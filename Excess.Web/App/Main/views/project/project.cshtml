@@ -1,0 +1,37 @@
+﻿<div ng-controller="app.views.project as vm">
+    <layout id="main-layout"
+            ng-splitters="false"
+            ng-center="{minSize: 400, resize: updateCodeEditor, triggerEventsOnLoad: true}"
+            ng-west="{size: 300,  minSize: 300, maxSize: '50%', spacing_open: 4}"
+            ng-south="{size: 200, maxSize: '50%', spacing_open: 8, spacing_closed: 8, initClosed: true}">
+
+        <div class="pane ui-layout-center round-border">
+            <div style="padding-top:5px">
+                <div id="toolbar">
+                    <a title="Compile (CTRL+SHIFT+B)"><i class="toolbar-item fa fa-check-circle"></i></a>
+                    <a title="Run (CTRL+F5)"><i class="toolbar-item fa fa-play-circle"></i></a>
+                    <a title="Download"><i class="toolbar-item fa fa-download"></i></a>
+                    <a title="Save (CTRL+S)" ng-show="sourceModified"><i class="toolbar-item fa fa-save"></i></a>
+                </div>
+
+                <tabset id="editor-tabs">
+                    <tab ng-repeat="editor in editors" heading="{{editor.name}}" select="editorSelected(editor.name)">
+                        <div ng-controller="TabsChildController"
+                             ng-init="editor=editor">
+                        </div>
+                    </tab>
+                </tabset>
+            </div>
+
+            <xs-code-editor id="code-editor" source="{{sourceCode}}" resized="{{editorResized}}" changed="sourceChanged()" />
+        </div>
+
+        <div class="pane ui-layout-west round-border">
+            <xs-tree id="project-tree" tree="testTree" action="projectAction(action, data)" />
+        </div>
+
+        <div class="pane ui-layout-south">
+            console
+        </div>
+    </layout>
+</div>

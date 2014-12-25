@@ -1,0 +1,30 @@
+﻿/*.header {
+    background: #777;
+}
+
+.header a{
+	font-size: 20px !important;
+	font-weight: bold ;
+	color: #fff ;
+	line-height: 40px;
+}
+
+.menu-btn {
+	background: center center no-repeat transparent;
+	background-image: url( data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABkAAAAZCAYAAADE6YVjAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAADhJREFUeNpi/P//PwOtARMDHQBdLGFBYtMq3BiHT3DRPU4YR4NrNAmPJuHRJDyahEeT8Ii3BCDAAF0WBj5Er5idAAAAAElFTkSuQmCC );
+
+	display: block;
+	position: absolute;
+	width: 40px;
+	height: 40px;
+	top: 5px;
+	left: 10px;
+}
+
+.container {
+    margin-left: 15px;
+}
+
+.navbar-brand {
+    padding-top: 5px;
+}*/

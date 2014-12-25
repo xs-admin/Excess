@@ -1,0 +1,73 @@
+﻿#main-layout .ui-layout-pane {
+    border-top: 1px solid #BBB;
+    border-bottom: 1px solid #BBB;
+}
+
+#main-layout .ui-layout-pane-west {
+    border-right: 1px solid #BBB;
+    overflow: hidden;
+}
+
+#main-layout .ui-layout-pane-center {
+    border-left: 1px solid #BBB;
+    overflow: hidden;
+}
+
+#main-layout .ui-layout-resizer-west {
+    border-left: 0;
+}
+
+#main-layout .ui-layout-pane-north {
+    border-bottom: 0;
+}
+
+#main-layout .ui-layout-resizer-north {
+    border-top: 2px solid #BBB;
+}
+
+#main-layout .ui-layout-pane-south {
+    border-top: 0;
+}
+
+#main-layout .ui-layout-resizer-south {
+    border-bottom: 1px solid #BBB;
+}
+
+#main-layout .ui-layout-resizer-west-dragging,
+#main-layout .ui-layout-resizer-east-dragging {
+    border-left: 1px solid #BBB;
+    border-right: 1px solid #BBB;
+}
+
+#main-layout .ui-layout-resizer-north-dragging,
+#main-layout .ui-layout-resizer-south-dragging {
+    border-top: 1px solid #BBB;
+    border-bottom: 1px solid #BBB;
+}
+
+.nav-tabs a {
+   height: 25px;  
+}
+
+.nav-tabs > li > a {
+    padding: 2px 15px;
+}
+
+#code-editor {
+   position: absolute;
+    top: 30px; 
+    bottom: 0; 
+    left: 0; 
+    right: 0; 
+}
+
+#toolbar {
+    float: left; 
+    padding-left:10px; 
+    padding-right:5px
+}
+
+.toolbar-item {
+    padding-right:5px;
+    padding-top:5px;
+}

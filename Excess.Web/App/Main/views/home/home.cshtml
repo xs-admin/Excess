@@ -1,0 +1,42 @@
+﻿<div ng-controller="app.views.home as vm" class="fill-parent">
+    <table class="fill-parent" style="height: 100%; width : 100%">
+        <tr>
+            <td height="">
+                <h1>@L("WellcomeMessage")</h1>
+                <p class="lead">@L("Home_ThisIsATemplate")</p>
+            </td>
+        </tr>
+        <tr style="height: 100%">
+            <td height="100%" style="position: relative">
+                <layout ng-splitters="false"
+                        ng-center   ="{minSize: '110px'}"
+                        ng-east     ="{size: '45%', resize: resizeTarget}"
+                        ng-west     ="{size: '45%', resize: resizeSource}">
+
+                    <div class="pane ui-layout-center">
+                        <p>
+                            <button class="btn btn-default center-block" ng-click="newProject()">Compile &raquo;</button>
+                        </p>
+                    </div>
+
+                    <div class="pane ui-layout-east round-border">
+                        <xs-code-editor id="target-editor" class="code-container" resized="{{targetResized}}" />
+                    </div>
+
+                    <div class="pane ui-layout-west round-border">
+                        <xs-code-editor id="source-editor" class="code-container" resized="{{sourceResized}}" />
+                    </div>
+                </layout>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <h1>@L("WellcomeMessage")</h1>
+                <p class="lead">@L("Home_ThisIsATemplate")</p>
+            </td>
+        </tr>
+    </table>
+
+    <mmenu id="main-menu">
+    </mmenu>
+</div>
