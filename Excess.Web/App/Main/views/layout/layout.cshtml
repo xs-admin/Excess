@@ -42,30 +42,32 @@
 <body>
     <div ng-app="app">
         <div ng-controller="app.views.layout as vm">
-            @*<div ng-include="'/App/Main/views/layout/header.cshtml'"></div>*@
             <div class="header FixedTop">
-                <a class="menu-btn" href="#here" ng-click="openMenu()"></a>
-                <div class="toolbar-right">
-                    <a class="app-title" href="#/">Excess</a>
+                <div class="toolbar-left">
+                    <a class="app-title" href="#/">EXCESS</a>
                 </div>
 
-                <div class="toolbar-right">
-                    <a ng-repeat="menu in menus" class="toolbar-icon fa {{menu.icon}}" href="{{menu.url}}"></a>
+                <div class="toolbar-left">
+                    <a ng-repeat="menu in menus" class="toolbar-icon fa {{menu.icon}}" href="{{menu.url}}">
+                        <span class="toolbar-text">{{menu.caption}}</span>
+                    </a>
                 </div>
             </div>
 
-            <div ui-view class="container fill-container">
+            <div ui-view class="content-container">
             </div>
             
             <div class="footer">
-                <div class="container">
-                    <ul class="nav navbar-nav">
-                        <li>
-                            <a href="#here"><i class="fa fa-empire"></i> Worky </a>
-                        </li>
-                    </ul>
+                <div class="toolbar-right">
+                    <a class="toolbar-icon fa fa-facebook fa-fw"></a>
+                    <a class="toolbar-icon fa fa-twitter fa-fw"></a>
+                    <a class="toolbar-icon fa fa-google-plus fa-fw"></a>
+                    <a class="toolbar-icon fa fa-github fa-fw"></a>
                 </div>
             </div>
+
+            <mmenu id="main-menu">
+            </mmenu>
         </div>
     </div>
 </body>

@@ -21,6 +21,12 @@
                         $scope.sourceCode = data.file;
                         break;
                     }
+
+                    case "test-console":
+                    {
+                        $scope.console.add('Hello, dolly');
+                        break;
+                    }
                 }
             }
 
@@ -64,6 +70,9 @@
                 $scope.sourceModified = true;
             }
             
+            //console
+            $scope.console = {};
+
             //data
             $scope.editors =
             [
@@ -89,7 +98,10 @@
                                         file: "filename1"
                                     }
                                 },
-                                { label: 'file2' },
+                                {
+                                    label: 'file2',
+                                    action: "test-console",
+                                },
                                 { label: 'file3' },
                             ]
                         },

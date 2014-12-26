@@ -16,10 +16,6 @@
                     });
             }
 
-            $scope.openMenu = function () {
-                $('#main-menu').trigger('open.mm');
-            }
-
             $scope.newProject = function () {
 
                 var modalInstance = $modal.open({

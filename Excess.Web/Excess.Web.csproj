@@ -183,6 +183,8 @@
     <Content Include="Abp\Framework\styles\utils\ie10fix.css" />
     <Content Include="App\Main\app.js" />
     <Content Include="App\Main\components\code-editor.html" />
+    <Content Include="App\Main\components\console.css" />
+    <Content Include="App\Main\components\console.js" />
     <Content Include="App\Main\components\layout.css" />
     <Content Include="App\Main\components\layout.js" />
     <Content Include="App\Main\components\layout.html" />

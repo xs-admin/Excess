@@ -5,9 +5,10 @@
             var vm = this;
 
             $scope.menus = [
-                { icon: 'fa-home',    url: '#/'        },
-                { icon: 'fa-info',    url: '#/about'   },
-                { icon: 'fa-share-alt-square', url: '#/project' }
+                { icon: 'fa-home',             url: '#/'        },
+                { icon: 'fa-info-circle',      url: '#/about'   },
+                { icon: 'fa-code', url: '#/project' },
+                { icon: 'fa-question-circle', url: '#/project' }
             ];
 
             $scope.openMenu = function () {

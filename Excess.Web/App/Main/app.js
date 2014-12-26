@@ -16,6 +16,7 @@
 
         'ui.xs.codemirror',
         'ui.xs.tree',
+        'ui.xs.console',
 
         'rcWizard',
     ]);
