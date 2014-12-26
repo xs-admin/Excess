@@ -11,7 +11,7 @@ namespace Excess.Web.Views
     {
         protected ExcessWebViewPageBase()
         {
-            LocalizationSourceName = ExcessConsts.LocalizationSourceName;
+            //LocalizationSourceName = ExcessConsts.LocalizationSourceName;
         }
     }
 }

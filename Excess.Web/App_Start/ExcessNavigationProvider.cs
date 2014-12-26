@@ -17,14 +17,14 @@ namespace Excess.Web
                 .AddItem(
                     new MenuItemDefinition(
                         "Home",
-                        new LocalizableString("HomePage", ExcessConsts.LocalizationSourceName),
+                        new LocalizableString("HomePage", "Home"),
                         url: "#/",
                         icon: "fa fa-home"
                         )
                 ).AddItem(
                     new MenuItemDefinition(
                         "Project",
-                        new LocalizableString("Project", ExcessConsts.LocalizationProject),
+                        new LocalizableString("Project", "Project"),
                         url: "#/project",
                         icon: "fa fa-info"
                         )

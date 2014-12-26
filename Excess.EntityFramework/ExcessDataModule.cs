@@ -6,7 +6,6 @@ using Excess.EntityFramework;
 
 namespace Excess
 {
-    [DependsOn(typeof(AbpEntityFrameworkModule), typeof(ExcessCoreModule))]
     public class ExcessDataModule : AbpModule
     {
         public override void PreInitialize()
