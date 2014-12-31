@@ -1,8 +1,9 @@
 ﻿using Abp.EntityFramework;
+using System.Data.Entity;
 
 namespace Excess.EntityFramework
 {
-    public class ExcessDbContext : AbpDbContext
+    public class ExcessDbContext : DbContext
     {
         //TODO: Define an IDbSet for each Entity...
 

@@ -32,6 +32,7 @@
                 });
             }
 
+
             //code mirror must be resized manually
             $scope.resizeSource = function () {
                 $scope.sourceResized = !$scope.sourceResized;

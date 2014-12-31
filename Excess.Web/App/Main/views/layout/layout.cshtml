@@ -34,8 +34,8 @@
     </script>
 
     <!-- Dynamic scripts of ABP system (They are created on runtime and can not be bundled) -->
-    <script src="~/api/AbpServiceProxies/GetAll?type=angular"></script>
-    <script src="~/AbpScripts/GetScripts" type="text/javascript"></script>
+    @*<script src="~/api/AbpServiceProxies/GetAll?type=angular"></script>
+    <script src="~/AbpScripts/GetScripts" type="text/javascript"></script>*@
 
     @Scripts.Render("~/Bundles/App/Main/js")
 </head>
@@ -51,6 +51,13 @@
                     <a ng-repeat="menu in menus" class="toolbar-icon fa {{menu.icon}}" href="{{menu.url}}">
                         <span class="toolbar-text">{{menu.caption}}</span>
                     </a>
+                </div>
+
+                <div class="toolbar-right">
+                    <a class="toolbar-icon fa fa-user" ng-click="showLogin()" ng-if="!session"></a>
+
+                    <a ng-if="session">{{session.UserName}}</a>
+                    <a class="toolbar-icon fa fa-sign-out" ng-click="showLogout()" ng-if="session"></a>
                 </div>
             </div>
 

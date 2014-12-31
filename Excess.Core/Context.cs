@@ -128,18 +128,6 @@ namespace Excess.Core
                 }
 
                 tree = root.SyntaxTree;
-
-                var DebugCompilation = CSharpCompilation.Create("XS",
-                    syntaxTrees: new[] {tree},
-                    references: new[] {
-                    new MetadataFileReference(typeof(object).Assembly.Location),
-                    new MetadataFileReference(typeof(Enumerable).Assembly.Location),
-                    new MetadataFileReference(typeof(Dictionary<int, int>).Assembly.Location),
-                },
-                    options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
-
-                var errors = DebugCompilation.GetDiagnostics();
-
             }
 
             ctx.FileName = null;
@@ -225,9 +213,9 @@ namespace Excess.Core
                 result = CSharpCompilation.Create(result.AssemblyName,
                             syntaxTrees: trees,
                             references: new[] {
-                                new MetadataFileReference(typeof(object).Assembly.Location),
-                                new MetadataFileReference(typeof(Enumerable).Assembly.Location),
-                                new MetadataFileReference(typeof(Dictionary<int, int>).Assembly.Location),
+                                MetadataReference.CreateFromAssembly(typeof(object).Assembly),
+                                MetadataReference.CreateFromAssembly(typeof(Enumerable).Assembly),
+                                MetadataReference.CreateFromAssembly(typeof(Dictionary<int, int>).Assembly),
                             },
                             options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
@@ -278,9 +266,8 @@ namespace Excess.Core
                 result = CSharpCompilation.Create(result.AssemblyName,
                             syntaxTrees: trees,
                             references: new[] {
-                                new MetadataFileReference(typeof(object).Assembly.Location),
-                                new MetadataFileReference(typeof(Enumerable).Assembly.Location),
-                                new MetadataFileReference(typeof(Dictionary<int, int>).Assembly.Location),
+                                MetadataReference.CreateFromAssembly(typeof(object).Assembly),
+                                MetadataReference.CreateFromAssembly(typeof(Enumerable).Assembly),
                             },
                             options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 

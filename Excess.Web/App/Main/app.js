@@ -19,6 +19,7 @@
         'ui.xs.console',
 
         'rcWizard',
+        'dialogs.main',
     ]);
 
     //Configuration for Angular UI routing.

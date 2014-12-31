@@ -76,7 +76,9 @@ namespace Excess.Web
                         "~/Scripts/codemirror-4.8/mode/clike/clike.js",
 
                         "~/Scripts/jquery.bootstrap.wizard.js",
-                        "~/Scripts/rcWizard.js"
+                        "~/Scripts/rcWizard.js",
+                        "~/Scripts/dialogs.min.js",
+                        "~/Scripts/dialogs-default-translations.min.js"
                     )
                 );
 
