@@ -503,7 +503,7 @@ namespace Excess.Core
 
         public bool NeedsLinking()
         {
-            return linkers_.Count > 0 || true; //td:
+            return linkers_.Count > 0;
         }
 
         public void AddTypeInfo(string type, string field, object value)

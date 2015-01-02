@@ -10,10 +10,7 @@ namespace Excess
 {
     public class DSLService : IDSLService
     {
-        public DSLService(IDSLFactory appFactory)
-        {
-            _appFactory = appFactory;
-        }
+        public IDSLFactory AppFactory { set { _appFactory = value; } }
 
         public IDSLFactory factory()
         {

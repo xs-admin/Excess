@@ -40,25 +40,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Abp, Version=0.5.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Abp.0.5.0.0\lib\net451\Abp.dll</HintPath>
-    </Reference>
-    <Reference Include="Abp.AutoMapper">
-      <HintPath>..\packages\Abp.AutoMapper.0.4.4.0\lib\net451\Abp.AutoMapper.dll</HintPath>
-    </Reference>
-    <Reference Include="Abp.Web, Version=0.4.4.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Abp.Web.0.4.4.0\lib\net451\Abp.Web.dll</HintPath>
-    </Reference>
-    <Reference Include="Abp.Web.Api, Version=0.4.4.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Abp.Web.Api.0.4.4.0\lib\net451\Abp.Web.Api.dll</HintPath>
-    </Reference>
-    <Reference Include="Abp.Web.Mvc, Version=0.4.4.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\packages\Abp.Web.Mvc.0.4.4.0\lib\net451\Abp.Web.Mvc.dll</HintPath>
-    </Reference>
     <Reference Include="Antlr3.Runtime">
       <HintPath>..\packages\Antlr.3.5.0.2\lib\Antlr3.Runtime.dll</HintPath>
     </Reference>
@@ -83,6 +64,9 @@
     </Reference>
     <Reference Include="Castle.Windsor">
       <HintPath>..\packages\Castle.Windsor.3.3.0\lib\net45\Castle.Windsor.dll</HintPath>
+    </Reference>
+    <Reference Include="Castle.Windsor.Web.Mvc">
+      <HintPath>..\packages\Castle.Windsor.Web.Mvc.1.0.7\lib\net40\Castle.Windsor.Web.Mvc.dll</HintPath>
     </Reference>
     <Reference Include="EntityFramework, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -266,6 +250,9 @@
     <Reference Include="System.Configuration" />
     <Reference Include="System.Web.Services" />
     <Reference Include="System.EnterpriseServices" />
+    <Reference Include="WebActivatorEx">
+      <HintPath>..\packages\WebActivatorEx.2.0.1\lib\net40\WebActivatorEx.dll</HintPath>
+    </Reference>
     <Reference Include="WebGrease">
       <HintPath>..\packages\WebGrease.1.6.0\lib\WebGrease.dll</HintPath>
     </Reference>
@@ -276,17 +263,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Abp\Framework\scripts\abp.js" />
-    <Content Include="Abp\Framework\scripts\libs\abp.blockUI.js" />
-    <Content Include="Abp\Framework\scripts\libs\abp.jquery.js" />
-    <Content Include="Abp\Framework\scripts\libs\abp.spin.js" />
-    <Content Include="Abp\Framework\scripts\libs\abp.toastr.js" />
-    <Content Include="Abp\Framework\scripts\libs\angularjs\abp.ng.js" />
-    <Content Include="Abp\Framework\scripts\libs\requirejs\plugins\service.js" />
-    <Content Include="Abp\Framework\scripts\utils\ie10fix.js" />
-    <Content Include="Abp\Framework\styles\abp.css" />
-    <Content Include="Abp\Framework\styles\abp.min.css" />
-    <Content Include="Abp\Framework\styles\utils\ie10fix.css" />
     <Content Include="App\Main\app.js" />
     <Content Include="App\Main\components\code-editor.html" />
     <Content Include="App\Main\components\console.css" />
@@ -385,8 +361,6 @@
     <Content Include="fonts\fontawesome-webfont.svg" />
     <Content Include="fonts\glyphicons-halflings-regular.svg" />
     <Content Include="Global.asax" />
-    <Content Include="Localization\AbpWeb\AbpWeb.tr.xml" />
-    <Content Include="Localization\AbpWeb\AbpWeb.xml" />
     <Content Include="Localization\Excess\Excess.tr.xml" />
     <Content Include="Localization\Excess\Excess.xml" />
     <Content Include="Scripts\addons\jquery.mmenu.counters.js" />
@@ -432,7 +406,7 @@
     <Content Include="Scripts\angular-ui\ui-utils.min.js" />
     <Content Include="App\Main\main.less" />
     <Content Include="App\Main\views\layout\layout.cshtml" />
-    <Content Include="App\Main\views\home\home.cshtml" />
+    <Content Include="App\Main\views\home\home.html" />
     <Content Include="App\Main\views\about\about.cshtml" />
     <Content Include="App\Main\web.config" />
     <Content Include="log4net.config" />
@@ -447,8 +421,6 @@
     <Content Include="Scripts\angular.min.js" />
     <Content Include="Scripts\bootstrap.js" />
     <Content Include="Scripts\bootstrap.min.js" />
-    <Content Include="Abp\Framework\styles\abp.less" />
-    <Content Include="Abp\Framework\styles\abp.css.map" />
     <Content Include="fonts\glyphicons-halflings-regular.woff" />
     <Content Include="fonts\glyphicons-halflings-regular.ttf" />
     <Content Include="fonts\glyphicons-halflings-regular.eot" />
@@ -844,7 +816,8 @@
     <Content Include="Scripts\codemirror-4.8\bin\lint" />
     <Content Include="Scripts\codemirror-4.8\bin\release" />
     <Content Include="Scripts\codemirror-4.8\bin\source-highlight" />
-    <Content Include="App\Main\views\project\project.cshtml" />
+    <Content Include="App\Main\views\project\project.html" />
+    <Content Include="Readme.md" />
     <None Include="Scripts\jquery-2.1.1.intellisense.js" />
     <Content Include="Scripts\i18n\angular-locale_aa-dj.js" />
     <Content Include="Scripts\i18n\angular-locale_aa-er.js" />
@@ -1627,11 +1600,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="App_Start\BundleConfig.cs" />
-    <Compile Include="App_Start\ExcessNavigationProvider.cs" />
-    <Compile Include="App_Start\ExcessWebModule.cs" />
+    <Compile Include="App_Start\ContainerBootstrapper.cs" />
+    <Compile Include="App_Start\FilterConfig.cs" />
     <Compile Include="App_Start\IdentityConfig.cs" />
     <Compile Include="App_Start\RouteConfig.cs" />
     <Compile Include="App_Start\Startup.Auth.cs" />
+    <Compile Include="App_Start\WindsorActivator.cs" />
     <Compile Include="Controllers\AccountController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\ExcessControllerBase.cs" />
@@ -1641,6 +1615,7 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Installers\ControllersInstaller.cs" />
     <Compile Include="Migrations\201412301655041_Initial.cs" />
     <Compile Include="Migrations\201412301655041_Initial.Designer.cs">
       <DependentUpon>201412301655041_Initial.cs</DependentUpon>
@@ -1652,6 +1627,7 @@
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\AccountViewModels.cs" />
     <Compile Include="Models\IdentityModels.cs" />
+    <Compile Include="Plumbing\WindsorControllerFactory.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Resources\SampleCode.Designer.cs">
       <AutoGen>True</AutoGen>
@@ -1664,7 +1640,6 @@
   <ItemGroup>
     <Content Include="Views\web.config" />
     <Content Include="packages.config" />
-    <Content Include="Views\Shared\Error.cshtml" />
     <Content Include="Views\Shared\_Layout.cshtml" />
     <Content Include="Scripts\version.json" />
     <Content Include="Views\Account\ConfirmEmail.cshtml" />
@@ -1710,10 +1685,6 @@
     <ProjectReference Include="..\Excess.Core\Excess.Core.csproj">
       <Project>{17298ea0-af73-4f30-b6f1-2066100d7d74}</Project>
       <Name>Excess.Core</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Excess.WebApi\Excess.WebApi.csproj">
-      <Project>{5EB52D3D-09FD-463A-B02A-8D9856BD3724}</Project>
-      <Name>Excess.WebApi</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

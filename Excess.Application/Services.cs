@@ -1,5 +1,4 @@
-﻿using Abp.Application.Services;
-using Excess.Core;
+﻿using Excess.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,6 +7,11 @@ using System.Threading.Tasks;
 
 namespace Excess
 {
+
+    public interface IApplicationService
+    {
+    }
+
     public interface ITranslationService : IApplicationService
     {
         string translate(string text);

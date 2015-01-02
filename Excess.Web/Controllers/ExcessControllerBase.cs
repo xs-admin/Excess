@@ -1,15 +1,14 @@
-﻿using Abp.Web.Mvc.Controllers;
+﻿using System.Web.Mvc;
 
 namespace Excess.Web.Controllers
 {
     /// <summary>
     /// Derive all Controllers from this class.
     /// </summary>
-    public abstract class ExcessControllerBase : AbpController
+    public abstract class ExcessControllerBase : Controller
     {
         protected ExcessControllerBase()
         {
-            LocalizationSourceName = ExcessConsts.LocalizationSourceName;
         }
     }
 }

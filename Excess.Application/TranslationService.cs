@@ -1,5 +1,4 @@
-﻿using Abp.Domain.Uow;
-using Excess.Core;
+﻿using Excess.Core;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using System;
@@ -17,7 +16,6 @@ namespace Excess
             _dsl = dsl;
         }
 
-        [UnitOfWork(IsDisabled = true)]
         public string translate(string text)
         {
             ExcessContext ctx;

@@ -4,12 +4,14 @@
         '$scope', '$modal', 'xsCompiler', function ($scope, $modal, xsCompiler) {
             var vm = this;
             
+            $scope.targetSource = "";
+
             $scope.translateSource = function () {
                 var sourceEditor = $('#source-editor').isolateScope();
 
                 xsCompiler.translate(sourceEditor.content())
                     .then(function (result) {
-                        alert(result);
+                        $scope.targetSource = result.data;
                     })
                     .catch(function () {
                         alert("Error");

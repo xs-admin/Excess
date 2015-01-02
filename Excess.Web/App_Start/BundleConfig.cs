@@ -35,7 +35,6 @@ namespace Excess.Web
             bundles.Add(
                 new ScriptBundle("~/Bundles/App/vendor/js")
                     .Include(
-                        "~/Abp/Framework/scripts/utils/ie10fix.js",
                         "~/Scripts/json2.min.js",
 
                         "~/Scripts/modernizr-2.8.3.js",
@@ -58,13 +57,6 @@ namespace Excess.Web
                         "~/Scripts/angular-ui/ui-bootstrap.min.js",
                         "~/Scripts/angular-ui/ui-bootstrap-tpls.min.js",
                         "~/Scripts/angular-ui/ui-utils.min.js",
-
-                        "~/Abp/Framework/scripts/abp.js",
-                        "~/Abp/Framework/scripts/libs/abp.jquery.js",
-                        "~/Abp/Framework/scripts/libs/abp.toastr.js",
-                        "~/Abp/Framework/scripts/libs/abp.blockUI.js",
-                        "~/Abp/Framework/scripts/libs/abp.spin.js",
-                        "~/Abp/Framework/scripts/libs/angularjs/abp.ng.js",
 
                         "~/Scripts/jquery.mmenu.min.all.js",
                         "~/Scripts/addons/jquery.mmenu.dragopen.min.js",

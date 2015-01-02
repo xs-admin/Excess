@@ -1,4 +1,5 @@
-﻿using Abp.Web.Mvc.Views;
+﻿
+using System.Web.Mvc;
 
 namespace Excess.Web.Views
 {
@@ -7,7 +8,7 @@ namespace Excess.Web.Views
 
     }
 
-    public abstract class ExcessWebViewPageBase<TModel> : AbpWebViewPage<TModel>
+    public abstract class ExcessWebViewPageBase<TModel> : WebViewPage<TModel>
     {
         protected ExcessWebViewPageBase()
         {
