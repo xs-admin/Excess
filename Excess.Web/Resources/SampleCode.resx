@@ -1,0 +1,358 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Arrays" xml:space="preserve">
+    <value>class Arrays 
+{
+    void main()
+    {
+        var arr = [10, 15, 30];
+        
+        foreach(int val in arr)
+            console.write(val);
+    }
+}</value>
+  </data>
+  <data name="DSLAsynch" xml:space="preserve">
+    <value>class DSL
+{
+    void main()
+    {
+        asynch()
+        {
+            var x = expensive();
+          	
+            synch()
+            {
+              	notify(x);
+            }
+        }
+    }
+}</value>
+  </data>
+  <data name="Events" xml:space="preserve">
+    <value>namespace Events 
+{
+    class Base
+    {
+        public delegate void FinishedHandler(int x, int y);
+        public event FinishedHandler FinishedEvent;
+    }
+  
+    class Derived : Base
+    {
+        public event closed(int x, int y);
+
+        on closed(x, y)
+        {
+            console.write(x);
+        }
+
+        on finished()
+        {
+            console.write(y);
+        }
+    }
+}</value>
+  </data>
+  <data name="Functions" xml:space="preserve">
+    <value>class Functions 
+{
+    void main()
+    {
+        foo(function(i){
+            console.write(i);
+            return i + 5;
+        });
+    }
+  
+    function foo(function&lt;int, int&gt; callback)
+    {
+        int result = callback(73);
+        return result;
+    }
+
+    string function bar()
+    {
+        return "bar";
+    }
+}</value>
+  </data>
+  <data name="HelloWorld" xml:space="preserve">
+    <value>void main()
+{
+    console.write("Hello World");
+}</value>
+  </data>
+  <data name="LolCats" xml:space="preserve">
+    <value>public class Lolcat
+{
+    constructor(string name)
+    {
+        Name = name;
+        initSpeekers();
+    }
+
+    string property Name;
+
+    method Say(Mood mood)
+    { 
+        Speek speek = speekers[mood](mood);
+        console.write(Name + ": " + speek.Say);
+        return speek.Mood;
+    }
+
+    typedef Func&lt;Mood, Speek&gt; 		  Speeker; 
+    typedef Dictionary&lt;Mood, Speeker&gt; Speekers; 
+        
+    protected Speekers speekers = new Speekers();
+
+    protected virtual void initSpeekers()
+    {
+        Speeker defaultSpeek = function(mood)
+        {
+            return Speeks.AnySpeek(mood);  
+        };
+
+        speekers[Mood.Nize]   = Speeks.AnySpeek;
+        speekers[Mood.Skerd]  = defaultSpeek;
+        speekers[Mood.Hungry] = defaultSpeek;
+    }
+}</value>
+  </data>
+  <data name="LolCatsApplication" xml:space="preserve">
+    <value>var cats = [new Lolcat("Kitty"), new Lolcat("Furry Kitty"), new Trollcat("Ball of Fur")];
+var mood = Mood.Nize;
+
+for(int i = 0; i &lt; 30; i++)
+{
+    int cat = random.Int(3);
+    mood = cats[cat].Say(mood);
+}
+
+console.write("Powered by speaklolcat.com");</value>
+  </data>
+  <data name="LolCatsSpeek" xml:space="preserve">
+    <value>public enum Mood
+{
+    Nize,
+    Hungry,
+    Skerd,
+}
+
+public class Speek
+{
+    public string Say  { get; set; }
+    public Mood   Mood { get; set; }
+}
+
+public class Speeks
+{
+    static method AnySpeek(Mood mood)
+    {
+        Speek[] choices;
+        switch (mood)
+        {
+            case Mood.Nize: choices = NizeTalk; break;
+            case Mood.Skerd: choices = SkerdTalk; break;
+            default: choices = HungryTalk; break;
+        }
+        
+        return choices[random.Int(choices.Length)];
+    }
+        
+    static Speek[] NizeTalk = 
+    [
+        new Speek {Say = "HAI",               Mood = Mood.Nize},
+        new Speek {Say = "KTHXBYE",           Mood = Mood.Skerd},
+        new Speek {Say = "I HAS CHEEZBURGER", Mood = Mood.Hungry},
+    ];
+
+    static Speek[] HungryTalk = 
+    [
+        new Speek {Say = "I WANTS CHEEZBURGER",      Mood = Mood.Hungry},
+        new Speek {Say = "PLZ",                      Mood = Mood.Skerd},
+        new Speek {Say = "I CAN HAS CHEEZBURGER...", Mood = Mood.Nize},
+    ];
+
+    static Speek[] SkerdTalk = 
+    [
+        new Speek {Say = "IM GUD KITTEH",           Mood = Mood.Nize},
+        new Speek {Say = "PLZ",                     Mood = Mood.Skerd},
+        new Speek {Say = "I WANTS NO CHEEZBURGER",  Mood = Mood.Nize},
+        new Speek {Say = "I HAS FAILD",             Mood = Mood.Hungry},
+    ];
+}</value>
+  </data>
+  <data name="LolCatsTrollcat" xml:space="preserve">
+    <value>public class Trollcat : Lolcat
+{
+    public Trollcat(string name)
+        : base(name)
+    {
+    }
+
+    protected override void initSpeekers()
+    {
+        base.initSpeekers();
+
+        speekers[Mood.Nize] = function(mood)
+        {
+            return new Speek { Say = "BAD KITTEH!", Mood = Mood.Skerd };
+        };
+
+        speekers[Mood.Hungry] = hungry;
+    }
+
+    function hungry(Mood m)
+    {
+        return new Speek { Say = "NO CHEEZBURGER!", Mood = Mood.Skerd };
+    }
+}</value>
+  </data>
+  <data name="Misc" xml:space="preserve">
+    <value>class Misc 
+{
+    typedef IEnumerable&lt;int&gt; 	 Data;
+    typedef function&lt;int, int&gt;   Calculation;
+    typedef Dictionary&lt;int, int&gt; Results;
+
+    void main()
+    {
+        var data = [2, 3, 5, 7, 11];
+        var calc = function(int value)
+        {
+            return value*5;
+        };
+        
+        Results results = new Results();
+        calculate(data, calc, results);
+    }
+
+    private void calculate(Data data, Calculation fn, Results results)
+    {
+        foreach(var d in data)
+        {
+            var result = fn(d);
+            results[d] = result;
+        }
+    }
+}</value>
+  </data>
+</root>

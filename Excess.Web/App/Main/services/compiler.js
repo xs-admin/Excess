@@ -4,7 +4,7 @@
 
     this.translate = function (text)
     {
-        return $http.get('/compiler/translate',
+        return $http.get('/XS/Translate',
         {
             params: { text: text }
         });

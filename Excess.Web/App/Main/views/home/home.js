@@ -5,9 +5,9 @@
             var vm = this;
             
             $scope.translateSource = function () {
-                getEditors();
+                var sourceEditor = $('#source-editor').isolateScope();
 
-                xsCompiler.translate(_sourceEditor.getValue())
+                xsCompiler.translate(sourceEditor.content())
                     .then(function (result) {
                         alert(result);
                     })

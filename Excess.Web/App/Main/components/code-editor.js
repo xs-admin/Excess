@@ -60,7 +60,7 @@
 .directive('xsCodeEditor', ['$parse', 'cmConfig', function ($parse, config) {
     return {
         restrict: 'E',
-        replace: true,
+        replace: false,
         controller: 'cmController',
         scope: {
             resized: '@',
@@ -79,6 +79,10 @@
 
             var textArea   = element.find('textarea')[0];
             var codeEditor = CodeMirror.fromTextArea(textArea, options);
+
+            scope.content = function () {
+                return codeEditor.getValue();
+            }
 
             codeEditor.on("change", function ()
             {

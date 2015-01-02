@@ -9,7 +9,7 @@ using Abp.Modules;
 
 namespace Excess.Web
 {
-    [DependsOn(typeof(ExcessDataModule), typeof(ExcessApplicationModule), typeof(ExcessWebApiModule))]
+    [DependsOn(typeof(ExcessApplicationModule), typeof(ExcessWebApiModule))]
     public class ExcessWebModule : AbpModule
     {
         public override void PreInitialize()
@@ -28,6 +28,8 @@ namespace Excess.Web
 
             //Configure navigation/menu
             Configuration.Navigation.Providers.Add<ExcessNavigationProvider>();
+
+            Configuration.UnitOfWork.IsTransactional = false;
         }
 
         public override void Initialize()
