@@ -4,14 +4,39 @@
         '$scope', '$modal', 'xsCompiler', function ($scope, $modal, xsCompiler) {
             var vm = this;
             
-            $scope.targetSource = "";
+            $scope.sourceCode = "";
+            $scope.targetCode = "";
+
+            $scope.sampleStatus = 'Getting Samples...';
+            xsCompiler.samples()
+                .then(function (result) {
+                    $scope.sampleStatus = 'Compile a sample';
+                    $scope.samples = result.data;
+                });
+
+            $scope.selectedSample = null;
+            $scope.$watch("selectedSample", function (value) {
+                if (value)
+                {
+                    xsCompiler.sample(value.id)
+                        .then(function (result) {
+                            $scope.sourceCode = result.data;
+                        })
+                }
+            });
+
+            $scope.editorKeywords = null;
+            xsCompiler.keywords()
+                .then(function (value) {
+                    $scope.editorKeywords = value.data;
+                });
 
             $scope.translateSource = function () {
                 var sourceEditor = $('#source-editor').isolateScope();
 
                 xsCompiler.translate(sourceEditor.content())
                     .then(function (result) {
-                        $scope.targetSource = result.data;
+                        $scope.targetCode = result.data;
                     })
                     .catch(function () {
                         alert("Error");
@@ -19,7 +44,6 @@
             }
 
             $scope.newProject = function () {
-
                 var modalInstance = $modal.open({
                     templateUrl: '/App/Main/dialogs/newProject.html',
                     controller: $scope.newProjectCtrl,

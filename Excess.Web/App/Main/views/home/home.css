@@ -10,3 +10,12 @@
     left: 0; 
     right: 0; 
 }
+
+.home-text {
+    padding-left: 15px;
+}
+
+.home-select {
+    width: 200px;
+    display: inline;
+}

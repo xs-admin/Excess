@@ -63,43 +63,60 @@
         replace: false,
         controller: 'cmController',
         scope: {
-            resized: '@',
-            source:  '@',
-            changed: '&',
+            keywords: '@',
+            resized:  '@',
+            source:   '@',
+            changed:  '&',
         },
         templateUrl: '/App/Main/components/code-editor.html',
         link: function (scope, element, attrs, ctrl) {
-            var extraKeywords = angular.isDefined(attrs.ngExtraKeywords) ? scope.$eval(attrs.ngExtraKeywords) : "";
-            ctrl.registerMime(extraKeywords);
 
-            var options = {};
-            //td: parse options
+            function createCodeMirror(keywords)
+            {
+                ctrl.registerMime(keywords);
 
-            options = angular.extend({}, options, config);
+                var options = {};
+                //td: parse options
 
-            var textArea   = element.find('textarea')[0];
-            var codeEditor = CodeMirror.fromTextArea(textArea, options);
+                options = angular.extend({}, options, config);
 
-            scope.content = function () {
-                return codeEditor.getValue();
+                var textArea = element.find('textarea')[0];
+                var codeEditor = CodeMirror.fromTextArea(textArea, options);
+
+                scope.content = function () {
+                    return codeEditor.getValue();
+                }
+
+                codeEditor.on("change", function () {
+                    if (scope.changed)
+                        scope.$apply(function () {
+                            scope.changed();
+                        });
+                });
+
+                scope.$watch("source", function (value) {
+                    if (value)
+                        codeEditor.setValue(value);
+                });
+
+                scope.$watch('resized', function (value) {
+                    codeEditor.setSize(element.width(), element.height());
+                });
             }
 
-            codeEditor.on("change", function ()
-            {
-                if (scope.changed)
-                    scope.$apply(function () {
-                        scope.changed();
-                    });
-            });
+            if (angular.isDefined(attrs.keywords)) {
+                element.hide();
+                scope.$watch("keywords", function (value) {
+                    if (value)
+                    {
+                        element.show();
+                        createCodeMirror(value);
+                    }
+                });
+            }
+            else
+                createCodeMirror("");
 
-            scope.$watch("source", function (value) {
-                if (value)
-                    codeEditor.setValue(value);
-            });
-
-            scope.$watch('resized', function (value) {
-                codeEditor.setSize(element.width(), element.height());
-            });
         }
     };
 }])

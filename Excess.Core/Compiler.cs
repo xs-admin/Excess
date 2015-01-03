@@ -104,7 +104,7 @@ namespace Excess.Core
 
                     if (toAdd is TypeDeclarationSyntax || toAdd is EnumDeclarationSyntax)
                         types.Add(toAdd);
-                    else
+                    else if (!(toAdd is NamespaceDeclarationSyntax))
                         members.Add(toAdd);
                 }
                 else

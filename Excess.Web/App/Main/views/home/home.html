@@ -1,14 +1,26 @@
 ﻿<div ng-controller="app.views.home as vm">
-    <table class="fill-parent" style="height: 100%; max-width : 1200px; min-width : 1000px">
+    <table class="fill-parent" style="height: 100%; max-width : 1500px; min-width : 1200px">
         <tr>
-            <td height="">
-                <h1>@L("WellcomeMessage")</h1>
-                <p class="lead">@L("Home_ThisIsATemplate")</p>
+            <td class="home-text">
+                <h3>Welcome to Excess</h3>
+                A platform for programming language experimentation. Introducing <strong>xs</strong>, a superset of <strong>c#</strong> 
+                that uses translation to generate executable code.
+                
+                <p style="margin-bottom: 10px; margin-top: 10px">
+                    <select class="form-control home-select" ng-model="selectedSample" ng-options="sample.desc for sample in samples">
+                        <option value="">{{sampleStatus}}</option>
+                    </select>
+                    <label>OR</label>
+                    <select class="form-control home-select">
+                        <option>Run a sample</option>
+                    </select>
+                </p>
             </td>
         </tr>
         <tr style="height: 100%">
             <td height="100%" style="position: relative">
-                <layout ng-splitters="false"
+                <layout class="home-text" 
+                        ng-splitters="false" 
                         ng-center   ="{minSize: '110px'}"
                         ng-east     ="{size: '45%', resize: resizeTarget}"
                         ng-west     ="{size: '45%', resize: resizeSource}">
@@ -20,19 +32,33 @@
                     </div>
 
                     <div class="pane ui-layout-east round-border">
-                        <xs-code-editor id="target-editor" class="code-container" source="{{targetSource}}" resized="{{targetResized}}" />
+                        <xs-code-editor id="target-editor" class="code-container" source="{{targetCode}}" resized="{{targetResized}}" />
                     </div>
 
                     <div class="pane ui-layout-west round-border">
-                        <xs-code-editor id="source-editor" class="code-container" resized="{{sourceResized}}" />
+                        <xs-code-editor id="source-editor" class="code-container"
+                                        source  ="{{sourceCode}}"
+                                        resized ="{{sourceResized}}"
+                                        keywords="{{editorKeywords}}" />
                     </div>
                 </layout>
             </td>
         </tr>
         <tr>
             <td>
-                <h1>@L("WellcomeMessage")</h1>
-                <p class="lead">@L("Home_ThisIsATemplate")</p>
+                <div class="col-md-3">
+                    <h4>Learn More</h4>
+                    <h5><a href="http://xslang.blogspot.com/" target="_blank">Development blog &raquo;</a></h5>
+                    <h5><a href="http://roslyn.codeplex.com/" target="_blank">Roslyn &raquo;</a></h5>
+                </div>
+                <div class="col-md-3">
+                    <h4>Connect</h4>
+
+                    <a href="http://xslang.blogspot.com/" target="_blank"><img src="/Content/images/facebook.png" /></a>
+                    <a href="http://xslang.blogspot.com/" target="_blank"><img src="/Content/images/twitter.png" /></a>
+                    <a href="http://xslang.blogspot.com/" target="_blank"><img src="/Content/images/gplus.png" /></a>
+                    <a href="http://xslang.blogspot.com/" target="_blank"><img src="/Content/images/blogspot.png" /></a>
+                </div>
             </td>
         </tr>
     </table>

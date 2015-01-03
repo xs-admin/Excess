@@ -10,4 +10,18 @@
         });
     }
 
+    this.samples = function () {
+        return $http.get('/XS/GetSamples');
+    }
+
+    this.sample = function (id) {
+        return $http.get('/XS/GetSample',
+        {
+            params: { id: id }
+        });
+    }
+
+    this.keywords = function () {
+        return $http.get('/XS/GetKeywords');
+    }
 }]);

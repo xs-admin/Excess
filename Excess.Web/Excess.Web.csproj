@@ -280,7 +280,6 @@
     <Content Include="App\Main\dialogs\login.js" />
     <Content Include="App\Main\dialogs\newProject.html" />
     <Content Include="App\Main\dialogs\newProject.js" />
-    <Content Include="App\Main\images\abp-logo.png" />
     <Content Include="App\Main\main.css">
       <DependentUpon>main.less</DependentUpon>
     </Content>
@@ -319,6 +318,10 @@
     <Content Include="Content\flags\famfamfam-flags.png" />
     <Content Include="Content\font-awesome.css" />
     <Content Include="Content\font-awesome.min.css" />
+    <Content Include="Content\images\blogspot.png" />
+    <Content Include="Content\images\facebook.png" />
+    <Content Include="Content\images\gplus.png" />
+    <Content Include="Content\images\twitter.png" />
     <Content Include="Content\jquery.mmenu.all.css" />
     <Content Include="Content\jquery.mmenu.css" />
     <Content Include="Content\jquery.ui.layout.css" />

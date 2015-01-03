@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Excess.Core;
 using System.Net;
+using Excess.DSL;
 
 namespace Excess
 {
@@ -14,7 +15,9 @@ namespace Excess
 
         public IDSLFactory factory()
         {
-            IDSLFactory result = new SimpleFactory();
+            IDSLFactory result = new SimpleFactory()
+                .Add<ASynchDSL>("asynch")
+                .Add<SynchDSL>("synch");
 
             if (_appFactory != null)
                 result = new CompoundFactory(result, _appFactory);
