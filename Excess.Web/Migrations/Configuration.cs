@@ -17,9 +17,13 @@ namespace Excess.Web.Migrations
         protected override void Seed(Excess.Web.Entities.ExcessDbContext context)
         {
             foreach (var sample in TranslationSamples())
-            {
                 context.Samples.AddOrUpdate(sample);
-            }
+
+            foreach (var sampleProject in SampleProjects())
+                context.Projects.AddOrUpdate(sampleProject);
+
+            foreach (var file in SampleProjectFiles())
+                context.ProjectFiles.AddOrUpdate(file);
         }
 
         private TranslationSample[] TranslationSamples()
@@ -59,6 +63,73 @@ namespace Excess.Web.Migrations
                     ID = 5,
                     Name = "DSL (Asynch/Synch)",
                     Contents = SampleCode.DSLAsynch,
+                },
+            };
+        }
+        private ProjectFile[] SampleProjectFiles()
+        {
+            return new ProjectFile[]
+            {
+                new ProjectFile
+                {
+                    ID = 1,
+                    OwnerProject = 1,
+                    Name = "application",
+                    Contents = SampleCode.HelloWorld,
+                },
+
+                new ProjectFile
+                {
+                    ID = 2,
+                    OwnerProject = 2,
+                    Name = "application",
+                    Contents = SampleCode.LolCatsApplication,
+                },
+
+                new ProjectFile
+                {
+                    ID = 3,
+                    OwnerProject = 2,
+                    Name = "lolcat",
+                    Contents = SampleCode.LolCats,
+                },
+
+                new ProjectFile
+                {
+                    ID = 4,
+                    OwnerProject = 2,
+                    Name = "speek",
+                    Contents = SampleCode.LolCatsSpeek,
+                },
+
+                new ProjectFile
+                {
+                    ID = 5,
+                    OwnerProject = 2,
+                    Name = "trollcat",
+                    Contents = SampleCode.LolCatsTrollcat,
+                },
+            };
+        }
+
+        private Project[] SampleProjects()
+        {
+            return new Project[]
+            {
+                new Project
+                {
+                    ID = 1,
+                    ProjectType = "console",
+                    Name = "Hello World",
+                    IsSample = true,
+                },
+
+                new Project
+                {
+                    ID = 2,
+                    ProjectType = "console",
+                    Name = "LOL Cats",
+                    IsSample = true,
                 },
             };
         }

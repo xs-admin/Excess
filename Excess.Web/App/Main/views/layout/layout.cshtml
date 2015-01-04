@@ -39,6 +39,7 @@
                 </div>
 
                 <div class="toolbar-left">
+                    <a class="toolbar-icon fa fa-spinner fa-spin" ng-hide="loadingRequests <= 0"></a>
                     <a ng-repeat="menu in menus" class="toolbar-icon fa {{menu.icon}}" href="{{menu.url}}">
                         <span class="toolbar-text">{{menu.caption}}</span>
                     </a>

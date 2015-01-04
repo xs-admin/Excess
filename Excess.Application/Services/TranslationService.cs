@@ -24,7 +24,13 @@ namespace Excess
             if (ctx.NeedsLinking())
             {
                 Compilation compilation = CSharpCompilation.Create("translation",
-                            syntaxTrees: new[] { tree });
+                            syntaxTrees: new[] { tree },
+                            references: new[]  {
+                                MetadataReference.CreateFromAssembly(typeof(object).Assembly),
+                                MetadataReference.CreateFromAssembly(typeof(Enumerable).Assembly),
+                                MetadataReference.CreateFromAssembly(typeof(Dictionary<int, int>).Assembly),
+                            },
+                            options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 
                 compilation = ExcessContext.Link(ctx, compilation);
                 tree = compilation.SyntaxTrees.First();

@@ -5,10 +5,21 @@
         function ($scope, $rootScope, $window, $modal, dialogs, xsAuthentication) {
             var vm = this;
 
+            //loading
+            $scope.loadingRequests = 0;
+
+            $scope.$on('loading-requests', function (ev, count) {
+                $scope.loadingRequests = count;
+            })
+
+            $scope.$on('request-loaded', function () {
+                $scope.loadingRequests = $scope.loadingRequests - 1;
+            })
+
             $scope.menus = [
                 { icon: 'fa-home',             url: '#/'        },
                 { icon: 'fa-info-circle',      url: '#/about'   },
-                { icon: 'fa-code', url: '#/project' },
+                { icon: 'fa-code', url: '#/project/1' },
                 { icon: 'fa-question-circle', url: '#/project' }
             ];
 

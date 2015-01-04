@@ -1,17 +1,23 @@
 ﻿(function() {
     var controllerId = 'app.views.home';
     angular.module('app').controller(controllerId, [
-        '$scope', '$modal', 'xsCompiler', function ($scope, $modal, xsCompiler) {
+        '$scope', '$rootScope', '$modal', '$state', 'xsCompiler',
+        function ($scope, $rootScope, $modal, $state, xsCompiler) {
             var vm = this;
             
-            $scope.sourceCode = "";
-            $scope.targetCode = "";
+            $scope.sourceCode = "//write xs here";
+            $scope.targetCode = "//result c# here after compiling";
 
-            $scope.sampleStatus = 'Getting Samples...';
+            //loading
+            $rootScope.$broadcast('loading-requests', 3 );
+
+            //translation samples
             xsCompiler.samples()
                 .then(function (result) {
-                    $scope.sampleStatus = 'Compile a sample';
                     $scope.samples = result.data;
+                })
+                .finally(function () {
+                    $rootScope.$broadcast('request-loaded');
                 });
 
             $scope.selectedSample = null;
@@ -25,12 +31,33 @@
                 }
             });
 
+            //project samples
+            xsCompiler.sampleProjects()
+                .then(function (result) {
+                    $scope.sampleProjects = result.data;
+                })
+                .finally(function () {
+                    $rootScope.$broadcast('request-loaded');
+                });
+
+            $scope.selectedProject = null;
+            $scope.$watch("selectedProject", function (value) {
+                if (value) {
+                    $state.go('project', { projectId: value.ID });
+                }
+            });
+
+            //editor keywords
             $scope.editorKeywords = null;
             xsCompiler.keywords()
                 .then(function (value) {
                     $scope.editorKeywords = value.data;
+                })
+                .finally(function () {
+                    $rootScope.$broadcast('request-loaded');
                 });
 
+            //translate
             $scope.translateSource = function () {
                 var sourceEditor = $('#source-editor').isolateScope();
 

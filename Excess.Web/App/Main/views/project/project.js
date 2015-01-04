@@ -1,9 +1,11 @@
 ﻿(function () {
     var controllerId = 'app.views.project';
     angular.module('app').controller(controllerId, [
-        '$scope', function ($scope) {
+        '$scope', '$stateParams', function ($scope, $stateParams) {
             var vm = this;
             
+            alert($stateParams.projectId);
+
             var _currTest = 0;
             $scope.projectAction = function (action, data)
             {

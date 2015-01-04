@@ -8,11 +8,11 @@
                 
                 <p style="margin-bottom: 10px; margin-top: 10px">
                     <select class="form-control home-select" ng-model="selectedSample" ng-options="sample.desc for sample in samples">
-                        <option value="">{{sampleStatus}}</option>
+                        <option value="">Compile a sample</option>
                     </select>
                     <label>OR</label>
-                    <select class="form-control home-select">
-                        <option>Run a sample</option>
+                    <select class="form-control home-select" ng-model="selectedProject" ng-options="sampleProject.Name for sampleProject in sampleProjects">
+                        <option value="">Run a sample</option>
                     </select>
                 </p>
             </td>

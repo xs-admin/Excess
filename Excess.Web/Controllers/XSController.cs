@@ -20,7 +20,7 @@ namespace Excess.Web.Controllers
 
         public ActionResult GetSamples()
         {
-            var samples = from sample in db.Samples
+            var samples = from sample in _db.Samples
                           select new
                           {
                               id   = sample.ID,
@@ -32,7 +32,7 @@ namespace Excess.Web.Controllers
 
         public ActionResult GetSample(int id)
         {
-            var content = from   sample in db.Samples
+            var content = from   sample in _db.Samples
                           where  sample.ID == id
                           select sample.Contents;
 
@@ -60,7 +60,13 @@ namespace Excess.Web.Controllers
             return Content(result.ToString());
         }
 
-        private ExcessDbContext     db = new ExcessDbContext();
+        public ActionResult GetSampleProjects()
+        {
+            ProjectRepository repo = new ProjectRepository();
+            return Json(repo.GetSampleProjects(), JsonRequestBehavior.AllowGet);
+        }
+        
+        private ExcessDbContext     _db = new ExcessDbContext();
         private ITranslationService _translator;
         private IDSLService         _dsl;
     }

@@ -1,4 +1,5 @@
 ﻿using Excess.Core;
+using Excess.Project;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,18 +8,18 @@ using System.Threading.Tasks;
 
 namespace Excess
 {
-
-    public interface IApplicationService
-    {
-    }
-
-    public interface ITranslationService : IApplicationService
+    public interface ITranslationService
     {
         string translate(string text);
     }
 
-    public interface IDSLService : IApplicationService
+    public interface IDSLService
     {
         IDSLFactory factory();
+    }
+
+    public interface IProjectManager
+    {
+        IRuntimeProject createRuntime(string projectType, Dictionary<string, string> files);
     }
 }

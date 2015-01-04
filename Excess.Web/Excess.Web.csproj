@@ -1614,6 +1614,8 @@
     <Compile Include="Controllers\ExcessControllerBase.cs" />
     <Compile Include="Controllers\XSController.cs" />
     <Compile Include="Entities\ExcessDbContext.cs" />
+    <Compile Include="Entities\Project.cs" />
+    <Compile Include="Entities\ProjectRepository.cs" />
     <Compile Include="Entities\TranslationSample.cs" />
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
@@ -1626,6 +1628,14 @@
     <Compile Include="Migrations\201412310531167_Adding-Samples.cs" />
     <Compile Include="Migrations\201412310531167_Adding-Samples.Designer.cs">
       <DependentUpon>201412310531167_Adding-Samples.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201501030707045_Adding-Projects.cs" />
+    <Compile Include="Migrations\201501030707045_Adding-Projects.Designer.cs">
+      <DependentUpon>201501030707045_Adding-Projects.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201501030709558_Reseeding-Projects.cs" />
+    <Compile Include="Migrations\201501030709558_Reseeding-Projects.Designer.cs">
+      <DependentUpon>201501030709558_Reseeding-Projects.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\AccountViewModels.cs" />
@@ -1674,6 +1684,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201412310531167_Adding-Samples.resx">
       <DependentUpon>201412310531167_Adding-Samples.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201501030707045_Adding-Projects.resx">
+      <DependentUpon>201501030707045_Adding-Projects.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201501030709558_Reseeding-Projects.resx">
+      <DependentUpon>201501030709558_Reseeding-Projects.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\SampleCode.resx">
       <Generator>PublicResXFileCodeGenerator</Generator>

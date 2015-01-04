@@ -24,4 +24,8 @@
     this.keywords = function () {
         return $http.get('/XS/GetKeywords');
     }
+
+    this.sampleProjects = function () {
+        return $http.get('/XS/GetSampleProjects');
+    }
 }]);

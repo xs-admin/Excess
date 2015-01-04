@@ -32,7 +32,7 @@
                     menu: 'Home' //Matches to name of 'Home' menu in ExcessNavigationProvider
                 })
                 .state('project', {
-                    url: '/project',
+                    url: '/project/:projectId',
                     templateUrl: '/App/Main/views/project/project.html',
                     menu: 'Project' 
                 });
