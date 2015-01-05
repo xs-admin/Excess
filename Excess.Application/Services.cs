@@ -1,5 +1,5 @@
 ﻿using Excess.Core;
-using Excess.Project;
+using Excess.RuntimeProject;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,6 +20,6 @@ namespace Excess
 
     public interface IProjectManager
     {
-        IRuntimeProject createRuntime(string projectType, Dictionary<string, string> files);
+        IRuntimeProject createRuntime(string projectType);
     }
 }

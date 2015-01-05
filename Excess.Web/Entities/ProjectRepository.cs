@@ -61,6 +61,34 @@ namespace Excess.Web.Entities
             _db.SaveChanges();
         }
 
+        public void SaveFile(int fileId, string contents)
+        {
+            var files = from projectFile in _db.ProjectFiles
+                        where projectFile.ID == fileId
+                        select projectFile;
+            var file = files.FirstOrDefault();
+            if (file != null)
+            {
+                file.Contents = contents;
+                _db.SaveChanges();
+            }
+        }
+
+        public int CreateFile(int projectId, string fileName, string contents)
+        {
+            var newFile = new ProjectFile
+            {
+                Name         = fileName,
+                Contents     = contents,
+                OwnerProject = projectId
+            };
+
+            _db.ProjectFiles.Add(newFile);
+            _db.SaveChanges();
+
+            return newFile.ID; 
+        }
+
         private ExcessDbContext _db = new ExcessDbContext();
     }
 }

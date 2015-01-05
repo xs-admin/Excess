@@ -9,16 +9,13 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Excess.Project
+namespace Excess.RuntimeProject
 {
     internal abstract class BaseRuntime : IRuntimeProject
     {
-        public BaseRuntime(IDSLFactory factory, Dictionary<string, string> files)
+        public BaseRuntime(IDSLFactory factory)
         {
             _ctx = new ExcessContext(factory);
-
-            foreach (var file in files)
-                addFile(file.Key, file.Value);
         }
 
         public bool busy()
@@ -75,12 +72,20 @@ namespace Excess.Project
             }
         }
 
-        public void add(string file, string contents)
+        public void add(string file, int fileId, string contents)
         {
             if (_files.ContainsKey(file))
                 throw new InvalidOperationException();
 
-            addFile(file, contents);
+            var rFile = new RuntimeFile
+            {
+                FileName = file,
+                FileId = fileId,
+                Contents = contents,
+            };
+
+            _files[file] = rFile;
+            _dirty.Add(rFile);
         }
 
         public void modify(string file, string contents)
@@ -114,9 +119,30 @@ namespace Excess.Project
             return result;
         }
 
+        public abstract string defaultFile();
+
+        public string fileContents(string file)
+        {
+            RuntimeFile rFile;
+            if (_files.TryGetValue(file, out rFile))
+                return rFile.Contents;
+
+            return null;
+        }
+
+        public int fileId(string file)
+        {
+            RuntimeFile rFile;
+            if (_files.TryGetValue(file, out rFile))
+                return rFile.FileId;
+
+            return -1;
+        }
+
         protected class RuntimeFile
         {
             public string FileName { get; set; }
+            public int FileId { get; set; }
             public SyntaxTree Tree { get; set; }
             public string Contents { get; set; }
         }
@@ -165,13 +191,6 @@ namespace Excess.Project
         //File Management
         protected Dictionary<string, RuntimeFile> _files = new Dictionary<string, RuntimeFile>();
         protected List<RuntimeFile>               _dirty = new List<RuntimeFile>();
-
-        private void addFile(string file, string contents)
-        {
-            var rFile = new RuntimeFile { FileName = file, Contents = contents };
-            _files[file] = rFile;
-            _dirty.Add(rFile);
-        }
 
         //Compilation Management
         protected Compilation _compilation;

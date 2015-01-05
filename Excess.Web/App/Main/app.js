@@ -9,15 +9,14 @@
         'ui.bootstrap',
         'ui.jq',
 
-        'ui.jq.mmenu',
         'ui.jq.layout',
-
         'ui.xs.codemirror',
         'ui.xs.tree',
         'ui.xs.console',
 
         'rcWizard',
         'dialogs.main',
+        'cfp.hotkeys',
     ]);
 
     //Configuration for Angular UI routing.

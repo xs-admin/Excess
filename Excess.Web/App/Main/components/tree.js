@@ -22,10 +22,12 @@
         ev.stopPropagation();
     }
 
-    $scope.actionSelected = function (action, data)
+    $scope.actionSelected = function (event, action, data)
     {
         if ($scope.action)
             $scope.action({ action: action, data: data });
+
+        event.stopPropagation();
     }
 }])
 

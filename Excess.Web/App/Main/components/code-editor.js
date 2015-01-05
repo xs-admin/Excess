@@ -57,7 +57,8 @@
     indentUnit: 4,
 })
 
-.directive('xsCodeEditor', ['$parse', 'cmConfig', function ($parse, config) {
+.directive('xsCodeEditor', ['$parse', '$timeout', 'cmConfig',
+    function ($parse, $timeout, config) {
     return {
         restrict: 'E',
         replace: false,
@@ -89,7 +90,7 @@
 
                 codeEditor.on("change", function () {
                     if (scope.changed)
-                        scope.$apply(function () {
+                        $timeout(function () {
                             scope.changed();
                         });
                 });

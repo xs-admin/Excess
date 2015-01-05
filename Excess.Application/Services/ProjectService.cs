@@ -1,4 +1,4 @@
-﻿using Excess.Project;
+﻿using Excess.RuntimeProject;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,11 +14,11 @@ namespace Excess.Services
             _dsl = dsl;
         }
 
-        public IRuntimeProject createRuntime(string projectType, Dictionary<string, string> files)
+        public IRuntimeProject createRuntime(string projectType)
         {
             switch (projectType)
             {
-                case "console": return new ConsoleRuntime(_dsl.factory(), files);
+                case "console": return new ConsoleRuntime(_dsl.factory());
             }
 
             throw new InvalidOperationException("Invalid project type " + projectType);

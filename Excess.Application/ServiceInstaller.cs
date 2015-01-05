@@ -1,6 +1,7 @@
 ﻿using Castle.MicroKernel.Registration;
 using Castle.MicroKernel.SubSystems.Configuration;
 using Castle.Windsor;
+using Excess.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,7 +16,8 @@ namespace Excess
         {
             container.Register(
                 Component.For<ITranslationService>().ImplementedBy<TranslationService>(),
-                Component.For<IDSLService>().ImplementedBy<DSLService>());
+                Component.For<IDSLService>().ImplementedBy<DSLService>(),
+                Component.For<IProjectManager>().ImplementedBy<ProjectService>());
         }
     }
 }

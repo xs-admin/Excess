@@ -70,7 +70,8 @@ namespace Excess.Web
                         "~/Scripts/jquery.bootstrap.wizard.js",
                         "~/Scripts/rcWizard.js",
                         "~/Scripts/dialogs.min.js",
-                        "~/Scripts/dialogs-default-translations.min.js"
+                        "~/Scripts/dialogs-default-translations.min.js",
+                        "~/Scripts/hotkeys.min.js"
                     )
                 );
 

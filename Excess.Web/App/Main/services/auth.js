@@ -25,6 +25,9 @@
         return _session;
     }
 
+    this.isAuthenticated = function () {
+        return !!_session;
+    }
 }])
 
 .run(['$rootScope', 'xsAuthentication', function ($rootScope, xsAuthentication) {

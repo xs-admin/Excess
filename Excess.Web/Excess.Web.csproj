@@ -278,6 +278,8 @@
     <Content Include="App\Main\components\tree.js" />
     <Content Include="App\Main\dialogs\login.html" />
     <Content Include="App\Main\dialogs\login.js" />
+    <Content Include="App\Main\dialogs\newClass.html" />
+    <Content Include="App\Main\dialogs\newClass.js" />
     <Content Include="App\Main\dialogs\newProject.html" />
     <Content Include="App\Main\dialogs\newProject.js" />
     <Content Include="App\Main\main.css">
@@ -288,6 +290,7 @@
     </Content>
     <Content Include="App\Main\services\auth.js" />
     <Content Include="App\Main\services\compiler.js" />
+    <Content Include="App\Main\services\menu.js" />
     <Content Include="App\Main\services\project.js" />
     <Content Include="App\Main\views\home\home.css" />
     <Content Include="App\Main\views\layout\header.css" />
@@ -318,6 +321,8 @@
     <Content Include="Content\flags\famfamfam-flags.png" />
     <Content Include="Content\font-awesome.css" />
     <Content Include="Content\font-awesome.min.css" />
+    <Content Include="Content\hotkeys.css" />
+    <Content Include="Content\hotkeys.min.css" />
     <Content Include="Content\images\blogspot.png" />
     <Content Include="Content\images\facebook.png" />
     <Content Include="Content\images\gplus.png" />
@@ -822,6 +827,8 @@
     <Content Include="App\Main\views\project\project.html" />
     <Content Include="Readme.md" />
     <None Include="Scripts\jquery-2.1.1.intellisense.js" />
+    <Content Include="Scripts\hotkeys.js" />
+    <Content Include="Scripts\hotkeys.min.js" />
     <Content Include="Scripts\i18n\angular-locale_aa-dj.js" />
     <Content Include="Scripts\i18n\angular-locale_aa-er.js" />
     <Content Include="Scripts\i18n\angular-locale_aa-et.js" />
@@ -1612,6 +1619,7 @@
     <Compile Include="Controllers\AccountController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\ExcessControllerBase.cs" />
+    <Compile Include="Controllers\ProjectController.cs" />
     <Compile Include="Controllers\XSController.cs" />
     <Compile Include="Entities\ExcessDbContext.cs" />
     <Compile Include="Entities\Project.cs" />

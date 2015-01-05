@@ -5,7 +5,7 @@
             {{node.label}}
             <img width="10"/>
             <a ng-repeat="action in node.actions">
-                <i class="fa {{action.icon}}" ng-click="actionSelected(action.id, node.data)"></i>
+                <i class="fa {{action.icon}}" ng-click="actionSelected($event, action.id, node.data)"></i>
             </a>
         </span>
         <ul>

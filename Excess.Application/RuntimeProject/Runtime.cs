@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Excess.Project
+namespace Excess.RuntimeProject
 {
     public enum NotificationKind
     {
@@ -26,8 +26,11 @@ namespace Excess.Project
         bool busy();
         void compile();
         void run();
-        void add(string file, string contents);
+        void add(string file, int id, string contents);
         void modify(string file, string contents);
         IEnumerable<Notification> notifications();
+        string defaultFile();
+        string fileContents(string file);
+        int fileId(string file);
     }
 }

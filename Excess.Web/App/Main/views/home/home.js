@@ -70,22 +70,6 @@
                     });
             }
 
-            $scope.newProject = function () {
-                var modalInstance = $modal.open({
-                    templateUrl: '/App/Main/dialogs/newProject.html',
-                    controller: $scope.newProjectCtrl,
-                    windowClass: "app-modal-window",
-                    backdrop: true,
-                    resolve: {
-                    }
-                });
-
-                modalInstance.result.then(function(){
-                }, function(){
-                });
-            }
-
-
             //code mirror must be resized manually
             $scope.resizeSource = function () {
                 $scope.sourceResized = !$scope.sourceResized;

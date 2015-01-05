@@ -9,13 +9,18 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Excess.Project
+namespace Excess.RuntimeProject
 {
     class ConsoleRuntime : BaseRuntime
     {
-        public ConsoleRuntime(IDSLFactory factory, Dictionary<string, string> files) :
-            base(factory, files)
+        public ConsoleRuntime(IDSLFactory factory) :
+            base(factory)
         {
+        }
+
+        public override string defaultFile()
+        {
+            return "application";
         }
 
         protected override IEnumerable<MetadataReference> references()
