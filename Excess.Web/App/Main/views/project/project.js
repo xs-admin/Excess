@@ -8,10 +8,13 @@
             //project tree
             $scope.projectTree = null;
 
-            //load project
+            //loading
             $scope.busy = true;
+            $scope.fileBusy = false;
+            $scope.compilerBusy = false;
             $rootScope.$broadcast('loading-requests', 1);
 
+            //load project
             xsProject.loadProject($stateParams.projectId)
                 .then(function(result) {
                     $scope.busy = false;
@@ -34,7 +37,6 @@
                     defaultTab(file, contents);
             }
 
-            $scope.fileBusy = false;
             function loadFile(file, inNewTab)
             {
                 var cached = _fileCache[file];
@@ -124,37 +126,81 @@
                 }
             }
             
+            //layout
+            $scope.layoutControl = {};
+
+            //console
+            $scope.console = {};
+            $scope.consoleOpen = false;
+
+            function startConsole(text)
+            {
+                $scope.layoutControl.open('south');
+                $scope.console.clear(text);
+            }
+
+            function consoleNotification(notification) {
+                $scope.console.add(notification.Message);
+            }
+
             //compiler interface
             $scope.compileProject = function () {
+                if ($scope.compilerBusy)
+                    return;
+
+                $scope.compilerBusy = true;
+                startConsole("Compiling...");
+                
+                xsProject.compile(consoleNotification)
+                    .finally(function () {
+                        $scope.compilerBusy = false;
+                    });
             };
 
             $scope.runProject = function () {
+                if ($scope.compilerBusy)
+                    return;
+
+                $scope.compilerBusy = true;
+                startConsole("Executing...");
+
+                xsProject.execute(consoleNotification)
+                    .finally(function () {
+                        $scope.compilerBusy = false;
+                    });
             };
 
             //keyboard shortcuts
             hotkeys.add({
                 combo: 'ctrl+shift+b',
                 description: 'Compile',
-                callback: function () {
+                allowIn: ['INPUT', 'SELECT', 'TEXTAREA'],
+                callback: function (event) {
                     $scope.compileProject();
+                    event.preventDefault();
                 }
             });
 
             hotkeys.add({
                 combo: 'ctrl+f5',
                 description: 'Run',
-                callback: function () {
+                allowIn: ['INPUT', 'SELECT', 'TEXTAREA'],
+                callback: function (event) {
                     $scope.runProject();
+                    event.preventDefault();
                 }
             });
 
             hotkeys.add({
                 combo: 'ctrl+s',
                 description: 'Save',
-                callback: function () {
+                allowIn: ['INPUT', 'SELECT', 'TEXTAREA'],
+                callback: function (event) {
                     $scope.saveFiles();
+                    event.preventDefault();
                 }
             });
+
             //tab management
             $scope.editors =
             [
@@ -236,9 +282,6 @@
                 $scope.sourceModified = false;
             }
             
-            //console
-            $scope.console = {};
-
             //test
             $scope.testTree =
             [
@@ -274,7 +317,6 @@
                             actions: 
                             [
                                 { id: 'new_tab', icon: 'fa-star'},
-
                             ]
                         },
                     ]

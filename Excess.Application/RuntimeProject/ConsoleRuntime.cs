@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -30,15 +31,19 @@ namespace Excess.RuntimeProject
 
         private static IEnumerable<SyntaxNode> CompleteTree(ExcessContext.CompleteInfo info)
         {
-            if (info.Statements != null)
+            ExcessContext.CompleteInfo newInfo = info.Clone();
+            newInfo.DefaultClass = "application";
+
+            if (info.Statements != null && info.Statements.Any())
             {
-                yield return SyntaxFactory.ClassDeclaration("application")
-                                .WithMembers(SyntaxFactory.List(new MemberDeclarationSyntax[] {
-                                        SyntaxFactory.MethodDeclaration(SyntaxFactory.ParseTypeName("void"), "main")
-                                            .WithBody(SyntaxFactory.Block()
-                                                .WithStatements(SyntaxFactory.List(info.Statements)))
-                                }));
+                var mainMethod = SyntaxFactory.MethodDeclaration(SyntaxFactory.ParseTypeName("void"), "main")
+                                    .WithBody(SyntaxFactory.Block()
+                                        .WithStatements(SyntaxFactory.List(info.Statements)));
+
+                newInfo.Members = newInfo.Members.Union(new[] { mainMethod });
             }
+
+            return info.Context.TriggerDefaultComplete(newInfo);
         }
 
         protected override void prepareContext(string fileName)
@@ -58,14 +63,14 @@ namespace Excess.RuntimeProject
                 return;
             }
 
-            var main = appType.GetMethod("main", BindingFlags.Instance);
+            var main = appType.GetMethod("main", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public);
             if (main == null)
             {
                 notify(NotificationKind.Error, "Main method missing");
                 return;
             }
 
-            var instance = asm.CreateInstance("application");
+            var instance = FormatterServices.GetUninitializedObject(appType);// Activator.CreateInstance(appType);
             main.Invoke(instance, new object[] { });
         }
     }

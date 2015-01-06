@@ -31,7 +31,8 @@ namespace Excess.RuntimeProject
             _busy = true;
             try
             {
-                doCompile();
+                if (!doCompile())
+                    notifyErrors();
             }
             finally
             {
@@ -68,7 +69,7 @@ namespace Excess.RuntimeProject
             foreach (var diag in _compilation.GetDiagnostics()
                                     .Where(d => d.Severity == DiagnosticSeverity.Error))
             {
-                notify(NotificationKind.Error, diag.GetMessage());
+                notify(NotificationKind.Error, diag.ToString());
             }
         }
 
@@ -163,20 +164,27 @@ namespace Excess.RuntimeProject
             //Compile
             foreach (var dirty in _dirty)
             {
-                var newNode = _ctx.Compile(dirty.Tree.GetRoot());
-                var newTree = newNode.SyntaxTree;
+                notify(NotificationKind.System, dirty.FileName + "...");
 
-                _compilation = _compilation.ReplaceSyntaxTree(dirty.Tree, newTree);
+                prepareContext(dirty.FileName);
+                var newTree = ExcessContext.Compile(_ctx, dirty.Contents);
+
+                if (dirty.Tree == null)
+                    _compilation = _compilation.AddSyntaxTrees(new[] { newTree });
+                else
+                    _compilation = _compilation.ReplaceSyntaxTree(dirty.Tree, newTree);
+
                 dirty.Tree = newTree;
             }
 
-            //Link
-            foreach (var dirty in _dirty)
-            {
-                var linker     = new Linker(_ctx, _compilation);
-                var resultTree = linker.link(dirty.Tree.GetRoot(), out _compilation).SyntaxTree;
+            Dictionary<SyntaxTree, SyntaxTree> track = new Dictionary<SyntaxTree, SyntaxTree>();
+            _compilation = ExcessContext.Link(_ctx, _compilation, track);
 
-                dirty.Tree = resultTree;
+            foreach (var file in _files)
+            {
+                SyntaxTree tree;
+                if (track.TryGetValue(file.Value.Tree, out tree))
+                    file.Value.Tree = tree;
             }
 
             _dirty.Clear();
@@ -201,9 +209,6 @@ namespace Excess.RuntimeProject
 
         private void updateCompilation()
         {
-            if (_busy)
-                throw new InvalidOperationException();
-
             if (_compilation == null)
             {
                 var defaultReferences = new[]  {
@@ -218,28 +223,15 @@ namespace Excess.RuntimeProject
                     projReferences = projReferences.Union(defaultReferences);
 
                 _compilation = CSharpCompilation.Create("runtime",
-                    syntaxTrees: new[] { consoleTree },
+                    syntaxTrees: new[] { consoleTree, randomTree },
                     references:  projReferences,
                     options:     new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
-            }
-
-            foreach (var dirty in _dirty)
-            {
-                prepareContext(dirty.FileName);
-                var newTree = ExcessContext.Compile(_ctx, dirty.Contents);
-
-                if (dirty.Tree == null)
-                    _compilation = _compilation.AddSyntaxTrees(new[] { newTree });
-                else
-                    _compilation = _compilation.ReplaceSyntaxTree(dirty.Tree, newTree);
-
-                dirty.Tree = newTree;
             }
         }
 
         //Notifications
-        private List<Notification> _notifications = new List<Notification>();
-        private object             _notificationLock;
+        private List<Notification> _notifications    = new List<Notification>();
+        private object             _notificationLock = new object();
 
         protected void notify(NotificationKind kind, string message)
         {
@@ -267,24 +259,47 @@ namespace Excess.RuntimeProject
 
         //Console
         static protected SyntaxTree consoleTree = SyntaxFactory.ParseSyntaxTree(
-            @"public class console
+            @"using System;
+            public class console
             {
                 static private Action<string> _notify;
-                static internal void setup(Action<string> notify)
+                static public void setup(Action<string> notify)
                 {
                     _notify = notify;
                 }
 
                 static public void write(string message)
                 {
-                    _notify.notify(message);
+                    _notify(message);
+                }
+            }");
+
+        static protected SyntaxTree randomTree = SyntaxFactory.ParseSyntaxTree(
+            @"using System;
+            public class random
+            {
+                static private Random _random = new Random();
+
+                static public int Int()
+                {
+                    return _random.Next();
+                }
+
+                static public int Int(int range)
+                {
+                    return _random.Next(range);
+                }
+
+                static public double Double()
+                {
+                    return _random.NextDouble();
                 }
             }");
 
         private void setupConsole(Assembly assembly)
         {
             Type console = assembly.GetType("console");
-            var  method = console.GetMethod("setup", BindingFlags.Static);
+            var  method = console.GetMethod("setup");
             method.Invoke(null, new [] { (Action<string>)consoleNotify });
         }
 

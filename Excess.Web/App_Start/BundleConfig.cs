@@ -71,7 +71,7 @@ namespace Excess.Web
                         "~/Scripts/rcWizard.js",
                         "~/Scripts/dialogs.min.js",
                         "~/Scripts/dialogs-default-translations.min.js",
-                        "~/Scripts/hotkeys.min.js"
+                        "~/Scripts/hotkeys.js"
                     )
                 );
 

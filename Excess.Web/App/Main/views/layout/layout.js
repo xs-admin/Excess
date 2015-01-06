@@ -32,7 +32,7 @@
 
             $scope.showLogout = function () {
 
-                var dlg = dialogs.confirm('Please Confirm', 'Are you sure you want to log off?');
+                var dlg = dialogs.confirm('Confirm Logoff', 'Are you sure you want to log off?', {size: 'sm'});
                 dlg.result.then(function () {
                     xsAuthentication.closeSession()
                         .then(function () {

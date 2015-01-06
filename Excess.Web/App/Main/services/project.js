@@ -1,6 +1,6 @@
 ﻿angular.module('app')
 
-.service('xsProject', ['$http', function ($http) {
+.service('xsProject', ['$http', '$timeout', function ($http, $timeout) {
 
     this.loadProject = function (id) {
         return $http.get('/Project/LoadProject',
@@ -33,5 +33,38 @@
                 className: className
             }
         });
+    }
+
+    function getNotifications(notify) {
+
+        function tick() {
+            $http.get('/Project/Notifications')
+                .then(function (result) {
+                    var finished = false;
+
+                    angular.forEach(result.data, function (value, key) {
+                        notify(value);
+
+                        if (value.Kind == 4) {
+                            finished = true;
+                        }
+                    });
+
+                    if (!finished)
+                        $timeout(getNotifications, 100);
+                })
+        }
+
+        $timeout(tick, 100);
+    }
+
+    this.compile = function (notify) {
+        getNotifications(notify);
+        return $http.post('/Project/Compile');
+    }
+
+    this.execute = function (notify) {
+        getNotifications(notify);
+        return $http.post('/Project/Execute');
     }
 }]);

@@ -1,10 +1,9 @@
 ﻿angular.module('ui.jq.layout', [])
 
 .controller('LayoutController', ['$scope', '$attrs', function ($scope, $attrs) {
-
 }])
 
-.directive('layout', ['$parse', function ($parse) {
+.directive('layout', ['$parse', '$timeout', function ($parse, $timeout) {
     return {
         restrict: 'EA',
         controller: 'LayoutController',
@@ -21,20 +20,11 @@
                 var pane = scope.$eval(attr);
                 if (pane.resize)
                 {
-                    var firstTimer = true;
                     pane.onresize = function (paneId, paneObject, paneState, paneOptions)
                     {
-                        if (firstTimer)
-                        {
-                            firstTimer = false;
+                        $timeout(function () {
                             pane.resize(paneId, paneObject, paneState, paneOptions);
-                        }
-                        else
-                        {
-                            scope.$apply(function () {
-                                pane.resize(paneId, paneObject, paneState, paneOptions);
-                            });
-                        }
+                        });
                     }
                 }
 
@@ -79,7 +69,15 @@
             if (west)   options.west   = west;
             if (center) options.center = center;
 
-            angular.element(element).layout(options);
+            var layout = angular.element(element).layout(options);
+
+            var control = scope.$eval(attrs.ngControl);
+            if (control) {
+                control.open = function (paneId)
+                {
+                    layout.open(paneId);
+                }
+            }
         }
     };
 }])

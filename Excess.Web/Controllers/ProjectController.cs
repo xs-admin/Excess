@@ -99,7 +99,36 @@ namespace Excess.Web.Controllers
             project.add(className, fileId, contents);
             return Content("ok");
         }
-        
+
+        public ActionResult Compile()
+        {
+            var project = Session["project"] as IRuntimeProject;
+            if (project == null)
+                return HttpNotFound(); //td: right error
+
+            project.compile();
+            return Content("ok");
+        }
+
+        public ActionResult Execute()
+        {
+            var project = Session["project"] as IRuntimeProject;
+            if (project == null)
+                return HttpNotFound(); //td: right error
+
+            project.run();
+            return Content("ok");
+        }
+
+        public ActionResult Notifications()
+        {
+            var project = Session["project"] as IRuntimeProject;
+            if (project == null)
+                return HttpNotFound(); //td: right error
+
+            var notifications = project.notifications();
+            return Json(notifications, JsonRequestBehavior.AllowGet);
+        }
 
         //Project tree
         private class TreeNodeAction

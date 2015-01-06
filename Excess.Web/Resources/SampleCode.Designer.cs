@@ -207,7 +207,13 @@ namespace Excess.Web.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to var cats = [new Lolcat(&quot;Kitty&quot;), new Lolcat(&quot;Furry Kitty&quot;), new Trollcat(&quot;Ball of Fur&quot;)];
+        ///   Looks up a localized string similar to var cats = new [] 
+        ///{
+        ///    new Lolcat(&quot;Kitty&quot;), 
+        ///    new Lolcat(&quot;Furry Kitty&quot;), 
+        ///    new Trollcat(&quot;Ball of Fur&quot;)
+        ///};
+        ///
         ///var mood = Mood.Nize;
         ///
         ///for(int i = 0; i &lt; 30; i++)
@@ -250,8 +256,7 @@ namespace Excess.Web.Resources {
         ///            default: choices = HungryTalk; break;
         ///        }
         ///        
-        ///        return choices[random.Int(choices.Length)];
-        ///    [rest of string was truncated]&quot;;.
+        ///        return choices[random. [rest of string was truncated]&quot;;.
         /// </summary>
         public static string LolCatsSpeek {
             get {

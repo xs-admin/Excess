@@ -16,6 +16,10 @@
                     element.append('<p class="xs-console-text">' + text + '</p>');
                     element.scrollTop(1E10);
                 }
+
+                scope.control.clear = function (text) {
+                    element.html('<p class="xs-console-text">' + text + '</p>');
+                }
             }
         }
     };

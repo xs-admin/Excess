@@ -415,7 +415,7 @@
     <Content Include="App\Main\main.less" />
     <Content Include="App\Main\views\layout\layout.cshtml" />
     <Content Include="App\Main\views\home\home.html" />
-    <Content Include="App\Main\views\about\about.cshtml" />
+    <Content Include="App\Main\views\about\about.html" />
     <Content Include="App\Main\web.config" />
     <Content Include="log4net.config" />
     <Content Include="App\Main\views\layout\header.cshtml" />

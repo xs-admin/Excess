@@ -13,14 +13,17 @@
                 return;
             }
 
-            project.userProjects()
-                .then(function (result) {
-                    dialogs.create('/App/Main/dialogs/selectProject.html', 'selectProjectCtrl',
-                                   result.data, { size: "md" })
-                        .then(function (selected) {
-                            alert('GO PROJ' + selected);
-                        });
-                });
+            dialogs.error("Error",
+                          "This functionality is coming soon",
+                          { size: "sm" });
+            //project.userProjects()
+            //    .then(function (result) {
+            //        dialogs.create('/App/Main/dialogs/selectProject.html', 'selectProjectCtrl',
+            //                       result.data, { size: "md" })
+            //            .then(function (selected) {
+            //                alert('GO PROJ' + selected);
+            //            });
+            //    });
         }
 
         $rootScope.newProject = function () {
@@ -46,7 +49,7 @@
                     result = [
                         { icon: 'fa-sitemap',     action: $rootScope.selectProject },
                         { icon: 'fa-plus-square', action: $rootScope.newProject },
-                        { icon: 'fa-info',        url: '#/about' }
+                        //{ icon: 'fa-info',        url: '#/about' }
                     ];
                     break;
                 }
@@ -57,7 +60,7 @@
                         { icon: 'fa-home',        url: '#/' },
                         { icon: 'fa-sitemap',     action: $rootScope.selectProject },
                         { icon: 'fa-plus-square', action: $rootScope.newProject },
-                        { icon: 'fa-info',        url: '#/about' }
+                        //{ icon: 'fa-info',        url: '#/about' }
                     ];
                     break;
                 }

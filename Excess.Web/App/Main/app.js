@@ -28,12 +28,14 @@
                 .state('home', {
                     url: '/',
                     templateUrl: '/App/Main/views/home/home.html',
-                    menu: 'Home' //Matches to name of 'Home' menu in ExcessNavigationProvider
                 })
                 .state('project', {
                     url: '/project/:projectId',
                     templateUrl: '/App/Main/views/project/project.html',
-                    menu: 'Project' 
+                })
+                .state('about', {
+                    url: '/about',
+                    templateUrl: '/App/Main/views/about/about.html',
                 });
         }
     ]);
