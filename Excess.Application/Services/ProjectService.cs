@@ -19,6 +19,7 @@ namespace Excess.Services
             switch (projectType)
             {
                 case "console": return new ConsoleRuntime(_dsl.factory());
+                case "dsl":     return new DSLRuntime();
             }
 
             throw new InvalidOperationException("Invalid project type " + projectType);

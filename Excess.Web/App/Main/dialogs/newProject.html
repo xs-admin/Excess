@@ -3,8 +3,7 @@
 </div>
 
 <div class="modal-body">
-    <div ng-controller="newProjectCtrl"
-         rc-wizard="newProjectWizard" rc-disabled="rc.selectProject.submitInProgress">
+    <div rc-wizard="newProjectWizard" rc-disabled="rc.selectProject.submitInProgress">
         <ul class="nav rc-nav-wizard">
             <li class="active">
                 <a class="active" href="#select-project" data-toggle="tab">
@@ -64,10 +63,10 @@
                         </div>
                         <div class="form-group">
                             <label class="control-label">Extends</label><br />
-                            <input type="checkbox" ng-checked="dslConfiguration.extendsNamespaces" /> Namespaces<br />
-                            <input type="checkbox" ng-checked="dslConfiguration.extendsTypes" /> Types<br />
-                            <input type="checkbox" ng-checked="dslConfiguration.extendsMembers" /> Members<br />
-                            <input type="checkbox" ng-checked="dslConfiguration.extendsCode" /> Code<br />
+                            <input type="checkbox" ng-model="dslConfiguration.extendsNamespaces" /> Namespaces<br />
+                            <input type="checkbox" ng-model="dslConfiguration.extendsTypes" /> Types<br />
+                            <input type="checkbox" ng-model="dslConfiguration.extendsMembers" /> Members<br />
+                            <input type="checkbox" ng-model="dslConfiguration.extendsCode" /> Code<br />
                         </div>
                     </div>
                 </div>
@@ -79,8 +78,8 @@
                    ng-show="rc.newProjectWizard.currentIndex > rc.newProjectWizard.firstIndex">Back</a>
                 <a class="btn btn-primary" data-loading-text="Please Wait..." ng-click="rc.newProjectWizard.forward()"
                    ng-show="rc.newProjectWizard.currentIndex < rc.newProjectWizard.navigationLength">Continue</a>
-                <a class="btn btn-primary" ng-click="rc.newProjectWizard.forward()"
-                   ng-show="rc.newProjectWizard.currentIndex == rc.newProjectWizard.navigationLength">Complete</a>
+                <a class="btn btn-primary" ng-click="done()"
+                   ng-show="rc.newProjectWizard.currentIndex == rc.newProjectWizard.navigationLength">{{finishText}}</a>
             </div>
         </div>
     </div>

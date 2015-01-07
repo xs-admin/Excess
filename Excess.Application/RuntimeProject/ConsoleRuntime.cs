@@ -24,7 +24,12 @@ namespace Excess.RuntimeProject
             return "application";
         }
 
-        protected override IEnumerable<MetadataReference> references()
+        protected override IEnumerable<MetadataReference> compilationReferences()
+        {
+            return null;
+        }
+
+        protected override IEnumerable<SyntaxTree> compilationFiles()
         {
             return null;
         }

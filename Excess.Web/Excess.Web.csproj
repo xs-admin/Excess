@@ -282,6 +282,8 @@
     <Content Include="App\Main\dialogs\newClass.js" />
     <Content Include="App\Main\dialogs\newProject.html" />
     <Content Include="App\Main\dialogs\newProject.js" />
+    <Content Include="App\Main\dialogs\projectList.html" />
+    <Content Include="App\Main\dialogs\projectList.js" />
     <Content Include="App\Main\main.css">
       <DependentUpon>main.less</DependentUpon>
     </Content>
@@ -366,7 +368,9 @@
     <Content Include="Content\toastr.css" />
     <Content Include="Content\toastr.min.css" />
     <Content Include="favicon.ico" />
-    <Content Include="fonts\fontawesome-webfont.svg" />
+    <Content Include="fonts\fontawesome-webfont.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="fonts\glyphicons-halflings-regular.svg" />
     <Content Include="Global.asax" />
     <Content Include="Localization\Excess\Excess.tr.xml" />
@@ -419,10 +423,18 @@
     <Content Include="App\Main\web.config" />
     <Content Include="log4net.config" />
     <Content Include="App\Main\views\layout\header.cshtml" />
-    <Content Include="fonts\fontawesome-webfont.woff" />
-    <Content Include="fonts\fontawesome-webfont.ttf" />
-    <Content Include="fonts\fontawesome-webfont.eot" />
-    <Content Include="fonts\FontAwesome.otf" />
+    <Content Include="fonts\fontawesome-webfont.woff">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="fonts\fontawesome-webfont.ttf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="fonts\fontawesome-webfont.eot">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="fonts\FontAwesome.otf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Content\toastr.scss" />
     <Content Include="Content\toastr.less" />
     <Content Include="Scripts\angular.js" />
@@ -561,21 +573,9 @@
     <Content Include="Scripts\codemirror-4.8\lib\codemirror.css" />
     <Content Include="Scripts\codemirror-4.8\lib\codemirror.js" />
     <Content Include="Scripts\codemirror-4.8\LICENSE" />
-    <Content Include="Scripts\codemirror-4.8\mode\apl\apl.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\apl\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\asterisk\asterisk.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\asterisk\index.html" />
     <Content Include="Scripts\codemirror-4.8\mode\clike\clike.js" />
     <Content Include="Scripts\codemirror-4.8\mode\clike\index.html" />
     <Content Include="Scripts\codemirror-4.8\mode\clike\scala.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\clojure\clojure.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\clojure\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\cobol\cobol.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\cobol\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\coffeescript\coffeescript.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\coffeescript\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\commonlisp\commonlisp.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\commonlisp\index.html" />
     <Content Include="Scripts\codemirror-4.8\mode\css\css.js" />
     <Content Include="Scripts\codemirror-4.8\mode\css\index.html" />
     <Content Include="Scripts\codemirror-4.8\mode\css\less.html" />
@@ -583,182 +583,8 @@
     <Content Include="Scripts\codemirror-4.8\mode\css\scss.html" />
     <Content Include="Scripts\codemirror-4.8\mode\css\scss_test.js" />
     <Content Include="Scripts\codemirror-4.8\mode\css\test.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\cypher\cypher.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\cypher\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\diff\diff.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\diff\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\django\django.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\django\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\dockerfile\dockerfile.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\dockerfile\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\dtd\dtd.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\dtd\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\dylan\dylan.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\dylan\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\d\d.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\d\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\ecl\ecl.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\ecl\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\eiffel\eiffel.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\eiffel\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\erlang\erlang.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\erlang\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\fortran\fortran.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\fortran\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\gas\gas.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\gas\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\gfm\gfm.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\gfm\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\gfm\test.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\gherkin\gherkin.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\gherkin\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\go\go.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\go\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\groovy\groovy.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\groovy\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\haml\haml.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\haml\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\haml\test.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\haskell\haskell.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\haskell\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\haxe\haxe.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\haxe\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\htmlembedded\htmlembedded.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\htmlembedded\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\htmlmixed\htmlmixed.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\htmlmixed\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\http\http.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\http\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\idl\idl.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\idl\index.html" />
     <Content Include="Scripts\codemirror-4.8\mode\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\jade\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\jade\jade.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\javascript\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\javascript\javascript.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\javascript\json-ld.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\javascript\test.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\javascript\typescript.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\jinja2\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\jinja2\jinja2.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\julia\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\julia\julia.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\kotlin\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\kotlin\kotlin.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\livescript\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\livescript\livescript.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\lua\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\lua\lua.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\markdown\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\markdown\markdown.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\markdown\test.js" />
     <Content Include="Scripts\codemirror-4.8\mode\meta.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\mirc\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\mirc\mirc.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\mllike\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\mllike\mllike.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\modelica\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\modelica\modelica.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\nginx\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\nginx\nginx.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\ntriples\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\ntriples\ntriples.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\octave\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\octave\octave.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\pascal\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\pascal\pascal.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\pegjs\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\pegjs\pegjs.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\perl\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\perl\perl.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\php\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\php\php.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\php\test.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\pig\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\pig\pig.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\properties\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\properties\properties.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\puppet\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\puppet\puppet.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\python\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\python\python.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\q\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\q\q.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\rpm\changes\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\rpm\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\rpm\rpm.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\rst\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\rst\rst.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\ruby\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\ruby\ruby.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\ruby\test.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\rust\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\rust\rust.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\r\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\r\r.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\sass\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\sass\sass.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\scheme\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\scheme\scheme.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\shell\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\shell\shell.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\shell\test.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\sieve\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\sieve\sieve.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\slim\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\slim\slim.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\slim\test.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\smalltalk\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\smalltalk\smalltalk.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\smartymixed\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\smartymixed\smartymixed.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\smarty\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\smarty\smarty.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\solr\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\solr\solr.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\sparql\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\sparql\sparql.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\sql\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\sql\sql.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\stex\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\stex\stex.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\stex\test.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\tcl\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\tcl\tcl.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\textile\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\textile\test.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\textile\textile.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\tiddlywiki\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\tiddlywiki\tiddlywiki.css" />
-    <Content Include="Scripts\codemirror-4.8\mode\tiddlywiki\tiddlywiki.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\tiki\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\tiki\tiki.css" />
-    <Content Include="Scripts\codemirror-4.8\mode\tiki\tiki.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\toml\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\toml\toml.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\tornado\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\tornado\tornado.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\turtle\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\turtle\turtle.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\vbscript\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\vbscript\vbscript.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\vb\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\vb\vb.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\velocity\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\velocity\velocity.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\verilog\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\verilog\test.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\verilog\verilog.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\xml\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\xml\test.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\xml\xml.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\xquery\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\xquery\test.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\xquery\xquery.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\yaml\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\yaml\yaml.js" />
-    <Content Include="Scripts\codemirror-4.8\mode\z80\index.html" />
-    <Content Include="Scripts\codemirror-4.8\mode\z80\z80.js" />
     <Content Include="Scripts\codemirror-4.8\package.json" />
     <Content Include="Scripts\codemirror-4.8\README.md" />
     <Content Include="Scripts\codemirror-4.8\test\comment_test.js" />
@@ -808,6 +634,8 @@
     <Content Include="Scripts\codemirror-4.8\theme\vibrant-ink.css" />
     <Content Include="Scripts\codemirror-4.8\theme\xq-dark.css" />
     <Content Include="Scripts\codemirror-4.8\theme\xq-light.css" />
+    <Content Include="Scripts\dialogs-default-translations.min.js" />
+    <Content Include="Scripts\dialogs.min.js" />
     <Content Include="Scripts\errors.json" />
     <Content Include="Scripts\angular-touch.min.js.map" />
     <Content Include="Scripts\angular-sanitize.min.js.map" />
@@ -819,13 +647,9 @@
     <Content Include="Scripts\angular-aria.min.js.map" />
     <Content Include="Scripts\angular-animate.min.js.map" />
     <Content Include="Scripts\angular.min.js.map" />
-    <Content Include="Scripts\codemirror-4.8\bin\authors.sh" />
-    <Content Include="Scripts\codemirror-4.8\bin\compress" />
-    <Content Include="Scripts\codemirror-4.8\bin\lint" />
-    <Content Include="Scripts\codemirror-4.8\bin\release" />
-    <Content Include="Scripts\codemirror-4.8\bin\source-highlight" />
     <Content Include="App\Main\views\project\project.html" />
     <Content Include="Readme.md" />
+    <None Include="Properties\PublishProfiles\xslang.pubxml" />
     <None Include="Scripts\jquery-2.1.1.intellisense.js" />
     <Content Include="Scripts\hotkeys.js" />
     <Content Include="Scripts\hotkeys.min.js" />
@@ -1650,6 +1474,11 @@
     <Compile Include="Models\IdentityModels.cs" />
     <Compile Include="Plumbing\WindsorControllerFactory.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Resources\ProjectTemplates.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>ProjectTemplates.resx</DependentUpon>
+    </Compile>
     <Compile Include="Resources\SampleCode.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -1698,6 +1527,10 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201501030709558_Reseeding-Projects.resx">
       <DependentUpon>201501030709558_Reseeding-Projects.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\ProjectTemplates.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>ProjectTemplates.Designer.cs</LastGenOutput>
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\SampleCode.resx">
       <Generator>PublicResXFileCodeGenerator</Generator>

@@ -130,6 +130,27 @@ namespace Excess.Web.Controllers
             return Json(notifications, JsonRequestBehavior.AllowGet);
         }
 
+        public ActionResult UserProjects()
+        {
+            if (!User.Identity.IsAuthenticated)
+                return HttpNotFound(); //td: right error
+
+            ProjectRepository repo = new ProjectRepository();
+            var projects = repo.GetUserProjects(User.Identity.GetUserId());
+            return Json(projects, JsonRequestBehavior.AllowGet);
+        }
+
+        public ActionResult CreateProject(string projectType, string projectName, string projectData)
+        {
+            if (!User.Identity.IsAuthenticated)
+                return HttpNotFound(); //td: right error
+
+            ProjectRepository repo   = new ProjectRepository();
+            Project           result = repo.CreateProject(projectType, projectName, projectData, User.Identity.GetUserId());
+
+            return Json(new { projectId = result.ID }, JsonRequestBehavior.AllowGet);
+        }
+
         //Project tree
         private class TreeNodeAction
         {

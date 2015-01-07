@@ -35,6 +35,18 @@
         });
     }
 
+    this.createProject = function (projectName, projectType, projectData) {
+        return $http.get('/Project/CreateProject', {
+            params:
+            {
+                projectType: projectType,
+                projectName: projectName,
+                projectData: projectData
+            }
+        });
+    }
+    
+
     function getNotifications(notify) {
 
         function tick() {
@@ -56,6 +68,10 @@
         }
 
         $timeout(tick, 100);
+    }
+
+    this.userProjects = function () {
+        return $http.post('/Project/UserProjects');
     }
 
     this.compile = function (notify) {

@@ -337,8 +337,10 @@ namespace Excess.Core
                         case "function": return FunctionType(oldNode);
                         default:
                         {
-                            var currType = oldNode.Ancestors().OfType<ClassDeclarationSyntax>().First(); //td: type info
-                            Debug.Assert(currType != null);
+                            var currType = oldNode.Ancestors().OfType<ClassDeclarationSyntax>().FirstOrDefault(); 
+                            if (currType == null)
+                                break;
+
                             IEnumerable<Typedef> tdefs = GetTypeInfo<Typedef>(currType.Identifier.ToString(), "typedefs");
 
                             if (tdefs != null)

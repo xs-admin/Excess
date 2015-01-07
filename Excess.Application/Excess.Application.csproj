@@ -104,6 +104,7 @@
     <Compile Include="DSL\Synch.cs" />
     <Compile Include="RuntimeProject\BaseRuntime.cs" />
     <Compile Include="RuntimeProject\ConsoleRuntime.cs" />
+    <Compile Include="RuntimeProject\DSLRuntime.cs" />
     <Compile Include="RuntimeProject\Runtime.cs" />
     <Compile Include="Services\DSLService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

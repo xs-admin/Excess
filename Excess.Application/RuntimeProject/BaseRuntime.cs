@@ -202,7 +202,8 @@ namespace Excess.RuntimeProject
 
         //Compilation Management
         protected Compilation _compilation;
-        protected abstract IEnumerable<MetadataReference> references();
+        protected abstract IEnumerable<MetadataReference> compilationReferences();
+        protected abstract IEnumerable<SyntaxTree> compilationFiles();
         protected virtual void prepareContext(string fileName)
         {
         }
@@ -216,14 +217,25 @@ namespace Excess.RuntimeProject
                     MetadataReference.CreateFromAssembly(typeof(Enumerable).Assembly),
                 };
 
-                IEnumerable<MetadataReference> projReferences = references();
+                IEnumerable<MetadataReference> projReferences = compilationReferences();
                 if (projReferences == null)
                     projReferences = defaultReferences;
                 else
                     projReferences = projReferences.Union(defaultReferences);
 
+                var defaultFiles = new[] {
+                    consoleTree,
+                    randomTree
+                };
+
+                IEnumerable<SyntaxTree> projFiles = compilationFiles();
+                if (projFiles == null)
+                    projFiles = defaultFiles;
+                else
+                    projFiles = projFiles.Union(defaultFiles);
+
                 _compilation = CSharpCompilation.Create("runtime",
-                    syntaxTrees: new[] { consoleTree, randomTree },
+                    syntaxTrees: projFiles,
                     references:  projReferences,
                     options:     new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
             }

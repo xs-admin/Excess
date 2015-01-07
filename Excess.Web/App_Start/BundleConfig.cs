@@ -13,12 +13,12 @@ namespace Excess.Web
             //~/Bundles/App/vendor/css
             bundles.Add(
                 new StyleBundle("~/Bundles/App/vendor/css")
+                    .Include("~/Content/font-awesome.min.css", new CssRewriteUrlTransform())
                     .Include(
                         "~/Content/themes/base/all.css",
                         "~/Content/bootstrap.min.css",
                         "~/Content/toastr.min.css",
                         "~/Content/flags/famfamfam-flags.css",
-                        "~/Content/font-awesome.min.css",
                         "~/Content/jquery.mmenu.all.css",
                         "~/Content/jquery.mmenu.css",
                         "~/Content/addons/jquery.mmenu.dragopen.css",
@@ -64,14 +64,15 @@ namespace Excess.Web
 
                         "~/Scripts/jquery.layout.js",
 
+                        "~/Scripts/dialogs.min.js",
+                        "~/Scripts/dialogs-default-translations.min.js",
+
                         "~/Scripts/codemirror-4.8/lib/codemirror.js",
                         "~/Scripts/codemirror-4.8/mode/clike/clike.js",
 
                         "~/Scripts/jquery.bootstrap.wizard.js",
                         "~/Scripts/rcWizard.js",
-                        "~/Scripts/dialogs.min.js",
-                        "~/Scripts/dialogs-default-translations.min.js",
-                        "~/Scripts/hotkeys.js"
+                        "~/Scripts/hotkeys.js" 
                     )
                 );
 

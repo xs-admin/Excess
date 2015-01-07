@@ -1,7 +1,7 @@
 ﻿angular.module('app')
 
-.service('xsMenu', ['$rootScope', '$state', 'dialogs', 'xsProject', 'xsAuthentication',
-    function ($rootScope, $state, dialogs, project, auth) {
+.service('xsMenu', ['$rootScope', '$state', '$modal', 'dialogs', 'xsProject', 'xsAuthentication',
+    function ($rootScope, $state, $modal, dialogs, project, auth) {
 
         $rootScope.selectProject = function ()
         {
@@ -13,17 +13,7 @@
                 return;
             }
 
-            dialogs.error("Error",
-                          "This functionality is coming soon",
-                          { size: "sm" });
-            //project.userProjects()
-            //    .then(function (result) {
-            //        dialogs.create('/App/Main/dialogs/selectProject.html', 'selectProjectCtrl',
-            //                       result.data, { size: "md" })
-            //            .then(function (selected) {
-            //                alert('GO PROJ' + selected);
-            //            });
-            //    });
+            dialogs.create('/App/Main/dialogs/projectList.html', 'projectListCtrl', null, { size: "md" });
         }
 
         $rootScope.newProject = function () {
@@ -35,8 +25,12 @@
             }
 
             dialogs.create('/App/Main/dialogs/newProject.html', 'newProjectCtrl', null, { size: "md" })
-                .then(function (selected) {
-                    alert('CREATE PROJ' + selected);
+                .result.then(function (projectId) {
+                    dialogs.confirm("Project Created",
+                                  "Would you like to edit this project?", { size: "sm" })
+                        .result.then(function () {
+                            $state.go('project', { projectId: projectId });
+                        })
                 });
         }
 

@@ -7,8 +7,8 @@ namespace Excess.Web.Migrations
     {
         public override void Up()
         {
-            Sql("DBCC CHECKIDENT (Projects, RESEED, 999)");
-            Sql("DBCC CHECKIDENT (ProjectFiles, RESEED, 999)");
+            //Sql("DBCC CHECKIDENT (Projects, RESEED, 999)");
+            //Sql("DBCC CHECKIDENT (ProjectFiles, RESEED, 999)");
         }
 
         public override void Down()
