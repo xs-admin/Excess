@@ -276,6 +276,9 @@
     <Content Include="App\Main\components\tree.css" />
     <Content Include="App\Main\components\tree.html" />
     <Content Include="App\Main\components\tree.js" />
+    <Content Include="App\Main\dialogs\dslDebugger.css" />
+    <Content Include="App\Main\dialogs\dslDebugger.js" />
+    <Content Include="App\Main\dialogs\dslDebugger.html" />
     <Content Include="App\Main\dialogs\login.html" />
     <Content Include="App\Main\dialogs\login.js" />
     <Content Include="App\Main\dialogs\newClass.html" />
@@ -1453,6 +1456,7 @@
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
     <Compile Include="Installers\ControllersInstaller.cs" />
+    <Compile Include="Installers\EntityInstaller.cs" />
     <Compile Include="Migrations\201412301655041_Initial.cs" />
     <Compile Include="Migrations\201412301655041_Initial.Designer.cs">
       <DependentUpon>201412301655041_Initial.cs</DependentUpon>
@@ -1484,6 +1488,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>SampleCode.resx</DependentUpon>
     </Compile>
+    <Compile Include="Services\UserServices.cs" />
     <Compile Include="Startup.cs" />
     <Compile Include="Views\ExcessWebViewPageBase.cs" />
   </ItemGroup>

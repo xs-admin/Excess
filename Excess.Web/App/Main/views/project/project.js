@@ -165,6 +165,17 @@
                 startConsole("Executing...");
 
                 xsProject.execute(consoleNotification)
+                    .then(function (result) {
+                        var debuggerDlg  = result.data.debuggerDlg;
+                        var debuggerCtrl = result.data.debuggerCtrl;
+                        if (debuggerDlg && debuggerCtrl)
+                        {
+                            var dlg = dialogs.create(debuggerDlg,
+                                                     debuggerCtrl,
+                                                     null,
+                                                     { size: "1200px" });
+                        }
+                    })
                     .finally(function () {
                         $scope.compilerBusy = false;
                     });

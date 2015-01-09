@@ -4,6 +4,7 @@ using Microsoft.AspNet.Identity;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Web;
 using System.Web.Mvc;
 
@@ -32,7 +33,7 @@ namespace Excess.Web.Controllers
                     return HttpNotFound(); //td: right error
             }
 
-            var runtime = _manager.createRuntime(project.ProjectType);
+            var runtime = _manager.createRuntime(project.ProjectType, project.Name);
             foreach (var file in project.ProjectFiles)
                 runtime.add(file.Name, file.ID, file.Contents);
 
@@ -116,8 +117,9 @@ namespace Excess.Web.Controllers
             if (project == null)
                 return HttpNotFound(); //td: right error
 
-            project.run();
-            return Content("ok");
+            dynamic clientData;
+            project.run(out clientData);
+            return Json(clientData, JsonRequestBehavior.AllowGet);
         }
 
         public ActionResult Notifications()
@@ -149,6 +151,38 @@ namespace Excess.Web.Controllers
             Project           result = repo.CreateProject(projectType, projectName, projectData, User.Identity.GetUserId());
 
             return Json(new { projectId = result.ID }, JsonRequestBehavior.AllowGet);
+        }
+
+        public ActionResult debugDSL(string text)
+        {
+            var runtime = Session["project"] as IDSLRuntime;
+            if (runtime == null)
+                return HttpNotFound(); //td: right error
+
+            string result;
+            try
+            {
+                result = runtime.debugDSL(text);
+
+                var notProvider = runtime as IRuntimeProject;
+                var nots = notProvider.notifications();
+
+                if (nots.Any())
+                {
+                    StringBuilder notBuilder = new StringBuilder();
+                    foreach (var not in nots)
+                        notBuilder.AppendLine(not.Message);
+
+                    result = string.Format("{0} \n ================= Notifications ================= \n {1}", 
+                        result, notBuilder.ToString());
+                }
+            }
+            catch (Exception ex)
+            {
+                result = ex.Message;
+            }
+
+            return Content(result);
         }
 
         //Project tree

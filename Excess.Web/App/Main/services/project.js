@@ -83,4 +83,10 @@
         getNotifications(notify);
         return $http.post('/Project/Execute');
     }
+
+    this.debugDSL = function (text) {
+        return $http.get('/Project/debugDSL', {
+            params: { text: text }
+        });
+    }
 }]);

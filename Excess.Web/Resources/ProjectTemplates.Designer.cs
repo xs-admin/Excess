@@ -76,7 +76,7 @@ namespace Excess.Web.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to public class Linker : RoslynLinker
+        ///   Looks up a localized string similar to public class Linker
         ///{
         ///    public override SyntaxNode Link(SyntaxNode node, SemanticModel model)
         ///    {
@@ -91,12 +91,12 @@ namespace Excess.Web.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to     public override SyntaxNode ParseCodeHeader(SyntaxNode node)
+        ///   Looks up a localized string similar to     public SyntaxNode ParseCodeHeader(SyntaxNode node)
         ///    {
         ///        return null;
         ///    }
         ///
-        ///    public override SyntaxNode ParseCode(SyntaxNode node, SyntaxToken id, ParameterListSyntax args, BlockSyntax code, bool expectsResult)
+        ///    public SyntaxNode ParseCode(SyntaxNode node, SyntaxToken id, ParameterListSyntax args, BlockSyntax code, bool expectsResult)
         ///    {
         ///        throw new NotImplementedException();
         ///    }.
@@ -108,7 +108,7 @@ namespace Excess.Web.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to     public override SyntaxNode ParseMethod(SyntaxNode node, SyntaxToken id, ParameterListSyntax args, BlockSyntax code)
+        ///   Looks up a localized string similar to     public SyntaxNode ParseMethod(SyntaxNode node, SyntaxToken id, ParameterListSyntax args, BlockSyntax code)
         ///    {
         ///        throw new NotImplementedException();
         ///    }.
@@ -120,7 +120,7 @@ namespace Excess.Web.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to     public override SyntaxNode ParseNamespace(SyntaxNode node, SyntaxToken id, ParameterListSyntax args, BlockSyntax code)
+        ///   Looks up a localized string similar to     public SyntaxNode ParseNamespace(SyntaxNode node, SyntaxToken id, ParameterListSyntax args, BlockSyntax code)
         ///    {
         ///        throw new NotImplementedException();
         ///    }
@@ -133,7 +133,7 @@ namespace Excess.Web.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to class Parser : RoslynParser
+        ///   Looks up a localized string similar to class Parser
         ///{{
         ///{0}
         ///}}.
@@ -145,7 +145,7 @@ namespace Excess.Web.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to     public override SyntaxNode ParseClass(SyntaxNode node, SyntaxToken id, ParameterListSyntax args)
+        ///   Looks up a localized string similar to     public SyntaxNode ParseClass(SyntaxNode node, SyntaxToken id, ParameterListSyntax args)
         ///    {
         ///        throw new NotImplementedException();
         ///    }

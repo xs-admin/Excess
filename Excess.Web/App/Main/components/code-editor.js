@@ -84,6 +84,19 @@
                 var textArea = element.find('textarea')[0];
                 var codeEditor = CodeMirror.fromTextArea(textArea, options);
 
+                var _fixedSize = false;
+                if (angular.isDefined(attrs.size))
+                {
+                    var fixed  = scope.$eval(attrs.size);
+                    _fixedSize = true;
+
+                    codeEditor.setSize(fixed.width, fixed.height);
+                    
+                    $timeout(function () {
+                        codeEditor.refresh();
+                    });
+                }
+
                 scope.content = function () {
                     return codeEditor.getValue();
                 }
@@ -100,9 +113,12 @@
                         codeEditor.setValue(value);
                 });
 
-                scope.$watch('resized', function (value) {
-                    codeEditor.setSize(element.width(), element.height());
-                });
+                if (!_fixedSize)
+                {
+                    scope.$watch('resized', function (value) {
+                        codeEditor.setSize(element.width(), element.height());
+                    });
+                }
             }
 
             if (angular.isDefined(attrs.keywords)) {

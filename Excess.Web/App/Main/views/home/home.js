@@ -78,26 +78,6 @@
             $scope.resizeTarget = function () {
                 $scope.targetResized = !$scope.targetResized;
             }
-
-            //code mirror has its own instances, which we need to cache
-            var _sourceEditor, _targetEditor;
-
-            function getEditors() {
-                if (_sourceEditor && _targetEditor)
-                    return;
-
-                _sourceEditor = getCodeMirror('#source-editor');
-                _targetEditor = getCodeMirror('#target-editor');
-            }
-
-            function getCodeMirror(elem)
-            {
-                var target = $(elem).isolateScope();
-                if (!target || !target.instance)
-                    throw "Element " + elem + " is not a code mirror directive";
-
-                return target.instance;
-            }
         }
     ]);
 })();

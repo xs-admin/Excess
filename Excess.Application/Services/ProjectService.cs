@@ -9,17 +9,17 @@ namespace Excess.Services
 {
     public class ProjectService : IProjectManager
     {
-        public ProjectService(IDSLService dsl)
+        public ProjectService(IDSLService DSL)
         {
-            _dsl = dsl;
+            _dsl = DSL;
         }
 
-        public IRuntimeProject createRuntime(string projectType)
+        public IRuntimeProject createRuntime(string projectType, string projectName)
         {
             switch (projectType)
             {
                 case "console": return new ConsoleRuntime(_dsl.factory());
-                case "dsl":     return new DSLRuntime();
+                case "dsl":     return new DSLRuntime(projectName);
             }
 
             throw new InvalidOperationException("Invalid project type " + projectType);

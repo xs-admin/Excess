@@ -8,6 +8,11 @@ using System.Threading.Tasks;
 
 namespace Excess
 {
+    public interface IUserServices
+    {
+        string userId();
+    }
+
     public interface ITranslationService
     {
         string translate(string text);
@@ -20,6 +25,6 @@ namespace Excess
 
     public interface IProjectManager
     {
-        IRuntimeProject createRuntime(string projectType);
+        IRuntimeProject createRuntime(string projectType, string projectName);
     }
 }

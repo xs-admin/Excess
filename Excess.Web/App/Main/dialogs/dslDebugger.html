@@ -1,0 +1,21 @@
+﻿<div class="modal-header">
+    <h4 class="modal-title">
+        Debug DSL
+        <img width="20"/>
+        <a class="btn btn-default" ng-click="compileTest()">
+            <i class="fa fa-play-circle-o fa-lg"></i> Compile
+        </a>
+    </h4>
+</div>
+<div class="modal-body" style="min-height:400px">
+    <div class="round-border dd-code" style="float: left">
+        <xs-code-editor id="source-editor" source="{{sourceCode}}" size="{width: 423, height: 368}" />
+    </div>
+
+    <div class="round-border dd-code" style="float: right">
+        <xs-code-editor id="target-editor" source="{{targetCode}}" size="{width: 423, height: 368}" />
+    </div>
+</div>
+<div class="modal-footer">
+    <button class="btn btn-default" ng-click="done()">Close</button>
+</div>

@@ -127,7 +127,7 @@
 }</value>
   </data>
   <data name="DSLLinker" xml:space="preserve">
-    <value>public class Linker : RoslynLinker
+    <value>public class Linker
 {
     public override SyntaxNode Link(SyntaxNode node, SemanticModel model)
     {
@@ -136,37 +136,37 @@
 }</value>
   </data>
   <data name="DSLParseCode" xml:space="preserve">
-    <value>    public override SyntaxNode ParseCodeHeader(SyntaxNode node)
+    <value>    public SyntaxNode ParseCodeHeader(SyntaxNode node)
     {
         return null;
     }
 
-    public override SyntaxNode ParseCode(SyntaxNode node, SyntaxToken id, ParameterListSyntax args, BlockSyntax code, bool expectsResult)
+    public SyntaxNode ParseCode(SyntaxNode node, SyntaxToken id, ParameterListSyntax args, BlockSyntax code, bool expectsResult)
     {
         throw new NotImplementedException();
     }</value>
   </data>
   <data name="DSLParseMember" xml:space="preserve">
-    <value>    public override SyntaxNode ParseMethod(SyntaxNode node, SyntaxToken id, ParameterListSyntax args, BlockSyntax code)
+    <value>    public SyntaxNode ParseMethod(SyntaxNode node, SyntaxToken id, ParameterListSyntax args, BlockSyntax code)
     {
         throw new NotImplementedException();
     }</value>
   </data>
   <data name="DSLParseNamespace" xml:space="preserve">
-    <value>    public override SyntaxNode ParseNamespace(SyntaxNode node, SyntaxToken id, ParameterListSyntax args, BlockSyntax code)
+    <value>    public SyntaxNode ParseNamespace(SyntaxNode node, SyntaxToken id, ParameterListSyntax args, BlockSyntax code)
     {
         throw new NotImplementedException();
     }
 </value>
   </data>
   <data name="DSLParser" xml:space="preserve">
-    <value>class Parser : RoslynParser
+    <value>class Parser
 {{
 {0}
 }}</value>
   </data>
   <data name="DSLParseType" xml:space="preserve">
-    <value>    public override SyntaxNode ParseClass(SyntaxNode node, SyntaxToken id, ParameterListSyntax args)
+    <value>    public SyntaxNode ParseClass(SyntaxNode node, SyntaxToken id, ParameterListSyntax args)
     {
         throw new NotImplementedException();
     }

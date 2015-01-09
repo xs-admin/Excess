@@ -25,12 +25,17 @@ namespace Excess.RuntimeProject
     {
         bool busy();
         void compile();
-        void run();
+        void run(out dynamic client);
         void add(string file, int id, string contents);
         void modify(string file, string contents);
         IEnumerable<Notification> notifications();
         string defaultFile();
         string fileContents(string file);
         int fileId(string file);
+    }
+
+    public interface IDSLRuntime
+    {
+        string debugDSL(string text);
     }
 }

@@ -7,9 +7,9 @@ using System.Threading.Tasks;
 
 namespace Excess.Core
 {
-    class DllFactory : IDSLFactory
+    public class DllFactory : IDSLFactory
     {
-        public bool AddReference(string name, string dll, out string error)
+        public bool AddReference(string dll, out string error)
         {
             error = null;
 
@@ -17,10 +17,29 @@ namespace Excess.Core
             {
                 Assembly assembly = Assembly.LoadFrom(dll);
                 Type type = assembly.GetType("DSLPlugin");
-
                 object result = type.InvokeMember("Create", BindingFlags.InvokeMethod | BindingFlags.Static, null, null, null);
+                factories_.Add((IDSLFactory)result);
+            }
+            catch (Exception e)
+            {
+                error = e.Message;
+                return false;
+            }
 
-                factories_[name] = (IDSLFactory)result;
+            return true;
+        }
+
+        public bool AddReference(Assembly assembly, out string error)
+        {
+            error = null;
+            try
+            {
+                Type type = assembly.GetType("DSLPlugin");
+
+                var Create = type.GetMethod("Create", BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
+                var result = Create.Invoke(null, new object[] { });
+
+                factories_.Add((IDSLFactory)result);
             }
             catch (Exception e)
             {
@@ -33,22 +52,25 @@ namespace Excess.Core
 
         public IDSLHandler create(string name)
         {
-            IDSLFactory result;
-            if (factories_.TryGetValue(name, out result))
-                return result.create(name);
+            foreach (var factory in factories_)
+            {
+                var result = factory.create(name);
+                if (result != null)
+                    return result;
+            }
 
             return null;
         }
 
         public IEnumerable<string> supported()
         {
-            foreach (IDSLFactory factory in factories_.Values)
+            foreach (IDSLFactory factory in factories_)
             {
                 foreach (string dsl in factory.supported())
                     yield return dsl;
             }
         }
 
-        private Dictionary<string, IDSLFactory> factories_ = new Dictionary<string, IDSLFactory>();
+        private List<IDSLFactory> factories_ = new List<IDSLFactory>();
     }
 }

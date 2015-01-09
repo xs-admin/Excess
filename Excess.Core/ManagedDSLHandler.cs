@@ -4,31 +4,26 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Excess.Core
 {
-    public interface IParser
-    {
-        SyntaxNode ParseNamespace(SyntaxNode node, SyntaxToken id, ParameterListSyntax args, BlockSyntax code);
-        SyntaxNode ParseClass(SyntaxNode node, SyntaxToken id, ParameterListSyntax args);
-        SyntaxNode ParseMethod(SyntaxNode node, SyntaxToken id, ParameterListSyntax args, BlockSyntax code);
-        SyntaxNode ParseCodeHeader(SyntaxNode node);
-        SyntaxNode ParseCode(SyntaxNode node, SyntaxToken id, ParameterListSyntax args, BlockSyntax code, bool expectsResult);
-    }
-
-    public interface ILinker
-    {
-        SyntaxNode Link(SyntaxNode node, SemanticModel model);
-    }
-
     public class ManagedDSLHandler : IDSLHandler
     {
-        public ManagedDSLHandler(IParser parser, ILinker linker)
+        public ManagedDSLHandler(object parser, object linker)
         {
             _parser = parser;
             _linker = linker;
+
+            _parseNamespace = parser.GetType().GetMethod("ParseNamespace");
+            _parseClass = parser.GetType().GetMethod("ParseClass");
+            _parseMethod = parser.GetType().GetMethod("ParseMethod");
+            _parseCodeHeader = parser.GetType().GetMethod("ParseCodeHeader");
+            _parseCode = parser.GetType().GetMethod("ParseCode");
+
+            _link = linker.GetType().GetMethod("Link");
         }
 
         public SyntaxNode compile(ExcessContext ctx, DSLContext dctx)
@@ -40,19 +35,25 @@ namespace Excess.Core
                 {
                     if (node is ClassDeclarationSyntax)
                     {
+                        if (_parseClass == null)
+                            throw new InvalidOperationException("This dsl does not support types");
+
                         var classDeclaration = (ClassDeclarationSyntax)ctx.Rewriter.Visit(node);
 
-                        var id = classDeclaration.Identifier;
+                        var id = classDeclaration.Identifier.ToString();
                         var result = ctx.Rewriter.Visit(node);
-                        return _parser.ParseClass(classDeclaration, id, SyntaxFactory.ParameterList());
+                        return (SyntaxNode)_parseClass.Invoke(_parser, new object[] { classDeclaration, id, SyntaxFactory.ParameterList() });
                     }
                     else if (node is MethodDeclarationSyntax)
                     {
+                        if (_parseNamespace == null)
+                            throw new InvalidOperationException("This dsl does not support namespaces");
+
                         var method = (MethodDeclarationSyntax)node;
-                        var id     = method.ReturnType.IsMissing? new SyntaxToken() :  method.Identifier;
+                        var id     = method.ReturnType.IsMissing? "" :  method.Identifier.ToString();
                         var code   = (BlockSyntax)ctx.Rewriter.Visit(method.Body);
-                        var result = _parser.ParseNamespace(method, id, method.ParameterList, code);
-                        return result;
+
+                        return (SyntaxNode)_parseNamespace.Invoke(_parser, new object[] { method, id, method.ParameterList, code });
                     }
 
                     //td: error
@@ -61,15 +62,21 @@ namespace Excess.Core
 
                 case DSLSurroundings.TypeBody:
                 {
+                    if (_parseMethod == null)
+                        throw new InvalidOperationException("This dsl does not support methods");
+
                     var method = (MethodDeclarationSyntax)node;
                     var code = (BlockSyntax)ctx.Rewriter.Visit(method.Body);
-                    var result = _parser.ParseMethod(method, new SyntaxToken(), method.ParameterList, code);
-                    return result;
+
+                    return (SyntaxNode)_parseMethod.Invoke(_parser, new object[] { method, "", method.ParameterList, code });
                 }
 
                 case DSLSurroundings.Code:
                 {
-                    return _parser.ParseCodeHeader(node); 
+                    if (_parseCodeHeader == null)
+                        return null;
+
+                    return (SyntaxNode)_parseCodeHeader.Invoke(_parser, new object[] { node });
                 }
             }
 
@@ -78,8 +85,11 @@ namespace Excess.Core
 
         public SyntaxNode setCode(ExcessContext ctx, DSLContext dctx, BlockSyntax code)
         {
+            if (_parseCode == null)
+                throw new InvalidOperationException("This dsl does not support code");
+
             SyntaxNode          node       =  dctx.MainNode;
-            SyntaxToken         identifier = new SyntaxToken();
+            string              identifier = "";
             ParameterListSyntax args       = null;
 
             var invocation = node as InvocationExpressionSyntax;
@@ -96,22 +106,32 @@ namespace Excess.Core
                     return node;
                 }
 
-                identifier = varDeclarator.Identifier;
+                identifier = varDeclarator.Identifier.ToString();
                 args = toParameterList(varDeclarator.ArgumentList.Arguments);
             }
 
             code = (BlockSyntax)ctx.Rewriter.Visit(code);
-            return _parser.ParseCode(code, identifier, args, code, dctx.Assign); 
+            return (SyntaxNode)_parseCode.Invoke(_parser, new object[] { code, identifier, args, code, dctx.Assign });
         }
 
         public SyntaxNode link(ExcessContext ctx, SyntaxNode node, SemanticModel model)
         {
-            return _linker.Link(node, model);
+            if (_link == null)
+                throw new InvalidOperationException("This dsl does not support linking");
+
+            return (SyntaxNode)_link.Invoke(_linker, new object[] { node, model });
         }
 
 
-        private IParser _parser;
-        private ILinker _linker;
+        private object _parser;
+        private object _linker;
+
+        private MethodInfo _parseNamespace;
+        private MethodInfo _parseClass;
+        private MethodInfo _parseMethod;
+        private MethodInfo _parseCodeHeader;
+        private MethodInfo _parseCode;
+        private MethodInfo _link;
 
         private ParameterListSyntax toParameterList(IEnumerable<ArgumentSyntax> arguments)
         {

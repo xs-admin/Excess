@@ -4,6 +4,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
@@ -59,8 +60,10 @@ namespace Excess.RuntimeProject
             }
         }
 
-        protected override void doRun(Assembly asm)
+        protected override void doRun(Assembly asm, out dynamic clientData)
         {
+            clientData = null;
+
             Type appType = asm.GetType("application");
             if (appType == null)
             {

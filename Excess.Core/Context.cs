@@ -750,6 +750,9 @@ namespace Excess.Core
             else
                 completed = completed.Union(types);
 
+            if (!completed.Any())
+                return null;
+
             return SyntaxFactory.CompilationUnit().
                                  WithMembers(SyntaxFactory.List(completed)).SyntaxTree;
         }

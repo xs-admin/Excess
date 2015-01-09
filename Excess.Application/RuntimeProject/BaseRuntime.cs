@@ -41,8 +41,9 @@ namespace Excess.RuntimeProject
             }
         }
 
-        public void run()
+        public void run(out dynamic client)
         {
+            client = null;
             if (_busy)
                 throw new InvalidOperationException();
 
@@ -54,7 +55,7 @@ namespace Excess.RuntimeProject
                 else
                 {
                     Assembly assembly = loadAssembly();
-                    doRun(assembly);
+                    doRun(assembly, out client);
                 }
             }
             finally
@@ -194,7 +195,7 @@ namespace Excess.RuntimeProject
                         .Any();
         }
 
-        protected abstract void doRun(Assembly asm);
+        protected abstract void doRun(Assembly asm, out dynamic clientData);
         
         //File Management
         protected Dictionary<string, RuntimeFile> _files = new Dictionary<string, RuntimeFile>();
@@ -234,7 +235,7 @@ namespace Excess.RuntimeProject
                 else
                     projFiles = projFiles.Union(defaultFiles);
 
-                _compilation = CSharpCompilation.Create("runtime",
+                _compilation = CSharpCompilation.Create("runtime" + Guid.NewGuid().ToString().Replace("-", "") + ".dll",
                     syntaxTrees: projFiles,
                     references:  projReferences,
                     options:     new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
@@ -264,7 +265,6 @@ namespace Excess.RuntimeProject
 
                 var assembly = Assembly.Load(stream.GetBuffer());
                 setupConsole(assembly);
-
                 return assembly;
             }
         }

@@ -128,7 +128,7 @@ namespace Excess.Core
             }
 
             var complete = ctx_.Complete(statements, members, types);
-            return complete;
+            return complete != null? complete : tree;
 
             //var container = SyntaxFactory.ClassDeclaration("application");
             //if (hasCode)
