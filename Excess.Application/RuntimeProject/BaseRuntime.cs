@@ -65,13 +65,17 @@ namespace Excess.RuntimeProject
             }
         }
 
-        private void notifyErrors()
+        protected void notifyErrors(IEnumerable<Diagnostic> errors)
         {
-            foreach (var diag in _compilation.GetDiagnostics()
-                                    .Where(d => d.Severity == DiagnosticSeverity.Error))
+            foreach (var diag in errors)
             {
                 notify(NotificationKind.Error, diag.ToString());
             }
+        }
+
+        protected void notifyErrors()
+        {
+            notifyErrors(GetErrors());
         }
 
         public void add(string file, int fileId, string contents)
@@ -190,9 +194,16 @@ namespace Excess.RuntimeProject
 
             _dirty.Clear();
 
-            return !_compilation.GetDiagnostics()
-                        .Where(d => d.Severity == DiagnosticSeverity.Error)
-                        .Any();
+            return !GetErrors().Any();
+        }
+
+        private IEnumerable<Diagnostic> GetErrors()
+        {
+            return _ctx
+                .GetErrors()
+                .Union(_compilation
+                    .GetDiagnostics()
+                    .Where(d => d.Severity == DiagnosticSeverity.Error));
         }
 
         protected abstract void doRun(Assembly asm, out dynamic clientData);

@@ -62,6 +62,7 @@ namespace Excess.Web.Controllers
             return Content(contents);
         }
 
+        [ValidateInput(false)]
         public ActionResult SaveFile(string file, string contents)
         {
             var project = Session["project"] as IRuntimeProject;

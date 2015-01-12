@@ -37,11 +37,11 @@
     <Compile Include="CompundFactory.cs" />
     <Compile Include="Context.cs" />
     <Compile Include="DllFactory.cs" />
-    <Compile Include="DSLRuntime.cs" />
     <Compile Include="ExcessConsts.cs" />
     <Compile Include="Linker.cs" />
     <Compile Include="LookAhead.cs" />
     <Compile Include="ManagedDSLHandler.cs" />
+    <Compile Include="ManagedItems.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SimpleFactory.cs" />
   </ItemGroup>

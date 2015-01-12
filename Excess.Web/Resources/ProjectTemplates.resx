@@ -127,11 +127,12 @@
 }</value>
   </data>
   <data name="DSLLinker" xml:space="preserve">
-    <value>public class Linker
+    <value>public class Linker : ManagedLinker
 {
-    public override SyntaxNode Link(SyntaxNode node, SemanticModel model)
+    public SyntaxNode Link(SyntaxNode node, SemanticModel model)
     {
-        throw new NotImplementedException();
+        //global changes here
+        return node;
     }
 }</value>
   </data>
@@ -147,26 +148,26 @@
     }</value>
   </data>
   <data name="DSLParseMember" xml:space="preserve">
-    <value>    public SyntaxNode ParseMethod(SyntaxNode node, SyntaxToken id, ParameterListSyntax args, BlockSyntax code)
+    <value>    public SyntaxNode ParseMethod(SyntaxNode node, string id, ParameterListSyntax args, BlockSyntax code)
     {
         throw new NotImplementedException();
     }</value>
   </data>
   <data name="DSLParseNamespace" xml:space="preserve">
-    <value>    public SyntaxNode ParseNamespace(SyntaxNode node, SyntaxToken id, ParameterListSyntax args, BlockSyntax code)
+    <value>    public SyntaxNode ParseNamespace(SyntaxNode node, string  id, ParameterListSyntax args, BlockSyntax code)
     {
         throw new NotImplementedException();
     }
 </value>
   </data>
   <data name="DSLParser" xml:space="preserve">
-    <value>class Parser
+    <value>public class Parser : ManagedParser&lt;Linker&gt;
 {{
 {0}
 }}</value>
   </data>
   <data name="DSLParseType" xml:space="preserve">
-    <value>    public SyntaxNode ParseClass(SyntaxNode node, SyntaxToken id, ParameterListSyntax args)
+    <value>    public SyntaxNode ParseClass(SyntaxNode node, string  id, ParameterListSyntax args)
     {
         throw new NotImplementedException();
     }

@@ -17,12 +17,9 @@
     }
 
     this.saveFile = function (file, contents) {
-        return $http.get('/Project/SaveFile', {
-            params: 
-            {
-                file: file,
-                contents: contents
-            }
+        return $http.post('/Project/SaveFile', {
+            file: file,
+            contents: contents
         });
     }
 
@@ -71,7 +68,7 @@
     }
 
     this.userProjects = function () {
-        return $http.post('/Project/UserProjects');
+        return $http.get('/Project/UserProjects');
     }
 
     this.compile = function (notify) {

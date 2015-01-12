@@ -908,5 +908,30 @@ namespace Excess.Core
         {
             _usings.AddRange(usings);
         }
+
+        List<Diagnostic> _diagnostics = new List<Diagnostic>();
+        public void AddError(SyntaxNode node, string error, string message)
+        {
+            Location location = Location.Create(node.SyntaxTree, node.Span);
+            var diag = Diagnostic.Create(error, "XS", message, DiagnosticSeverity.Error, DiagnosticSeverity.Error, true, 0, location: location);
+            _diagnostics.Add(diag);
+        }
+
+        public IEnumerable<Diagnostic> GetErrors()
+        {
+            return _diagnostics;
+        }
+
+        Dictionary<string, int> _uniques = new Dictionary<string, int>();
+        public string GetUnique(string name)
+        {
+            int    current = 0;
+            string result  = name;
+            if (_uniques.TryGetValue(name, out current))
+                result = result + ++current;
+
+            _uniques[name] = current;
+            return result;
+        }
     }
 }

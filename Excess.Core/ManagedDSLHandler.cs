@@ -28,6 +28,9 @@ namespace Excess.Core
 
         public SyntaxNode compile(ExcessContext ctx, DSLContext dctx)
         {
+            setContext(_parser, ctx);
+            setContext(_linker, ctx);
+
             var node = dctx.MainNode;
             switch (dctx.Surroundings)
             {
@@ -81,6 +84,12 @@ namespace Excess.Core
             }
 
             return node;
+        }
+
+        private void setContext(object obj, ExcessContext ctx)
+        {
+            var method = obj.GetType().GetMethod("SetContext");
+            method.Invoke(obj, new object[] { ctx });
         }
 
         public SyntaxNode setCode(ExcessContext ctx, DSLContext dctx, BlockSyntax code)
@@ -170,6 +179,33 @@ namespace Excess.Core
                                                              WithType(type).
                                                              WithDefault(SyntaxFactory.EqualsValueClause(value));
                                     })));
+        }
+    }
+
+    public class ManagedDSLFactory : IDSLFactory
+    {
+        public ManagedDSLFactory(string name, object parser, object linker)
+        {
+            _name   = name;
+            _parser = parser;
+            _linker = linker;
+        }
+
+        protected string _name;
+        protected object _parser;
+        protected object _linker;
+
+        public IDSLHandler create(string name)
+        {
+            if (name == _name)
+                return new ManagedDSLHandler(_parser, _linker);
+
+            return null;
+        }
+
+        public IEnumerable<string> supported()
+        {
+            yield return _name;
         }
     }
 }

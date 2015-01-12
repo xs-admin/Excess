@@ -9,6 +9,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Excess.Core;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.IO;
+using System.Threading;
 
 namespace Excess.RuntimeProject
 {
@@ -19,6 +20,7 @@ namespace Excess.RuntimeProject
         {
             _projectName = projectName;
 
+            _ctx.AddUsing("System.Linq");
             _ctx.AddUsing("Microsoft.CodeAnalysis");
             _ctx.AddUsing("Microsoft.CodeAnalysis.CSharp");
             _ctx.AddUsing("Microsoft.CodeAnalysis.CSharp.Syntax");
@@ -39,17 +41,12 @@ namespace Excess.RuntimeProject
 
             if (ctx.NeedsLinking())
             {
-                Compilation compilation = CSharpCompilation.Create("debugDSL",
-                            syntaxTrees: new[] { tree },
-                            references: new[]  {
-                                MetadataReference.CreateFromAssembly(typeof(object).Assembly),
-                                MetadataReference.CreateFromAssembly(typeof(Enumerable).Assembly),
-                                MetadataReference.CreateFromAssembly(typeof(Dictionary<int, int>).Assembly),
-                            },
-                            options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+                Compilation compilation = CSharpCompilation.Create("debugDSL", syntaxTrees: new[] { tree });
 
                 compilation = ExcessContext.Link(ctx, compilation);
                 tree = compilation.SyntaxTrees.First();
+
+                notifyErrors();
             }
 
             return tree.GetRoot().NormalizeWhitespace().ToString();
@@ -70,24 +67,27 @@ namespace Excess.RuntimeProject
 
         protected override IEnumerable<MetadataReference> compilationReferences()
         {
+            var assemblyPath = Path.GetDirectoryName(typeof(object).Assembly.Location);
             return new[]  {
                 MetadataReference.CreateFromAssembly(typeof(IDSLFactory).Assembly),
                 MetadataReference.CreateFromAssembly(typeof(SyntaxNode).Assembly),
                 MetadataReference.CreateFromAssembly(typeof(ParameterListSyntax).Assembly),
+                MetadataReference.CreateFromFile(Path.Combine(assemblyPath, "System.Runtime.dll")),
+                MetadataReference.CreateFromFile(Path.Combine(assemblyPath, "System.Threading.Tasks.dll")),
             };
         }
 
         protected override IEnumerable<SyntaxTree> compilationFiles()
         {
-            var dslName = pluginTree.GetRoot()
-                .DescendantNodes()
-                .OfType<IdentifierNameSyntax>()
-                .Where(identifier => identifier.ToString() == "DSLName")
-                .First();
-
-            var plugin = pluginTree.GetRoot()
-                .ReplaceNode(dslName,
-                             SyntaxFactory.ParseExpression('"' + _projectName + '"'))
+            var root   = pluginTree.GetRoot();
+            var plugin = root
+                .ReplaceNode(root
+                    .DescendantNodes()
+                    .OfType<LiteralExpressionSyntax>()
+                    .First(),
+                    SyntaxFactory.LiteralExpression(
+                        SyntaxKind.StringLiteralExpression,
+                        SyntaxFactory.ParseToken( '"' + _projectName + '"')))
                 .SyntaxTree;
 
             return new[] { plugin };
@@ -99,76 +99,22 @@ namespace Excess.RuntimeProject
             @"using System;
             using Excess.Core;
 
-            public class MyDSL : ManagedDSLHandler
-            {
-                public MyDSL():
-                    base(new Parser(), new Linker())
-                {
-                }
-            }
-
             public class DSLPlugin
             {
+                private static string DSLName = """";
+
                 public static IDSLFactory Create()
                 {
-                    return new SimpleFactory().Add<MyDSL>(DSLName);
-                }
+                    Parser.DSLName = DSLName;
+                    Linker.DSLName = DSLName;
 
+                    var parser = new Parser();
+                    var linker = new Linker();
+
+                    parser.Linker = linker;
+                    return new ManagedDSLFactory(DSLName, parser, linker);
+                }
             }");
 
-        //static protected SyntaxTree parserTree = SyntaxFactory.ParseSyntaxTree(
-        //    @"using System;
-        //    using Microsoft.CodeAnalysis;
-        //    using Microsoft.CodeAnalysis.CSharp;
-        //    using Microsoft.CodeAnalysis.CSharp.Syntax;
-        //    using Excess.Core;
-
-        //    namespace PPP
-        //    {
-        //    public class RoslynParser : BaseParser
-        //    {
-        //        public override SyntaxNode ParseNamespace(SyntaxNode node, SyntaxToken id, ParameterListSyntax args, BlockSyntax code)
-        //        {
-        //            throw new InvalidOperationException(""This dsl does not support namespaces"");
-        //        }
-
-        //        public override SyntaxNode ParseClass(SyntaxNode node, SyntaxToken id, ParameterListSyntax args)
-        //        {
-        //            throw new InvalidOperationException(""This dsl does not support types"");
-        //        }
-
-        //        public override SyntaxNode ParseMethod(SyntaxNode node, SyntaxToken id, ParameterListSyntax args, BlockSyntax code)
-        //        {
-        //            throw new InvalidOperationException(""This dsl does not support members"");
-        //        }
-        //        public override SyntaxNode ParseCodeHeader(SyntaxNode node)
-        //        {
-        //            throw new InvalidOperationException(""This dsl does not support code"");
-        //        }
-
-        //        public override SyntaxNode ParseCode(SyntaxNode node, SyntaxToken id, ParameterListSyntax args, BlockSyntax code, bool expectsResult)
-        //        {
-        //            throw new InvalidOperationException(""This dsl does not support code"");
-        //        }
-        //    }}");
-
-        //    static protected SyntaxTree linkerTree = SyntaxFactory.ParseSyntaxTree(
-        //        @"using System;
-        //        using Microsoft.CodeAnalysis;
-        //        using Microsoft.CodeAnalysis.CSharp;
-        //        using Microsoft.CodeAnalysis.CSharp.Syntax;
-        //        using Excess.Core;
-
-        //        public class RoslynLinker : ILinker
-        //        {
-        //            public RoslynLinker()
-        //            {
-        //            }
-
-        //            public virtual SyntaxNode Link(SyntaxNode node, SemanticModel model)
-        //            {
-        //                throw new NotImplementedException();
-        //            }
-        //        }");
     }
 }

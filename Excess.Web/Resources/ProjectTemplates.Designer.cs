@@ -76,11 +76,12 @@ namespace Excess.Web.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to public class Linker
+        ///   Looks up a localized string similar to public class Linker : ManagedLinker
         ///{
-        ///    public override SyntaxNode Link(SyntaxNode node, SemanticModel model)
+        ///    public SyntaxNode Link(SyntaxNode node, SemanticModel model)
         ///    {
-        ///        throw new NotImplementedException();
+        ///        //global changes here
+        ///        return node;
         ///    }
         ///}.
         /// </summary>
@@ -108,7 +109,7 @@ namespace Excess.Web.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to     public SyntaxNode ParseMethod(SyntaxNode node, SyntaxToken id, ParameterListSyntax args, BlockSyntax code)
+        ///   Looks up a localized string similar to     public SyntaxNode ParseMethod(SyntaxNode node, string id, ParameterListSyntax args, BlockSyntax code)
         ///    {
         ///        throw new NotImplementedException();
         ///    }.
@@ -120,7 +121,7 @@ namespace Excess.Web.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to     public SyntaxNode ParseNamespace(SyntaxNode node, SyntaxToken id, ParameterListSyntax args, BlockSyntax code)
+        ///   Looks up a localized string similar to     public SyntaxNode ParseNamespace(SyntaxNode node, string  id, ParameterListSyntax args, BlockSyntax code)
         ///    {
         ///        throw new NotImplementedException();
         ///    }
@@ -133,7 +134,7 @@ namespace Excess.Web.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to class Parser
+        ///   Looks up a localized string similar to public class Parser : ManagedParser&lt;Linker&gt;
         ///{{
         ///{0}
         ///}}.
@@ -145,7 +146,7 @@ namespace Excess.Web.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to     public SyntaxNode ParseClass(SyntaxNode node, SyntaxToken id, ParameterListSyntax args)
+        ///   Looks up a localized string similar to     public SyntaxNode ParseClass(SyntaxNode node, string  id, ParameterListSyntax args)
         ///    {
         ///        throw new NotImplementedException();
         ///    }
