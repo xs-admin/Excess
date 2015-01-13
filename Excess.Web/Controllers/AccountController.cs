@@ -43,7 +43,7 @@ namespace Excess.Web.Controllers
         //
         // GET: /Account/Login
         [AllowAnonymous]
-        public ActionResult Login(string returnUrl)
+        public ActionResult Login()
         {
             ViewBag.ReturnUrl = "~/Account/LoginSuccessful";
             return View();
@@ -54,6 +54,7 @@ namespace Excess.Web.Controllers
             return PartialView();
         }
 
+        [AllowAnonymous]
         public ActionResult CurrentUser()
         {
             if (User.Identity.IsAuthenticated)
@@ -64,13 +65,6 @@ namespace Excess.Web.Controllers
                 }, JsonRequestBehavior.AllowGet);
 
             return Json(new { NotAuthenticated = true }, JsonRequestBehavior.AllowGet);
-        }
-
-        // GET: /Account/LoginForm
-        [AllowAnonymous]
-        public ActionResult LoginForm()
-        {
-            return PartialView();
         }
 
         private ApplicationSignInManager _signInManager;
@@ -191,7 +185,7 @@ namespace Excess.Web.Controllers
                     // var callbackUrl = Url.Action("ConfirmEmail", "Account", new { userId = user.Id, code = code }, protocol: Request.Url.Scheme);
                     // await UserManager.SendEmailAsync(user.Id, "Confirm your account", "Please confirm your account by clicking <a href=\"" + callbackUrl + "\">here</a>");
 
-                    return RedirectToAction("Index", "Home");
+                    return RedirectToAction("Login", "Account");
                 }
                 AddErrors(result);
             }
