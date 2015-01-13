@@ -1422,6 +1422,8 @@
     <Compile Include="Controllers\ExcessControllerBase.cs" />
     <Compile Include="Controllers\ProjectController.cs" />
     <Compile Include="Controllers\XSController.cs" />
+    <Compile Include="Entities\DSLProject.cs" />
+    <Compile Include="Entities\DSLTest.cs" />
     <Compile Include="Entities\ExcessDbContext.cs" />
     <Compile Include="Entities\Project.cs" />
     <Compile Include="Entities\ProjectRepository.cs" />
@@ -1443,9 +1445,17 @@
     <Compile Include="Migrations\201501030707045_Adding-Projects.Designer.cs">
       <DependentUpon>201501030707045_Adding-Projects.cs</DependentUpon>
     </Compile>
-    <Compile Include="Migrations\201501030709558_Reseeding-Projects.cs" />
-    <Compile Include="Migrations\201501030709558_Reseeding-Projects.Designer.cs">
-      <DependentUpon>201501030709558_Reseeding-Projects.cs</DependentUpon>
+    <Compile Include="Migrations\201501122001534_Hidden-Files.cs" />
+    <Compile Include="Migrations\201501122001534_Hidden-Files.Designer.cs">
+      <DependentUpon>201501122001534_Hidden-Files.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201501130008263_Project-Config.cs" />
+    <Compile Include="Migrations\201501130008263_Project-Config.Designer.cs">
+      <DependentUpon>201501130008263_Project-Config.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201501130525054_DSL-Tests.cs" />
+    <Compile Include="Migrations\201501130525054_DSL-Tests.Designer.cs">
+      <DependentUpon>201501130525054_DSL-Tests.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\AccountViewModels.cs" />
@@ -1461,6 +1471,11 @@
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>SampleCode.resx</DependentUpon>
+    </Compile>
+    <Compile Include="Resources\SampleProjectStrings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>SampleProjectStrings.resx</DependentUpon>
     </Compile>
     <Compile Include="Services\UserServices.cs" />
     <Compile Include="Startup.cs" />
@@ -1504,8 +1519,14 @@
     <EmbeddedResource Include="Migrations\201501030707045_Adding-Projects.resx">
       <DependentUpon>201501030707045_Adding-Projects.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\201501030709558_Reseeding-Projects.resx">
-      <DependentUpon>201501030709558_Reseeding-Projects.cs</DependentUpon>
+    <EmbeddedResource Include="Migrations\201501122001534_Hidden-Files.resx">
+      <DependentUpon>201501122001534_Hidden-Files.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201501130008263_Project-Config.resx">
+      <DependentUpon>201501130008263_Project-Config.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201501130525054_DSL-Tests.resx">
+      <DependentUpon>201501130525054_DSL-Tests.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\ProjectTemplates.resx">
       <Generator>ResXFileCodeGenerator</Generator>
@@ -1513,7 +1534,11 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\SampleCode.resx">
       <Generator>PublicResXFileCodeGenerator</Generator>
-      <LastGenOutput>SampleCode.Designer.cs</LastGenOutput>
+      <LastGenOutput>SampleCode1.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Resources\SampleProjectStrings.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>SampleProjectStrings.Designer.cs</LastGenOutput>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>

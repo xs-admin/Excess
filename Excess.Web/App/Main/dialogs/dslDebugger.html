@@ -1,15 +1,38 @@
 ﻿<div class="modal-header">
-    <h4 class="modal-title">
-        Debug DSL
-        <img width="20"/>
-        <a class="btn btn-default" ng-click="compileTest()">
-            <i class="fa fa-play-circle-o fa-lg"></i> Compile
-        </a>
-    </h4>
+    <div style="min-height:30px">
+        <div style="float:left">
+            <h4 class="modal-title">
+                Debug DSL
+                <img width="20" />
+                <a class="btn btn-default" ng-click="compileTest()">
+                    <i class="fa fa-play-circle-o fa-lg"></i> Compile
+                </a>
+            </h4>
+        </div>
+        <div class="btn-group" style="float:right">
+            <a class="btn btn-default" ng-disabled="testName == ''" ng-click="saveCurrentTest()">
+                <i class="fa fa-save fa-fw"></i>
+            </a>
+            <a class="btn btn-input">
+                <input class="form-control dd-input" type="text" placeholder="Saved Tests" ng-model="testName" />
+            </a>
+            <a class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                <span class="fa fa-caret-down"></span>
+            </a>
+            <ul class="dropdown-menu dd-dropdown">
+                <li ng-repeat="test in tests">
+                    <a ng-click="setCurrentTest(test)"><i class="fa fa-check-square fa-lg" style="margin-right:5px"></i> {{test.Caption}} </a>
+                </li>
+                <li ng-if="!gotTests">
+                    <a><i class="fa fa-spin fa-spinner"></i> Please wait...</a>
+                </li>
+            </ul>
+        </div>
+    </div>
 </div>
 <div class="modal-body" style="min-height:400px">
     <div class="round-border dd-code" style="float: left">
-        <xs-code-editor id="source-editor" source="{{sourceCode}}" size="{width: 423, height: 368}" />
+        <xs-code-editor id="source-editor" source="{{sourceCode}}" keywords="{{editorKeywords}}" size="{width: 423, height: 368}" />
     </div>
 
     <div class="round-border dd-code" style="float: right">
@@ -17,18 +40,5 @@
     </div>
 </div>
 <div class="modal-footer">
-    <div class="btn-group open" style="float:left">
-        <a class="btn btn-primary" href="#"><i class="fa fa-user fa-fw"></i> User</a>
-        <a class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#">
-            <span class="fa fa-caret-down"></span>
-        </a>
-        <ul class="dropdown-menu">
-            <li><a href="#"><i class="fa fa-pencil fa-fw"></i> Edit</a></li>
-            <li><a href="#"><i class="fa fa-trash-o fa-fw"></i> Delete</a></li>
-            <li><a href="#"><i class="fa fa-ban fa-fw"></i> Ban</a></li>
-            <li class="divider"></li>
-            <li><a href="#"><i class="i"></i> Make admin</a></li>
-        </ul>
-    </div>    
     <button class="btn btn-default" ng-click="done()">Close</button>
 </div>

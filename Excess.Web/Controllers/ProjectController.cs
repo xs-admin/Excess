@@ -20,7 +20,9 @@ namespace Excess.Web.Controllers
         public ActionResult LoadProject(int projectId)
         {
             ProjectRepository repo = new ProjectRepository();
-            Project project = repo.LoadProject(projectId);
+
+            dynamic config; 
+            Project project = repo.LoadProject(projectId, out config);
             if (project == null)
                 return HttpNotFound();
 
@@ -33,14 +35,16 @@ namespace Excess.Web.Controllers
                     return HttpNotFound(); //td: right error
             }
 
-            var runtime = _manager.createRuntime(project.ProjectType, project.Name);
+            IRuntimeProject runtime = _manager.createRuntime(project.ProjectType, project.Name, config);
             foreach (var file in project.ProjectFiles)
                 runtime.add(file.Name, file.ID, file.Contents);
 
-            Session["project"]   = runtime;
+            Session["project"] = runtime;
 
             if (!project.IsSample)
                 Session["projectId"] = project.ID;
+            else
+                Session["SampleProjectId"] = project.ID;
 
             return Json(new
             {
@@ -186,6 +190,71 @@ namespace Excess.Web.Controllers
             return Content(result);
         }
 
+        public ActionResult GetDSLTests()
+        {
+            var project = Session["projectId"] as int?;
+            if (project == null)
+                project = Session["SampleProjectId"] as int?;
+
+            if (project == null)
+                return HttpNotFound(); //td: right error
+
+            //td: !!! entity project
+            ExcessDbContext _db = new ExcessDbContext();
+            var result = _db.DSLTests.Where( test => test.ProjectID == project);
+
+            return Json(result, JsonRequestBehavior.AllowGet);
+        }
+
+
+        [ValidateInput(false)]
+        public ActionResult UpdateDSLTest(string id, string contents)
+        {
+            var project = Session["projectId"] as int?;
+            if (project == null)
+                return HttpNotFound(); //td: right error
+
+            Guid testId;
+            if (!Guid.TryParse(id, out testId))
+                return HttpNotFound(); //td: right error
+
+            ExcessDbContext _db = new ExcessDbContext();
+            var result = _db.DSLTests
+                .Where(test => test.ID == testId)
+                .FirstOrDefault();
+
+            if (result == null)
+                return HttpNotFound(); //td: right error
+
+            result.Contents = contents;
+            _db.SaveChanges();
+
+            return Content("ok");
+        }
+
+        [ValidateInput(false)]
+        public ActionResult AddDSLTest(string name, string contents)
+        {
+            var project = Session["projectId"] as int?;
+            if (project == null)
+                return HttpNotFound(); //td: right error
+
+            ExcessDbContext _db = new ExcessDbContext();
+
+            var result = new DSLTest
+            {
+                ID        = Guid.NewGuid(),  
+                ProjectID = (int)project,
+                Caption   = name,
+                Contents  = contents  
+            };
+
+            _db.DSLTests.Add(result);
+            _db.SaveChanges();
+
+            return Json(result, JsonRequestBehavior.AllowGet);
+        }
+
         //Project tree
         private class TreeNodeAction
         {
@@ -213,21 +282,23 @@ namespace Excess.Web.Controllers
                 {
                     new TreeNodeAction { id = "add-class", icon = "fa-plus-circle" }
                 } ,
-                children = project.ProjectFiles.Select<ProjectFile, TreeNode>( file =>
-                {
-                    return new TreeNode
+                children = project.ProjectFiles
+                    .Where(projectFile => !projectFile.isHidden)
+                    .Select<ProjectFile, TreeNode>(projectFile =>
                     {
-                        label   = file.Name,
-                        icon    = "fa-code",
-                        action  = "select-file",
-                        data    = file.Name,
-                        actions = new[]
+                        return new TreeNode
                         {
-                            new TreeNodeAction { id = "remove-file", icon = "fa-times-circle-o"       },
-                            new TreeNodeAction { id = "open-tab",    icon = "fa-arrow-circle-o-right" },
-                        }
-                    };
-                })
+                            label   = projectFile.Name,
+                            icon    = "fa-code",
+                            action  = "select-file",
+                            data    = projectFile.Name,
+                            actions = new[]
+                            {
+                                new TreeNodeAction { id = "remove-file", icon = "fa-times-circle-o"       },
+                                new TreeNodeAction { id = "open-tab",    icon = "fa-arrow-circle-o-right" },
+                            }
+                        };
+                    })
             };
 
             return result;

@@ -172,7 +172,7 @@
                         {
                             var dlg = dialogs.create(debuggerDlg,
                                                      debuggerCtrl,
-                                                     null,
+                                                     result.data.debuggerData,
                                                      { size: "1200px" });
                         }
                     })

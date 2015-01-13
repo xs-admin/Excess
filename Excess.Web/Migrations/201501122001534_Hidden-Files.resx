@@ -117,81 +117,10 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="ConsoleApplication" xml:space="preserve">
-    <value>class application
-{
-    void main()
-    {
-        //your code here
-    }
-}</value>
+  <data name="Target" xml:space="preserve">
+    <value>H4sIAAAAAAAEAO1Z227bRhB9L9B/IPjUAo4oyS+tQSVwJKsVGllG6KTPK3Ikb7tcstylK31bH/pJ+YXM8n6TSEp24wKGAUNazpy57NnZ4ejLP/+a73Yu0x4hENTjE300GOoacNtzKN9O9FBu3vykv3v7/XfmjePutM+p3KWSQ00uJvqDlP6VYQj7AVwiBi61A094GzmwPdcgjmeMh8OfjdHIAITQEUvTzI8hl9SF6At+nXrcBl+GhC09B5hI1vGJFaFqt8QF4RMbJvrNzgYhBr/DenCDIJKC0LVrRgm6YgHb6Brh3JNEoqNXnwRYMvD41vJxgbD7vQ8otyFMQBLAVS7eNZbhWMVi5IoplB0K6bk9AUeXSXKMqvpJKdaz5GH6ogztVdRRCif6XeD9AbacU4bxV+1dTVmgZBuTPCioXmi5wEXGCiSP+rvQpiGTYQATDqEMCLvQ7sI1o/ZvsL/3/gQ+4SFjRTfRUXxWWsAltOdDIPcfYZM4v5jpmlHWM6qKmVpBJ45pweXlWNdu0ThZM8hYUIjfkl4AvwCHgEhw7oiUEOAmLhyI8lizXrGl/qfWkHZ4hHRtSXYfgG/lw0THj7o2pztw0pXEg0+c4olDJRmE0GYEz4pEd8SzG1r9jXlINr0th8eRqPiVOpjDFOW95zEgvAXHNHL2duH0iXx+5fK343KyBcrKs9taCIu4PoN+JKzj4JUS5BvxRO525vp9QLhg0Q6n4fRjfQ3glf/fjv/PVMuPs0kZJRTzkjgRb/9sHTmzayqjSPmEUyIxV44qxrVA1psMDC33JW7QBqUexOgEdQSmFSKmeRNCw2FqSmOWsLwtNeK+NO1fjQMNrLkkvo87WmhokxXNirvZ6Rurf5fnxhiGLRqavczbzBIeBLKFylNFPgfmNBByRiRZE8WpqePWxKr0OJDs1FoDA6rFIN+HVEl9LpLxYONZxcoTOscYXTxLUbiQuVXueGva0RsGYSRoqDRTj4UuP1StjmnHtaOoH690R8gLQxElX+2OVO7iimjlJ90R826uiJav1pFMo7JJVUYYNUpUboYqzfqQ8MkIeDr5/j/EK3VkRaDSg+54eddViko01dvjSGnfVcRJ114M5dK75lzG1W+m/tzrgPFSWdi//D3rftcagapIZj1rCCoXv5lcwu3jrdqtHIvoGqbokTrqRrb2QoI7UAID6y82ZRTjzQWWhNMNCBn35/p4OBpXBmQvZ1hlCOGw7hOr//w9g6rEtr5J9HyDLL5a8EcS2A8k+MElux+LSKe8PpwF1jTuicI/c9izpm0YvQc9rzRom6KchVedlLTvYNuUpIc7Z0xCXmnxVNWh3wCh/iLZeTzQNh2IL7+J7qw9DCN2tzxd6DY/ODY+OGKjHb9hhNBlzNBksyYmTh5H1LsN0yj+5GbOQNBtDqF+gOMYL5rOQVOZBd94KbUw8KJHqUiFeUuQxEEuXAeSbogt8bFqcaPR1mfCQtX0umtwFnwVSj+U10KAu2almZxpHLcfzVzKPpsrX30TTxECukkxBFjx9yFlTub3vOH6OgChjkVSF9SWSlUftvsM6dbjHYGS9M3AB66qyj0gOxBMrJAoj3CKb1ieP8CW2Pu0aTwM0r4R5bSbM0q2AXFFgpHr41fksOPu3n4FsXxyoXkeAAA=</value>
   </data>
-  <data name="DSLLinker" xml:space="preserve">
-    <value>public class Linker : ManagedLinker
-{
-    public SyntaxNode Link(SyntaxNode node, SemanticModel model)
-    {
-        //global changes here
-        return node;
-    }
-}</value>
-  </data>
-  <data name="DSLParseCode" xml:space="preserve">
-    <value>    public SyntaxNode ParseCodeHeader(SyntaxNode node)
-    {
-        return null;
-    }
-
-    public SyntaxNode ParseCode(SyntaxNode node, SyntaxToken id, ParameterListSyntax args, BlockSyntax code, bool expectsResult)
-    {
-        throw new NotImplementedException();
-    }</value>
-  </data>
-  <data name="DSLParseMember" xml:space="preserve">
-    <value>    public SyntaxNode ParseMethod(SyntaxNode node, string id, ParameterListSyntax args, BlockSyntax code)
-    {
-        throw new NotImplementedException();
-    }</value>
-  </data>
-  <data name="DSLParseNamespace" xml:space="preserve">
-    <value>    public SyntaxNode ParseNamespace(SyntaxNode node, string  id, ParameterListSyntax args, BlockSyntax code)
-    {
-        throw new NotImplementedException();
-    }
-</value>
-  </data>
-  <data name="DSLParser" xml:space="preserve">
-    <value>public class Parser : ManagedParser&lt;Linker&gt;
-{{
-{0}
-}}</value>
-  </data>
-  <data name="DSLParseType" xml:space="preserve">
-    <value>    public SyntaxNode ParseClass(SyntaxNode node, string  id, ParameterListSyntax args)
-    {
-        throw new NotImplementedException();
-    }
-</value>
-  </data>
-  <data name="DSLPlugin" xml:space="preserve">
-    <value>using System;
-using Excess.Core;
-
-public class DSLPlugin
-{{
-    private static string DSLName = "{0}";
-
-    public static IDSLFactory Create()
-    {{
-        Parser.DSLName = DSLName;
-        Linker.DSLName = DSLName;
-
-        var parser = new Parser();
-        var linker = new Linker();
-
-        parser.Linker = linker;
-        return new ManagedDSLFactory(DSLName, parser, linker);
-    }}
-}}</value>
+  <data name="DefaultSchema" xml:space="preserve">
+    <value>dbo</value>
   </data>
 </root>

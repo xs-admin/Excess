@@ -86,4 +86,22 @@
             params: { text: text }
         });
     }
+
+    this.dslTests = function () {
+        return $http.get('/Project/GetDSLTests');
+    }
+
+    this.udateDslTest = function (test) {
+        return $http.post('/Project/UpdateDSLTest', {
+            id:       test.ID,
+            contents: test.Contents
+        });
+    }
+
+    this.addDslTest = function (name, contents) {
+        return $http.post('/Project/AddDSLTest', {
+            name:     name,
+            contents: contents
+        });
+    }
 }]);

@@ -14,12 +14,12 @@ namespace Excess.Services
             _dsl = DSL;
         }
 
-        public IRuntimeProject createRuntime(string projectType, string projectName)
+        public IRuntimeProject createRuntime(string projectType, string projectName, dynamic config)
         {
             switch (projectType)
             {
                 case "console": return new ConsoleRuntime(_dsl.factory());
-                case "dsl":     return new DSLRuntime(projectName);
+                case "dsl":     return new DSLRuntime(config);
             }
 
             throw new InvalidOperationException("Invalid project type " + projectType);

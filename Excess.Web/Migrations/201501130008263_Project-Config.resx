@@ -117,81 +117,10 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="ConsoleApplication" xml:space="preserve">
-    <value>class application
-{
-    void main()
-    {
-        //your code here
-    }
-}</value>
+  <data name="Target" xml:space="preserve">
+    <value>H4sIAAAAAAAEAO1a227bRhB9L9B/IPjUAo5oOy+tQSVwJLsVYtlG6KTPK3Ikb7NcstylK31bH/pJ/YUO78uLRFKUYrcwAgT2Xs7Mzp4Zzuz4n7/+Nt+vXaY9QSCox8f62ehU14DbnkP5aqyHcvnmJ/39u++/M68cd619yda9jdbhTi7G+qOU/oVhCPsRXCJGLrUDT3hLObI91yCOZ5yfnv5snJ0ZgBA6Ymma+SnkkroQ/4K/Tjxugy9DwuaeA0yk4zhjxajaLXFB+MSGsX61tkGI0W+wGF0hiKQgdO2SUYKqWMCWukY49ySRqOjFZwGWDDy+snwcIOxh4wOuWxImID3ARbG861lOz6OzGMXGDMoOhfTcnoBnb1PjGNXte5lYz42H5osttIlOHZtwrE+tm/vA+x1sqWtVcRcTFkRLG208KnaeaMX8Sc4JpE7070SbhEyGAYw5hDIg7ES7DxeM2h9h8+B9BT7mIWOqkqgmzpUGcAhl+RDIzSdYpqrPprpmlPcZ1Y35NmVPcqQZl2/Pde0WhZMFg5wDyvEt6QXwC3AIiATnnkgJAV7hzIHYijXpFVmpddpF7oaJ/s8QkLvoh7o2J+sb4Cv5ONbxR127pmtwspEU9TOn6La4SQZhq5B7EggIPlLuHF3UDeVfv5Goq7UE7og8WIhM4gfPY0B477tIAeOocSCsObgL9JgDoU3QNv2gTKOICTsjRUrna8qgb6hQtr7GiudzcvyqIkmkOLqguz/RDvlnZUjwo+JX6qANj8vpPfn8yuXn43J6BZGUo8uaCYu4PusZWOs4mHwGxUUcSN3OXH8ICBcsvuHsOP1YXwN45f/z8f9IsXw3myKhhKJd8qQjuv7pIlZm3RRGkfIpp0QqrnyqBNcCWStH8GSFKkklN1KLFWM3kJJyNCGVkpluUDtgWiESf2lCaPDKpvvILV9UwkZSCmcls7GlZjbnxPeRGkoNnY5oVlJAT95Y/QtLN8EwbNFQX+ba5pLQo8gKKrMRix24poGQUyLJgkTknDhubVmVZ1uMnUmrU6kaVIpryPZEP6uk3lbrVqEKc17jCV10yfiwkCtVKrFrm+MXDcJI0BCvJh4LXb4t5u3arVSeKogy3B0riWYqTDLSQxultiypo4x3R1PLRxVNHe+O1lAhqqAN072x02KxATad6Y2Yl4wNmPlcb9SkdGyATCbqeKZRYX7Vy4yam1W+2lXP7eTXpcg+1LHV70B/z965+ziuPdwdi8xBRSlGuyOVyzwVrTzTHbEo91S0YvSlkfBgBNyffP8d4pVKtobvUjLRHa8oy0qnEk151G6krDBTcbKxF0O5LIccyrh6xtmfex0wXioL+4e/o953LcGvLsml54l+JaE30+S6vVNWy7aTJbqGJnqiTpRpWxshwR1FC0bWH2zCKJ63WDAnnC5ByKSA189Pz84rvbaX0/cyhHBY5+bXN3+HoJFdW18aer4w1VpOsZQBDSf+RAL7kQQ/uGT9o4q0X1NpEFy9cTQIbmtzaEH726ypMTQAp9IUGoCkNoTaYfZqBv0/XOdgrK++zA0Ca+qk7OPT1T7K4anwSoPWBsUgvGoTYp+YUG5A9FBnQJPhlRaHig793ubrT6tdX95bHt6TpHGsOwsPD5EoW3q27/4y3/Yw3ySq/LDfTdaul/sdMtrxG17vu7zwN8msLRPNt9+hE1AvCExD/QM7cwqCrgqI6M/tOJ4XRReg2ZoZX3oZh/HgqkbZkgrF5yCJg6S7DCRdElvidFSFxu2pL4SFUXKC6Y0z43eh9EN5KQSmO6zUVzON3fLjdkdZZ/POj34ThzgCqknxCHDHP4SUObne1w3fyS0Qkf+lASi6UhkFotUmR7r1eEeg1HxT8DGfw9DxAMgOBBN3SJQn2Ec3/A7cwIrYm6yu2w7SfhFls5tTSlYBcUWKUezHX5HDjrt+9y+Zb5ZqZyoAAA==</value>
   </data>
-  <data name="DSLLinker" xml:space="preserve">
-    <value>public class Linker : ManagedLinker
-{
-    public SyntaxNode Link(SyntaxNode node, SemanticModel model)
-    {
-        //global changes here
-        return node;
-    }
-}</value>
-  </data>
-  <data name="DSLParseCode" xml:space="preserve">
-    <value>    public SyntaxNode ParseCodeHeader(SyntaxNode node)
-    {
-        return null;
-    }
-
-    public SyntaxNode ParseCode(SyntaxNode node, SyntaxToken id, ParameterListSyntax args, BlockSyntax code, bool expectsResult)
-    {
-        throw new NotImplementedException();
-    }</value>
-  </data>
-  <data name="DSLParseMember" xml:space="preserve">
-    <value>    public SyntaxNode ParseMethod(SyntaxNode node, string id, ParameterListSyntax args, BlockSyntax code)
-    {
-        throw new NotImplementedException();
-    }</value>
-  </data>
-  <data name="DSLParseNamespace" xml:space="preserve">
-    <value>    public SyntaxNode ParseNamespace(SyntaxNode node, string  id, ParameterListSyntax args, BlockSyntax code)
-    {
-        throw new NotImplementedException();
-    }
-</value>
-  </data>
-  <data name="DSLParser" xml:space="preserve">
-    <value>public class Parser : ManagedParser&lt;Linker&gt;
-{{
-{0}
-}}</value>
-  </data>
-  <data name="DSLParseType" xml:space="preserve">
-    <value>    public SyntaxNode ParseClass(SyntaxNode node, string  id, ParameterListSyntax args)
-    {
-        throw new NotImplementedException();
-    }
-</value>
-  </data>
-  <data name="DSLPlugin" xml:space="preserve">
-    <value>using System;
-using Excess.Core;
-
-public class DSLPlugin
-{{
-    private static string DSLName = "{0}";
-
-    public static IDSLFactory Create()
-    {{
-        Parser.DSLName = DSLName;
-        Linker.DSLName = DSLName;
-
-        var parser = new Parser();
-        var linker = new Linker();
-
-        parser.Linker = linker;
-        return new ManagedDSLFactory(DSLName, parser, linker);
-    }}
-}}</value>
+  <data name="DefaultSchema" xml:space="preserve">
+    <value>dbo</value>
   </data>
 </root>

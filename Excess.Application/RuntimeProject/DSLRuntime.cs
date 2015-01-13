@@ -15,10 +15,12 @@ namespace Excess.RuntimeProject
 {
     class DSLRuntime : BaseRuntime, IDSLRuntime
     {
-        public DSLRuntime(string projectName) :
+        private string _dslName;
+
+        public DSLRuntime(dynamic config) :
             base(new SimpleFactory())
         {
-            _projectName = projectName;
+            _dslName = config != null? config.Name : string.Empty;
 
             _ctx.AddUsing("System.Linq");
             _ctx.AddUsing("Microsoft.CodeAnalysis");
@@ -36,19 +38,16 @@ namespace Excess.RuntimeProject
             if (error != null)
                 return error;
 
-            ExcessContext ctx;
-            SyntaxTree tree = ExcessContext.Compile(text, factory, out ctx);
-
-            if (ctx.NeedsLinking())
+            SyntaxTree tree = ExcessContext.Compile(text, factory, out _ctx);
+            if (_ctx.NeedsLinking())
             {
                 Compilation compilation = CSharpCompilation.Create("debugDSL", syntaxTrees: new[] { tree });
 
-                compilation = ExcessContext.Link(ctx, compilation);
+                compilation = ExcessContext.Link(_ctx, compilation);
                 tree = compilation.SyntaxTrees.First();
-
-                notifyErrors();
             }
 
+            notifyInternalErrors();
             return tree.GetRoot().NormalizeWhitespace().ToString();
         }
 
@@ -62,7 +61,14 @@ namespace Excess.RuntimeProject
         protected override void doRun(Assembly asm, out dynamic client)
         {
             _assembly = asm;
-            client = new { debuggerDlg = "/App/Main/dialogs/dslDebugger.html", debuggerCtrl = "dslDebuggerCtrl" };
+            client = new {
+                debuggerDlg  = "/App/Main/dialogs/dslDebugger.html",
+                debuggerCtrl = "dslDebuggerCtrl",
+                debuggerData = new
+                {
+                    keywords = " " + _dslName
+                }
+            };
         }
 
         protected override IEnumerable<MetadataReference> compilationReferences()
@@ -79,42 +85,7 @@ namespace Excess.RuntimeProject
 
         protected override IEnumerable<SyntaxTree> compilationFiles()
         {
-            var root   = pluginTree.GetRoot();
-            var plugin = root
-                .ReplaceNode(root
-                    .DescendantNodes()
-                    .OfType<LiteralExpressionSyntax>()
-                    .First(),
-                    SyntaxFactory.LiteralExpression(
-                        SyntaxKind.StringLiteralExpression,
-                        SyntaxFactory.ParseToken( '"' + _projectName + '"')))
-                .SyntaxTree;
-
-            return new[] { plugin };
+            return null;
         }
-
-        private string _projectName;
-
-        static protected SyntaxTree pluginTree = SyntaxFactory.ParseSyntaxTree(
-            @"using System;
-            using Excess.Core;
-
-            public class DSLPlugin
-            {
-                private static string DSLName = """";
-
-                public static IDSLFactory Create()
-                {
-                    Parser.DSLName = DSLName;
-                    Linker.DSLName = DSLName;
-
-                    var parser = new Parser();
-                    var linker = new Linker();
-
-                    parser.Linker = linker;
-                    return new ManagedDSLFactory(DSLName, parser, linker);
-                }
-            }");
-
     }
 }

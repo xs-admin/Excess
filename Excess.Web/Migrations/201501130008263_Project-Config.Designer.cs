@@ -7,13 +7,13 @@ namespace Excess.Web.Migrations
     using System.Resources;
     
     [GeneratedCode("EntityFramework.Migrations", "6.1.1-30610")]
-    public sealed partial class ReseedingProjects : IMigrationMetadata
+    public sealed partial class ProjectConfig : IMigrationMetadata
     {
-        private readonly ResourceManager Resources = new ResourceManager(typeof(ReseedingProjects));
+        private readonly ResourceManager Resources = new ResourceManager(typeof(ProjectConfig));
         
         string IMigrationMetadata.Id
         {
-            get { return "201501030709558_Reseeding-Projects"; }
+            get { return "201501130008263_Project-Config"; }
         }
         
         string IMigrationMetadata.Source

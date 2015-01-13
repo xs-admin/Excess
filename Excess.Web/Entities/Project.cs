@@ -37,5 +37,6 @@ namespace Excess.Web.Entities
         public string Name { get; set; }
         public string Contents { get; set; }
         public int OwnerProject { get; set; }
+        public bool isHidden { get; set; }
     }
 }

@@ -157,5 +157,32 @@ namespace Excess.Web.Resources {
                 return ResourceManager.GetString("DSLParseType", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to using System;
+        ///using Excess.Core;
+        ///
+        ///public class DSLPlugin
+        ///{{
+        ///    private static string DSLName = &quot;{0}&quot;;
+        ///
+        ///    public static IDSLFactory Create()
+        ///    {{
+        ///        Parser.DSLName = DSLName;
+        ///        Linker.DSLName = DSLName;
+        ///
+        ///        var parser = new Parser();
+        ///        var linker = new Linker();
+        ///
+        ///        parser.Linker = linker;
+        ///        return new ManagedDSLFactory(DSLName, parser, linker);
+        ///    }}
+        ///}}.
+        /// </summary>
+        internal static string DSLPlugin {
+            get {
+                return ResourceManager.GetString("DSLPlugin", resourceCulture);
+            }
+        }
     }
 }

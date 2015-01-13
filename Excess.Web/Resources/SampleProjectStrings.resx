@@ -117,10 +117,40 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="Target" xml:space="preserve">
-    <value>H4sIAAAAAAAEAO1Z3W7bNhS+H7B3EHS1AalpJzdbILdI7WQwVsdBlbbXtHTscKMoTaRS+9l2sUfaK/RQ/3+2ZMdZMyAIEFjU4Xf+PpKHR//+/Y/1buNx4xFCyXwxNkeDoWmAcHyXifXYjNTqzS/mu7c//mBdu97G+JzJXWg5nCnk2HxQKrgkRDoP4FE58JgT+tJfqYHje4S6PjkfDn8loxEBhDARyzCsj5FQzIP4AR8nvnAgUBHlc98FLtNxfGPHqMYt9UAG1IGxeb1xQMrBF1gOrhFEMZCmccUZRVNs4CvToEL4iio09PKTBFuFvljbAQ5Qfr8NAOVWlEtIHbgsxPv6MjzXvpBiYgblRFL53oGAo4s0OKQ+/agQm3nwMHxxhLba6ziEY/Mu9P8AR90wjv7X9V1OeKhlW4M8KE09MwqBs5wVSB79d2ZMIq6iEMYCIhVSfmbcRUvOnN9he+//CWIsIs7LZqKh+K4ygEOoL4BQbT/CKjV+NjUNUp1H6hPzaaU5iU8zoS7OTeMWldMlh5wFJf9t5YfwGwgIqQL3jioFISZx5kIcx4b2mi79P9OGtMMlZBpzuvkAYq0exib+NI0btgE3G0kt+CQYrjicpMIIupTgWlFojnx2RYuvGIc06V0xLCNZpGBdHy4eycNXDn4/DqYp0FqeXddM2tQLeK7ove9zoKKDhE0cPArCIhEnMrc31+9DKiSPM5y5cxjrGwCv/P9+/H+mPXg/m7RSyjAuqRFJ+qfL2JhN2zaKlE85JVN1Va8SXBtUszhA1wpbksJqUKkdSC+oPTCdEAnN2xBaFlNbGPOAFeUkSerJrO4kOwpPa06DADNaKkTTEcNOqtDJG/vw6sxLMIgjW4q03NpcEy4EuobaW00+F25YKNWUKrqkmlMT12uI1emxI9iZthYG1DeDIg/ZJP27TMadBWMdqwjoDfro4VqK3YXcrGql2pgd3wwop2HLTjPxeeSJXbvVvtnJ3lGen4z0Ryg2hjJKMdofqVp9ldGqb5qIFqmFtp5H0khkbT+vk+MQ6pyMNsdT5v9Dl0odVQaqvOiPV9RKFa9k2y65Hymrlso42diLoVx2QjyVcc3z5HDu9cB4qSw8fNN61nw3ju+6SK49P8Zrx7WVHp3dzaTGWZqImAaG6JG5+hy1t1KBN9ACA/svPuEM/S0E5lSwFUiVVNXm+XB0XmtHvZzWEJHS5f37Q//57YDpwHbW/wfe+8oXAvFIQ+eBhj95dPNzGemYov9JYG3Nldj907ZWXlPY1bd4El69N7FkXRns6kscYM4Teg+vtDjVyj7syt68uvW+kHfdx5ODa2y6Sx/dSMyt3uf73dj3Xdj36OjGb7m097nYt+lsiMmjGwDNSsEi5Y9T1hQkWxcQ+lOVQH9RdQGayczEys+ohY6XLcpEasybg6IucuEqVGxFHYWvdXkaN5M+Ux7pgtVbgjsTi0gFkbqSErwlr3TBLLJff9zlqNpsLQL9JE/hAprJ0AVYiPcR425u903L8bUDQi+LdF/QKVV6f1hvc6RbX/QESsM3hQCE3lXuAdmBYHKBRHmEY2zD7fkDrKmzzQq+3SDdiaiG3Zoyug6pJ1OMYr7+4Er0F9e33wC4BvARox0AAA==</value>
+  <data name="PureTest1" xml:space="preserve">
+    <value>public class Impure 
+{
+    int _i = 0;
+    public void modify(int ii)
+    {
+        _i += ii;
+    }
+}
+
+public pure class Pure
+{
+    public void modify(Impure ip, int ii)
+    {
+        //this call modifies state
+        ip.modify(ii);
+    }
+}</value>
   </data>
-  <data name="DefaultSchema" xml:space="preserve">
-    <value>dbo</value>
+  <data name="PureTest2" xml:space="preserve">
+    <value>public static class StaticPure 
+{
+    public int doSomething(int ii)
+    {
+    }
+}
+
+public pure class Pure
+{
+    public void modify(StaticPure sp, int ii)
+    {
+        //this call does not modify state
+        sp.doSomething(ii);
+    }
+}</value>
   </data>
 </root>

@@ -78,6 +78,11 @@ namespace Excess.RuntimeProject
             notifyErrors(GetErrors());
         }
 
+        protected void notifyInternalErrors()
+        {
+            notifyErrors(_ctx.GetErrors());
+        }
+
         public void add(string file, int fileId, string contents)
         {
             if (_files.ContainsKey(file))

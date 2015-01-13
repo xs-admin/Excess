@@ -20,19 +20,23 @@ namespace Excess.Web.Entities
         public IEnumerable<Project> GetSampleProjects()
         {
             return from   project in _db.Projects
-                   where  project.IsSample == true
+                   where  project.IsSample == true && project.Name != null
                    select project;
         }
 
-        public Project LoadProject(int projectId)
+        public Project LoadProject(int projectId, out dynamic config)
         {
+            config = null;
             var projects = from project in _db.Projects
                            where project.ID == projectId
                            select project;
 
             var result = projects.FirstOrDefault();
             if (result != null)
+            {
                 LoadProject(result);
+                config = _db.DSLProjects.SingleOrDefault(cfg => cfg.ProjectID == result.ID);
+            }
 
             return result;
         }
@@ -94,6 +98,7 @@ namespace Excess.Web.Entities
 
         private class DSLConfiguration
         {
+            public string name { get; set; }
             public string parser { get; set; }
             public string linker { get; set; }
             public bool extendsNamespaces { get; set; }
@@ -112,7 +117,9 @@ namespace Excess.Web.Entities
                 UserID      = userId
             };
 
-            List<ProjectFile> files = new List<ProjectFile>();
+            List<ProjectFile> files     = new List<ProjectFile>();
+            DSLProject        dslConfig = null;
+            
             switch (projectType)
             {
                 case "console":
@@ -138,15 +145,33 @@ namespace Excess.Web.Entities
 
                     files.Add(new ProjectFile
                     {
-                        Name = "parser",
+                        Name     = "parser",
                         Contents = string.Format(ProjectTemplates.DSLParser, members.ToString()) 
                     });
 
                     files.Add(new ProjectFile
                     {
-                        Name = "linker",
+                        Name     = "linker",
                         Contents = ProjectTemplates.DSLLinker
                     });
+
+                    files.Add(new ProjectFile
+                    {
+                        Name     = "plugin",
+                        isHidden = true,
+                        Contents = string.Format(ProjectTemplates.DSLPlugin, config.name)
+                    });
+
+                    dslConfig = new DSLProject
+                    {
+                        Name = config.name,
+                        ParserKind = config.parser,
+                        LinkerKind = config.linker,
+                        ExtendsNamespaces = config.extendsNamespaces,
+                        ExtendsTypes = config.extendsTypes,
+                        ExtendsMembers = config.extendsMembers,
+                        ExtendsCode = config.extendsCode,
+                    };
                     break;
                 }
 
@@ -160,6 +185,12 @@ namespace Excess.Web.Entities
             {
                 file.OwnerProject = project.ID;
                 _db.ProjectFiles.Add(file);
+            }
+
+            if (dslConfig != null)
+            {
+                dslConfig.ProjectID = project.ID;
+                _db.DSLProjects.Add(dslConfig);
             }
 
             _db.SaveChanges();

@@ -19,11 +19,64 @@ namespace Excess.Web.Migrations
             foreach (var sample in TranslationSamples())
                 context.Samples.AddOrUpdate(sample);
 
+            int projectSamples = 1;
             foreach (var sampleProject in SampleProjects())
+            {
+                projectSamples++;
                 context.Projects.AddOrUpdate(sampleProject);
+            }
 
+            reserveProjects(context, projectSamples, 299);
+
+            int projectFileSamples = 1;
             foreach (var file in SampleProjectFiles())
+            {
+                projectFileSamples++;
                 context.ProjectFiles.AddOrUpdate(file);
+            }
+
+            reserveProjectFiles(context, projectFileSamples, 999);
+
+            int dslConfigs = 1;
+            foreach (var config in DSLProjects())
+            {
+                dslConfigs++;
+                context.DSLProjects.AddOrUpdate(config);
+            }
+
+            reserveDSLProjectFiles(context, dslConfigs, 99);
+
+            foreach (var dslTest in DSLTests())
+            {
+                context.DSLTests.AddOrUpdate(dslTest);
+            }
+        }
+
+        private void reserveProjectFiles(ExcessDbContext context, int projectFileSamples, int reserveCount)
+        {
+            for (int i = projectFileSamples; i < reserveCount; i++)
+            {
+                var reserved = new ProjectFile { ID = i };
+                context.ProjectFiles.AddOrUpdate(reserved);
+            }
+        }
+
+        private void reserveProjects(ExcessDbContext context, int projectSamples, int reserveCount)
+        {
+            for (int i = projectSamples; i < reserveCount; i++)
+            {
+                var reserved = new Project { ID = i, IsSample = true };
+                context.Projects.AddOrUpdate(reserved);
+            }
+        }
+
+        private void reserveDSLProjectFiles(ExcessDbContext context, int dslProjects, int reserveCount)
+        {
+            for (int i = dslProjects; i < reserveCount; i++)
+            {
+                var reserved = new DSLProject { ID = i };
+                context.DSLProjects.AddOrUpdate(reserved);
+            }
         }
 
         private TranslationSample[] TranslationSamples()
@@ -70,6 +123,7 @@ namespace Excess.Web.Migrations
         {
             return new ProjectFile[]
             {
+                //Hello world
                 new ProjectFile
                 {
                     ID = 1,
@@ -78,6 +132,7 @@ namespace Excess.Web.Migrations
                     Contents = SampleCode.HelloWorld,
                 },
 
+                //Lolcats
                 new ProjectFile
                 {
                     ID = 2,
@@ -109,6 +164,32 @@ namespace Excess.Web.Migrations
                     Name = "trollcat",
                     Contents = SampleCode.LolCatsTrollcat,
                 },
+
+                //Pure
+                new ProjectFile 
+                {
+                    ID           = 6,
+                    OwnerProject = 3,
+                    Name         = "plugin",
+                    isHidden     = true,   
+                    Contents     = string.Format(ProjectTemplates.DSLPlugin, "pure")
+                },
+
+                new ProjectFile
+                {
+                    ID           = 7,
+                    OwnerProject = 3,
+                    Name         = "parser",
+                    Contents     = SampleCode.PureParser,
+                },
+
+                new ProjectFile
+                {
+                    ID           = 8,
+                    OwnerProject = 3,
+                    Name         = "linker",
+                    Contents     = SampleCode.PureLinker,
+                },
             };
         }
 
@@ -130,6 +211,53 @@ namespace Excess.Web.Migrations
                     ProjectType = "console",
                     Name = "LOL Cats",
                     IsSample = true,
+                },
+
+                new Project
+                {
+                    ID = 3,
+                    ProjectType = "dsl",
+                    Name = "Pure Class DSL",
+                    IsSample = true,
+                },
+            };
+        }
+
+        private DSLProject[] DSLProjects()
+        {
+            return new DSLProject[]
+            {
+                new DSLProject
+                {
+                    ID           = 1,
+                    ProjectID    = 3,
+                    Name         = "pure",
+                    ExtendsTypes = true,
+                },
+            };
+        }
+
+        static Guid PureTest1 = new Guid("E8FB63DB-D135-4FE9-893A-24A4162A1D0B");
+        static Guid PureTest2 = new Guid("6C3371F4-59AD-4D74-91BA-50C5A9424632");
+
+        private DSLTest[] DSLTests()
+        {
+            return new DSLTest[]
+            {
+                new DSLTest
+                {
+                    ID          = PureTest1,
+                    ProjectID   = 3,
+                    Caption     = "Testing impurity",
+                    Contents    = SampleProjectStrings.PureTest1,
+                },
+
+                new DSLTest
+                {
+                    ID          = PureTest2,
+                    ProjectID   = 3,
+                    Caption     = "Testing static classs",
+                    Contents    = SampleProjectStrings.PureTest2,
                 },
             };
         }

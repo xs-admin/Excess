@@ -5,12 +5,13 @@
 function ($scope, $modalInstance, xsProject)
 {
     //default values
-    $scope.projectName = "Enter Name";
+    $scope.projectName = "";
     $scope.projectKind = "console";
     $scope.finishText  = "Finish"; 
 
     $scope.dslConfiguration =
     {
+        name:              "",
         parser:            "roslyn",
         linker:            "roslyn",
         extendsNamespaces: false,

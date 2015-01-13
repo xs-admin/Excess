@@ -326,5 +326,48 @@ namespace Excess.Web.Resources {
                 return ResourceManager.GetString("Misc", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to public class Linker : ManagedLinker
+        ///{
+        ///    public SyntaxNode CheckCall(SyntaxNode node, SemanticModel model)
+        ///    {
+        ///        InvocationExpressionSyntax call   = (InvocationExpressionSyntax)node;
+        ///        ISymbol                    caller = GetSemantics(model,  call.Expression);
+        ///
+        ///        bool isPure = false;
+        ///        if (caller == null)
+        ///            Error(call, &quot;cannot resolve &apos;&quot; + call.Expression.ToString() + &quot;&apos;&quot;);
+        ///        else
+        ///        {
+        ///            ITypeSymbol callee = caller.ContainingType;
+        ///        [rest of string was truncated]&quot;;.
+        /// </summary>
+        public static string PureLinker {
+            get {
+                return ResourceManager.GetString("PureLinker", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to public class Parser : ManagedParser&lt;Linker&gt;
+        ///{
+        ///    public SyntaxNode ParseClass(SyntaxNode node, string  id, ParameterListSyntax args)
+        ///    {
+        ///        IEnumerable&lt;SyntaxNode&gt; assigments = node
+        ///            .DescendantNodes()
+        ///            .OfType&lt;ExpressionStatementSyntax&gt;()
+        ///            .Where(statement =&gt; IsAssigment(statement.Expression.CSharpKind()))
+        ///            .Select(assignment =&gt; assignment.Expression);
+        ///
+        ///        IEnumerable&lt;SyntaxNode&gt; calls = node
+        ///            .DescendantNodes()
+        ///            .Of [rest of string was truncated]&quot;;.
+        /// </summary>
+        public static string PureParser {
+            get {
+                return ResourceManager.GetString("PureParser", resourceCulture);
+            }
+        }
     }
 }

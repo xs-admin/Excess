@@ -25,8 +25,7 @@
                 <div class="form-group"
                      ng-class="{'has-error': rc.selectProject.needsAttention(selectProject.projectName)}">
                     <label class="control-label">Name</label>
-                    <input name="projectName" class="form-control" type="text" required
-                           ng-model="projectName" />
+                    <input name="projectName" class="form-control" type="text" placeholder="Project Name" ng-model="projectName" />
                 </div>
                 <div class="form-group">
                     <label class="control-label">Kind</label>
@@ -49,7 +48,12 @@
                     </div>
                     <div ng-switch-when="dsl">
                         <div class="form-group">
-                            <label class="control-label">Compiler</label>
+                            <label class="control-label">DSL Name</label>
+                            <input name="projectName" class="form-control" type="text" placeholder="DSL Name" required ng-model="dslConfiguration.name" />
+                        </div>
+
+                        <div class="form-group">
+                            <label class="control-label">Parser</label>
                             <select id="parser-type" class="form-control">
                                 <option value="roslyn">Roslyn</option>
                             </select>

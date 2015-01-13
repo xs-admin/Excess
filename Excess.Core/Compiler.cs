@@ -109,8 +109,8 @@ namespace Excess.Core
                 }
                 else
                 {
-                    //td: error
-                    Debug.Assert(false);
+                    //any other top level construct indicates completeness
+                    return tree;
                 }
             }
 
