@@ -19,3 +19,7 @@
     width: 200px;
     display: inline;
 }
+
+.home-selector {
+    min-width: 150px;
+}

@@ -190,6 +190,32 @@ namespace Excess.Web.Migrations
                     Name         = "linker",
                     Contents     = SampleCode.PureLinker,
                 },
+
+                //match
+                new ProjectFile
+                {
+                    ID           = 9,
+                    OwnerProject = 4,
+                    Name         = "plugin",
+                    isHidden     = true,
+                    Contents     = string.Format(ProjectTemplates.DSLPlugin, "match")
+                },
+
+                new ProjectFile
+                {
+                    ID           = 10,
+                    OwnerProject = 4,
+                    Name         = "parser",
+                    Contents     = SampleProjectStrings.MatchParser,
+                },
+
+                new ProjectFile
+                {
+                    ID           = 11,
+                    OwnerProject = 4,
+                    Name         = "linker",
+                    Contents     = SampleProjectStrings.MatchLinker,
+                },
             };
         }
 
@@ -220,6 +246,14 @@ namespace Excess.Web.Migrations
                     Name = "Pure Class DSL",
                     IsSample = true,
                 },
+
+                new Project
+                {
+                    ID = 4,
+                    ProjectType = "dsl",
+                    Name = "Match DSL",
+                    IsSample = true,
+                },
             };
         }
 
@@ -234,11 +268,20 @@ namespace Excess.Web.Migrations
                     Name         = "pure",
                     ExtendsTypes = true,
                 },
+                new DSLProject
+                {
+                    ID          = 2,
+                    ProjectID   = 4,
+                    Name        = "match",
+                    ExtendsCode = true,
+                },
             };
+
         }
 
-        static Guid PureTest1 = new Guid("E8FB63DB-D135-4FE9-893A-24A4162A1D0B");
-        static Guid PureTest2 = new Guid("6C3371F4-59AD-4D74-91BA-50C5A9424632");
+        static Guid PureTest1  = new Guid("E8FB63DB-D135-4FE9-893A-24A4162A1D0B");
+        static Guid PureTest2  = new Guid("6C3371F4-59AD-4D74-91BA-50C5A9424632");
+        static Guid MatchTest1 = new Guid("834A3BDB-40A4-4025-8588-FB341C22A2E6");
 
         private DSLTest[] DSLTests()
         {
@@ -256,8 +299,15 @@ namespace Excess.Web.Migrations
                 {
                     ID          = PureTest2,
                     ProjectID   = 3,
-                    Caption     = "Testing static classs",
+                    Caption     = "Testing static classes",
                     Contents    = SampleProjectStrings.PureTest2,
+                },
+                new DSLTest
+                {
+                    ID          = MatchTest1,
+                    ProjectID   = 4,
+                    Caption     = "Usage",
+                    Contents    = SampleProjectStrings.MatchTest1,
                 },
             };
         }

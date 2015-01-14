@@ -12,40 +12,50 @@
             $rootScope.$broadcast('loading-requests', 3 );
 
             //translation samples
+            $scope.gotSamples = false;
             xsCompiler.samples()
                 .then(function (result) {
                     $scope.samples = result.data;
                 })
                 .finally(function () {
+                    $scope.gotSamples = true;
                     $rootScope.$broadcast('request-loaded');
                 });
 
-            $scope.selectedSample = null;
-            $scope.$watch("selectedSample", function (value) {
-                if (value)
-                {
-                    xsCompiler.sample(value.id)
-                        .then(function (result) {
-                            $scope.sourceCode = result.data;
-                        })
-                }
-            });
+            $scope.selectSample = function (sampleId) {
+                xsCompiler.sample(sampleId)
+                    .then(function (result) {
+                        $scope.sourceCode = result.data;
+                    })
+            }
 
             //project samples
+            $scope.gotSampleProjects = false;
             xsCompiler.sampleProjects()
                 .then(function (result) {
-                    $scope.sampleProjects = result.data;
+
+                    var projects = result.data; 
+                    angular.forEach(projects, function (value, key) {
+                        var icon = "fa-circle-o";
+                        if (value.ProjectType == 'console') 
+                            icon = 'fa-terminal';
+                        else if (value.ProjectType == 'dsl') 
+                            icon = 'fa-signal';
+
+                        value.Icon = icon;
+                    });
+
+                    $scope.sampleProjects = projects;
                 })
                 .finally(function () {
+                    $scope.gotSampleProjects = true;
                     $rootScope.$broadcast('request-loaded');
                 });
 
-            $scope.selectedProject = null;
-            $scope.$watch("selectedProject", function (value) {
-                if (value) {
-                    $state.go('project', { projectId: value.ID });
-                }
-            });
+            $scope.selectProject = function (projectId)
+            {
+                $state.go('project', { projectId: projectId });
+            };
 
             //editor keywords
             $scope.editorKeywords = null;

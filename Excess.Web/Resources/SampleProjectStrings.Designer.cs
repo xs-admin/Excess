@@ -61,6 +61,67 @@ namespace Excess.Web.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to public class Linker : ManagedLinker
+        ///    {
+        ///        public SyntaxNode Link(SyntaxNode node, SemanticModel model)
+        ///        {
+        ///            return node;
+        ///        }
+        ///    }.
+        /// </summary>
+        internal static string MatchLinker {
+            get {
+                return ResourceManager.GetString("MatchLinker", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to public class Parser : ManagedParser&lt;Linker&gt;
+        ///    {
+        ///        public SyntaxNode ParseCode(SyntaxNode node, string id, ParameterListSyntax args, BlockSyntax code, bool expectsResult)
+        ///        {
+        ///            ExpressionSyntax control = null;
+        ///            if (args.Parameters.Count &gt; 0)
+        ///                control = SyntaxFactory.IdentifierName(args.Parameters[0].Identifier);
+        ///
+        ///            //all the match element supports are case/default
+        ///            if (!startsWithCase(code))
+        ///            {
+        ///                Error( [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string MatchParser {
+            get {
+                return ResourceManager.GetString("MatchParser", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to void main()
+        ///{
+        ///    int y = 20;
+        ///    match (x)
+        ///    {
+        ///        case 0:
+        ///        {
+        ///            y = 20;
+        ///            return null;
+        ///        }
+        ///        case &gt; 10: 
+        ///        	return 30;
+        ///        case y &gt; 10: 
+        ///        	return 40;
+        ///        default: 
+        ///        	return x;
+        ///    }
+        ///}.
+        /// </summary>
+        internal static string MatchTest1 {
+            get {
+                return ResourceManager.GetString("MatchTest1", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to public class Impure 
         ///{
         ///    int _i = 0;

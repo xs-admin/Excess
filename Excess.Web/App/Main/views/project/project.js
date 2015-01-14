@@ -223,8 +223,13 @@
                 if (_currentTab != selected) {
                     _currentTab = selected;
 
+                    var cached = _fileCache[_currentTab.name];
+
                     _ignoreChange = true;
-                    $scope.sourceCode = selected.sourceCode;
+                    if (cached) 
+                        $scope.sourceCode = cached.contents;
+                    else
+                        $scope.sourceCode = selected.sourceCode;
                 }
             }
 

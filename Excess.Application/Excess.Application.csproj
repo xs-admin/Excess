@@ -102,6 +102,7 @@
   <ItemGroup>
     <Compile Include="DSL\Asynch.cs" />
     <Compile Include="DSL\DSLPlugin.cs" />
+    <Compile Include="DSL\match.cs" />
     <Compile Include="DSL\pure.cs" />
     <Compile Include="DSL\Synch.cs" />
     <Compile Include="RuntimeProject\BaseRuntime.cs" />

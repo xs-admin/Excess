@@ -3,32 +3,69 @@
         <tr>
             <td class="home-text">
                 <h3>Welcome to Excess</h3>
-                A platform for programming language experimentation. Introducing <strong>xs</strong>, a superset of <strong>c#</strong> 
-                that uses translation to generate executable code.
-                
-                <p style="margin-bottom: 10px; margin-top: 10px">
-                    <select class="form-control home-select" ng-model="selectedSample" ng-options="sample.desc for sample in samples">
-                        <option value="">Compile a sample</option>
-                    </select>
-                    <label>OR</label>
-                    <select class="form-control home-select" ng-model="selectedProject" ng-options="sampleProject.Name for sampleProject in sampleProjects">
-                        <option value="">Run a sample</option>
-                    </select>
+                <p>
+                    A platform for programming language experimentation. Introducing <strong>xs</strong>, a superset of <strong>c#</strong>
+                    that uses translation to generate executable code.
                 </p>
+                
+                <div class="btn-group">
+                    <a class="btn btn-default home-selector">
+                        Run a project in the awesome IDE
+                    </a>
+                    <a class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                        <span class="fa fa-caret-down"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li ng-repeat="sampleProject in sampleProjects">
+                            <a ng-click="selectProject(sampleProject.ID)">
+                                <i class="fa {{sampleProject.Icon}}" style="margin-right:15px"></i> {{sampleProject.Name}}
+                            </a>
+                        </li>
+                        <li ng-if="!gotSampleProjects">
+                            <a><i class="fa fa-spin fa-refresh"></i> Please wait...</a>
+                        </li>
+                    </ul>
+                </div>
+
+                <a class="btn btn-default" ng-disabled="true">OR</a>
+
+                <div class="btn-group">
+                    <a class="btn btn-default home-selector">
+                        Choose an example
+                    </a>
+                    <a class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                        <span class="fa fa-caret-down"></span>
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li ng-repeat="sample in samples">
+                            <a ng-click="selectSample(sample.id)">
+                                <i class="fa fa-check-square"></i> {{sample.desc}}
+                            </a>
+                        </li>
+                        <li ng-if="!gotSamples">
+                            <a><i class="fa fa-spin fa-refresh"></i> Please wait...</a>
+                        </li>
+                    </ul>
+                </div>
+
+                <a class="btn btn-default" ng-disabled="true">THEN</a>
+                <a class="btn btn-default" ng-click="translateSource()">
+                    <i class="fa fa-play-circle-o fa-lg"></i> Compile &raquo;
+                </a>
             </td>
         </tr>
         <tr style="height: 100%">
             <td height="100%" style="position: relative">
-                <layout class="home-text" 
-                        ng-splitters="false" 
-                        ng-center   ="{minSize: '110px'}"
-                        ng-east     ="{size: '45%', resize: resizeTarget}"
-                        ng-west     ="{size: '45%', resize: resizeSource}">
+                <layout class="home-text"
+                        ng-splitters="false"
+                        ng-center="{minSize: '20px'}"
+                        ng-east="{size: '50%', resize: resizeTarget}"
+                        ng-west="{size: '50%', resize: resizeSource}">
 
                     <div class="pane ui-layout-center">
-                        <p>
-                            <button class="btn btn-default center-block" ng-click="translateSource()">Compile &raquo;</button>
-                        </p>
+                        <!--<p>
+                <button class="btn btn-default center-block" ng-click="translateSource()">Compile &raquo;</button>
+            </p>-->
                     </div>
 
                     <div class="pane ui-layout-east round-border">
@@ -37,8 +74,8 @@
 
                     <div class="pane ui-layout-west round-border">
                         <xs-code-editor id="source-editor" class="code-container"
-                                        source  ="{{sourceCode}}"
-                                        resized ="{{sourceResized}}"
+                                        source="{{sourceCode}}"
+                                        resized="{{sourceResized}}"
                                         keywords="{{editorKeywords}}" />
                     </div>
                 </layout>

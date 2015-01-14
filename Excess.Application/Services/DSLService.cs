@@ -18,7 +18,7 @@ namespace Excess
             IDSLFactory result = new SimpleFactory()
                 .Add<ASynchDSL>("asynch")
                 .Add<SynchDSL>("synch")
-                .AddFactory(PureFactory.Create());
+                .AddFactory(MatchFactory.Create());
 
             if (_appFactory != null)
                 result = new CompoundFactory(result, _appFactory);
