@@ -270,8 +270,6 @@
     <Content Include="App\Main\components\layout.css" />
     <Content Include="App\Main\components\layout.js" />
     <Content Include="App\Main\components\layout.html" />
-    <Content Include="App\Main\components\mmenu.html" />
-    <Content Include="App\Main\components\mmenu.js" />
     <Content Include="App\Main\components\code-editor.js" />
     <Content Include="App\Main\components\tree.css" />
     <Content Include="App\Main\components\tree.html" />
@@ -279,6 +277,9 @@
     <Content Include="App\Main\dialogs\dslDebugger.css" />
     <Content Include="App\Main\dialogs\dslDebugger.js" />
     <Content Include="App\Main\dialogs\dslDebugger.html" />
+    <Content Include="App\Main\dialogs\helpDialog.css" />
+    <Content Include="App\Main\dialogs\helpDialog.html" />
+    <Content Include="App\Main\dialogs\helpDialog.js" />
     <Content Include="App\Main\dialogs\login.html" />
     <Content Include="App\Main\dialogs\login.js" />
     <Content Include="App\Main\dialogs\newClass.html" />
@@ -298,8 +299,6 @@
     <Content Include="App\Main\services\menu.js" />
     <Content Include="App\Main\services\project.js" />
     <Content Include="App\Main\views\home\home.css" />
-    <Content Include="App\Main\views\layout\header.css" />
-    <Content Include="App\Main\views\layout\header.js" />
     <Content Include="App\Main\views\layout\layout.css" />
     <Content Include="App\Main\views\layout\layout.js" />
     <Content Include="App\Main\views\home\home.js" />
@@ -402,7 +401,6 @@
     <Content Include="App\Main\views\about\about.html" />
     <Content Include="App\Main\web.config" />
     <Content Include="log4net.config" />
-    <Content Include="App\Main\views\layout\header.cshtml" />
     <Content Include="fonts\fontawesome-webfont.woff">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

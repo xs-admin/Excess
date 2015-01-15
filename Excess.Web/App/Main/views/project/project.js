@@ -1,8 +1,8 @@
 ﻿(function () {
     var controllerId = 'app.views.project';
     angular.module('app').controller(controllerId, [
-        '$scope', '$rootScope', '$stateParams', 'dialogs', 'hotkeys', 'xsProject',
-        function ($scope, $rootScope, $stateParams, dialogs, hotkeys, xsProject) {
+        '$scope', '$rootScope', '$window', '$stateParams', 'dialogs', 'hotkeys', 'xsProject',
+        function ($scope, $rootScope, $window, $stateParams, dialogs, hotkeys, xsProject) {
             var vm = this;
             
             //project tree
@@ -298,46 +298,12 @@
                 $scope.sourceModified = false;
             }
             
-            //test
-            $scope.testTree =
-            [
-                {
-                    label: 'project',
-                    icon: 'fa-star',
-                    children:
-                    [
-                        {
-                            label: 'folder1',
-                            icon: 'fa-folder',
-                            children:
-                            [
-                                {
-                                    label: 'file1',
-                                    action: "select-file",
-                                    data: {
-                                        file: "filename1"
-                                    }
-                                },
-                                {
-                                    label: 'file2',
-                                    action: "test-console",
-                                },
-                                { label: 'file3' },
-                            ]
-                        },
-
-                        { label: 'file4', icon: 'fa-file' },
-                        {
-                            label: 'file5',
-                            icon: 'fa-file',
-                            actions: 
-                            [
-                                { id: 'new_tab', icon: 'fa-star'},
-                            ]
-                        },
-                    ]
-                }
-            ];
+            //show help on first visit
+            var hasVisited = $window.localStorage['xs-seen-project-help'];
+            if (!hasVisited) {
+                $window.localStorage['xs-seen-project-help'] = true;
+                $rootScope.projectHelp();
+            }
         }
     ])
 })();

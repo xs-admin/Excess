@@ -1,10 +1,11 @@
 ﻿(function() {
     var controllerId = 'app.views.home';
     angular.module('app').controller(controllerId, [
-        '$scope', '$rootScope', '$modal', '$state', 'xsCompiler',
-        function ($scope, $rootScope, $modal, $state, xsCompiler) {
+        '$scope', '$window', '$rootScope', '$modal', '$state', 'xsCompiler',
+        function ($scope, $window, $rootScope, $modal, $state, xsCompiler) {
             var vm = this;
             
+            //source code 
             $scope.sourceCode = "//write xs here";
             $scope.targetCode = "//result c# here after compiling";
 
@@ -87,6 +88,13 @@
 
             $scope.resizeTarget = function () {
                 $scope.targetResized = !$scope.targetResized;
+            }
+
+            //show help on first visit
+            var hasVisited = $window.localStorage['xs-seen-home-help'];
+            if (!hasVisited) {
+                $window.localStorage['xs-seen-home-help'] = true;
+                $rootScope.homeHelp();
             }
         }
     ]);
