@@ -317,8 +317,12 @@
     <Content Include="Content\hotkeys.css" />
     <Content Include="Content\hotkeys.min.css" />
     <Content Include="Content\images\blogspot.png" />
+    <Content Include="Content\images\dsl-debugger.png" />
     <Content Include="Content\images\facebook.png" />
     <Content Include="Content\images\gplus.png" />
+    <Content Include="Content\images\home-options.png" />
+    <Content Include="Content\images\home-usage.png" />
+    <Content Include="Content\images\project-usage.png" />
     <Content Include="Content\images\twitter.png" />
     <Content Include="Content\jquery.ui.layout.css" />
     <Content Include="Content\themes\base\accordion.css" />
