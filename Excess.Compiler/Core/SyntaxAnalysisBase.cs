@@ -3,190 +3,178 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Excess.Compiler.Core
 {
-    using SyntacticalMatchFunction     = Func<SyntaxNode, ISyntacticalMatchResult, bool>;
-    using SyntacticalMatchNodeFunction = Func<SyntaxNode, bool>;
-
-    public class BaseSyntacticalMatch : ISyntacticalMatch
+    public class BaseSyntacticalMatch<TNode> : ISyntacticalMatch<TNode>
     {
-        private ISyntaxAnalysis  _syntax;
-        public BaseSyntacticalMatch(ISyntaxAnalysis syntax)
+        private ISyntaxAnalysis<TNode>   _syntax;
+        private ISyntacticalMatch<TNode> _parent;
+
+        public BaseSyntacticalMatch(ISyntaxAnalysis<TNode> syntax, ISyntacticalMatch<TNode> parent = null)
         {
             _syntax = syntax;
+            _parent = parent;
         }
 
 
-        private List<SyntacticalMatchFunction> _matchers = new List<SyntacticalMatchFunction>();
-        public void addMatcher(Func<SyntaxNode, bool> matcher)
+        private List<Func<TNode, ISyntacticalMatchResult<TNode>, bool>> _matchers = new List<Func<TNode, ISyntacticalMatchResult<TNode>, bool>>();
+        public void addMatcher(Func<TNode, bool> matcher)
         {
             _matchers.Add((node, result) => matcher(node));
         }
 
-        private static SyntacticalMatchFunction MatchChildren(ISyntacticalMatch match)
+        private static Func<TNode, ISyntacticalMatchResult<TNode>, bool> MatchChildren(ISyntacticalMatch<TNode> match)
         {
             return (node, result) =>
             {
-                result.matchNodes(node.ChildNodes(), match);
+                result.matchChildren(match);
                 return true;
             };
         }
 
-        private static SyntacticalMatchFunction MatchDescendants(ISyntacticalMatch match)
+        private static Func<TNode, ISyntacticalMatchResult<TNode>, bool> MatchDescendants(ISyntacticalMatch<TNode> match)
         {
             return (node, result) =>
             {
-                result.matchNodes(node.DescendantNodes(), match);
+                result.matchDescendants(match);
                 return true;
             };
         }
 
-        public INestedSyntacticalMatch children()
+        public ISyntacticalMatch<TNode> children()
         {
-            BaseNestedSyntacticalMatch result = new BaseNestedSyntacticalMatch(this, _syntax);
+            BaseSyntacticalMatch<TNode> result = new BaseSyntacticalMatch<TNode>(_syntax, this);
             _matchers.Add(MatchChildren(result));
 
             return result;
         }
 
-        public INestedSyntacticalMatch children(Func<SyntaxNode, bool> handler)
+        public ISyntacticalMatch<TNode> children(Func<TNode, bool> handler)
         {
-            BaseNestedSyntacticalMatch result = new BaseNestedSyntacticalMatch(this, _syntax);
+            BaseSyntacticalMatch<TNode> result = new BaseSyntacticalMatch<TNode>(_syntax, this);
             result.addMatcher(node => handler(node));
             _matchers.Add(MatchChildren(result));
 
             return result;
         }
 
-        public INestedSyntacticalMatch children<T>(Func<T, bool> handler) where T : SyntaxNode
+        public ISyntacticalMatch<TNode> children<T>(Func<T, bool> handler) where T : TNode
         {
-            BaseNestedSyntacticalMatch result = new BaseNestedSyntacticalMatch(this, _syntax);
+            BaseSyntacticalMatch<TNode> result = new BaseSyntacticalMatch<TNode>(_syntax, this);
             result.addMatcher(node => (node is T) && handler((T)node));
             _matchers.Add(MatchChildren(result));
 
             return result;
         }
 
-        public INestedSyntacticalMatch descendants()
+        public ISyntacticalMatch<TNode> descendants()
         {
-            BaseNestedSyntacticalMatch result = new BaseNestedSyntacticalMatch(this, _syntax);
+            BaseSyntacticalMatch<TNode> result = new BaseSyntacticalMatch<TNode>(_syntax, this);
             _matchers.Add(MatchDescendants(result));
 
             return result;
         }
 
-        public INestedSyntacticalMatch descendants(Func<SyntaxNode, bool> handler)
+        public ISyntacticalMatch<TNode> descendants(Func<TNode, bool> handler)
         {
-            BaseNestedSyntacticalMatch result = new BaseNestedSyntacticalMatch(this, _syntax);
+            BaseSyntacticalMatch<TNode> result = new BaseSyntacticalMatch<TNode>(_syntax, this);
             result.addMatcher(node => handler(node));
             _matchers.Add(MatchDescendants(result));
 
             return result;
         }
 
-        public INestedSyntacticalMatch descendants<T>(Func<T, bool> handler) where T : SyntaxNode
-        {
-            BaseNestedSyntacticalMatch result = new BaseNestedSyntacticalMatch(this, _syntax);
-            result.addMatcher(node => (node is T) && handler((T)node));
-            _matchers.Add(MatchDescendants(result));
-
-            return result;
-        }
-
-        public ISyntaxAnalysis then(Func<SyntaxNode, SyntaxNode> handler)
-        {
-            throw new NotImplementedException();
-        }
-
-        public ISyntaxAnalysis then(ISyntaxTransform transform)
-        {
-            throw new NotImplementedException();
-        }
-    }
-
-    public class BaseNestedSyntacticalMatch: BaseSyntacticalMatch, INestedSyntacticalMatch
-    {
-        ISyntacticalMatch _parent;
-        public BaseNestedSyntacticalMatch(ISyntacticalMatch parent, ISyntaxAnalysis syntax) :
-            base(syntax)
-        {
-            _parent = parent;
-        }
-
-        public ISyntacticalMatch then(Func<SyntaxNode, SyntaxNode> handler, bool stayOnParent)
+        public ISyntacticalMatch<TNode> parent()
         {
             return _parent;
         }
 
-        public ISyntacticalMatch then(ISyntaxTransform transform, bool continueToParent)
+        public ISyntacticalMatch<TNode> descendants<T>(Func<T, bool> handler) where T : TNode
+        {
+            BaseSyntacticalMatch<TNode> result = new BaseSyntacticalMatch<TNode>(_syntax, this);
+            result.addMatcher(node => (node is T) && handler((T)node));
+            _matchers.Add(MatchDescendants(result));
+
+            return result;
+        }
+
+        public ISyntaxAnalysis<TNode> then(Func<TNode, TNode> handler)
+        {
+            throw new NotImplementedException();
+        }
+
+        public ISyntaxAnalysis<TNode> then(ISyntaxTransform transform)
         {
             throw new NotImplementedException();
         }
     }
 
-    public class SyntaxAnalysisBase : ISyntaxAnalysis
+    public class SyntaxAnalysisBase<TNode> : ISyntaxAnalysis<TNode>
     {
-        private Func<IEnumerable<MemberDeclarationSyntax>, SyntaxNode> _looseMembers;
-        private Func<IEnumerable<StatementSyntax>, SyntaxNode> _looseStatements;
-        private Func<IEnumerable<TypeDeclarationSyntax>, SyntaxNode>  _looseTypes;
+        private Func<IEnumerable<TNode>, TNode> _looseMembers;
+        private Func<IEnumerable<TNode>, TNode> _looseStatements;
+        private Func<IEnumerable<TNode>, TNode> _looseTypes;
 
-        public ISyntaxAnalysis looseMembers(Func<IEnumerable<MemberDeclarationSyntax>, SyntaxNode> handler)
+        public ISyntaxAnalysis<TNode> looseMembers(Func<IEnumerable<TNode>, TNode> handler)
         {
             _looseMembers = handler;
             return this;
         }
 
-        public ISyntaxAnalysis looseStatements(Func<IEnumerable<StatementSyntax>, SyntaxNode> handler)
+        public ISyntaxAnalysis<TNode> looseStatements(Func<IEnumerable<TNode>, TNode> handler)
         {
             _looseStatements = handler;
             return this;
         }
 
-        public ISyntaxAnalysis looseTypes(Func<IEnumerable<TypeDeclarationSyntax>, SyntaxNode> handler)
+        public ISyntaxAnalysis<TNode> looseTypes(Func<IEnumerable<TNode>, TNode> handler)
         {
             _looseTypes = handler;
             return this;
         }
 
-        public ISyntacticalMatch match()
+        public ISyntacticalMatch<TNode> match()
         {
             throw new NotImplementedException();
         }
 
-        public ISyntacticalMatch match<T>(Func<T, bool> handler)
+        public ISyntacticalMatch<TNode> match<T>(Func<T, bool> handler) where T : TNode
         {
             throw new NotImplementedException();
         }
 
-        public ISyntacticalMatch matchCodeDSL(string dsl)
+        public ISyntacticalMatch<TNode> matchCodeDSL(string dsl)
         {
             throw new NotImplementedException();
         }
 
-        public ISyntacticalMatch matchTypeDSL(string dsl)
+        public ISyntacticalMatch<TNode> matchTypeDSL(string dsl)
         {
             throw new NotImplementedException();
         }
 
-        public ISyntacticalMatch matchMemberDSL(string dsl)
+        public ISyntacticalMatch<TNode> matchMemberDSL(string dsl)
         {
             throw new NotImplementedException();
         }
 
-        public ISyntacticalMatch matchNamespaceDSL(string dsl)
+        public ISyntacticalMatch<TNode> matchNamespaceDSL(string dsl)
         {
             throw new NotImplementedException();
         }
 
-        public IEnumerable<ISyntacticalMatch> matches()
+        public IEnumerable<ISyntacticalMatch<TNode>> consume()
         {
             throw new NotImplementedException();
         }
 
         public ISyntaxTransform transform()
+        {
+            throw new NotImplementedException();
+        }
+
+        public TNode normalize(TNode node)
         {
             throw new NotImplementedException();
         }

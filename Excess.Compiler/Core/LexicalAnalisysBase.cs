@@ -3,17 +3,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
 
 namespace Excess.Compiler.Core
 {
-    using MatchFunction      = Func<SyntaxToken, ILexicalMatchResult, TokenMatch>;
-    using MatchTokenFunction = Func<SyntaxToken, bool>;
-
-    public class BaseLexicalMatch : ILexicalMatch
+    public class LexicalMatch<TToken> : ILexicalMatch<TToken>
     {
-        private List<MatchFunction> _matchers = new List<MatchFunction>();
+        private ILexicalAnalysis<TToken>                            _lexical;
+        private ILexicalTransform<TToken>                           _transform;
+        private List<Func<TToken, ILexicalMatchResult, TokenMatch>> _matchers = new List<Func<TToken, ILexicalMatchResult, TokenMatch>>();
+
+        public LexicalMatch(ILexicalAnalysis<TToken> lexical)
+        {
+            _lexical = lexical;
+        }
 
         protected class EnclosedState
         {
@@ -22,13 +24,13 @@ namespace Excess.Compiler.Core
                 DepthCount = 1;
             }
 
-            public int DepthCount             { get; set; }
-            public List<SyntaxToken> Contents { get; set; }
+            public int DepthCount        { get; set; }
+            public List<TToken> Contents { get; set; }
         }
 
-        private static MatchFunction MatchEnclosed(MatchTokenFunction open, MatchTokenFunction close, string start, string end, string contents)
+        private static Func<TToken, ILexicalMatchResult, TokenMatch> MatchEnclosed(Func<TToken, bool> open, Func<TToken, bool> close, string start, string end, string contents)
         {
-            return (SyntaxToken token, ILexicalMatchResult result) =>
+            return (token, result) =>
             {
                 dynamic context = result.context();
                 if (context._state == null)
@@ -42,7 +44,7 @@ namespace Excess.Compiler.Core
 
                     if (contents != null)
                     {
-                        initialState.Contents = new List<SyntaxToken>();
+                        initialState.Contents = new List<TToken>();
                         result.context_set(contents, initialState.Contents);
                     }
 
@@ -69,40 +71,30 @@ namespace Excess.Compiler.Core
             };
         }
 
-        private static MatchTokenFunction MatchString(string value)
+        private static Func<TToken, bool> MatchString(string value)
         {
             return token => token.ToString() == value;
         }
 
-        private static MatchTokenFunction MatchSyntaxKind(SyntaxKind value)
-        {
-            return token => token.CSharpKind() == value;
-        }
-
-        public ILexicalMatch enclosed(string open, string close, string start, string end, string contents)
+        public ILexicalMatch<TToken> enclosed(string open, string close, string start, string end, string contents)
         {
             return enclosed(MatchString(open), MatchString(close), start, end, contents);
         }
 
-        public ILexicalMatch enclosed(SyntaxKind open, SyntaxKind close, string start = null, string end = null, string contents = null)
-        {
-            return enclosed(MatchSyntaxKind(open), MatchSyntaxKind(close), start, end, contents);
-        }
-
-        public ILexicalMatch enclosed(char open, char close, string start = null, string end = null, string contents = null)
+        public ILexicalMatch<TToken> enclosed(char open, char close, string start = null, string end = null, string contents = null)
         {
             return enclosed(MatchString(open.ToString()), MatchString(close.ToString()), start, end, contents);
         }
 
-        public ILexicalMatch enclosed(Func<SyntaxToken, bool> open, Func<SyntaxToken, bool> close, string start = null, string end = null, string contents = null)
+        public ILexicalMatch<TToken> enclosed(Func<TToken, bool> open, Func<TToken, bool> close, string start = null, string end = null, string contents = null)
         {
             _matchers.Add(MatchEnclosed(open, close, start, end, contents));
             return this;
         }
 
-        private static MatchFunction MatchMany(MatchTokenFunction match, string named, bool matchNone = false)
+        private static Func<TToken, ILexicalMatchResult, TokenMatch> MatchMany(Func<TToken, bool> match, string named, bool matchNone = false)
         {
-            return (SyntaxToken token, ILexicalMatchResult result) =>
+            return (token, result) =>
             {
                 var matches = match(token);
 
@@ -112,7 +104,7 @@ namespace Excess.Compiler.Core
                     if (!matches)
                         return matchNone ? TokenMatch.Match : TokenMatch.UnMatch;
 
-                    var state = new List<SyntaxToken>();
+                    var state = new List<TToken>();
                     state.Add(token);
 
                     if (named != null)
@@ -125,7 +117,7 @@ namespace Excess.Compiler.Core
                 {
                     if (named != null)
                     {
-                        List<SyntaxToken> namedResult = context._state;
+                        List<TToken> namedResult = context._state;
                         namedResult.Add(token);
                     }
 
@@ -136,7 +128,7 @@ namespace Excess.Compiler.Core
             };
         }
 
-        private static MatchTokenFunction MatchStringArray(IEnumerable<string> values)
+        private static Func<TToken, bool> MatchStringArray(IEnumerable<string> values)
         {
             return token =>
             {
@@ -151,134 +143,79 @@ namespace Excess.Compiler.Core
             };
         }
 
-        private static MatchTokenFunction MatchSyntaxKindArray(IEnumerable<SyntaxKind> values)
-        {
-            return token =>
-            {
-                var tokenValue = token.CSharpKind();
-                foreach (var value in values)
-                {
-                    if (tokenValue == value)
-                        return true;
-                }
-
-                return false;
-            };
-        }
-
-        public ILexicalMatch many(params SyntaxKind[] anyOf)
-        {
-            return many(MatchSyntaxKindArray(anyOf));
-        }
-
-        public ILexicalMatch many(params string[] anyOf)
+        public ILexicalMatch<TToken> many(params string[] anyOf)
         {
             return many(MatchStringArray(anyOf));
         }
 
-        public ILexicalMatch many(params char[] anyOf)
+        public ILexicalMatch<TToken> many(params char[] anyOf)
         {
             return many(MatchStringArray(anyOf.Select<char, string>(ch => ch.ToString())));
         }
 
-        public ILexicalMatch many(SyntaxKind[] anyOf, string named = null)
-        {
-            return many(MatchSyntaxKindArray(anyOf), named);
-        }
-
-        public ILexicalMatch many(string[] anyOf, string named = null)
+        public ILexicalMatch<TToken> many(string[] anyOf, string named = null)
         {
             return many(MatchStringArray(anyOf), named);
         }
 
-        public ILexicalMatch many(char[] anyOf, string named = null)
+        public ILexicalMatch<TToken> many(char[] anyOf, string named = null)
         {
             return many(MatchStringArray(anyOf.Select<char, string>( ch => ch.ToString())), named);
         }
 
-        public ILexicalMatch many(Func<SyntaxToken, bool> tokens, string named = null)
+        public ILexicalMatch<TToken> many(Func<TToken, bool> tokens, string named = null)
         {
             _matchers.Add(MatchMany(tokens, named));
             return this;
         }
 
-        public ILexicalMatch manyOrNone(params SyntaxKind[] anyOf)
-        {
-            return manyOrNone(MatchSyntaxKindArray(anyOf));
-        }
-
-        public ILexicalMatch manyOrNone(params string[] anyOf)
+        public ILexicalMatch<TToken> manyOrNone(params string[] anyOf)
         {
             return manyOrNone(MatchStringArray(anyOf));
         }
 
-        public ILexicalMatch manyOrNone(params char[] anyOf)
+        public ILexicalMatch<TToken> manyOrNone(params char[] anyOf)
         {
             return manyOrNone(MatchStringArray(anyOf.Select<char, string>(ch => ch.ToString())));
         }
 
-        public ILexicalMatch manyOrNone(SyntaxKind[] anyOf, string named = null)
-        {
-            return manyOrNone(MatchSyntaxKindArray(anyOf), named);
-        }
-
-        public ILexicalMatch manyOrNone(string[] anyOf, string named = null)
+        public ILexicalMatch<TToken> manyOrNone(string[] anyOf, string named = null)
         {
             return manyOrNone(MatchStringArray(anyOf), named);
         }
 
-        public ILexicalMatch manyOrNone(char[] anyOf, string named = null)
+        public ILexicalMatch<TToken> manyOrNone(char[] anyOf, string named = null)
         {
             return manyOrNone(MatchStringArray(anyOf.Select<char, string>(ch => ch.ToString())), named);
         }
 
-        public ILexicalMatch manyOrNone(Func<SyntaxToken, bool> tokens, string named = null)
+        public ILexicalMatch<TToken> manyOrNone(Func<TToken, bool> tokens, string named = null)
         {
             _matchers.Add(MatchMany(tokens, named, true));
             return this;
         }
 
-        public ILexicalAnalysis then(Func<ILexicalMatchResult, IEnumerable<SyntaxToken>> handler)
-        {
-            throw new NotImplementedException();
-        }
-
-        public ILexicalAnalysis then(ILexicalTransform transform)
-        {
-            throw new NotImplementedException();
-        }
-
-        public ILexicalMatch tokens(params SyntaxKind[] anyOf)
-        {
-            return tokens(MatchSyntaxKindArray(anyOf));
-        }
-
-        public ILexicalMatch tokens(params string[] anyOf)
+        public ILexicalMatch<TToken> tokens(params string[] anyOf)
         {
             return tokens(MatchStringArray(anyOf));
         }
 
-        public ILexicalMatch tokens(params char[] anyOf)
+        public ILexicalMatch<TToken> tokens(params char[] anyOf)
         {
             return tokens(MatchStringArray(anyOf.Select<char, string>(ch => ch.ToString())));
         }
 
-        public ILexicalMatch tokens(SyntaxKind[] anyOf, string named = null)
-        {
-            return tokens(MatchSyntaxKindArray(anyOf), named);
-        }
-
-        public ILexicalMatch tokens(string[] anyOf, string named = null)
+        public ILexicalMatch<TToken> tokens(string[] anyOf, string named = null)
         {
             return tokens(MatchStringArray(anyOf), named);
         }
 
-        public ILexicalMatch tokens(char[] anyOf, string named = null)
+        public ILexicalMatch<TToken> tokens(char[] anyOf, string named = null)
         {
             return tokens(MatchStringArray(anyOf.Select<char, string>(ch => ch.ToString())), named);
         }
 
-        private static MatchFunction MatchOne(MatchTokenFunction match, string named, bool matchNone = false)
+        private static Func<TToken, ILexicalMatchResult, TokenMatch> MatchOne(Func<TToken, bool> match, string named, bool matchNone = false)
         {
             return (token, result) =>
             {
@@ -293,46 +230,76 @@ namespace Excess.Compiler.Core
             };
         }
 
-        public ILexicalMatch tokens(Func<SyntaxToken, bool> handler, string named = null)
+        public ILexicalMatch<TToken> tokens(Func<TToken, bool> handler, string named = null)
         {
             _matchers.Add(MatchOne(handler, named));
             return this;
         }
 
-        public ILexicalMatch optional(params SyntaxKind[] anyOf)
-        {
-            return tokens(MatchSyntaxKindArray(anyOf));
-        }
-
-        public ILexicalMatch optional(params string[] anyOf)
+        public ILexicalMatch<TToken> optional(params string[] anyOf)
         {
             return tokens(MatchStringArray(anyOf));
         }
 
-        public ILexicalMatch optional(params char[] anyOf)
+        public ILexicalMatch<TToken> optional(params char[] anyOf)
         {
             return tokens(MatchStringArray(anyOf.Select<char, string>(ch => ch.ToString())));
         }
 
-        public ILexicalMatch optional(SyntaxKind[] anyOf, string named = null)
-        {
-            return tokens(MatchSyntaxKindArray(anyOf), named);
-        }
-
-        public ILexicalMatch optional(string[] anyOf, string named = null)
+        public ILexicalMatch<TToken> optional(string[] anyOf, string named = null)
         {
             return tokens(MatchStringArray(anyOf), named);
         }
 
-        public ILexicalMatch optional(char[] anyOf, string named = null)
+        public ILexicalMatch<TToken> optional(char[] anyOf, string named = null)
         {
             return tokens(MatchStringArray(anyOf.Select<char, string>(ch => ch.ToString())), named);
         }
 
-        public ILexicalMatch optional(Func<SyntaxToken, bool> handler, string named = null)
+        public ILexicalMatch<TToken> optional(Func<TToken, bool> handler, string named = null)
         {
             _matchers.Add(MatchOne(handler, named, true));
             return this;
         }
+
+        public ILexicalAnalysis<TToken> then(Func<IEnumerable<TToken>, ILexicalMatchResult, IEnumerable<TToken>> handler)
+        {
+            _transform = new LexicalFunctorTransform<TToken>(handler);
+            return _lexical;
+        }
+
+        public ILexicalAnalysis<TToken> then(ILexicalTransform<TToken> transform)
+        {
+            _transform = transform;
+            return _lexical;
+        }
+
+        public IEnumerable<TToken> transform(IEnumerable<TToken> enumerable, out int consumed)
+        {
+            throw new NotImplementedException();
+        }
+
     }
+
+    public abstract class LexicalAnalysis<TToken> :  ILexicalAnalysis<TToken>
+    {
+        private List<ILexicalMatch<TToken>> _matches = new List<ILexicalMatch<TToken>>();
+
+        public ILexicalMatch<TToken> match()
+        {
+            var result = new LexicalMatch<TToken>(this);
+            _matches.Add(result);
+            return result;
+        }
+
+        public abstract ILexicalTransform<TToken> transform();
+
+        public IEnumerable<ILexicalMatch<TToken>> consume()
+        {
+            var result = _matches;
+            _matches = new List<ILexicalMatch<TToken>>();
+            return result;
+        }
+    }
+
 }

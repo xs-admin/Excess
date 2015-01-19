@@ -1,10 +1,9 @@
-﻿using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.CodeAnalysis;
 
 namespace Excess.Compiler
 {
@@ -21,61 +20,54 @@ namespace Excess.Compiler
         void    context_set(string name, dynamic value);
     }
 
-    public interface ILexicalMatch
+    public interface ILexicalMatch<TToken>
     {
-        ILexicalMatch tokens(params char[] anyOf);
-        ILexicalMatch tokens(params string[] anyOf);
-        ILexicalMatch tokens(params SyntaxKind[] anyOf);
-        ILexicalMatch tokens(char[] anyOf, string named = null);
-        ILexicalMatch tokens(string[] anyOf, string named = null);
-        ILexicalMatch tokens(SyntaxKind[] anyOf, string named = null);
-        ILexicalMatch tokens(Func<SyntaxToken, bool> anyOf, string named = null);
+        ILexicalMatch<TToken> tokens(params char[] anyOf);
+        ILexicalMatch<TToken> tokens(params string[] anyOf);
+        ILexicalMatch<TToken> tokens(char[] anyOf, string named = null);
+        ILexicalMatch<TToken> tokens(string[] anyOf, string named = null);
+        ILexicalMatch<TToken> tokens(Func<TToken, bool> anyOf, string named = null);
 
-        ILexicalMatch optional(params char[] anyOf);
-        ILexicalMatch optional(params string[] anyOf);
-        ILexicalMatch optional(params SyntaxKind[] anyOf);
-        ILexicalMatch optional(char[] anyOf, string named = null);
-        ILexicalMatch optional(string[] anyOf, string named = null);
-        ILexicalMatch optional(SyntaxKind[] anyOf, string named = null);
-        ILexicalMatch optional(Func<SyntaxToken, bool> anyOf, string named = null);
+        ILexicalMatch<TToken> optional(params char[] anyOf);
+        ILexicalMatch<TToken> optional(params string[] anyOf);
+        ILexicalMatch<TToken> optional(char[] anyOf, string named = null);
+        ILexicalMatch<TToken> optional(string[] anyOf, string named = null);
+        ILexicalMatch<TToken> optional(Func<TToken, bool> anyOf, string named = null);
 
-        ILexicalMatch enclosed(char open, char close, string start = null, string end = null, string contents = null);
-        ILexicalMatch enclosed(string open, string close, string start = null, string end = null, string contents = null);
-        ILexicalMatch enclosed(SyntaxKind open, SyntaxKind close, string start = null, string end = null, string contents = null);
-        ILexicalMatch enclosed(Func<SyntaxToken, bool> open, 
-                               Func<SyntaxToken, bool> close, 
+        ILexicalMatch<TToken> enclosed(char open, char close, string start = null, string end = null, string contents = null);
+        ILexicalMatch<TToken> enclosed(string open, string close, string start = null, string end = null, string contents = null);
+        ILexicalMatch<TToken> enclosed(Func<TToken, bool> open, 
+                               Func<TToken, bool> close, 
                                string start = null, string end = null, string contents = null);
-        ILexicalMatch many(params char[] anyOf);
-        ILexicalMatch many(params string[] anyOf);
-        ILexicalMatch many(params SyntaxKind[] anyOf);
-        ILexicalMatch many(char[] anyOf, string named = null);
-        ILexicalMatch many(string[] anyOf, string named = null);
-        ILexicalMatch many(SyntaxKind[] anyOf, string named = null);
-        ILexicalMatch many(Func<SyntaxToken, bool> tokens, string named = null);
+        ILexicalMatch<TToken> many(params char[] anyOf);
+        ILexicalMatch<TToken> many(params string[] anyOf);
+        ILexicalMatch<TToken> many(char[] anyOf, string named = null);
+        ILexicalMatch<TToken> many(string[] anyOf, string named = null);
+        ILexicalMatch<TToken> many(Func<TToken, bool> tokens, string named = null);
 
-        ILexicalMatch manyOrNone(params char[] anyOf);
-        ILexicalMatch manyOrNone(params string[] anyOf);
-        ILexicalMatch manyOrNone(params SyntaxKind[] anyOf);
-        ILexicalMatch manyOrNone(char[] anyOf, string named = null);
-        ILexicalMatch manyOrNone(string[] anyOf, string named = null);
-        ILexicalMatch manyOrNone(SyntaxKind[] anyOf, string named = null);
-        ILexicalMatch manyOrNone(Func<SyntaxToken, bool> tokens, string named = null);
+        ILexicalMatch<TToken> manyOrNone(params char[] anyOf);
+        ILexicalMatch<TToken> manyOrNone(params string[] anyOf);
+        ILexicalMatch<TToken> manyOrNone(char[] anyOf, string named = null);
+        ILexicalMatch<TToken> manyOrNone(string[] anyOf, string named = null);
+        ILexicalMatch<TToken> manyOrNone(Func<TToken, bool> tokens, string named = null);
 
-        ILexicalAnalysis then(Func<ILexicalMatchResult, IEnumerable<SyntaxToken>> handler);
-        ILexicalAnalysis then(ILexicalTransform transform);
+        ILexicalAnalysis<TToken> then(Func<IEnumerable<TToken>, ILexicalMatchResult, IEnumerable<TToken>> handler);
+        ILexicalAnalysis<TToken> then(ILexicalTransform<TToken> transform);
+
+        IEnumerable<TToken> transform(IEnumerable<TToken> enumerable, out int consumed);
     }
 
-    public interface ILexicalTransform
+    public interface ILexicalTransform<TToken>
     {
-        ILexicalTransform insert();
-        ILexicalTransform replace();
-        ILexicalTransform remove();
+        ILexicalTransform<TToken> insert(string tokens, string before = null, string after = null);
+        ILexicalTransform<TToken> replace(string named, string tokens);
+        ILexicalTransform<TToken> remove(string named);
     }
 
-    public interface ILexicalAnalysis
+    public interface ILexicalAnalysis<TToken>
     {
-        ILexicalMatch     match();
-        ILexicalTransform transform();
-        IEnumerable<ILexicalMatch> matches();
+        ILexicalMatch<TToken> match();
+        ILexicalTransform<TToken> transform();
+        IEnumerable<ILexicalMatch<TToken>> consume();
     }
 }

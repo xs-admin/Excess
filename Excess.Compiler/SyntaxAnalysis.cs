@@ -1,6 +1,4 @@
-﻿using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,28 +6,26 @@ using System.Threading.Tasks;
 
 namespace Excess.Compiler
 {
-
-    public interface ISyntacticalMatch
+    public interface ISyntacticalMatch<TNode>
     {
-        INestedSyntacticalMatch children(Func<SyntaxNode, bool> handler);
-        INestedSyntacticalMatch children<T>(Func<T, bool> handler = null) where T : SyntaxNode;
-        INestedSyntacticalMatch children();
-        INestedSyntacticalMatch descendants(Func<SyntaxNode, bool> handler);
-        INestedSyntacticalMatch descendants<T>(Func<T, bool> handler = null) where T : SyntaxNode;
-        INestedSyntacticalMatch descendants();
-        ISyntaxAnalysis then(Func<SyntaxNode, SyntaxNode> handler);
-        ISyntaxAnalysis then(ISyntaxTransform transform);
+        ISyntacticalMatch<TNode> children(Func<TNode, bool> handler);
+        ISyntacticalMatch<TNode> children<T>(Func<T, bool> handler = null) where T : TNode;
+        ISyntacticalMatch<TNode> children();
+        ISyntacticalMatch<TNode> descendants(Func<TNode, bool> handler);
+        ISyntacticalMatch<TNode> descendants<T>(Func<T, bool> handler = null) where T : TNode;
+        ISyntacticalMatch<TNode> descendants();
+        ISyntacticalMatch<TNode> parent();
+
+        ISyntaxAnalysis<TNode> then(Func<TNode, TNode> handler);
+        ISyntaxAnalysis<TNode> then(ISyntaxTransform transform);
     }
 
-    public interface INestedSyntacticalMatch :  ISyntacticalMatch
+    public interface ISyntacticalMatchResult<TNode>
     {
-        ISyntacticalMatch then(Func<SyntaxNode, SyntaxNode> handler, bool continueToParent);
-        ISyntacticalMatch then(ISyntaxTransform transform, bool continueToParent);
-    }
+        void matchChildren(ISyntacticalMatch<TNode> match);
+        void matchDescendants(ISyntacticalMatch<TNode> match);
 
-    public interface ISyntacticalMatchResult
-    {
-        void matchNodes(IEnumerable<SyntaxNode> nodes, ISyntacticalMatch match);
+        dynamic context(TNode node);
     }
 
     public interface ISyntaxTransform
@@ -39,22 +35,23 @@ namespace Excess.Compiler
         ISyntaxTransform remove();
     }
 
-    public interface ISyntaxAnalysis
+    public interface ISyntaxAnalysis<TNode>
     {
-        ISyntaxAnalysis looseStatements(Func<IEnumerable<StatementSyntax>, SyntaxNode> handler);
-        ISyntaxAnalysis looseMembers(Func<IEnumerable<MemberDeclarationSyntax>, SyntaxNode> handler);
-        ISyntaxAnalysis looseTypes(Func<IEnumerable<TypeDeclarationSyntax>, SyntaxNode> handler);
+        ISyntaxAnalysis<TNode> looseStatements(Func<IEnumerable<TNode>, TNode> handler);
+        ISyntaxAnalysis<TNode> looseMembers(Func<IEnumerable<TNode>, TNode> handler);
+        ISyntaxAnalysis<TNode> looseTypes(Func<IEnumerable<TNode>, TNode> handler);
 
-        ISyntacticalMatch match<T>(Func<T, bool> handler);
-        ISyntacticalMatch match();
-        ISyntacticalMatch matchCodeDSL(string dsl);
-        ISyntacticalMatch matchTypeDSL(string dsl);
-        ISyntacticalMatch matchMemberDSL(string dsl);
-        ISyntacticalMatch matchNamespaceDSL(string dsl);
+        ISyntacticalMatch<TNode> match<T>(Func<T, bool> handler) where T : TNode;
+        ISyntacticalMatch<TNode> match();
+        ISyntacticalMatch<TNode> matchCodeDSL(string dsl);
+        ISyntacticalMatch<TNode> matchTypeDSL(string dsl);
+        ISyntacticalMatch<TNode> matchMemberDSL(string dsl);
+        ISyntacticalMatch<TNode> matchNamespaceDSL(string dsl);
 
-        IEnumerable<ISyntacticalMatch> matches();
+        IEnumerable<ISyntacticalMatch<TNode>> consume();
 
         ISyntaxTransform transform();
 
+        TNode normalize(TNode node);
     }
 }
