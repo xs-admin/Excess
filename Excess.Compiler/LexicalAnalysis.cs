@@ -70,6 +70,7 @@ namespace Excess.Compiler
     {
         ILexicalMatch<TToken> match();
         ILexicalTransform<TToken> transform();
-        IEnumerable<ILexicalMatch<TToken>> consume();
+
+        IEnumerable<CompilerEvent> produce();
     }
 }

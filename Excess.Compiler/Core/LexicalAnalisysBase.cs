@@ -331,22 +331,20 @@ namespace Excess.Compiler.Core
 
     public abstract class LexicalAnalysis<TToken> :  ILexicalAnalysis<TToken>
     {
-        private List<ILexicalMatch<TToken>> _matches = new List<ILexicalMatch<TToken>>();
+        private List<ILexicalMatch<TToken>> _matchers = new List<ILexicalMatch<TToken>>();
 
         public ILexicalMatch<TToken> match()
         {
             var result = new LexicalMatch<TToken>(this);
-            _matches.Add(result);
+            _matchers.Add(result);
             return result;
         }
 
         public abstract ILexicalTransform<TToken> transform();
 
-        public IEnumerable<ILexicalMatch<TToken>> consume()
+        public IEnumerable<CompilerEvent> produce()
         {
-            var result = _matches;
-            _matches = new List<ILexicalMatch<TToken>>();
-            return result;
+            return new[] { new LexicalMatchEvent<TToken>(_matchers) };
         }
     }
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,7 +11,8 @@ namespace Excess.Compiler.Core
     {
         protected ILexicalAnalysis<TToken> _lexical;
         protected ISyntaxAnalysis<TNode>   _sintaxis;
-        protected CompilerPass             _stage = CompilerPass.Lexical;
+        protected CompilerStage            _stage  = CompilerStage.Started;
+        protected EventBus                 _events = new EventBus();
 
         public CompilerBase(ILexicalAnalysis<TToken> lexical, ISyntaxAnalysis<TNode> sintaxis)
         {
@@ -28,32 +30,34 @@ namespace Excess.Compiler.Core
             return _sintaxis;
         }
 
-        public CompilerPassResult DoPass(CompilerPass pass)
+        ICompilerPass _pass;
+        public ICompilerPass Compile(string text, CompilerStage stage)
         {
-            switch (pass)
-            {
-                case CompilerPass.Lexical:
-                {
-                    var matchers = _lexical.consume();
-                    if (matchers == null || !matchers.Any())
-                        return CompilerPassResult.Fail;
-                    
-                    return LexicalPass(matchers);
-                    }
-                case CompilerPass.Syntactical:
-                {
-                    var matchers = _sintaxis.consume();
-                    if (matchers == null || !matchers.Any())
-                        return CompilerPassResult.Success; 
-                    
-                    return SyntacticalPass(matchers);
-                 }
-                default: throw new NotImplementedException();
-            }
+            Debug.Assert(_pass == null);
+
+            _pass = initialPass(text);
+            if (_pass.Stage < stage)
+                _pass = Advance(stage);
+
+            return _pass;
         }
 
-        protected abstract CompilerPassResult SyntacticalPass(IEnumerable<ISyntacticalMatch<TNode>> matchers);
+        public ICompilerPass CompileAll(string text)
+        {
+            return Compile(text, CompilerStage.Finished);
+        }
 
-        protected abstract CompilerPassResult LexicalPass(IEnumerable<ILexicalMatch<TToken>> matchers);
+        Scope _scope = new Scope(); //td: !! scope tree
+        public ICompilerPass Advance(CompilerStage stage)
+        {
+            while (_pass != null && _pass.Stage < stage)
+            {
+                _pass = _pass.Compile(_events, _scope);
+            }
+
+            return _pass;
+        }
+
+        public abstract ICompilerPass initialPass(string text);
     }
 }

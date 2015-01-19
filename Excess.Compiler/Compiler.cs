@@ -6,18 +6,21 @@ using System.Threading.Tasks;
 
 namespace Excess.Compiler
 {
-    public enum CompilerPass
+    public enum CompilerStage
     {
+        Started,
         Lexical,
         Syntactical,
         Semantical,
+        Finished,
     }
 
-    public enum CompilerPassResult
+    public interface ICompilerPass
     {
-        Success,
-        Fail,
-        NotFinished,
+        string Id { get; }
+        CompilerStage Stage { get; }
+
+        ICompilerPass Compile(EventBus events, Scope scope);
     }
 
     public interface ICompiler<TToken, TNode>
@@ -25,6 +28,9 @@ namespace Excess.Compiler
         ILexicalAnalysis<TToken> Lexical();
         ISyntaxAnalysis<TNode> Syntaxis();
 
-        CompilerPassResult DoPass(CompilerPass pass);
+        ICompilerPass Compile(string text, CompilerStage stage = CompilerStage.Started);
+        ICompilerPass CompileAll(string text);
+        ICompilerPass Advance(CompilerStage stage);
     }
+
 }
