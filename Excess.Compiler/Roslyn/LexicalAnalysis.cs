@@ -22,7 +22,7 @@ namespace Excess.Compiler.Roslyn
     {
         public override ILexicalTransform<SyntaxToken> transform()
         {
-            throw new NotImplementedException();
+            return new RoslynLexicalTransform();
         }
     }
 }

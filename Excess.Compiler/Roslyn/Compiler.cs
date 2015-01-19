@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 
 namespace Excess.Compiler.Roslyn
 {
+    using System.Diagnostics;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
     public class Compiler : CompilerBase<SyntaxToken, SyntaxNode>
@@ -16,7 +17,7 @@ namespace Excess.Compiler.Roslyn
         {
         }
 
-        string _text;
+        string                   _text;
         IEnumerable<SyntaxToken> _tokens;
 
         protected override CompilerPassResult LexicalPass(IEnumerable<ILexicalMatch<SyntaxToken>> matchers)
@@ -63,9 +64,28 @@ namespace Excess.Compiler.Roslyn
             }
         }
 
+        SyntaxTree _tree;
         protected override CompilerPassResult SyntacticalPass(IEnumerable<ISyntacticalMatch<SyntaxNode>> matchers)
         {
-            throw new NotImplementedException();
+            if (_tree == null)
+            {
+                Debug.Assert(_tokens != null);
+                _tree = ParseTokens(_tokens);
+            }
+
+            SyntaxRewriter pass = new SyntaxRewriter(matchers);
+            var transformed = pass.Visit(_tree.GetRoot());
+            _tree = transformed.SyntaxTree;
+            return CompilerPassResult.Success;
+        }
+
+        private SyntaxTree ParseTokens(IEnumerable<SyntaxToken> tokens)
+        {
+            StringBuilder newText = new StringBuilder();
+            foreach (var token in tokens)
+                newText.Append(token.ToFullString());
+
+            return CSharp.ParseCompilationUnit(newText.ToString()).SyntaxTree;
         }
     }
 }

@@ -18,23 +18,24 @@ namespace Excess.Compiler.Roslyn
 
         public override SyntaxNode Visit(SyntaxNode node)
         {
-            //TD: !!!
-            //foreach (var matcher in _matchers)
-            //{
-            //    if (matcher.matches(node, result))
-            //    {
-            //        if (result.prePocess())
-            //        {
-            //            var pre = matcher.transform(node, result);
-            //            return base.Visit(pre);
-            //        }
-            //        else
-            //        {
-            //            var post = base.Visit(node);
-            //            return matcher.transform(post, result);
-            //        }
-            //    }
-            //}
+            //td: optimize
+            ISyntacticalMatchResult<SyntaxNode> result = new SyntacticalMatchResult();
+            foreach (var matcher in _matchers)
+            {
+                if (matcher.matches(node, result))
+                {
+                    if (result.Preprocess)
+                    {
+                        var pre = matcher.transform(node, result);
+                        return base.Visit(pre);
+                    }
+                    else
+                    {
+                        var post = base.Visit(node);
+                        return matcher.transform(post, result);
+                    }
+                }
+            }
 
             return base.Visit(node);
         }

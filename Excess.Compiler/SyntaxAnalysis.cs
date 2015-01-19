@@ -17,22 +17,33 @@ namespace Excess.Compiler
         ISyntacticalMatch<TNode> parent();
 
         ISyntaxAnalysis<TNode> then(Func<TNode, TNode> handler);
-        ISyntaxAnalysis<TNode> then(ISyntaxTransform transform);
+        ISyntaxAnalysis<TNode> then(Func<TNode, ISyntacticalMatchResult<TNode>, TNode> handler);
+        ISyntaxAnalysis<TNode> then(ISyntaxTransform<TNode> transform);
+
+        bool matches(TNode node, ISyntacticalMatchResult<TNode> result);
+        TNode transform(TNode node, ISyntacticalMatchResult<TNode> result);
     }
 
     public interface ISyntacticalMatchResult<TNode>
     {
+        TNode Node { get; set; }
+        bool Preprocess { get; set; }
+
         void matchChildren(ISyntacticalMatch<TNode> match);
         void matchDescendants(ISyntacticalMatch<TNode> match);
+        dynamic context();
 
-        dynamic context(TNode node);
+        void   set(string name, object value);
+        object get(string name);
     }
 
-    public interface ISyntaxTransform
+    public interface ISyntaxTransform<TNode>
     {
-        ISyntaxTransform insert();
-        ISyntaxTransform replace();
-        ISyntaxTransform remove();
+        ISyntaxTransform<TNode> insert();
+        ISyntaxTransform<TNode> replace();
+        ISyntaxTransform<TNode> remove();
+
+        TNode transform(TNode node, ISyntacticalMatchResult<TNode> result);
     }
 
     public interface ISyntaxAnalysis<TNode>
@@ -41,16 +52,14 @@ namespace Excess.Compiler
         ISyntaxAnalysis<TNode> looseMembers(Func<IEnumerable<TNode>, TNode> handler);
         ISyntaxAnalysis<TNode> looseTypes(Func<IEnumerable<TNode>, TNode> handler);
 
-        ISyntacticalMatch<TNode> match<T>(Func<T, bool> handler) where T : TNode;
-        ISyntacticalMatch<TNode> match();
-        ISyntacticalMatch<TNode> matchCodeDSL(string dsl);
-        ISyntacticalMatch<TNode> matchTypeDSL(string dsl);
-        ISyntacticalMatch<TNode> matchMemberDSL(string dsl);
-        ISyntacticalMatch<TNode> matchNamespaceDSL(string dsl);
+        ISyntacticalMatch<TNode> match(Func<TNode, bool> handler, string named = null, string add = null);
+        ISyntacticalMatch<TNode> match<T>(Func<T, bool> handler, string named = null, string add = null) where T : TNode;
+        ISyntacticalMatch<TNode> match<T>(string named = null, string add = null) where T : TNode;
+        ISyntacticalMatch<TNode> match(string named = null, string add = null);
 
         IEnumerable<ISyntacticalMatch<TNode>> consume();
 
-        ISyntaxTransform transform();
+        ISyntaxTransform<TNode> transform();
 
         TNode normalize(TNode node);
     }

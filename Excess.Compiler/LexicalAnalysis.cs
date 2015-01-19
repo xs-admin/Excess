@@ -62,6 +62,8 @@ namespace Excess.Compiler
         ILexicalTransform<TToken> insert(string tokens, string before = null, string after = null);
         ILexicalTransform<TToken> replace(string named, string tokens);
         ILexicalTransform<TToken> remove(string named);
+
+        IEnumerable<TToken> transform(IEnumerable<TToken> tokens, ILexicalMatchResult result);
     }
 
     public interface ILexicalAnalysis<TToken>

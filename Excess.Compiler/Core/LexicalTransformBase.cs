@@ -123,7 +123,7 @@ namespace Excess.Compiler.Core
                 .Select<Func<ILexicalMatchResult, TransformBinder>, TransformBinder>(f => f(result))
                 .OrderBy(binder => binder.extents.begin);
 
-            TransformBinder[] binders   = binderSelector.ToArray();
+            TransformBinder[] binders       = binderSelector.ToArray();
             int               currentToken  = 0;
             int               currentBinder = 0;
             int               binderCount   = binders.Length;

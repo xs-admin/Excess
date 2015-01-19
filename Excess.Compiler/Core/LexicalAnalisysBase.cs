@@ -1,11 +1,28 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Dynamic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Excess.Compiler.Core
 {
+    public class LexicalMatchResult : ILexicalMatchResult
+    {
+        ExpandoObject _context = new ExpandoObject();
+
+        public dynamic context()
+        {
+            return _context;
+        }
+
+        public void context_set(string name, dynamic value)
+        {
+            IDictionary<string, object> values = _context;
+            values[name] = value;
+        }
+    }
+
     public class LexicalMatch<TToken> : ILexicalMatch<TToken>
     {
         private ILexicalAnalysis<TToken>                            _lexical;
@@ -274,9 +291,40 @@ namespace Excess.Compiler.Core
             return _lexical;
         }
 
-        public IEnumerable<TToken> transform(IEnumerable<TToken> enumerable, out int consumed)
+        public IEnumerable<TToken> transform(IEnumerable<TToken> tokens, out int consumed)
         {
-            throw new NotImplementedException();
+                consumed    = 0;
+            int currMatcher = 0;
+            var result      = new LexicalMatchResult();
+            foreach (var token in tokens)
+            {
+                if (currMatcher >= _matchers.Count)
+                {
+                    if (consumed > 0)
+                        break;
+
+                    return null;
+                }
+
+                consumed++;
+
+                var matcher     = _matchers[currMatcher];
+                var matchResult = matcher(token, result);
+                switch (matchResult)
+                {
+                    case TokenMatch.Match:
+                    case TokenMatch.MatchAndContinue:
+                    {
+                        if (matchResult != TokenMatch.MatchAndContinue)
+                            currMatcher++;
+                        break;
+                    }
+                    case TokenMatch.UnMatch:
+                        return null;
+                }
+            }
+
+            return _transform.transform(tokens.Take(consumed), result);
         }
 
     }
