@@ -27,21 +27,24 @@ namespace Excess.Compiler
     public interface ISyntacticalMatchResult<TNode>
     {
         TNode Node { get; set; }
+        Scope Scope { get; set; }
         bool Preprocess { get; set; }
-
+        IEventBus Events { get; set; }
         void matchChildren(ISyntacticalMatch<TNode> match);
         void matchDescendants(ISyntacticalMatch<TNode> match);
-        dynamic context();
-
-        void   set(string name, object value);
-        object get(string name);
+        TNode schedule(string pass, TNode node, Func<TNode, TNode> handler);
     }
 
     public interface ISyntaxTransform<TNode>
     {
-        ISyntaxTransform<TNode> insert();
-        ISyntaxTransform<TNode> replace();
-        ISyntaxTransform<TNode> remove();
+        ISyntaxTransform<TNode> remove(string nodes);
+        ISyntaxTransform<TNode> remove(Func<ISyntacticalMatchResult<TNode>, IEnumerable<TNode>> handler);
+        ISyntaxTransform<TNode> replace(string nodes, Func<TNode, ISyntacticalMatchResult<TNode>, TNode> handler);
+        ISyntaxTransform<TNode> replace(string nodes, Func<TNode, TNode> handler);
+        ISyntaxTransform<TNode> replace(Func<ISyntacticalMatchResult<TNode>, IEnumerable<TNode>> selector, Func<TNode, ISyntacticalMatchResult<TNode>, TNode> handler);
+        ISyntaxTransform<TNode> replace(Func<ISyntacticalMatchResult<TNode>, IEnumerable<TNode>> selector, Func<TNode, TNode> handler);
+        ISyntaxTransform<TNode> addToScope(string nodes, bool type = false, bool @namespace = false);
+        ISyntaxTransform<TNode> addToScope(Func<ISyntacticalMatchResult<TNode>, IEnumerable<TNode>> handler, bool type = false, bool @namespace = false);
 
         TNode transform(TNode node, ISyntacticalMatchResult<TNode> result);
     }
@@ -56,8 +59,6 @@ namespace Excess.Compiler
         ISyntacticalMatch<TNode> match<T>(Func<T, bool> handler, string named = null, string add = null) where T : TNode;
         ISyntacticalMatch<TNode> match<T>(string named = null, string add = null) where T : TNode;
         ISyntacticalMatch<TNode> match(string named = null, string add = null);
-
-        IEnumerable<ISyntacticalMatch<TNode>> consume();
 
         ISyntaxTransform<TNode> transform();
 

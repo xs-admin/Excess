@@ -11,8 +11,8 @@ namespace Excess.Compiler.Core
     {
         protected ILexicalAnalysis<TToken> _lexical;
         protected ISyntaxAnalysis<TNode>   _sintaxis;
+        protected IEventBus                _events;
         protected CompilerStage            _stage  = CompilerStage.Started;
-        protected EventBus                 _events = new EventBus();
 
         public CompilerBase(ILexicalAnalysis<TToken> lexical, ISyntaxAnalysis<TNode> sintaxis)
         {

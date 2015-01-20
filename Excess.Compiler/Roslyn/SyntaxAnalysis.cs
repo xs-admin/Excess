@@ -19,6 +19,10 @@ namespace Excess.Compiler.Roslyn
         {
             return node.DescendantNodes();
         }
+        protected override SyntaxNode markNode(SyntaxNode node, int id)
+        {
+            throw new NotImplementedException();
+        }
     }
 
     public class RoslynSyntaxAnalysis : SyntaxAnalysisBase<SyntaxToken>

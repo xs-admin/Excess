@@ -51,6 +51,6 @@ namespace Excess.Compiler.Core
             }
         }
 
-        public abstract ICompilerPass Compile(EventBus events, Scope scope);
+        public abstract ICompilerPass Compile(IEventBus events, Scope scope);
     }
 }

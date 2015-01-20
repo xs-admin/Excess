@@ -6,45 +6,34 @@ using System.Threading.Tasks;
 
 namespace Excess.Compiler
 {
-    //opaque events tobe passed around during compilation
     public class CompilerEvent
     {
-        public CompilerEvent(CompilerStage stage)
+        public CompilerEvent(CompilerStage stage, string pass)
         {
             Stage = stage;
+            Pass = pass;
         }
 
         public CompilerStage Stage { get; }
+        public string Pass { get; set; }
     }
 
-    public class EventBus
+    public interface IEventBus
     {
-        public IEnumerable<CompilerEvent> poll(CompilerStage stage)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IEnumerable<CompilerEvent> poll(string pass)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IEnumerable<T> poll<T>() where T : CompilerEvent
-        {
-            throw new NotImplementedException();
-        }
-
-        public void push(IEnumerable<CompilerEvent> events)
-        {
-            throw new NotImplementedException();
-        }
+        IEnumerable<CompilerEvent> poll(string pass);
+        IEnumerable<CompilerEvent> check(string pass);
+        void schedule(CompilerEvent ev);
+        void schedule(IEnumerable<CompilerEvent> evs);
+        void schedule(string pass, CompilerEvent ev);
+        void schedule(string pass, IEnumerable<CompilerEvent> ev);
     }
+
 
     //expected events
     public class LexicalMatchEvent<TToken> : CompilerEvent
     {
         public LexicalMatchEvent(IEnumerable<ILexicalMatch<TToken>> matchers) :
-            base(CompilerStage.Lexical)
+            base(CompilerStage.Lexical, "")
         {
             Matchers = matchers;
         }
@@ -55,11 +44,24 @@ namespace Excess.Compiler
     public class SyntacticalMatchEvent<TNode> : CompilerEvent
     {
         public SyntacticalMatchEvent(IEnumerable<ISyntacticalMatch<TNode>> matchers) :
-            base(CompilerStage.Syntactical)
+            base(CompilerStage.Syntactical, "")
         {
             Matchers = matchers;
         }
 
         public IEnumerable<ISyntacticalMatch<TNode>> Matchers { get; set; }
+    };
+
+    public class SyntacticalNodeEvent<TNode> : CompilerEvent
+    {
+        public SyntacticalNodeEvent(int node, Func<TNode, TNode> handler, string pass) :
+            base(CompilerStage.Syntactical, pass)
+        {
+            Node = node;
+            Handler = handler;
+        }
+
+        public int Node { get; }
+        public Func<TNode, TNode> Handler { get; }
     };
 }

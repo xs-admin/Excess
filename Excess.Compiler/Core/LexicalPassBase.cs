@@ -14,12 +14,13 @@ namespace Excess.Compiler.Core
             _text = text;
         }
 
-        public override ICompilerPass Compile(EventBus events, Scope scope)
+        public override ICompilerPass Compile(IEventBus events, Scope scope)
         {
-            var myEvents = events.poll<LexicalMatchEvent<TToken>>();
+            var myEvents = events.poll(PassId);
+            var matchEvents = myEvents.OfType<LexicalMatchEvent<TToken>>();
 
             var tokens   = parseTokens(_text).ToArray();
-            var matchers = GetMatchers(myEvents);
+            var matchers = GetMatchers(matchEvents);
             IEnumerable<TToken> result = transformTokens(tokens, 0, tokens.Length, matchers);
 
             //calculate new text

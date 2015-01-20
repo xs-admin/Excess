@@ -22,28 +22,20 @@ namespace Excess.Compiler.Roslyn
             return new LexicalPass(text);
         }
 
-        //SyntaxTree _tree;
-        //protected override CompilerPassResult SyntacticalPass(IEnumerable<ISyntacticalMatch<SyntaxNode>> matchers)
-        //{
-        //    if (_tree == null)
-        //    {
-        //        Debug.Assert(_tokens != null);
-        //        _tree = ParseTokens(_tokens);
-        //    }
+        public static int GetSyntaxId(SyntaxNode node)
+        {
+            var annotation = node.GetAnnotations("xs-syntax-id").FirstOrDefault();
+            if (annotation != null)
+                return int.Parse(annotation.Data);
 
-        //    SyntaxRewriter pass = new SyntaxRewriter(matchers);
-        //    var transformed = pass.Visit(_tree.GetRoot());
-        //    _tree = transformed.SyntaxTree;
-        //    return CompilerPassResult.Success;
-        //}
+            return -1;
+        }
 
-        //private SyntaxTree ParseTokens(IEnumerable<SyntaxToken> tokens)
-        //{
-        //    StringBuilder newText = new StringBuilder();
-        //    foreach (var token in tokens)
-        //        newText.Append(token.ToFullString());
-
-        //    return CSharp.ParseCompilationUnit(newText.ToString()).SyntaxTree;
-        //}
+        public static SyntaxNode SetSyntaxId(SyntaxNode node, int id)
+        {
+            return node
+                .WithoutAnnotations("xs-syntax-id")
+                .WithAdditionalAnnotations(new SyntaxAnnotation("xs-syntax-id", id.ToString()));
+        }
     }
 }

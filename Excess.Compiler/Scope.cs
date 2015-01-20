@@ -36,5 +36,10 @@ namespace Excess.Compiler
         {
             return _values[id] as T;
         }
+
+        internal void set(string id, object value)
+        {
+            _values[id] = value;
+        }
     }
 }

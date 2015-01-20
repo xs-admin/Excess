@@ -20,7 +20,7 @@ namespace Excess.Compiler
         string Id { get; }
         CompilerStage Stage { get; }
 
-        ICompilerPass Compile(EventBus events, Scope scope);
+        ICompilerPass Compile(IEventBus events, Scope scope);
     }
 
     public interface ICompiler<TToken, TNode>

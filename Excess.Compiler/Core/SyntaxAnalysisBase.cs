@@ -11,6 +11,8 @@ namespace Excess.Compiler.Core
     public abstract class BaseSyntacticalMatchResult<TNode> : ISyntacticalMatchResult<TNode>
     {
         public TNode Node { get; set; }
+        public Scope Scope { get; set; }
+        public IEventBus Events { get; set; }
         public bool Preprocess { get; set; }
 
         ISyntacticalMatch<TNode> _matchChildren;
@@ -83,8 +85,17 @@ namespace Excess.Compiler.Core
             }
         }
 
+        public TNode schedule(string pass, TNode node, Func<TNode, TNode> handler)
+        {
+            int id = node.GetHashCode();
+            TNode result = markNode(node, id);
+            Events.schedule(pass, new SyntacticalNodeEvent<TNode>(id, handler, pass));
+            return result;
+        }
+
         protected abstract IEnumerable<TNode> children(TNode node);
         protected abstract IEnumerable<TNode> descendants(TNode node);
+        protected abstract TNode markNode(TNode node, int id);
     }
 
     public class BaseSyntacticalMatch<TNode> : ISyntacticalMatch<TNode>
@@ -232,7 +243,7 @@ namespace Excess.Compiler.Core
             }
 
             if (_name != null)
-                result.set(_name, node);
+                result.Scope.set(_name, node);
 
             return true;
         }
@@ -245,47 +256,6 @@ namespace Excess.Compiler.Core
 
             return node;
         }
-    }
-
-    public class FunctorSyntaxTransform<TNode> : ISyntaxTransform<TNode>
-    {
-        Func<TNode, TNode> _functor;
-        Func<TNode, ISyntacticalMatchResult<TNode>, TNode> _functorExtended;
-
-        public FunctorSyntaxTransform(Func<TNode, TNode> handler)
-        {
-            _functor = handler;
-        }
-
-        public FunctorSyntaxTransform(Func<TNode, ISyntacticalMatchResult<TNode>, TNode> handler)
-        {
-            _functorExtended = handler;
-        }
-
-        public ISyntaxTransform<TNode> insert()
-        {
-            throw new InvalidOperationException();
-        }
-
-        public ISyntaxTransform<TNode> replace()
-        {
-            throw new InvalidOperationException();
-        }
-
-        public ISyntaxTransform<TNode> remove()
-        {
-            throw new InvalidOperationException();
-        }
-
-
-        public TNode transform(TNode node, ISyntacticalMatchResult<TNode> result)
-        {
-            if (_functorExtended != null)
-                return _functorExtended(node, result);
-
-            return _functor(node);
-        }
-
     }
 
     public class SyntaxAnalysisBase<TNode> : ISyntaxAnalysis<TNode>
@@ -346,11 +316,6 @@ namespace Excess.Compiler.Core
             _matchers.Add(matcher);
 
             return matcher;
-        }
-
-        public IEnumerable<ISyntacticalMatch<TNode>> consume()
-        {
-            throw new NotImplementedException();
         }
 
         public ISyntaxTransform<TNode> transform()
