@@ -8,6 +8,12 @@ namespace Excess.Compiler
 {
     public class Class1
     {
+        static Class1()
+        {
+            int xx = 0;
+            xx++;
+        }
+
         //    public void init(ICompiler compiler)
         //    {
         //        compiler

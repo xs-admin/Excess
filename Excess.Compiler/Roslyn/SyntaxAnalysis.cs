@@ -21,7 +21,7 @@ namespace Excess.Compiler.Roslyn
         }
         protected override SyntaxNode markNode(SyntaxNode node, int id)
         {
-            throw new NotImplementedException();
+            return RoslynCompiler.SetSyntaxId(node, id);
         }
     }
 

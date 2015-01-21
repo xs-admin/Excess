@@ -10,21 +10,25 @@ namespace Excess.Compiler.Roslyn
 {
     public class SyntacticalPass : BasePass
     {
-        static SyntacticalPass()
-        {
-            PassId = "syntactical-pass";
-            PassStage = CompilerStage.Syntactical;
-        }
-
         SyntaxNode _root;
         public SyntacticalPass(SyntaxNode root)
         {
             _root = root;
         }
 
+        protected override string passId()
+        {
+            return "syntactical-pass";
+        }
+
+        protected override CompilerStage passStage()
+        {
+            return CompilerStage.Syntactical;
+        }
+
         public override ICompilerPass Compile(IEventBus events, Scope scope)
         {
-            var myEvents     = events.poll(PassId);
+            var myEvents     = events.poll(passId());
             var matchEvents  = myEvents.OfType<SyntacticalMatchEvent<SyntaxNode>>();
             var customEvents = myEvents.OfType<SyntacticalNodeEvent<SyntaxNode>> ();
 

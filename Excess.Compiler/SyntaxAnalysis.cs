@@ -60,8 +60,6 @@ namespace Excess.Compiler
         ISyntacticalMatch<TNode> match<T>(string named = null, string add = null) where T : TNode;
         ISyntacticalMatch<TNode> match(string named = null, string add = null);
 
-        ISyntaxTransform<TNode> transform();
-
-        TNode normalize(TNode node);
+        IEnumerable<CompilerEvent> produce();
     }
 }

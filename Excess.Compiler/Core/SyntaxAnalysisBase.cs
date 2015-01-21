@@ -318,14 +318,9 @@ namespace Excess.Compiler.Core
             return matcher;
         }
 
-        public ISyntaxTransform<TNode> transform()
+        public IEnumerable<CompilerEvent> produce()
         {
-            throw new NotImplementedException();
-        }
-
-        public TNode normalize(TNode node)
-        {
-            throw new NotImplementedException();
+            return new[] { new SyntacticalMatchEvent<TNode>(_matchers) };
         }
     }
 }

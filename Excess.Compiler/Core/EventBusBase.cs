@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Excess.Compiler.Core
 {
-    public abstract class BaseEventBus : IEventBus
+    public class BaseEventBus : IEventBus
     {
         List<CompilerEvent> _events = new List<CompilerEvent>();
         public IEnumerable<CompilerEvent> check(string pass)

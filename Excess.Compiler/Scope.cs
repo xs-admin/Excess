@@ -17,7 +17,8 @@ namespace Excess.Compiler
         Dictionary<string, object> _values = new Dictionary<string, object>();
         public override bool TryGetMember(GetMemberBinder binder, out object result)
         {
-            return _values.TryGetValue(binder.Name, out result);
+            _values.TryGetValue(binder.Name, out result);
+            return true;
         }
 
         public override bool TrySetMember(SetMemberBinder binder, object value)

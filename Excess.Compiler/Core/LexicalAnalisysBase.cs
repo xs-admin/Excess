@@ -7,9 +7,14 @@ using System.Threading.Tasks;
 
 namespace Excess.Compiler.Core
 {
-    public class LexicalMatchResult : ILexicalMatchResult
+    public class LexicalMatchResult<TToken> : ILexicalMatchResult<TToken>
     {
-        ExpandoObject _context = new ExpandoObject();
+        public LexicalMatchResult(IEnumerable<TToken> tokens)
+        {
+            Tokens = tokens;
+        }
+
+        Scope _context = new Scope();
 
         public dynamic context()
         {
@@ -18,16 +23,17 @@ namespace Excess.Compiler.Core
 
         public void context_set(string name, dynamic value)
         {
-            IDictionary<string, object> values = _context;
-            values[name] = value;
+            _context.set(name, value);
         }
+
+        public IEnumerable<TToken> Tokens { get; set; }
     }
 
     public class LexicalMatch<TToken> : ILexicalMatch<TToken>
     {
-        private ILexicalAnalysis<TToken>                            _lexical;
-        private ILexicalTransform<TToken>                           _transform;
-        private List<Func<TToken, ILexicalMatchResult, TokenMatch>> _matchers = new List<Func<TToken, ILexicalMatchResult, TokenMatch>>();
+        private ILexicalAnalysis<TToken> _lexical;
+        private ILexicalTransform<TToken> _transform;
+        private List<Func<TToken, ILexicalMatchResult<TToken>, TokenMatch>> _matchers = new List<Func<TToken, ILexicalMatchResult<TToken>, TokenMatch>>();
 
         public LexicalMatch(ILexicalAnalysis<TToken> lexical)
         {
@@ -45,7 +51,7 @@ namespace Excess.Compiler.Core
             public List<TToken> Contents { get; set; }
         }
 
-        private static Func<TToken, ILexicalMatchResult, TokenMatch> MatchEnclosed(Func<TToken, bool> open, Func<TToken, bool> close, string start, string end, string contents)
+        private static Func<TToken, ILexicalMatchResult<TToken>, TokenMatch> MatchEnclosed(Func<TToken, bool> open, Func<TToken, bool> close, string start, string end, string contents)
         {
             return (token, result) =>
             {
@@ -84,7 +90,7 @@ namespace Excess.Compiler.Core
                     }
                 }
 
-                return TokenMatch.UnMatch;
+                return TokenMatch.MatchAndContinue;
             };
         }
 
@@ -109,7 +115,7 @@ namespace Excess.Compiler.Core
             return this;
         }
 
-        private static Func<TToken, ILexicalMatchResult, TokenMatch> MatchMany(Func<TToken, bool> match, string named, bool matchNone = false)
+        private static Func<TToken, ILexicalMatchResult<TToken>, TokenMatch> MatchMany(Func<TToken, bool> match, string named, bool matchNone = false)
         {
             return (token, result) =>
             {
@@ -212,27 +218,43 @@ namespace Excess.Compiler.Core
             return this;
         }
 
-        public ILexicalMatch<TToken> tokens(params string[] anyOf)
+        public ILexicalMatch<TToken> token(char value, string named = null)
         {
-            return tokens(MatchStringArray(anyOf));
+            return token(MatchString(value.ToString()), named);
         }
 
-        public ILexicalMatch<TToken> tokens(params char[] anyOf)
+        public ILexicalMatch<TToken> token(string value, string named = null)
         {
-            return tokens(MatchStringArray(anyOf.Select<char, string>(ch => ch.ToString())));
+            return token(MatchString(value), named);
         }
 
-        public ILexicalMatch<TToken> tokens(string[] anyOf, string named = null)
+        public ILexicalMatch<TToken> token(Func<TToken, bool> matcher, string named = null)
         {
-            return tokens(MatchStringArray(anyOf), named);
+            _matchers.Add(MatchOne(matcher, named));
+            return this;
         }
 
-        public ILexicalMatch<TToken> tokens(char[] anyOf, string named = null)
+        public ILexicalMatch<TToken> any(params string[] anyOf)
         {
-            return tokens(MatchStringArray(anyOf.Select<char, string>(ch => ch.ToString())), named);
+            return any(MatchStringArray(anyOf));
         }
 
-        private static Func<TToken, ILexicalMatchResult, TokenMatch> MatchOne(Func<TToken, bool> match, string named, bool matchNone = false)
+        public ILexicalMatch<TToken> any(params char[] anyOf)
+        {
+            return any(MatchStringArray(anyOf.Select<char, string>(ch => ch.ToString())));
+        }
+
+        public ILexicalMatch<TToken> any(string[] anyOf, string named = null)
+        {
+            return any(MatchStringArray(anyOf), named);
+        }
+
+        public ILexicalMatch<TToken> any(char[] anyOf, string named = null)
+        {
+            return any(MatchStringArray(anyOf.Select<char, string>(ch => ch.ToString())), named);
+        }
+
+        private static Func<TToken, ILexicalMatchResult<TToken>, TokenMatch> MatchOne(Func<TToken, bool> match, string named, bool matchNone = false)
         {
             return (token, result) =>
             {
@@ -247,7 +269,7 @@ namespace Excess.Compiler.Core
             };
         }
 
-        public ILexicalMatch<TToken> tokens(Func<TToken, bool> handler, string named = null)
+        public ILexicalMatch<TToken> any(Func<TToken, bool> handler, string named = null)
         {
             _matchers.Add(MatchOne(handler, named));
             return this;
@@ -255,22 +277,22 @@ namespace Excess.Compiler.Core
 
         public ILexicalMatch<TToken> optional(params string[] anyOf)
         {
-            return tokens(MatchStringArray(anyOf));
+            return any(MatchStringArray(anyOf));
         }
 
         public ILexicalMatch<TToken> optional(params char[] anyOf)
         {
-            return tokens(MatchStringArray(anyOf.Select<char, string>(ch => ch.ToString())));
+            return any(MatchStringArray(anyOf.Select<char, string>(ch => ch.ToString())));
         }
 
         public ILexicalMatch<TToken> optional(string[] anyOf, string named = null)
         {
-            return tokens(MatchStringArray(anyOf), named);
+            return any(MatchStringArray(anyOf), named);
         }
 
         public ILexicalMatch<TToken> optional(char[] anyOf, string named = null)
         {
-            return tokens(MatchStringArray(anyOf.Select<char, string>(ch => ch.ToString())), named);
+            return any(MatchStringArray(anyOf.Select<char, string>(ch => ch.ToString())), named);
         }
 
         public ILexicalMatch<TToken> optional(Func<TToken, bool> handler, string named = null)
@@ -279,7 +301,7 @@ namespace Excess.Compiler.Core
             return this;
         }
 
-        public ILexicalAnalysis<TToken> then(Func<IEnumerable<TToken>, ILexicalMatchResult, IEnumerable<TToken>> handler)
+        public ILexicalAnalysis<TToken> then(Func<IEnumerable<TToken>, ILexicalMatchResult<TToken>, IEnumerable<TToken>> handler)
         {
             _transform = new LexicalFunctorTransform<TToken>(handler);
             return _lexical;
@@ -295,7 +317,7 @@ namespace Excess.Compiler.Core
         {
                 consumed    = 0;
             int currMatcher = 0;
-            var result      = new LexicalMatchResult();
+            var result      = new LexicalMatchResult<TToken>(tokens);
             foreach (var token in tokens)
             {
                 if (currMatcher >= _matchers.Count)
@@ -324,7 +346,8 @@ namespace Excess.Compiler.Core
                 }
             }
 
-            return _transform.transform(tokens.Take(consumed), result);
+            result.Tokens = tokens.Take(consumed);
+            return _transform.transform(result.Tokens, result);
         }
 
     }

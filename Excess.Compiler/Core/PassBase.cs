@@ -28,9 +28,6 @@ namespace Excess.Compiler.Core
     
     public abstract class BasePass : ICompilerPass
     {
-        protected static string        PassId;
-        protected static CompilerStage PassStage = CompilerStage.Started;
-
         public BasePass()
         {
         }
@@ -39,18 +36,22 @@ namespace Excess.Compiler.Core
         {
             get
             {
-                return PassId;
+                return passId();
             }
         }
+
 
         public CompilerStage Stage
         {
             get
             {
-                return PassStage;
+                return passStage();
             }
         }
 
         public abstract ICompilerPass Compile(IEventBus events, Scope scope);
+
+        protected abstract string passId();
+        protected abstract CompilerStage passStage();
     }
 }

@@ -8,13 +8,19 @@ using Excess.Compiler.Core;
 
 namespace Excess.Compiler.Roslyn
 {
+    using Microsoft.CodeAnalysis.CSharp;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
     public class RoslynLexicalTransform : LexicalTransform<SyntaxToken>
     {
         protected override IEnumerable<SyntaxToken> tokensFromString(string tokenString)
         {
-            return CSharp.ParseTokens(tokenString);
+            var tokens = CSharp.ParseTokens(tokenString);
+            foreach (var token in tokens)
+            {
+                if (token.CSharpKind() != SyntaxKind.EndOfFileToken)
+                    yield return token;
+            }
         }
     }
 

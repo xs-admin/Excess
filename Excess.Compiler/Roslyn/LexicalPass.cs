@@ -12,26 +12,44 @@ namespace Excess.Compiler.Roslyn
 
     public class LexicalPass : BaseLexicalPass<SyntaxToken>
     {
-        static LexicalPass()
-        {
-            PassId    = "lexical-transform";
-            PassStage = CompilerStage.Lexical;
-        }
-
         public LexicalPass(string text) :
             base(text)
         {
         }
 
+        internal SyntaxNode Root { get; private set; }
+        internal string NewText { get; private set; }
+
+        protected override string passId()
+        {
+            return "lexical-pass";
+        }
+
+        protected override CompilerStage passStage()
+        {
+            return CompilerStage.Lexical;
+        }
+
         protected override ICompilerPass continuation(string transformed)
         {
-            var root = CSharp.ParseCompilationUnit(transformed);
-            throw new NotImplementedException(); 
+            NewText = transformed;
+            Root = CSharp.ParseCompilationUnit(transformed);
+
+            return new SyntacticalPass(Root);
         }
 
         protected override IEnumerable<SyntaxToken> parseTokens(string text)
         {
             return CSharp.ParseTokens(text);
+        }
+
+        protected override string tokensToString(IEnumerable<SyntaxToken> tokens)
+        {
+            StringBuilder newText = new StringBuilder();
+            foreach (var token in tokens)
+                newText.Append(token.ToFullString());
+
+            return newText.ToString();
         }
     }
 }

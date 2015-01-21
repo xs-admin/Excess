@@ -14,19 +14,25 @@ namespace Excess.Compiler
         MatchAndContinue,
     }
 
-    public interface ILexicalMatchResult
+    public interface ILexicalMatchResult<TToken>
     {
+        IEnumerable<TToken> Tokens { get; set; }
+
         dynamic context();
         void    context_set(string name, dynamic value);
     }
 
     public interface ILexicalMatch<TToken>
     {
-        ILexicalMatch<TToken> tokens(params char[] anyOf);
-        ILexicalMatch<TToken> tokens(params string[] anyOf);
-        ILexicalMatch<TToken> tokens(char[] anyOf, string named = null);
-        ILexicalMatch<TToken> tokens(string[] anyOf, string named = null);
-        ILexicalMatch<TToken> tokens(Func<TToken, bool> anyOf, string named = null);
+        ILexicalMatch<TToken> token(char token, string named = null);
+        ILexicalMatch<TToken> token(string token, string named = null);
+        ILexicalMatch<TToken> token(Func<TToken, bool> matcher, string named = null);
+
+        ILexicalMatch<TToken> any(params char[] anyOf);
+        ILexicalMatch<TToken> any(params string[] anyOf);
+        ILexicalMatch<TToken> any(char[] anyOf, string named = null);
+        ILexicalMatch<TToken> any(string[] anyOf, string named = null);
+        ILexicalMatch<TToken> any(Func<TToken, bool> anyOf, string named = null);
 
         ILexicalMatch<TToken> optional(params char[] anyOf);
         ILexicalMatch<TToken> optional(params string[] anyOf);
@@ -51,7 +57,7 @@ namespace Excess.Compiler
         ILexicalMatch<TToken> manyOrNone(string[] anyOf, string named = null);
         ILexicalMatch<TToken> manyOrNone(Func<TToken, bool> tokens, string named = null);
 
-        ILexicalAnalysis<TToken> then(Func<IEnumerable<TToken>, ILexicalMatchResult, IEnumerable<TToken>> handler);
+        ILexicalAnalysis<TToken> then(Func<IEnumerable<TToken>, ILexicalMatchResult<TToken>, IEnumerable<TToken>> handler);
         ILexicalAnalysis<TToken> then(ILexicalTransform<TToken> transform);
 
         IEnumerable<TToken> transform(IEnumerable<TToken> enumerable, out int consumed);
@@ -63,7 +69,7 @@ namespace Excess.Compiler
         ILexicalTransform<TToken> replace(string named, string tokens);
         ILexicalTransform<TToken> remove(string named);
 
-        IEnumerable<TToken> transform(IEnumerable<TToken> tokens, ILexicalMatchResult result);
+        IEnumerable<TToken> transform(IEnumerable<TToken> tokens, ILexicalMatchResult<TToken> result);
     }
 
     public interface ILexicalAnalysis<TToken>

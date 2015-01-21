@@ -16,7 +16,7 @@ namespace Excess.Compiler.Core
 
         public override ICompilerPass Compile(IEventBus events, Scope scope)
         {
-            var myEvents = events.poll(PassId);
+            var myEvents = events.poll(passId());
             var matchEvents = myEvents.OfType<LexicalMatchEvent<TToken>>();
 
             var tokens   = parseTokens(_text).ToArray();
@@ -25,11 +25,8 @@ namespace Excess.Compiler.Core
 
             //calculate new text
             //td: !! mapping info
-            StringBuilder newText = new StringBuilder();
-            foreach (var token in tokens)
-                newText.Append(token.ToString());
-
-            return continuation(newText.ToString());
+            string newText = tokensToString(result);
+            return continuation(newText);
         }
 
         protected abstract ICompilerPass continuation(string transformed);
@@ -44,6 +41,7 @@ namespace Excess.Compiler.Core
         }
 
         protected abstract IEnumerable<TToken> parseTokens(string text);
+        protected abstract string tokensToString(IEnumerable<TToken> tokens);
 
         private static IEnumerable<TToken> Range(TToken[] tokens, int begin, int end)
         {
@@ -71,7 +69,7 @@ namespace Excess.Compiler.Core
                     foreach (var tt in transformed)
                         yield return tt;
 
-                    token += consumed;
+                    token += consumed - 1;
                 }
             }
         }
