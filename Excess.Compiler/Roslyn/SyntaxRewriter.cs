@@ -12,11 +12,17 @@ namespace Excess.Compiler.Roslyn
     {
         IEnumerable<ISyntacticalMatch<SyntaxNode>> _matchers;
         IDictionary<int, Func<SyntaxNode, SyntaxNode>> _handlers;
+        IEventBus _events;
+        Scope _scope;
 
-        public SyntaxRewriter(IEnumerable<ISyntacticalMatch<SyntaxNode>> matchers, IDictionary<int, Func<SyntaxNode, SyntaxNode>> handlers)
+        public SyntaxRewriter(IEventBus events, Scope scope,
+                              IEnumerable<ISyntacticalMatch<SyntaxNode>> matchers, 
+                              IDictionary<int, Func<SyntaxNode, SyntaxNode>> handlers)
         {
             _matchers = matchers;
             _handlers = handlers;
+            _events   = events;
+            _scope    = scope;
         }
 
         public override SyntaxNode Visit(SyntaxNode node)
@@ -29,11 +35,12 @@ namespace Excess.Compiler.Roslyn
                     return handler(base.Visit(node));
             }
 
-            ISyntacticalMatchResult <SyntaxNode> matchResult = new SyntacticalMatchResult();
+            ISyntacticalMatchResult<SyntaxNode> matchResult = new SyntacticalMatchResult(_scope, _events);
             foreach (var matcher in _matchers)
             {
                 if (matcher.matches(node, matchResult))
                 {
+                    matchResult.Node = node;
                     if (matchResult.Preprocess)
                     {
                         var pre = matcher.transform(node, matchResult);

@@ -21,6 +21,7 @@ namespace Excess.Compiler
     public interface IEventBus
     {
         IEnumerable<CompilerEvent> poll(string pass);
+        IEnumerable<T> poll<T>() where T : CompilerEvent;
         IEnumerable<CompilerEvent> check(string pass);
         void schedule(CompilerEvent ev);
         void schedule(IEnumerable<CompilerEvent> evs);
@@ -30,16 +31,32 @@ namespace Excess.Compiler
 
 
     //expected events
-    public class LexicalMatchEvent<TToken> : CompilerEvent
+    public class LexicalMatchEvent<TToken, TNode> : CompilerEvent
     {
-        public LexicalMatchEvent(IEnumerable<ILexicalMatch<TToken>> matchers) :
+        public LexicalMatchEvent(IEnumerable<ILexicalMatch<TToken, TNode>> matchers) :
             base(CompilerStage.Lexical, "")
         {
             Matchers = matchers;
         }
 
-        public IEnumerable<ILexicalMatch<TToken>> Matchers { get; set; }
+        public IEnumerable<ILexicalMatch<TToken, TNode>> Matchers { get; set; }
     };
+
+    public class LexicalExtensionEvent<TToken, TNode> : CompilerEvent
+    {
+        public LexicalExtensionEvent(LexicalExtension<TToken> extension, int lexicalId, Func<ISyntacticalMatchResult<TNode>, LexicalExtension<TToken>, TNode> handler) :
+            base(CompilerStage.Lexical, "")
+        {
+            Extension = extension;
+            LexicalId = lexicalId;
+            Handler = handler;
+        }
+
+        public LexicalExtension<TToken> Extension { get;  }
+        public int LexicalId { get; }
+        public Func<ISyntacticalMatchResult<TNode>, LexicalExtension<TToken>, TNode> Handler { get; }
+    }
+
 
     public class SyntacticalMatchEvent<TNode> : CompilerEvent
     {

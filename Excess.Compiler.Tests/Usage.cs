@@ -5,6 +5,7 @@ using Excess.Compiler.Core;
 using Microsoft.CodeAnalysis;
 using System.Linq;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System.Collections.Generic;
 
 namespace Excess.Compiler.Tests
 {
@@ -12,7 +13,7 @@ namespace Excess.Compiler.Tests
     public class Usage
     {
         [TestMethod]
-        public void LexicalMatching()
+        public void LexicalTokenMatching()
         {
             RoslynCompiler compiler = new RoslynCompiler();
             var lexical = compiler.Lexical();
@@ -48,5 +49,19 @@ namespace Excess.Compiler.Tests
                 .OfType<ImplicitArrayCreationExpressionSyntax>()
                 .Count() == 2);
         }
+
+        [TestMethod]
+        public void ExtensionMatching()
+        {
+            RoslynCompiler compiler = new RoslynCompiler();
+            var lexical = compiler.Lexical();
+            lexical
+                .extension("my_ext", ExtensionKind.Code, myExtLexical);
+        }
+
+        private IEnumerable<SyntaxToken> myExtLexical(LexicalExtension<SyntaxToken> extension, ILexicalMatchResult<SyntaxToken> result)
+        {
+            return RoslynCompiler.ParseTokens("my_ext_replaced");
+        }
     }
-}
+    }

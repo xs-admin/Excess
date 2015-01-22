@@ -10,6 +10,12 @@ namespace Excess.Compiler.Roslyn
 {
     public class SyntacticalMatchResult : BaseSyntacticalMatchResult<SyntaxNode>
     {
+        public SyntacticalMatchResult(Scope scope, IEventBus events, SyntaxNode node = null)
+            : base(node, scope, events)
+        {
+            Preprocess = false;
+        }
+
         protected override IEnumerable<SyntaxNode> children(SyntaxNode node)
         {
             return node.ChildNodes();
@@ -25,7 +31,7 @@ namespace Excess.Compiler.Roslyn
         }
     }
 
-    public class RoslynSyntaxAnalysis : SyntaxAnalysisBase<SyntaxToken>
+    public class RoslynSyntaxAnalysis : SyntaxAnalysisBase<SyntaxNode>
     {
     }
 }

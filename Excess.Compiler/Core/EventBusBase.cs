@@ -30,6 +30,22 @@ namespace Excess.Compiler.Core
             return result;
         }
 
+        public IEnumerable<T> poll<T>() where T :  CompilerEvent
+        {
+            List<CompilerEvent> new_events = new List<CompilerEvent>();
+            var result = _events.Select<CompilerEvent, T>(ev =>
+            {
+                if (ev is T)
+                    return (T)ev;
+
+                new_events.Add(ev);
+                return null;
+            });
+
+            _events = new_events;
+            return result;
+        }
+
         public void schedule(IEnumerable<CompilerEvent> evs)
         {
             _events.AddRange(evs);

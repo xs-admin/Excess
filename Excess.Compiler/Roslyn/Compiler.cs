@@ -9,6 +9,7 @@ using System.Diagnostics;
 
 namespace Excess.Compiler.Roslyn
 {
+    using Microsoft.CodeAnalysis.CSharp;
     using Microsoft.CodeAnalysis.CSharp.Syntax;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
@@ -23,6 +24,7 @@ namespace Excess.Compiler.Roslyn
             return new LexicalPass(text);
         }
 
+        //out of interface methods, used for testing
         public ExpressionSyntax CompileExpression(string expr)
         {
             var   pass   = new LexicalPass(expr);
@@ -30,6 +32,7 @@ namespace Excess.Compiler.Roslyn
             var   events = _lexical.produce();
 
             _events.schedule("lexical-pass", events);
+
             pass.Compile(_events, scope);
 
             return CSharp.ParseExpression(pass.NewText);
@@ -51,5 +54,40 @@ namespace Excess.Compiler.Roslyn
                 .WithAdditionalAnnotations(new SyntaxAnnotation("xs-syntax-id", id.ToString()));
         }
 
+        public static int GetLexicalId(SyntaxToken token)
+        {
+            var annotation = token.GetAnnotations("xs-lexical-id").FirstOrDefault();
+            if (annotation != null)
+                return int.Parse(annotation.Data);
+
+            return -1;
+        }
+
+        public static SyntaxToken SetLexicalId(SyntaxToken token, int id)
+        {
+            return token
+                .WithoutAnnotations("xs-lexical-id")
+                .WithAdditionalAnnotations(new SyntaxAnnotation("xs-lexical-id", id.ToString()));
+        }
+
+        public static SyntaxToken MarkToken(SyntaxToken token, string mark, object value)
+        {
+            var result = value == null ? new SyntaxAnnotation(mark) :
+                                         new SyntaxAnnotation(mark, value.ToString());
+
+            return token
+                .WithoutAnnotations(mark)
+                .WithAdditionalAnnotations(result);
+        }
+
+        public static IEnumerable<SyntaxToken> ParseTokens(string text)
+        {
+            var tokens = CSharp.ParseTokens(text);
+            foreach (var token in tokens)
+            {
+                if (token.CSharpKind() != SyntaxKind.EndOfFileToken)
+                    yield return token;
+            }
+        }
     }
 }

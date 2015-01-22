@@ -11,9 +11,11 @@ namespace Excess.Compiler.Roslyn
     public class SyntacticalPass : BasePass
     {
         SyntaxNode _root;
-        public SyntacticalPass(SyntaxNode root)
+        IEnumerable<PendingExtension<SyntaxToken, SyntaxNode>> _extensions;
+        public SyntacticalPass(SyntaxNode root, IEnumerable<PendingExtension<SyntaxToken, SyntaxNode>> extensions)
         {
             _root = root;
+            _extensions = extensions;
         }
 
         protected override string passId()
@@ -26,8 +28,17 @@ namespace Excess.Compiler.Roslyn
             return CompilerStage.Syntactical;
         }
 
+        //td: !!! move this to base pass
+        IEventBus _events;
+        Scope     _scope; 
         public override ICompilerPass Compile(IEventBus events, Scope scope)
         {
+            _events = events;
+            _scope  = scope;
+
+            if (_extensions.Any())
+                processExtensions();
+
             var myEvents     = events.poll(passId());
             var matchEvents  = myEvents.OfType<SyntacticalMatchEvent<SyntaxNode>>();
             var customEvents = myEvents.OfType<SyntacticalNodeEvent<SyntaxNode>> ();
@@ -35,13 +46,28 @@ namespace Excess.Compiler.Roslyn
             var matchers = GetMatchers(matchEvents);
             var handlers = GetHandlers(customEvents);
 
-            SyntaxRewriter pass = new SyntaxRewriter(matchers, handlers);
+            SyntaxRewriter pass = new SyntaxRewriter(_events, _scope, matchers, handlers);
             _root = pass.Visit(_root);
 
             if (events.check("syntactical-pass").Any())
                 return this;
 
             throw new NotImplementedException();
+        }
+
+        private void processExtensions()
+        {
+            Dictionary<SyntaxNode, PendingExtension<SyntaxToken, SyntaxNode>> extensions = new Dictionary<SyntaxNode, PendingExtension<SyntaxToken, SyntaxNode>>();
+            foreach (var ext in _extensions)
+                extensions[ext.Node] = ext;
+
+            _root = _root.ReplaceNodes(extensions.Keys, (oldNode, newNode) =>
+            {
+                var extension = extensions[oldNode];
+
+                SyntacticalMatchResult result = new SyntacticalMatchResult(_scope, _events, newNode);
+                return extension.Handler(result, extension.Extension);
+            });
         }
 
         private Dictionary<int, Func<SyntaxNode, SyntaxNode>> GetHandlers(IEnumerable<SyntacticalNodeEvent<SyntaxNode>> events)

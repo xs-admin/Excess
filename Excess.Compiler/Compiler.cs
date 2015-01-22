@@ -23,9 +23,13 @@ namespace Excess.Compiler
         ICompilerPass Compile(IEventBus events, Scope scope);
     }
 
+    public interface ICompilerService
+    {
+    }
+
     public interface ICompiler<TToken, TNode>
     {
-        ILexicalAnalysis<TToken> Lexical();
+        ILexicalAnalysis<TToken, TNode> Lexical();
         ISyntaxAnalysis<TNode> Syntaxis();
 
         ICompilerPass Compile(string text, CompilerStage stage = CompilerStage.Started);

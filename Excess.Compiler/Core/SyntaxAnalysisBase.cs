@@ -15,6 +15,13 @@ namespace Excess.Compiler.Core
         public IEventBus Events { get; set; }
         public bool Preprocess { get; set; }
 
+        public BaseSyntacticalMatchResult(TNode node, Scope scope, IEventBus events)
+        {
+            Node = node;
+            Scope = scope;
+            Events = events;
+        }
+
         ISyntacticalMatch<TNode> _matchChildren;
         public void matchChildren(ISyntacticalMatch<TNode> match)
         {

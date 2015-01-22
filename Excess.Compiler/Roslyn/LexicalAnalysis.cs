@@ -15,6 +15,19 @@ namespace Excess.Compiler.Roslyn
     {
         protected override IEnumerable<SyntaxToken> tokensFromString(string tokenString)
         {
+            return RoslynCompiler.ParseTokens(tokenString);
+        }
+    }
+
+    public class RoslynLexicalAnalysis : LexicalAnalysis<SyntaxToken, SyntaxNode>
+    {
+        public override ILexicalTransform<SyntaxToken> transform()
+        {
+            return new RoslynLexicalTransform();
+        }
+
+        public override IEnumerable<SyntaxToken> parseTokens(string tokenString)
+        {
             var tokens = CSharp.ParseTokens(tokenString);
             foreach (var token in tokens)
             {
@@ -22,13 +35,10 @@ namespace Excess.Compiler.Roslyn
                     yield return token;
             }
         }
-    }
 
-    public class RoslynLexicalAnalysis : LexicalAnalysis<SyntaxToken>
-    {
-        public override ILexicalTransform<SyntaxToken> transform()
+        protected override SyntaxToken setLexicalId(SyntaxToken token, int value)
         {
-            return new RoslynLexicalTransform();
+            return RoslynCompiler.SetLexicalId(token, value);
         }
     }
 }
