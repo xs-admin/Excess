@@ -28,8 +28,8 @@ namespace Excess.Compiler
     {
         TNode Node { get; set; }
         Scope Scope { get; set; }
-        bool Preprocess { get; set; }
         IEventBus Events { get; set; }
+        bool Preprocess { get; set; }
         void matchChildren(ISyntacticalMatch<TNode> match);
         void matchDescendants(ISyntacticalMatch<TNode> match);
         TNode schedule(string pass, TNode node, Func<TNode, TNode> handler);

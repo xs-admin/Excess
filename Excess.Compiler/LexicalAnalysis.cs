@@ -12,6 +12,7 @@ namespace Excess.Compiler
         Match,
         UnMatch,
         MatchAndContinue,
+        MatchAndStay,
     }
 
     public interface ILexicalMatchResult<TToken>
@@ -57,6 +58,8 @@ namespace Excess.Compiler
         ILexicalMatch<TToken, TNode> manyOrNone(char[] anyOf, string named = null);
         ILexicalMatch<TToken, TNode> manyOrNone(string[] anyOf, string named = null);
         ILexicalMatch<TToken, TNode> manyOrNone(Func<TToken, bool> tokens, string named = null);
+
+        ILexicalMatch<TToken, TNode> identifier(string named = null, bool optional = false);
 
         ILexicalAnalysis<TToken, TNode> then(Func<IEnumerable<TToken>, ILexicalMatchResult<TToken>, IEnumerable<TToken>> handler);
         ILexicalAnalysis<TToken, TNode> then(ILexicalTransform<TToken> transform);

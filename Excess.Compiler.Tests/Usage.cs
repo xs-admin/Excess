@@ -6,6 +6,7 @@ using Microsoft.CodeAnalysis;
 using System.Linq;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Collections.Generic;
+using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace Excess.Compiler.Tests
 {
@@ -51,17 +52,55 @@ namespace Excess.Compiler.Tests
         }
 
         [TestMethod]
-        public void ExtensionMatching()
+        public void LexicalExtension()
         {
             RoslynCompiler compiler = new RoslynCompiler();
             var lexical = compiler.Lexical();
             lexical
                 .extension("my_ext", ExtensionKind.Code, myExtLexical);
+
+            string lexicalResult = compiler.ApplyLexicalPasss("my_ext(int i) { code(); }");
+
+            Assert.IsTrue(lexicalResult == "my_ext_replaced int i = code(); ");
         }
 
         private IEnumerable<SyntaxToken> myExtLexical(LexicalExtension<SyntaxToken> extension, ILexicalMatchResult<SyntaxToken> result)
         {
-            return RoslynCompiler.ParseTokens("my_ext_replaced");
+            string testResult = "my_ext_replaced "
+                              + RoslynCompiler.TokensToString(extension.Arguments)
+                              + " = "
+                              + RoslynCompiler.TokensToString(extension.Body);
+
+            return RoslynCompiler.ParseTokens(testResult);
+        }
+
+        [TestMethod]
+        public void SyntacticalExtension()
+        {
+            RoslynCompiler compiler = new RoslynCompiler();
+            var lexical = compiler.Lexical();
+            lexical
+                .extension("my_ext", ExtensionKind.Code, myExtSyntactical);
+
+            var tree = compiler.ApplySyntacticalPasss("void main() { my_ext(int i) { code(); } }");
+            Assert.IsTrue(tree.ToString() == "void main() { my_ext(int i=>{code(); });}");
+        }
+
+        private SyntaxNode myExtSyntactical(ISyntacticalMatchResult<SyntaxNode> result, LexicalExtension<SyntaxToken> extension)
+        {
+            Assert.IsTrue(result.Node is ExpressionStatementSyntax);
+            var node = result.Node as ExpressionStatementSyntax;
+
+            Assert.IsTrue(node.ToString() == "__extension();");
+
+            var call = (node.Expression as InvocationExpressionSyntax)
+                .WithExpression(CSharp.ParseExpression("my_ext"))
+                .WithArgumentList(CSharp.ArgumentList(CSharp.SeparatedList(new[] {
+                    CSharp.Argument(CSharp.ParenthesizedLambdaExpression(
+                        parameterList: RoslynCompiler.ParseParameterList(extension.Arguments), 
+                        body:          RoslynCompiler.ParseCode(extension.Body)))})));
+            
+            return node.WithExpression(call);
         }
     }
-    }
+}

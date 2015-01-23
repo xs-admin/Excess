@@ -19,11 +19,29 @@ namespace Excess.Compiler.Roslyn
         }
     }
 
+    public class RoslynLexicalMatch : BaseLexicalMatch<SyntaxToken, SyntaxNode>
+    {
+        public RoslynLexicalMatch(ILexicalAnalysis<SyntaxToken, SyntaxNode> lexical) :
+            base(lexical)
+        {
+        }
+
+        protected override bool isIdentifier(SyntaxToken token)
+        {
+            return token.IsVerbatimIdentifier();
+        }
+    }
+
     public class RoslynLexicalAnalysis : LexicalAnalysis<SyntaxToken, SyntaxNode>
     {
         public override ILexicalTransform<SyntaxToken> transform()
         {
             return new RoslynLexicalTransform();
+        }
+
+        protected override ILexicalMatch<SyntaxToken, SyntaxNode> createMatch()
+        {
+            return new RoslynLexicalMatch(this);
         }
 
         public override IEnumerable<SyntaxToken> parseTokens(string tokenString)

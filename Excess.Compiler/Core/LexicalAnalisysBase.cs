@@ -25,13 +25,13 @@ namespace Excess.Compiler.Core
         }
     }
 
-    public class LexicalMatch<TToken, TNode> : ILexicalMatch<TToken, TNode>
+    public abstract class BaseLexicalMatch<TToken, TNode> : ILexicalMatch<TToken, TNode>
     {
         private ILexicalAnalysis<TToken, TNode> _lexical;
         private ILexicalTransform<TToken> _transform;
         private List<Func<TToken, ILexicalMatchResult<TToken>, TokenMatch>> _matchers = new List<Func<TToken, ILexicalMatchResult<TToken>, TokenMatch>>();
 
-        public LexicalMatch(ILexicalAnalysis<TToken, TNode> lexical)
+        public BaseLexicalMatch(ILexicalAnalysis<TToken, TNode> lexical)
         {
             _lexical = lexical;
         }
@@ -82,9 +82,13 @@ namespace Excess.Compiler.Core
                         if (end != null)
                             result.Scope.set(end, token);
 
+                        context._state = null;
                         return TokenMatch.Match;
                     }
                 }
+
+                if (state.Contents != null)
+                    state.Contents.Add(token);
 
                 return TokenMatch.MatchAndContinue;
             };
@@ -256,7 +260,7 @@ namespace Excess.Compiler.Core
             {
                 var matches = match(token);
                 if (!matches)
-                    return matchNone ? TokenMatch.Match : TokenMatch.UnMatch;
+                    return matchNone ? TokenMatch.MatchAndStay : TokenMatch.UnMatch;
 
                 if (named != null)
                     result.Scope.set(named, token);
@@ -297,6 +301,19 @@ namespace Excess.Compiler.Core
             return this;
         }
 
+        private Func<TToken, bool> MatchIdentifier()
+        {
+            return token => isIdentifier(token); 
+        }
+
+        protected abstract bool isIdentifier(TToken token);
+
+        public ILexicalMatch<TToken, TNode> identifier(string named = null, bool optional = false)
+        {
+            _matchers.Add(MatchOne(MatchIdentifier(), named, optional));
+            return this;
+        }
+
         public ILexicalAnalysis<TToken, TNode> then(Func<IEnumerable<TToken>, ILexicalMatchResult<TToken>, IEnumerable<TToken>> handler)
         {
             _transform = new LexicalFunctorTransform<TToken>(handler);
@@ -327,20 +344,28 @@ namespace Excess.Compiler.Core
 
                 consumed++;
 
-                var matcher     = _matchers[currMatcher];
-                var matchResult = matcher(token, result);
-                switch (matchResult)
+                bool keepMatching = false;
+                do
                 {
-                    case TokenMatch.Match:
-                    case TokenMatch.MatchAndContinue:
+                    var matcher = _matchers[currMatcher];
+                    var matchResult = matcher(token, result);
+                    switch (matchResult)
                     {
-                        if (matchResult != TokenMatch.MatchAndContinue)
-                            currMatcher++;
-                        break;
+                        case TokenMatch.Match:
+                        case TokenMatch.MatchAndContinue:
+                        case TokenMatch.MatchAndStay:
+                        {
+                            if (matchResult != TokenMatch.MatchAndContinue)
+                                currMatcher++;
+
+                            keepMatching = matchResult == TokenMatch.MatchAndStay;
+                            break;
+                        }
+                        case TokenMatch.UnMatch:
+                            return null;
                     }
-                    case TokenMatch.UnMatch:
-                        return null;
                 }
+                while (keepMatching);
             }
 
             result.Tokens = tokens.Take(consumed);
@@ -352,10 +377,11 @@ namespace Excess.Compiler.Core
     public abstract class LexicalAnalysis<TToken, TNode> :  ILexicalAnalysis<TToken, TNode>
     {
         private List<ILexicalMatch<TToken, TNode>> _matchers = new List<ILexicalMatch<TToken, TNode>>();
+        protected abstract ILexicalMatch<TToken, TNode> createMatch();
 
         public ILexicalMatch<TToken, TNode> match()
         {
-            var result = new LexicalMatch<TToken, TNode>(this);
+            var result = createMatch();
             _matchers.Add(result);
             return result;
         }
@@ -439,11 +465,11 @@ namespace Excess.Compiler.Core
 
         public ILexicalAnalysis<TToken, TNode> extension(string keyword, ExtensionKind kind, Func<LexicalExtension<TToken>, ILexicalMatchResult<TToken>, IEnumerable<TToken>> handler)
         {
-            var result = new LexicalMatch<TToken, TNode>(this);
+            var result = createMatch();
 
             result
                 .token(keyword, named: "keyword")
-                //.identifier(named: "id", optional: true)
+                .identifier(named: "id", optional: true)
                 .enclosed('(', ')', contents: "arguments")
                 .enclosed('{', '}', contents: "body")
                 .then(ReplaceExtension(keyword, kind, handler));

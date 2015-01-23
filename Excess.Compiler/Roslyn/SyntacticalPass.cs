@@ -1,5 +1,6 @@
 ﻿using Excess.Compiler.Core;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,6 +19,7 @@ namespace Excess.Compiler.Roslyn
             _extensions = extensions;
         }
 
+        public SyntaxTree Tree { get { return _root.SyntaxTree; } }
         protected override string passId()
         {
             return "syntactical-pass";
@@ -52,22 +54,67 @@ namespace Excess.Compiler.Roslyn
             if (events.check("syntactical-pass").Any())
                 return this;
 
-            throw new NotImplementedException();
+            return null; //td: !!!
+        }
+
+        private SyntaxNode extensionNode(PendingExtension<SyntaxToken, SyntaxNode> extension)
+        {
+            SyntaxNode result = extension.Node;
+            switch (extension.Extension.Kind)
+            {
+                case ExtensionKind.Code:
+                    result = extension.Node
+                        .AncestorsAndSelf()
+                        .OfType<ExpressionStatementSyntax>()
+                        .FirstOrDefault();
+
+                    if (result == null)
+                    {
+                        //td: error, malformed code extension
+                    }
+                    break;
+
+                case ExtensionKind.Member:
+                    result = extension.Node
+                        .AncestorsAndSelf()
+                        .OfType<MemberDeclarationSyntax>()
+                        .FirstOrDefault();
+
+                    if (result == null)
+                    {
+                        //td: error, malformed member extension
+                    }
+                    break;
+
+                case ExtensionKind.Type:
+                    result = extension.Node
+                        .AncestorsAndSelf()
+                        .OfType<TypeDeclarationSyntax>()
+                        .FirstOrDefault();
+
+                    if (result == null)
+                    {
+                        //td: error, malformed type extension
+                    }
+                    break;
+            }
+
+            return result;
         }
 
         private void processExtensions()
         {
-            Dictionary<SyntaxNode, PendingExtension<SyntaxToken, SyntaxNode>> extensions = new Dictionary<SyntaxNode, PendingExtension<SyntaxToken, SyntaxNode>>();
-            foreach (var ext in _extensions)
-                extensions[ext.Node] = ext;
-
-            _root = _root.ReplaceNodes(extensions.Keys, (oldNode, newNode) =>
+            var transform  = new Dictionary<SyntaxNode, SyntaxNode>();
+            foreach (var extension in _extensions)
             {
-                var extension = extensions[oldNode];
+                SyntaxNode             oldNode = extensionNode(extension);
+                SyntacticalMatchResult result  = new SyntacticalMatchResult(_scope, _events, oldNode);
+                var resultNode = extension.Handler(result, extension.Extension);
 
-                SyntacticalMatchResult result = new SyntacticalMatchResult(_scope, _events, newNode);
-                return extension.Handler(result, extension.Extension);
-            });
+                transform[oldNode] = resultNode;
+            }
+
+            _root = _root.ReplaceNodes(transform.Keys, (oldNode, newNode) => transform[oldNode]);
         }
 
         private Dictionary<int, Func<SyntaxNode, SyntaxNode>> GetHandlers(IEnumerable<SyntacticalNodeEvent<SyntaxNode>> events)

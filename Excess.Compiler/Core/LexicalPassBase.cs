@@ -102,7 +102,7 @@ namespace Excess.Compiler.Core
             {
                 IEnumerable<TToken> transformed = null;
                 int                 consumed = 0;
-                ILexicalMatchResult<TToken> result = new LexicalMatchResult<TToken>(_scope, _events);
+                ILexicalMatchResult<TToken> result = new LexicalMatchResult<TToken>(new Scope(), _events);
                 foreach (var matcher in matchers)
                 {
                     transformed = matcher.transform(Range(tokens, token, end), result, out consumed);

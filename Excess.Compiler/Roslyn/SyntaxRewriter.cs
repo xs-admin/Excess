@@ -27,6 +27,9 @@ namespace Excess.Compiler.Roslyn
 
         public override SyntaxNode Visit(SyntaxNode node)
         {
+            if (node == null)
+                return  null;
+
             int nodeID = RoslynCompiler.GetSyntaxId(node);
             if (nodeID >= 0)
             {
