@@ -108,7 +108,7 @@ namespace Excess.Compiler.Roslyn
             foreach (var extension in _extensions)
             {
                 SyntaxNode             oldNode = extensionNode(extension);
-                SyntacticalMatchResult result  = new SyntacticalMatchResult(_scope, _events, oldNode);
+                RoslynSyntacticalMatchResult result  = new RoslynSyntacticalMatchResult(_scope, _events, oldNode);
                 var resultNode = extension.Handler(result, extension.Extension);
 
                 transform[oldNode] = resultNode;

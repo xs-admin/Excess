@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,13 +9,14 @@ namespace Excess.Compiler.Core
 {
     public abstract class BaseSyntaxTransform<TNode> : ISyntaxTransform<TNode>
     {
-        List<Func<TNode, ISyntacticalMatchResult<TNode>, TNode>> _transformers = new List<Func<TNode, ISyntacticalMatchResult<TNode>, TNode>>();
+        protected List<Func<ISyntacticalMatchResult<TNode>, IEnumerable<TNode>, TNode>> _transformers = new List<Func<ISyntacticalMatchResult<TNode>, IEnumerable<TNode>, TNode>>();
+        protected List<Func<ISyntacticalMatchResult<TNode>, IEnumerable<TNode>>> _selectors = new List<Func<ISyntacticalMatchResult<TNode>, IEnumerable<TNode>>>();
 
-        Func<TNode, ISyntacticalMatchResult<TNode>, TNode> AddToScope(Func<ISyntacticalMatchResult<TNode>, IEnumerable<TNode>> handler, bool type, bool @namespace)
+        Func<ISyntacticalMatchResult<TNode>, IEnumerable<TNode>, TNode> AddToScope(bool type, bool @namespace)
         {
-            return (node, result) =>
+            return (result, nodes) =>
             {
-                var nodes = handler(result);
+                var node  = result.Node;
                 if (nodes == null)
                     return node;
 
@@ -36,21 +38,23 @@ namespace Excess.Compiler.Core
 
         public ISyntaxTransform<TNode> addToScope(Func<ISyntacticalMatchResult<TNode>, IEnumerable<TNode>> handler, bool type = false, bool @namespace = false)
         {
-            _transformers.Add(AddToScope(handler, type, @namespace));
+            _selectors.Add(handler);
+            _transformers.Add(AddToScope(type, @namespace));
             return this;
         }
 
         public ISyntaxTransform<TNode> addToScope(string nodes, bool type = false, bool @namespace = false)
         {
-            _transformers.Add(AddToScope(SelectFromScope(nodes), type, @namespace));
+            _selectors.Add(SelectFromScope(nodes));
+            _transformers.Add(AddToScope(type, @namespace));
             return this;
         }
 
-        Func<TNode, ISyntacticalMatchResult<TNode>, TNode> RemoveNodes(Func<ISyntacticalMatchResult<TNode>, IEnumerable<TNode>> selector)
+        Func<ISyntacticalMatchResult<TNode>, IEnumerable<TNode>, TNode> RemoveNodes()
         {
-            return (node, result) =>
+            return (result, nodes) =>
             {
-                var nodes = selector(result);
+                var node  = result.Node;
                 if (nodes == null)
                     return node;
 
@@ -60,69 +64,123 @@ namespace Excess.Compiler.Core
 
         public ISyntaxTransform<TNode> remove(string nodes)
         {
-            _transformers.Add(RemoveNodes(SelectFromScope(nodes)));
+            _selectors.Add(SelectFromScope(nodes));
+            _transformers.Add(RemoveNodes());
             return this;
         }
 
         public ISyntaxTransform<TNode> remove(Func<ISyntacticalMatchResult<TNode>, IEnumerable<TNode>> selector)
         {
-            _transformers.Add(RemoveNodes(selector));
+            _selectors.Add(selector);
+            _transformers.Add(RemoveNodes());
             return this;
         }
 
-        Func<TNode, ISyntacticalMatchResult<TNode>, TNode> ReplaceNodes(Func<ISyntacticalMatchResult<TNode>, IEnumerable<TNode>> selector, Func<TNode, ISyntacticalMatchResult<TNode>, TNode> handler)
+        Func<ISyntacticalMatchResult<TNode>, IEnumerable<TNode>, TNode> ReplaceNodes(Func<ISyntacticalMatchResult<TNode>, TNode> handler)
         {
-            return (node, result) =>
+            return (result, nodes) =>
             {
-                var nodes = selector(result);
-                if (nodes == null)
+                var node = result.Node;
+                if (nodes == null || !nodes.Any())
                     return node;
 
-                return replaceNodes(node, nodes, handler);
+                return replaceNodes(result, nodes, handler);
             };
         }
 
         public ISyntaxTransform<TNode> replace(string nodes, Func<TNode, TNode> handler)
         {
-            _transformers.Add(ReplaceNodes(SelectFromScope(nodes), (node, result) => handler(node)));
+            _selectors.Add(SelectFromScope(nodes));
+            _transformers.Add(ReplaceNodes(result => handler(result.Node)));
             return this;
         }
 
-        public ISyntaxTransform<TNode> replace(string nodes, Func<TNode, ISyntacticalMatchResult<TNode>, TNode> handler)
+        public ISyntaxTransform<TNode> replace(string nodes, Func<ISyntacticalMatchResult<TNode>, TNode> handler)
         {
-            _transformers.Add(ReplaceNodes(SelectFromScope(nodes), handler));
+            _selectors.Add(SelectFromScope(nodes));
+            _transformers.Add(ReplaceNodes(handler));
             return this;
         }
 
-        public ISyntaxTransform<TNode> replace(Func<ISyntacticalMatchResult<TNode>, IEnumerable<TNode>> selector, Func<TNode, ISyntacticalMatchResult<TNode>, TNode> handler)
+        public ISyntaxTransform<TNode> replace(Func<ISyntacticalMatchResult<TNode>, IEnumerable<TNode>> selector, Func<ISyntacticalMatchResult<TNode>, TNode> handler)
         {
-            _transformers.Add(ReplaceNodes(selector, handler));
+            _selectors.Add(selector);
+            _transformers.Add(ReplaceNodes(handler));
             return this;
         }
 
         public ISyntaxTransform<TNode> replace(Func<ISyntacticalMatchResult<TNode>, IEnumerable<TNode>> selector, Func<TNode, TNode> handler)
         {
-            _transformers.Add(ReplaceNodes(selector, (node, result) => handler(node)));
+            _selectors.Add(selector);
+            _transformers.Add(ReplaceNodes(result => handler(result.Node)));
             return this;
         }
 
-        public TNode transform(TNode node, ISyntacticalMatchResult<TNode> result)
+        private static Random _randId = new Random();
+        public TNode transform(ISyntacticalMatchResult<TNode> result)
         {
-            foreach (var transformer in _transformers)
+            Debug.Assert(_selectors.Count == _transformers.Count);
+            switch (_transformers.Count)
             {
-                node = transformer(node, result);
-                if (node == null)
-                    return default(TNode);
-            }
+                case 0: return result.Node;
+                case 1:
+                {
+                    //do not track on single transformations
+                    var selector = _selectors[0];
+                    IEnumerable<TNode> nodes = selector != null? selector(result) : new TNode[] { };
+                    var resultNode = _transformers[0](result, nodes);
+                    result.Node = resultNode;
+                    return resultNode;
+                }
+                default:
+                {
+                    var nodeIds     = new Dictionary<TNode, string>();
+                    var selectorIds = new Dictionary<object, string>();
+                    foreach (var selector in _selectors)
+                    {
+                        var sNodes = selector(result);
+                        if (sNodes.Any())
+                        {
+                            string unique = _randId.Next().ToString();
+                            foreach (var sNode in sNodes)
+                            {
+                                nodeIds[sNode] = unique;
+                                selectorIds[selector] = unique;
+                            }
+                        }
+                    }
 
-            return node;
+                    result.Node = markNodes(result.Node , "xs-syntax-transform", nodeIds);
+
+                    for (int i = 0;  i < _transformers.Count; i++)
+                    {
+                        var transformer = _transformers[i];
+                        var selector    = _selectors[i];
+
+                            string uid;
+                            IEnumerable<TNode> nodes = null;
+                            if (selectorIds.TryGetValue(selector, out uid))
+                                nodes = findNodes(result.Node, "xs-syntax-transform", uid);
+
+
+                        var node = transformer(result, nodes);
+                        if (node == null)
+                            return default(TNode);
+
+                        result.Node = node;
+                    }
+
+                    return result.Node;
+                }
+            }
         }
 
         protected abstract TNode resolveScope(TNode node, bool type, bool @namespace);
-        protected abstract TNode removeNodes(TNode node, object nodes);
-        protected abstract TNode replaceNodes(TNode node, IEnumerable<TNode> nodes, Func<TNode, ISyntacticalMatchResult<TNode>, TNode> handler);
-        protected abstract TNode addToNode(TNode n, IEnumerable<TNode> nodes);
-
+        protected abstract TNode removeNodes(TNode node, IEnumerable<TNode> nodes);
+        protected abstract TNode replaceNodes(ISyntacticalMatchResult<TNode> result, IEnumerable<TNode> nodes, Func<ISyntacticalMatchResult<TNode>, TNode> handler);
+        protected abstract TNode addToNode(TNode node, IEnumerable<TNode> nodes);
+        protected abstract IEnumerable<TNode> findNodes(TNode parent, string annotation, string data);
+        protected abstract TNode markNodes(TNode parent, string annotation, Dictionary<TNode, string> nodeIds);
     }
 
     public class FunctorSyntaxTransform<TNode> : ISyntaxTransform<TNode>
@@ -150,7 +208,7 @@ namespace Excess.Compiler.Core
             throw new InvalidOperationException();
         }
 
-        public ISyntaxTransform<TNode> replace(string nodes, Func<TNode, ISyntacticalMatchResult<TNode>, TNode> handler)
+        public ISyntaxTransform<TNode> replace(string nodes, Func<ISyntacticalMatchResult<TNode>, TNode> handler)
         {
             throw new InvalidOperationException();
         }
@@ -160,7 +218,7 @@ namespace Excess.Compiler.Core
             throw new InvalidOperationException();
         }
 
-        public ISyntaxTransform<TNode> replace(Func<ISyntacticalMatchResult<TNode>, IEnumerable<TNode>> selector, Func<TNode, ISyntacticalMatchResult<TNode>, TNode> handler)
+        public ISyntaxTransform<TNode> replace(Func<ISyntacticalMatchResult<TNode>, IEnumerable<TNode>> selector, Func<ISyntacticalMatchResult<TNode>, TNode> handler)
         {
             throw new InvalidOperationException();
         }
@@ -180,8 +238,9 @@ namespace Excess.Compiler.Core
             throw new InvalidOperationException();
         }
 
-        public TNode transform(TNode node, ISyntacticalMatchResult<TNode> result)
+        public TNode transform(ISyntacticalMatchResult<TNode> result)
         {
+            var node = result.Node;
             if (_functorExtended != null)
                 return _functorExtended(node, result);
 

@@ -102,5 +102,55 @@ namespace Excess.Compiler.Tests
             
             return node.WithExpression(call);
         }
+
+        [TestMethod]
+        public void SyntacticalMatching()
+        {
+            RoslynCompiler compiler = new RoslynCompiler();
+            var sintaxis = compiler.Sintaxis();
+
+            //simple match
+            sintaxis
+                .match<ClassDeclarationSyntax>(c => !c.Members.OfType<ConstructorDeclarationSyntax>().Any())
+                    .then(sintaxis.transform(addConstructor));
+
+            var tree = compiler.ApplySyntacticalPasss("class foo { } class bar { bar() {} }");
+
+            Assert.IsTrue(tree
+                .GetRoot()
+                .DescendantNodes()
+                .OfType<ConstructorDeclarationSyntax>()
+                .Count() == 2); //must have added a constructor to "foo"
+
+            //scope match & transform
+            sintaxis
+                .match<ClassDeclarationSyntax>(c => c.Identifier.ToString() == "foo")
+                    .descendants<MethodDeclarationSyntax>(named: "methods")
+                    .descendants<PropertyDeclarationSyntax>(prop => prop.Identifier.ToString().StartsWith("my"), named: "myProps")
+                .then(sintaxis.transform()
+                    .replace("methods", method => ((MethodDeclarationSyntax)method)
+                        .WithIdentifier(CSharp.ParseToken("my" + ((MethodDeclarationSyntax)method).Identifier.ToString())))
+                    .remove("myProps"));
+
+
+            var scopeTree = compiler.ApplySyntacticalPasss("class foo { public void Method() {} int myProp {get; set;} }");
+            Assert.IsTrue(scopeTree.ToString() == "class foo { public void myMethod() {} foo (){}}");
+
+            Assert.IsTrue(scopeTree
+                .GetRoot()
+                .DescendantNodes()
+                .OfType<ConstructorDeclarationSyntax>()
+                .Count() == 1); //must have added a constructor to "foo", since the sintaxis is the same
+        }
+
+    private static SyntaxNode addConstructor(SyntaxNode node)
+        {
+            var classDeclaration = node as ClassDeclarationSyntax;
+            Assert.IsTrue(classDeclaration != null);
+
+            return classDeclaration
+                .AddMembers(CSharp.ConstructorDeclaration(classDeclaration.Identifier)
+                    .WithBody(CSharp.Block()));
+        }
     }
 }

@@ -38,26 +38,28 @@ namespace Excess.Compiler.Roslyn
                     return handler(base.Visit(node));
             }
 
-            ISyntacticalMatchResult<SyntaxNode> matchResult = new SyntacticalMatchResult(_scope, _events);
+            ISyntacticalMatchResult<SyntaxNode> matchResult = new RoslynSyntacticalMatchResult(new Scope(), _events);
+            bool transformed = false;
             foreach (var matcher in _matchers)
             {
                 if (matcher.matches(node, matchResult))
                 {
                     matchResult.Node = node;
+                    transformed = true;
                     if (matchResult.Preprocess)
                     {
                         var pre = matcher.transform(node, matchResult);
-                        return base.Visit(pre);
+                        node = base.Visit(pre);
                     }
                     else
                     {
                         var post = base.Visit(node);
-                        return matcher.transform(post, matchResult);
+                        node = matcher.transform(post, matchResult);
                     }
                 }
             }
 
-            return base.Visit(node);
+            return transformed? node :  base.Visit(node);
         }
     }
 }

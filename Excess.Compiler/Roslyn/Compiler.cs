@@ -15,7 +15,7 @@ namespace Excess.Compiler.Roslyn
 
     public class RoslynCompiler : CompilerBase<SyntaxToken, SyntaxNode>
     {
-        public RoslynCompiler() : base(new RoslynLexicalAnalysis(), new SyntaxAnalysisBase<SyntaxNode>())
+        public RoslynCompiler() : base(new RoslynLexicalAnalysis(), new RoslynSyntaxAnalysis())
         {
         }
 

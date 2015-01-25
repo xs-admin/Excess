@@ -42,7 +42,7 @@ namespace Excess.Compiler.Core
             return _lexical;
         }
 
-        public ISyntaxAnalysis<TNode> Syntaxis()
+        public ISyntaxAnalysis<TNode> Sintaxis()
         {
             return _sintaxis;
         }

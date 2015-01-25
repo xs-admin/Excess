@@ -30,7 +30,7 @@ namespace Excess.Compiler
     public interface ICompiler<TToken, TNode>
     {
         ILexicalAnalysis<TToken, TNode> Lexical();
-        ISyntaxAnalysis<TNode> Syntaxis();
+        ISyntaxAnalysis<TNode> Sintaxis();
 
         ICompilerPass Compile(string text, CompilerStage stage = CompilerStage.Started);
         ICompilerPass CompileAll(string text);

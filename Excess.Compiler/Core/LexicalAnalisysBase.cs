@@ -411,6 +411,8 @@ namespace Excess.Compiler.Core
 
         protected abstract TToken setLexicalId(TToken token, int value);
 
+        Dictionary<int, Func<ISyntacticalMatchResult<TNode>, LexicalExtension<TToken>, TNode>> _extensions = new Dictionary<int, Func<ISyntacticalMatchResult<TNode>, LexicalExtension<TToken>, TNode>>();
+
         private Func<LexicalExtension<TToken>, ILexicalMatchResult<TToken>, IEnumerable<TToken>> SyntacticalExtension(Func<ISyntacticalMatchResult<TNode>, LexicalExtension<TToken>, TNode> handler)
         {
             return (extension, result) =>
@@ -439,7 +441,7 @@ namespace Excess.Compiler.Core
                     default: throw new InvalidOperationException();
                 }
 
-                //schedule the processing of these extensions for a time we actally have syntaxis
+                //schedule the processing of these extensions for a time we actally have sintaxis
                 int mark = extension.GetHashCode();
 
                 result.Events.schedule(new LexicalExtensionEvent<TToken, TNode>(extension, mark, handler));

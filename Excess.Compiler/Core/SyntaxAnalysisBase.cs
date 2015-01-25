@@ -22,74 +22,9 @@ namespace Excess.Compiler.Core
             Events = events;
         }
 
-        ISyntacticalMatch<TNode> _matchChildren;
-        public void matchChildren(ISyntacticalMatch<TNode> match)
-        {
-            _matchChildren = match;
-        }
-
-        ISyntacticalMatch<TNode> _matchDescendants;
-        public void matchDescendants(ISyntacticalMatch<TNode> match)
-        {
-            _matchDescendants = match;
-        }
-
-        ExpandoObject _context;
         public dynamic context()
         {
-            if (_context == null && Node != null)
-            {
-                _context = new ExpandoObject();
-                if (_matchChildren != null)
-                    applyMatch(children(Node), _matchChildren, this);
-
-                if (_matchDescendants != null)
-                    applyMatch(descendants(Node), _matchDescendants, this);
-            }
-
-            return _context;
-        }
-
-        public void set(string name, object value)
-        {
-            var dict = _context as IDictionary<string, object>;
-            Debug.Assert(dict != null);
-
-            dict[name] = value;
-        }
-
-        public void add(string name, object value)
-        {
-            var dict = _context as IDictionary<string, object>;
-            Debug.Assert(dict != null);
-
-            object current = dict[name];
-            if (current == null)
-            {
-                var arr = new List<object>();
-                arr.Add(value);
-                dict[name] = arr;
-            }
-            else
-            {
-                var arr = (List<object>)current;
-                arr.Add(value);
-            }
-        }
-
-        public object get(string name)
-        {
-            var dict = _context as IDictionary<string, object>;
-            Debug.Assert(dict != null);
-            return dict[name];
-        }
-
-        private void applyMatch(IEnumerable<TNode> nodes, ISyntacticalMatch<TNode> match, ISyntacticalMatchResult<TNode> result)
-        {
-            foreach (var node in nodes)
-            {
-
-            }
+            return Scope;
         }
 
         public TNode schedule(string pass, TNode node, Func<TNode, TNode> handler)
@@ -100,124 +35,96 @@ namespace Excess.Compiler.Core
             return result;
         }
 
-        protected abstract IEnumerable<TNode> children(TNode node);
-        protected abstract IEnumerable<TNode> descendants(TNode node);
         protected abstract TNode markNode(TNode node, int id);
     }
 
-    public class BaseSyntacticalMatch<TNode> : ISyntacticalMatch<TNode>
+    public abstract class BaseSyntacticalMatch<TNode> : ISyntacticalMatch<TNode>
     {
-        ISyntaxAnalysis<TNode>   _syntax;
-        ISyntacticalMatch<TNode> _parent;
-        string                   _name;
-        string                   _array;
+        ISyntaxAnalysis<TNode> _syntax;
 
-        public BaseSyntacticalMatch(ISyntaxAnalysis<TNode> syntax, ISyntacticalMatch<TNode> parent)
+        public BaseSyntacticalMatch(ISyntaxAnalysis<TNode> syntax)
         {
             _syntax = syntax;
-            _parent = parent;
         }
 
-        public BaseSyntacticalMatch(ISyntaxAnalysis<TNode> syntax, string named, string add)
-        {
-            _syntax = syntax;
-            _name   = named;
-            _array  = add;
-        }
-
-        private List<Func<TNode, ISyntacticalMatchResult<TNode>, bool>> _matchers = new List<Func<TNode, ISyntacticalMatchResult<TNode>, bool>>();
+        private List<Func<ISyntacticalMatchResult<TNode>, bool>> _matchers = new List<Func<ISyntacticalMatchResult<TNode>, bool>>();
         public void addMatcher(Func<TNode, bool> matcher)
         {
-            _matchers.Add((node, result) => matcher(node));
+            _matchers.Add(result => matcher(result.Node));
         }
 
-        public void addMatcher(Func<TNode, ISyntacticalMatchResult<TNode>, bool> matcher)
+        public void addMatcher(Func<ISyntacticalMatchResult<TNode>, bool> matcher)
         {
             _matchers.Add(matcher);
         }
 
         public void addMatcher<T>(Func<T, bool> matcher) where T : TNode
         {
-            _matchers.Add((node, result) => node is T && matcher((T)node));
+            _matchers.Add( result => result.Node is T && matcher((T)result.Node));
         }
 
-        public void addMatcher<T>(Func<T, ISyntacticalMatchResult<TNode>, bool> matcher) where T : TNode
+        public void addMatcher<T>(Func<ISyntacticalMatchResult<TNode>, bool> matcher) where T : TNode
         {
-            _matchers.Add((node, result) => node is T && matcher((T)node, result));
+            _matchers.Add(result => result.Node is T && matcher(result));
         }
 
-        private static Func<TNode, ISyntacticalMatchResult<TNode>, bool> MatchChildren(ISyntacticalMatch<TNode> match)
+        protected abstract IEnumerable<TNode> children(TNode node);
+        protected abstract IEnumerable<TNode> descendants(TNode node);
+
+        private Func<ISyntacticalMatchResult<TNode>, bool> MatchChildren(Func<TNode, bool> selector, string named)
         {
-            return (node, result) =>
+            return result =>
             {
-                result.matchChildren(match);
+                var nodes = children(result.Node)
+                    .Where(node => selector(node));
+
+                if (named != null)
+                    result.Scope.set(named, nodes);
+
                 return true;
             };
         }
 
-        private static Func<TNode, ISyntacticalMatchResult<TNode>, bool> MatchDescendants(ISyntacticalMatch<TNode> match)
+        private Func<ISyntacticalMatchResult<TNode>, bool> MatchDescendants(Func<TNode, bool> selector, string named)
         {
-            return (node, result) =>
+            return result =>
             {
-                result.matchDescendants(match);
+                var nodes = descendants(result.Node)
+                    .Where(node => selector(node));
+
+                if (named != null)
+                    result.Scope.set(named, nodes);
+
                 return true;
             };
         }
 
-        public ISyntacticalMatch<TNode> children()
+        public ISyntacticalMatch<TNode> children(Func<TNode, bool> selector, string named)
         {
-            BaseSyntacticalMatch<TNode> result = new BaseSyntacticalMatch<TNode>(_syntax, this);
-            _matchers.Add(MatchChildren(result));
-            return result;
+            _matchers.Add(MatchChildren(selector, named));
+            return this;
         }
 
-        public ISyntacticalMatch<TNode> children(Func<TNode, bool> handler)
+        public ISyntacticalMatch<TNode> children<T>(Func<T, bool> selector, string named) where T : TNode
         {
-            BaseSyntacticalMatch<TNode> result = new BaseSyntacticalMatch<TNode>(_syntax, this);
-            result.addMatcher(node => handler(node));
-
-            _matchers.Add(MatchChildren(result));
-            return result;
+            _matchers.Add(MatchChildren(node => (node is T) && selector((T)node), named));
+            return this;
         }
 
-        public ISyntacticalMatch<TNode> children<T>(Func<T, bool> handler) where T : TNode
+        public ISyntacticalMatch<TNode> descendants(Func<TNode, bool> selector, string named)
         {
-            BaseSyntacticalMatch<TNode> result = new BaseSyntacticalMatch<TNode>(_syntax, this);
-            result.addMatcher(node => (node is T) && handler((T)node));
-            _matchers.Add(MatchChildren(result));
-
-            return result;
+            _matchers.Add(MatchDescendants(selector, named));
+            return this;
         }
 
-        public ISyntacticalMatch<TNode> descendants()
+        public ISyntacticalMatch<TNode> descendants<T>(Func<T, bool> selector, string named) where T : TNode
         {
-            BaseSyntacticalMatch<TNode> result = new BaseSyntacticalMatch<TNode>(_syntax, this);
-            _matchers.Add(MatchDescendants(result));
+            if (selector != null)
+                _matchers.Add(MatchDescendants(node => (node is T) && selector((T)node), named));
+            else
+                _matchers.Add(MatchDescendants(node => node is T, named));
 
-            return result;
-        }
-
-        public ISyntacticalMatch<TNode> descendants(Func<TNode, bool> handler)
-        {
-            BaseSyntacticalMatch<TNode> result = new BaseSyntacticalMatch<TNode>(_syntax, this);
-            result.addMatcher(node => handler(node));
-            _matchers.Add(MatchDescendants(result));
-
-            return result;
-        }
-
-        public ISyntacticalMatch<TNode> descendants<T>(Func<T, bool> handler) where T : TNode
-        {
-            BaseSyntacticalMatch<TNode> result = new BaseSyntacticalMatch<TNode>(_syntax, this);
-            result.addMatcher(node => (node is T) && handler((T)node));
-            _matchers.Add(MatchDescendants(result));
-
-            return result;
-        }
-
-        public ISyntacticalMatch<TNode> parent()
-        {
-            return _parent;
+            return this;
         }
 
         public ISyntaxAnalysis<TNode> then(Func<TNode, TNode> handler)
@@ -245,12 +152,11 @@ namespace Excess.Compiler.Core
         {
             foreach (var matcher in _matchers)
             {
-                if (!matcher(node, result))
+                result.Node = node;
+                if (!matcher(result))
                     return false;
             }
 
-            if (_name != null)
-                result.Scope.set(_name, node);
 
             return true;
         }
@@ -259,13 +165,16 @@ namespace Excess.Compiler.Core
         public TNode transform(TNode node, ISyntacticalMatchResult<TNode> result)
         {
             if (_then != null)
-                return _then.transform(node, result);
+            {
+                result.Node = node;
+                return _then.transform(result);
+            }
 
             return node;
         }
     }
 
-    public class SyntaxAnalysisBase<TNode> : ISyntaxAnalysis<TNode>
+    public abstract class BaseSyntaxAnalysis<TNode> : ISyntaxAnalysis<TNode>
     {
         private Func<IEnumerable<TNode>, TNode> _looseMembers;
         private Func<IEnumerable<TNode>, TNode> _looseStatements;
@@ -289,40 +198,49 @@ namespace Excess.Compiler.Core
             return this;
         }
 
+        protected abstract ISyntacticalMatch<TNode> createMatch(Func<TNode, bool> selector);
+
         List<ISyntacticalMatch<TNode>> _matchers = new List<ISyntacticalMatch<TNode>>();
-        public ISyntacticalMatch<TNode> match(Func<TNode, bool> handler, string named, string add)
+        public ISyntacticalMatch<TNode> match(Func<TNode, bool> selector)
         {
-            BaseSyntacticalMatch<TNode> matcher = new BaseSyntacticalMatch<TNode>(this, named, add);
-            matcher.addMatcher(handler);
+            var matcher = createMatch(selector);
             _matchers.Add(matcher);
 
             return matcher;
         }
 
-        public ISyntacticalMatch<TNode> match<T>(Func<T, bool> handler, string named, string add) where T : TNode
+        public ISyntacticalMatch<TNode> match<T>(Func<T, bool> selector) where T : TNode
         {
-            BaseSyntacticalMatch<TNode> matcher = new BaseSyntacticalMatch<TNode>(this, named, add);
-            matcher.addMatcher<T>(handler);
+            var matcher = createMatch(node => node is T && selector((T)node));
             _matchers.Add(matcher);
 
             return matcher;
         }
 
-        public ISyntacticalMatch<TNode> match<T>(string named = null, string add = null) where T : TNode
+        public ISyntacticalMatch<TNode> match<T>() where T : TNode
         {
-            BaseSyntacticalMatch<TNode> matcher = new BaseSyntacticalMatch<TNode>(this, named, add);
-            matcher.addMatcher<T>((node, result) => true);
+            var matcher = createMatch(node => node is T);
             _matchers.Add(matcher);
 
             return matcher;
         }
 
-        public ISyntacticalMatch<TNode> match(string named = null, string add = null)
-        {
-            BaseSyntacticalMatch<TNode> matcher = new BaseSyntacticalMatch<TNode>(this, named, add);
-            _matchers.Add(matcher);
+        protected abstract ISyntaxTransform<TNode> createTransform();
+        protected abstract ISyntaxTransform<TNode> createTransform(Func<ISyntacticalMatchResult<TNode>, IEnumerable<TNode>, TNode> handler);
 
-            return matcher;
+        public ISyntaxTransform<TNode> transform()
+        {
+            return createTransform(); 
+        }
+
+        public ISyntaxTransform<TNode> transform(Func<TNode, TNode> handler)
+        {
+            return transform(result => handler(result.Node));
+        }
+
+        public ISyntaxTransform<TNode> transform(Func<ISyntacticalMatchResult<TNode>, TNode> handler)
+        {
+            return createTransform((result, children) => handler(result));
         }
 
         public IEnumerable<CompilerEvent> produce()
