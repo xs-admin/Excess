@@ -44,7 +44,7 @@ namespace Excess.Compiler
 
     public class LexicalExtensionEvent<TToken, TNode> : CompilerEvent
     {
-        public LexicalExtensionEvent(LexicalExtension<TToken> extension, int lexicalId, Func<ISyntacticalMatchResult<TNode>, LexicalExtension<TToken>, TNode> handler) :
+        public LexicalExtensionEvent(LexicalExtension<TToken> extension, string lexicalId, Func<ISyntacticalMatchResult<TNode>, LexicalExtension<TToken>, TNode> handler) :
             base(CompilerStage.Lexical, "")
         {
             Extension = extension;
@@ -53,10 +53,22 @@ namespace Excess.Compiler
         }
 
         public LexicalExtension<TToken> Extension { get;  }
-        public int LexicalId { get; }
+        public string LexicalId { get; }
         public Func<ISyntacticalMatchResult<TNode>, LexicalExtension<TToken>, TNode> Handler { get; }
     }
 
+    public class LexicalSyntaxTransformEvent<TNode> : CompilerEvent
+    {
+        public LexicalSyntaxTransformEvent(string lexicalId, ISyntaxTransform<TNode> transform) :
+            base(CompilerStage.Lexical, "")
+        {
+            LexicalId = lexicalId;
+            Transform = transform;
+        }
+
+        public string LexicalId { get; }
+        public ISyntaxTransform<TNode> Transform { get; }
+    }
 
     public class SyntacticalMatchEvent<TNode> : CompilerEvent
     {
@@ -71,14 +83,29 @@ namespace Excess.Compiler
 
     public class SyntacticalNodeEvent<TNode> : CompilerEvent
     {
-        public SyntacticalNodeEvent(int node, Func<TNode, TNode> handler, string pass) :
+        public SyntacticalNodeEvent(string node, Func<TNode, TNode> handler, string pass) :
             base(CompilerStage.Syntactical, pass)
         {
             Node = node;
             Handler = handler;
         }
 
-        public int Node { get; }
+        public string Node { get; }
         public Func<TNode, TNode> Handler { get; }
     };
+
+    public class SyntacticExtensionEvent<TNode> : CompilerEvent
+    {
+        public SyntacticExtensionEvent(string keyword, ExtensionKind kind, Func<ISyntacticalMatchResult<TNode>, SyntacticalExtension<TNode>, IEnumerable<TNode>> handler) :
+            base(CompilerStage.Syntactical, "")
+        {
+            Keyword = keyword;
+            Kind = kind;
+            Handler = handler;
+        }
+
+        public string Keyword { get; set; }
+        public ExtensionKind Kind { get; set; }
+        public Func<ISyntacticalMatchResult<TNode>, SyntacticalExtension<TNode>, IEnumerable<TNode>> Handler { get; set; }
+    }
 }

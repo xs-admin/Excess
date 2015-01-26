@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Excess.Compiler.Core
 {
-    public abstract class LexicalTransform<TToken> : ILexicalTransform<TToken>
+    public abstract class LexicalTransform<TToken, TNode> : ILexicalTransform<TToken, TNode>
     {
         protected class TokenSpan
         {
@@ -62,7 +62,7 @@ namespace Excess.Compiler.Core
             public ExistingToken             existingToken;
         }
 
-        List<Func<ILexicalMatchResult<TToken>, TransformBinder>> _binders = new List<Func<ILexicalMatchResult<TToken>, TransformBinder>>();
+        List<Func<ILexicalMatchResult<TToken, TNode>, TransformBinder>> _binders = new List<Func<ILexicalMatchResult<TToken, TNode>, TransformBinder>>();
 
         private Func<IEnumerable<TToken>> TokensFromString(string tokens)
         {
@@ -75,7 +75,7 @@ namespace Excess.Compiler.Core
         }
         
 
-        public ILexicalTransform<TToken> insert(string tokens, string before = null, string after = null)
+        public ILexicalTransform<TToken, TNode> insert(string tokens, string before = null, string after = null)
         {
             _binders.Add(lexicalResult =>
             {
@@ -103,7 +103,7 @@ namespace Excess.Compiler.Core
             return this;
         }
 
-        public ILexicalTransform<TToken> replace(string named, string tokens)
+        public ILexicalTransform<TToken, TNode> replace(string named, string tokens)
         {
             _binders.Add(lexicalResult =>
             {
@@ -116,7 +116,7 @@ namespace Excess.Compiler.Core
             return this;
         }
 
-        public ILexicalTransform<TToken> remove(string named)
+        public ILexicalTransform<TToken, TNode> remove(string named)
         {
             _binders.Add(lexicalResult =>
             {
@@ -129,10 +129,35 @@ namespace Excess.Compiler.Core
             return this;
         }
 
-        public IEnumerable<TToken> transform(IEnumerable<TToken> tokens, ILexicalMatchResult<TToken> result)
+        ISyntaxTransform<TNode> _syntactical;
+        public ILexicalTransform<TToken, TNode> then(Func<TNode, TNode> handler)
         {
+            Debug.Assert(_syntactical == null);
+            _syntactical =new FunctorSyntaxTransform<TNode>(handler);
+            return this;
+        }
+
+        public ILexicalTransform<TToken, TNode> then(Func<ISyntacticalMatchResult<TNode>, TNode> handler)
+        {
+            Debug.Assert(_syntactical == null);
+            _syntactical = new FunctorSyntaxTransform<TNode>(handler);
+            return this;
+        }
+
+        public ILexicalTransform<TToken, TNode> then(ISyntaxTransform<TNode> transform)
+        {
+            Debug.Assert(_syntactical == null);
+            _syntactical = transform;
+            return this;
+        }
+
+        public IEnumerable<TToken> transform(IEnumerable<TToken> tokens, ILexicalMatchResult<TToken, TNode> result)
+        {
+            if (_syntactical != null)
+                result.SyntacticalTransform = _syntactical;
+
             var binderSelector = _binders
-                .Select<Func<ILexicalMatchResult<TToken>, TransformBinder>, TransformBinder>(f => f(result))
+                .Select<Func<ILexicalMatchResult<TToken, TNode>, TransformBinder>, TransformBinder>(f => f(result))
                 .OrderBy(binder => binder.extents.begin);
 
             TransformBinder[] binders       = binderSelector.ToArray();
@@ -187,7 +212,7 @@ namespace Excess.Compiler.Core
 
         protected abstract IEnumerable<TToken> tokensFromString(string tokenstring);
 
-        private TokenSpan labelExtent(ILexicalMatchResult<TToken> result, string label)
+        private TokenSpan labelExtent(ILexicalMatchResult<TToken, TNode> result, string label)
         {
             object value = result.context().get<object>(label);
             if (value != null)
@@ -244,31 +269,46 @@ namespace Excess.Compiler.Core
         }
     }
 
-    public class LexicalFunctorTransform<TToken> : ILexicalTransform<TToken>
+    public class LexicalFunctorTransform<TToken, TNode> : ILexicalTransform<TToken, TNode>
     {
-        Func<IEnumerable<TToken>, ILexicalMatchResult<TToken>, IEnumerable<TToken>> _functor;
+        Func<IEnumerable<TToken>, ILexicalMatchResult<TToken, TNode>, IEnumerable<TToken>> _functor;
 
-        public LexicalFunctorTransform(Func<IEnumerable<TToken>, ILexicalMatchResult<TToken>, IEnumerable<TToken>> functor)
+        public LexicalFunctorTransform(Func<IEnumerable<TToken>, ILexicalMatchResult<TToken, TNode>, IEnumerable<TToken>> functor)
         {
             _functor = functor;
         }
 
-        public ILexicalTransform<TToken> insert(string tokens, string before = null, string after = null)
+        public ILexicalTransform<TToken, TNode> insert(string tokens, string before = null, string after = null)
         {
             throw new InvalidOperationException();
         }
 
-        public ILexicalTransform<TToken> replace(string named, string tokens)
+        public ILexicalTransform<TToken, TNode> replace(string named, string tokens)
         {
             throw new InvalidOperationException();
         }
 
-        public ILexicalTransform<TToken> remove(string named)
+        public ILexicalTransform<TToken, TNode> remove(string named)
         {
             throw new InvalidOperationException();
         }
 
-        public IEnumerable<TToken> transform(IEnumerable<TToken> tokens, ILexicalMatchResult<TToken> result)
+        public ILexicalTransform<TToken, TNode> then(Func<TNode, TNode> handler)
+        {
+            throw new InvalidOperationException();
+        }
+
+        public ILexicalTransform<TToken, TNode> then(Func<ISyntacticalMatchResult<TNode>, TNode> handler)
+        {
+            throw new InvalidOperationException();
+        }
+
+        public ILexicalTransform<TToken, TNode> then(ISyntaxTransform<TNode> transform)
+        {
+            throw new InvalidOperationException();
+        }
+
+        public IEnumerable<TToken> transform(IEnumerable<TToken> tokens, ILexicalMatchResult<TToken, TNode> result)
         {
             return _functor(tokens, result);
         }

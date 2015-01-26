@@ -98,6 +98,7 @@
     <Compile Include="LexicalAnalysis.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Roslyn\Compiler.cs" />
+    <Compile Include="Roslyn\ExtensionRewriter.cs" />
     <Compile Include="Roslyn\LexicalAnalysis.cs" />
     <Compile Include="Roslyn\LexicalPass.cs" />
     <Compile Include="Roslyn\SyntacticalPass.cs" />
@@ -105,6 +106,7 @@
     <Compile Include="Roslyn\SyntaxRewriter.cs" />
     <Compile Include="Scope.cs" />
     <Compile Include="SyntaxAnalysis.cs" />
+    <Compile Include="XS\Module.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

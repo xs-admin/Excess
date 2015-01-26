@@ -11,7 +11,7 @@ namespace Excess.Compiler.Roslyn
     using Microsoft.CodeAnalysis.CSharp;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
-    public class RoslynLexicalTransform : LexicalTransform<SyntaxToken>
+    public class RoslynLexicalTransform : LexicalTransform<SyntaxToken, SyntaxNode>
     {
         protected override IEnumerable<SyntaxToken> tokensFromString(string tokenString)
         {
@@ -28,13 +28,13 @@ namespace Excess.Compiler.Roslyn
 
         protected override bool isIdentifier(SyntaxToken token)
         {
-            return token.IsVerbatimIdentifier();
+            return RoslynCompiler.isLexicalIdentifier(token);
         }
     }
 
     public class RoslynLexicalAnalysis : LexicalAnalysis<SyntaxToken, SyntaxNode>
     {
-        public override ILexicalTransform<SyntaxToken> transform()
+        public override ILexicalTransform<SyntaxToken, SyntaxNode> transform()
         {
             return new RoslynLexicalTransform();
         }
@@ -54,9 +54,9 @@ namespace Excess.Compiler.Roslyn
             }
         }
 
-        protected override SyntaxToken setLexicalId(SyntaxToken token, int value)
+        protected override SyntaxToken setLexicalId(SyntaxToken token, out string id)
         {
-            return RoslynCompiler.SetLexicalId(token, value);
+            return RoslynCompiler.SetLexicalId(token, out id);
         }
     }
 }

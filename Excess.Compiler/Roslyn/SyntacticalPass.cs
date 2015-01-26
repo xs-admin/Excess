@@ -3,6 +3,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,11 +13,9 @@ namespace Excess.Compiler.Roslyn
     public class SyntacticalPass : BasePass
     {
         SyntaxNode _root;
-        IEnumerable<PendingExtension<SyntaxToken, SyntaxNode>> _extensions;
-        public SyntacticalPass(SyntaxNode root, IEnumerable<PendingExtension<SyntaxToken, SyntaxNode>> extensions)
+        public SyntacticalPass(SyntaxNode root)
         {
             _root = root;
-            _extensions = extensions;
         }
 
         public SyntaxTree Tree { get { return _root.SyntaxTree; } }
@@ -38,12 +37,12 @@ namespace Excess.Compiler.Roslyn
             _events = events;
             _scope  = scope;
 
-            if (_extensions.Any())
-                processExtensions();
+            var myEvents        = events.poll(passId());
+            var extensionEvents = myEvents.OfType<SyntacticExtensionEvent<SyntaxNode>>();
+            var matchEvents     = myEvents.OfType<SyntacticalMatchEvent<SyntaxNode>>();
+            var customEvents    = myEvents.OfType<SyntacticalNodeEvent<SyntaxNode>> ();
 
-            var myEvents     = events.poll(passId());
-            var matchEvents  = myEvents.OfType<SyntacticalMatchEvent<SyntaxNode>>();
-            var customEvents = myEvents.OfType<SyntacticalNodeEvent<SyntaxNode>> ();
+            _root = processExtensions(_root, extensionEvents);
 
             var matchers = GetMatchers(matchEvents);
             var handlers = GetHandlers(customEvents);
@@ -57,6 +56,12 @@ namespace Excess.Compiler.Roslyn
             return null; //td: !!!
         }
 
+        private SyntaxNode processExtensions(SyntaxNode node, IEnumerable<SyntacticExtensionEvent<SyntaxNode>> events)
+        {
+            ExtensionRewriter rewriter = new ExtensionRewriter(events, _events);
+            return rewriter.Visit(node);
+        }
+
         private SyntaxNode extensionNode(PendingExtension<SyntaxToken, SyntaxNode> extension)
         {
             SyntaxNode result = extension.Node;
@@ -65,6 +70,7 @@ namespace Excess.Compiler.Roslyn
                 case ExtensionKind.Code:
                     result = extension.Node
                         .AncestorsAndSelf()
+                    
                         .OfType<ExpressionStatementSyntax>()
                         .FirstOrDefault();
 
@@ -102,24 +108,9 @@ namespace Excess.Compiler.Roslyn
             return result;
         }
 
-        private void processExtensions()
+        private Dictionary<string, Func<SyntaxNode, SyntaxNode>> GetHandlers(IEnumerable<SyntacticalNodeEvent<SyntaxNode>> events)
         {
-            var transform  = new Dictionary<SyntaxNode, SyntaxNode>();
-            foreach (var extension in _extensions)
-            {
-                SyntaxNode             oldNode = extensionNode(extension);
-                RoslynSyntacticalMatchResult result  = new RoslynSyntacticalMatchResult(_scope, _events, oldNode);
-                var resultNode = extension.Handler(result, extension.Extension);
-
-                transform[oldNode] = resultNode;
-            }
-
-            _root = _root.ReplaceNodes(transform.Keys, (oldNode, newNode) => transform[oldNode]);
-        }
-
-        private Dictionary<int, Func<SyntaxNode, SyntaxNode>> GetHandlers(IEnumerable<SyntacticalNodeEvent<SyntaxNode>> events)
-        {
-            var result = new Dictionary<int, Func<SyntaxNode, SyntaxNode>>();
+            var result = new Dictionary<string, Func<SyntaxNode, SyntaxNode>>();
             foreach(var ev in events)
                 result[ev.Node] = ev.Handler;
 

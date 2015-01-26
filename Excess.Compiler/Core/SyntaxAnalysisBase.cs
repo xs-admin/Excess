@@ -29,13 +29,13 @@ namespace Excess.Compiler.Core
 
         public TNode schedule(string pass, TNode node, Func<TNode, TNode> handler)
         {
-            int id = node.GetHashCode();
-            TNode result = markNode(node, id);
+            string id;
+            TNode result = markNode(node, out id);
             Events.schedule(pass, new SyntacticalNodeEvent<TNode>(id, handler, pass));
             return result;
         }
 
-        protected abstract TNode markNode(TNode node, int id);
+        protected abstract TNode markNode(TNode node, out string id);
     }
 
     public abstract class BaseSyntacticalMatch<TNode> : ISyntacticalMatch<TNode>
@@ -134,7 +134,7 @@ namespace Excess.Compiler.Core
             return _syntax;
         }
 
-        public ISyntaxAnalysis<TNode> then(Func<TNode, ISyntacticalMatchResult<TNode>, TNode> handler)
+        public ISyntaxAnalysis<TNode> then(Func<ISyntacticalMatchResult<TNode>, TNode> handler)
         {
             Debug.Assert(_then == null);
             _then = new FunctorSyntaxTransform<TNode>(handler);
@@ -198,6 +198,20 @@ namespace Excess.Compiler.Core
             return this;
         }
 
+        List<SyntacticExtensionEvent<TNode>> _extensions = new List<SyntacticExtensionEvent<TNode>>();
+
+        public ISyntaxAnalysis<TNode> extension(string keyword, ExtensionKind kind, Func<ISyntacticalMatchResult<TNode>, SyntacticalExtension<TNode>, IEnumerable<TNode>> handler)
+        {
+            _extensions.Add(new SyntacticExtensionEvent<TNode>(keyword, kind, handler));
+            return this;
+        }
+
+        public ISyntaxAnalysis<TNode> extension(string keyword, ExtensionKind kind, Func<TNode, SyntacticalExtension<TNode>, IEnumerable<TNode>> handler)
+        {
+            _extensions.Add(new SyntacticExtensionEvent<TNode>(keyword, kind, (result, ext) => handler(result.Node, ext)));
+            return this;
+        }
+
         protected abstract ISyntacticalMatch<TNode> createMatch(Func<TNode, bool> selector);
 
         List<ISyntacticalMatch<TNode>> _matchers = new List<ISyntacticalMatch<TNode>>();
@@ -245,7 +259,8 @@ namespace Excess.Compiler.Core
 
         public IEnumerable<CompilerEvent> produce()
         {
-            return new[] { new SyntacticalMatchEvent<TNode>(_matchers) };
+            IEnumerable<CompilerEvent> matchEvents =  new[] { new SyntacticalMatchEvent<TNode>(_matchers) };
+            return matchEvents.Union(_extensions);
         }
     }
 }

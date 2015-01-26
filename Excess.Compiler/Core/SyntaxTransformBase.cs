@@ -186,14 +186,14 @@ namespace Excess.Compiler.Core
     public class FunctorSyntaxTransform<TNode> : ISyntaxTransform<TNode>
     {
         Func<TNode, TNode> _functor;
-        Func<TNode, ISyntacticalMatchResult<TNode>, TNode> _functorExtended;
+        Func<ISyntacticalMatchResult<TNode>, TNode> _functorExtended;
 
         public FunctorSyntaxTransform(Func<TNode, TNode> handler)
         {
             _functor = handler;
         }
 
-        public FunctorSyntaxTransform(Func<TNode, ISyntacticalMatchResult<TNode>, TNode> handler)
+        public FunctorSyntaxTransform(Func<ISyntacticalMatchResult<TNode>, TNode> handler)
         {
             _functorExtended = handler;
         }
@@ -240,11 +240,10 @@ namespace Excess.Compiler.Core
 
         public TNode transform(ISyntacticalMatchResult<TNode> result)
         {
-            var node = result.Node;
             if (_functorExtended != null)
-                return _functorExtended(node, result);
+                return _functorExtended(result);
 
-            return _functor(node);
+            return _functor(result.Node);
         }
 
     }

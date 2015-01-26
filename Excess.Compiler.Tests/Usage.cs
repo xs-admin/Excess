@@ -7,6 +7,7 @@ using System.Linq;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Collections.Generic;
 using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
+using Excess.Compiler.XS;
 
 namespace Excess.Compiler.Tests
 {
@@ -59,12 +60,12 @@ namespace Excess.Compiler.Tests
             lexical
                 .extension("my_ext", ExtensionKind.Code, myExtLexical);
 
-            string lexicalResult = compiler.ApplyLexicalPasss("my_ext(int i) { code(); }");
+            string lexicalResult = compiler.ApplyLexicalPass("my_ext(int i) { code(); }");
 
             Assert.IsTrue(lexicalResult == "my_ext_replaced int i = code(); ");
         }
 
-        private IEnumerable<SyntaxToken> myExtLexical(LexicalExtension<SyntaxToken> extension, ILexicalMatchResult<SyntaxToken> result)
+        private IEnumerable<SyntaxToken> myExtLexical(LexicalExtension<SyntaxToken> extension, ILexicalMatchResult<SyntaxToken, SyntaxNode> result)
         {
             string testResult = "my_ext_replaced "
                               + RoslynCompiler.TokensToString(extension.Arguments)
@@ -82,7 +83,7 @@ namespace Excess.Compiler.Tests
             lexical
                 .extension("my_ext", ExtensionKind.Code, myExtSyntactical);
 
-            var tree = compiler.ApplySyntacticalPasss("void main() { my_ext(int i) { code(); } }");
+            var tree = compiler.ApplySyntacticalPass("void main() { my_ext(int i) { code(); } }");
             Assert.IsTrue(tree.ToString() == "void main() { my_ext(int i=>{code(); });}");
         }
 
@@ -114,7 +115,7 @@ namespace Excess.Compiler.Tests
                 .match<ClassDeclarationSyntax>(c => !c.Members.OfType<ConstructorDeclarationSyntax>().Any())
                     .then(sintaxis.transform(addConstructor));
 
-            var tree = compiler.ApplySyntacticalPasss("class foo { } class bar { bar() {} }");
+            var tree = compiler.ApplySyntacticalPass("class foo { } class bar { bar() {} }");
 
             Assert.IsTrue(tree
                 .GetRoot()
@@ -132,8 +133,8 @@ namespace Excess.Compiler.Tests
                         .WithIdentifier(CSharp.ParseToken("my" + ((MethodDeclarationSyntax)method).Identifier.ToString())))
                     .remove("myProps"));
 
-
-            var scopeTree = compiler.ApplySyntacticalPasss("class foo { public void Method() {} int myProp {get; set;} }");
+              
+            var scopeTree = compiler.ApplySyntacticalPass("class foo { public void Method() {} int myProp {get; set;} }");
             Assert.IsTrue(scopeTree.ToString() == "class foo { public void myMethod() {} foo (){}}");
 
             Assert.IsTrue(scopeTree
@@ -143,7 +144,7 @@ namespace Excess.Compiler.Tests
                 .Count() == 1); //must have added a constructor to "foo", since the sintaxis is the same
         }
 
-    private static SyntaxNode addConstructor(SyntaxNode node)
+        private static SyntaxNode addConstructor(SyntaxNode node)
         {
             var classDeclaration = node as ClassDeclarationSyntax;
             Assert.IsTrue(classDeclaration != null);
@@ -151,6 +152,84 @@ namespace Excess.Compiler.Tests
             return classDeclaration
                 .AddMembers(CSharp.ConstructorDeclaration(classDeclaration.Identifier)
                     .WithBody(CSharp.Block()));
+        }
+
+        [TestMethod]
+        public void SyntacticalExtensions()
+        {
+            RoslynCompiler compiler = new RoslynCompiler();
+            var sintaxis = compiler.Sintaxis();
+
+            SyntaxTree tree;
+
+            //code extension
+            sintaxis
+                .extension("codeExtension", ExtensionKind.Code, codeExtension);
+
+            tree = compiler.ApplySyntacticalPass("class foo { void bar() {var v = codeExtension(param: \"foobar\") {bar();}} }");
+            Assert.IsTrue(tree.ToString() == "class foo { public void myMethod() {} foo (){}}");
+
+            //member extension
+            sintaxis
+                .extension("memberExtension", ExtensionKind.Member, memberExtension);
+
+            tree = compiler.ApplySyntacticalPass("class foo { memberExtension(param: \"foobar\") {int x = 3;} }");
+            Assert.IsTrue(tree.ToString() == "class foo { public void myMethod() {} foo (){}}");
+
+            //type extension
+            sintaxis
+                .extension("typeExtension", ExtensionKind.Type, typeExtension)
+                .extension("typeCodeExtension", ExtensionKind.Type, typeCodeExtension);
+
+            tree = compiler.ApplySyntacticalPass("public typeExtension foo(param: \"foobar\") { void bar() {} }");
+            Assert.IsTrue(tree.ToString() == "class foo { public void myMethod() {} foo (){}}");
+
+            tree = compiler.ApplySyntacticalPass("typeCodeExtension(param: \"foobar\") { int i = 0; }");
+            Assert.IsTrue(tree.ToString() == "class foo { public void myMethod() {} foo (){}}");
+        }
+
+        private IEnumerable<SyntaxNode> typeCodeExtension(ISyntacticalMatchResult<SyntaxNode> arg1, SyntacticalExtension<SyntaxNode> arg2)
+        {
+            throw new NotImplementedException();
+        }
+
+        private IEnumerable<SyntaxNode> typeExtension(ISyntacticalMatchResult<SyntaxNode> arg1, SyntacticalExtension<SyntaxNode> arg2)
+        {
+            throw new NotImplementedException();
+        }
+
+        private IEnumerable<SyntaxNode> memberExtension(ISyntacticalMatchResult<SyntaxNode> arg1, SyntacticalExtension<SyntaxNode> arg2)
+        {
+            throw new NotImplementedException();
+        }
+
+        private IEnumerable<SyntaxNode> codeExtension(ISyntacticalMatchResult<SyntaxNode> arg1, SyntacticalExtension<SyntaxNode> arg2)
+        {
+            throw new NotImplementedException();
+        }
+
+        [TestMethod]
+        public void XSFunctions()
+        {
+            RoslynCompiler compiler = new RoslynCompiler();
+            XSModule.Apply(compiler);
+
+            //as lambda
+            ExpressionSyntax exprFunction = compiler.CompileExpression("call(10, function(x, y) {})");
+            Assert.IsTrue(exprFunction.DescendantNodes()
+                .OfType<ParenthesizedLambdaExpressionSyntax>()
+                .Any());
+
+            //as typed method
+            string result = compiler.ApplyLexicalPass("class foo { public int function bar() {}}");
+            Assert.IsTrue(result == "class foo { public int bar() {}}");
+
+            SyntaxTree tree = null;
+            string     text = null;
+            
+            //as untyped method
+            tree = compiler.ApplySyntacticalPass("class foo { public function bar() {}}", out text);
+            Assert.IsTrue(text == "class foo\r\n{\r\n    public void bar()\r\n    {\r\n    }\r\n}");
         }
     }
 }

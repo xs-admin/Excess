@@ -7,11 +7,12 @@ using System.Threading.Tasks;
 
 namespace Excess.Compiler.Core
 {
-    public class LexicalMatchResult<TToken> : ILexicalMatchResult<TToken>
+    public class LexicalMatchResult<TToken, TNode> : ILexicalMatchResult<TToken, TNode>
     {
         public IEnumerable<TToken> Tokens { get; set; }
         public Scope Scope { get; set; }
         public IEventBus Events { get; set; }
+        public ISyntaxTransform<TNode> SyntacticalTransform { get; set; }
 
         public LexicalMatchResult(Scope scope, IEventBus events)
         {
@@ -28,8 +29,8 @@ namespace Excess.Compiler.Core
     public abstract class BaseLexicalMatch<TToken, TNode> : ILexicalMatch<TToken, TNode>
     {
         private ILexicalAnalysis<TToken, TNode> _lexical;
-        private ILexicalTransform<TToken> _transform;
-        private List<Func<TToken, ILexicalMatchResult<TToken>, TokenMatch>> _matchers = new List<Func<TToken, ILexicalMatchResult<TToken>, TokenMatch>>();
+        private ILexicalTransform<TToken, TNode> _transform;
+        private List<Func<TToken, ILexicalMatchResult<TToken, TNode>, TokenMatch>> _matchers = new List<Func<TToken, ILexicalMatchResult<TToken, TNode>, TokenMatch>>();
 
         public BaseLexicalMatch(ILexicalAnalysis<TToken, TNode> lexical)
         {
@@ -47,7 +48,7 @@ namespace Excess.Compiler.Core
             public List<TToken> Contents { get; set; }
         }
 
-        private static Func<TToken, ILexicalMatchResult<TToken>, TokenMatch> MatchEnclosed(Func<TToken, bool> open, Func<TToken, bool> close, string start, string end, string contents)
+        private static Func<TToken, ILexicalMatchResult<TToken, TNode>, TokenMatch> MatchEnclosed(Func<TToken, bool> open, Func<TToken, bool> close, string start, string end, string contents)
         {
             return (token, result) =>
             {
@@ -115,7 +116,7 @@ namespace Excess.Compiler.Core
             return this;
         }
 
-        private static Func<TToken, ILexicalMatchResult<TToken>, TokenMatch> MatchMany(Func<TToken, bool> match, string named, bool matchNone = false)
+        private static Func<TToken, ILexicalMatchResult<TToken, TNode>, TokenMatch> MatchMany(Func<TToken, bool> match, string named, bool matchNone = false)
         {
             return (token, result) =>
             {
@@ -254,7 +255,7 @@ namespace Excess.Compiler.Core
             return any(MatchStringArray(anyOf.Select<char, string>(ch => ch.ToString())), named);
         }
 
-        private static Func<TToken, ILexicalMatchResult<TToken>, TokenMatch> MatchOne(Func<TToken, bool> match, string named, bool matchNone = false)
+        private static Func<TToken, ILexicalMatchResult<TToken, TNode>, TokenMatch> MatchOne(Func<TToken, bool> match, string named, bool matchNone = false)
         {
             return (token, result) =>
             {
@@ -314,19 +315,19 @@ namespace Excess.Compiler.Core
             return this;
         }
 
-        public ILexicalAnalysis<TToken, TNode> then(Func<IEnumerable<TToken>, ILexicalMatchResult<TToken>, IEnumerable<TToken>> handler)
+        public ILexicalAnalysis<TToken, TNode> then(Func<IEnumerable<TToken>, ILexicalMatchResult<TToken, TNode>, IEnumerable<TToken>> handler)
         {
-            _transform = new LexicalFunctorTransform<TToken>(handler);
+            _transform = new LexicalFunctorTransform<TToken, TNode>(handler);
             return _lexical;
         }
 
-        public ILexicalAnalysis<TToken, TNode> then(ILexicalTransform<TToken> transform)
+        public ILexicalAnalysis<TToken, TNode> then(ILexicalTransform<TToken, TNode> transform)
         {
             _transform = transform;
             return _lexical;
         }
 
-        public IEnumerable<TToken> transform(IEnumerable<TToken> tokens, ILexicalMatchResult<TToken> result, out int consumed)
+        public IEnumerable<TToken> transform(IEnumerable<TToken> tokens, ILexicalMatchResult<TToken, TNode> result, out int consumed)
         {
             consumed      = 0;
             result.Tokens = tokens;
@@ -386,11 +387,11 @@ namespace Excess.Compiler.Core
             return result;
         }
 
-        public abstract ILexicalTransform<TToken> transform();
+        public abstract ILexicalTransform<TToken, TNode> transform();
         public abstract IEnumerable<TToken> parseTokens(string tokens);
 
 
-        private Func<IEnumerable<TToken>, ILexicalMatchResult<TToken>, IEnumerable<TToken>> ReplaceExtension(string keyword, ExtensionKind kind, Func<LexicalExtension<TToken>, ILexicalMatchResult<TToken>, IEnumerable<TToken>> handler)
+        private Func<IEnumerable<TToken>, ILexicalMatchResult<TToken, TNode>, IEnumerable<TToken>> ReplaceExtension(string keyword, ExtensionKind kind, Func<LexicalExtension<TToken>, ILexicalMatchResult<TToken, TNode>, IEnumerable<TToken>> handler)
         {
             return (tokens, result) =>
             {
@@ -409,11 +410,11 @@ namespace Excess.Compiler.Core
             };
         }
 
-        protected abstract TToken setLexicalId(TToken token, int value);
+        protected abstract TToken setLexicalId(TToken token, out string id);
 
         Dictionary<int, Func<ISyntacticalMatchResult<TNode>, LexicalExtension<TToken>, TNode>> _extensions = new Dictionary<int, Func<ISyntacticalMatchResult<TNode>, LexicalExtension<TToken>, TNode>>();
 
-        private Func<LexicalExtension<TToken>, ILexicalMatchResult<TToken>, IEnumerable<TToken>> SyntacticalExtension(Func<ISyntacticalMatchResult<TNode>, LexicalExtension<TToken>, TNode> handler)
+        private Func<LexicalExtension<TToken>, ILexicalMatchResult<TToken, TNode>, IEnumerable<TToken>> SyntacticalExtension(Func<ISyntacticalMatchResult<TNode>, LexicalExtension<TToken>, TNode> handler)
         {
             return (extension, result) =>
             {
@@ -442,17 +443,16 @@ namespace Excess.Compiler.Core
                 }
 
                 //schedule the processing of these extensions for a time we actally have sintaxis
-                int mark = extension.GetHashCode();
-
-                result.Events.schedule(new LexicalExtensionEvent<TToken, TNode>(extension, mark, handler));
-
                 bool firstToken = true;
                 return returnValue.Select(token =>
                 {
                     if (firstToken)
                     {
                         firstToken = false;
-                        return setLexicalId(token, mark);
+                        string mark;
+                        var resultToken = setLexicalId(token, out mark);
+                        result.Events.schedule(new LexicalExtensionEvent<TToken, TNode>(extension, mark, handler));
+                        return resultToken;
                     }
 
                     return token;
@@ -465,7 +465,7 @@ namespace Excess.Compiler.Core
             return extension(keyword, kind, SyntacticalExtension(handler));
         }
 
-        public ILexicalAnalysis<TToken, TNode> extension(string keyword, ExtensionKind kind, Func<LexicalExtension<TToken>, ILexicalMatchResult<TToken>, IEnumerable<TToken>> handler)
+        public ILexicalAnalysis<TToken, TNode> extension(string keyword, ExtensionKind kind, Func<LexicalExtension<TToken>, ILexicalMatchResult<TToken, TNode>, IEnumerable<TToken>> handler)
         {
             var result = createMatch();
 

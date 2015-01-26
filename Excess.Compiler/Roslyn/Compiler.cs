@@ -38,7 +38,7 @@ namespace Excess.Compiler.Roslyn
             return CSharp.ParseExpression(pass.NewText);
         }
 
-        public string ApplyLexicalPasss(string text)
+        public SyntaxNode ApplyLexicalPass(string text, out string newText)
         {
             Scope scope = new Scope();
 
@@ -48,11 +48,18 @@ namespace Excess.Compiler.Roslyn
             _events.schedule("lexical-pass", events);
 
             pass.Compile(_events, scope);
-
-            return pass.NewText;
+            newText = pass.NewText;
+            return pass.Root;
         }
 
-        public SyntaxTree ApplySyntacticalPasss(string text)
+        public string ApplyLexicalPass(string text)
+        {
+            string result;
+            ApplyLexicalPass(text, out result);
+            return result;
+        }
+
+        public SyntaxTree ApplySyntacticalPass(string text, out string result)
         {
             Scope scope = new Scope();
 
@@ -67,40 +74,95 @@ namespace Excess.Compiler.Roslyn
             _events.schedule("syntactical-pass", syntacticalEvents);
             syntacticalPass.Compile(_events, scope);
 
-            return ((SyntacticalPass)syntacticalPass).Tree;
+            var tree = ((SyntacticalPass)syntacticalPass).Tree;
+            result = tree.GetRoot().NormalizeWhitespace().ToString();
+
+            return tree;
         }
 
-        //high level utils
-        public static int GetSyntaxId(SyntaxNode node)
+        public SyntaxTree ApplySyntacticalPass(string text)
         {
-            var annotation = node.GetAnnotations("xs-syntax-id").FirstOrDefault();
+            string useless;
+            return ApplySyntacticalPass(text, out useless);
+        }
+
+
+        //declarations
+        public static TypeSyntax @void    = CSharp.PredefinedType(CSharp.Token(SyntaxKind.VoidKeyword));
+        public static TypeSyntax @object  = CSharp.PredefinedType(CSharp.Token(SyntaxKind.ObjectKeyword));
+        public static TypeSyntax @double  = CSharp.PredefinedType(CSharp.Token(SyntaxKind.DoubleKeyword));
+        public static TypeSyntax @int     = CSharp.PredefinedType(CSharp.Token(SyntaxKind.IntKeyword));
+        public static TypeSyntax @string  = CSharp.PredefinedType(CSharp.Token(SyntaxKind.StringKeyword));
+        public static TypeSyntax @boolean = CSharp.PredefinedType(CSharp.Token(SyntaxKind.BoolKeyword));
+
+        //modifiers
+        public static SyntaxTokenList @public  = CSharp.TokenList(CSharp.Token(SyntaxKind.PublicKeyword));
+        public static SyntaxTokenList @private = CSharp.TokenList(CSharp.Token(SyntaxKind.PrivateKeyword));
+
+        //node marking
+        static private int _seed = 0;
+        public static string uniqueId()
+        {
+            return (++_seed).ToString();
+        }
+
+        public static string SyntaxIdAnnotation = "xs-syntax-id";
+        public static string GetSyntaxId(SyntaxNode node)
+        {
+            var annotation = node.GetAnnotations(SyntaxIdAnnotation).FirstOrDefault();
             if (annotation != null)
-                return int.Parse(annotation.Data);
+                return annotation.Data;
 
-            return -1;
+            return null;
         }
 
-        public static SyntaxNode SetSyntaxId(SyntaxNode node, int id)
+        public static SyntaxNode SetSyntaxId(SyntaxNode node, out string id)
         {
+            id = uniqueId();
             return node
-                .WithoutAnnotations("xs-syntax-id")
-                .WithAdditionalAnnotations(new SyntaxAnnotation("xs-syntax-id", id.ToString()));
+                .WithoutAnnotations(SyntaxIdAnnotation)
+                .WithAdditionalAnnotations(new SyntaxAnnotation(SyntaxIdAnnotation, id));
         }
 
-        public static int GetLexicalId(SyntaxToken token)
+        public static string LexicalIdAnnotation = "xs-lexical-id";
+        public static string GetLexicalId(SyntaxToken token)
         {
-            var annotation = token.GetAnnotations("xs-lexical-id").FirstOrDefault();
+            var annotation = token.GetAnnotations(LexicalIdAnnotation).FirstOrDefault();
             if (annotation != null)
-                return int.Parse(annotation.Data);
+                return annotation.Data;
 
-            return -1;
+            return null;
         }
 
-        public static SyntaxToken SetLexicalId(SyntaxToken token, int id)
+        public static SyntaxToken SetLexicalId(SyntaxToken token, out string id)
+        {
+            id = uniqueId();
+            return SetLexicalId(token, id);
+        }
+
+        public static SyntaxToken SetLexicalId(SyntaxToken token, string id)
         {
             return token
-                .WithoutAnnotations("xs-lexical-id")
-                .WithAdditionalAnnotations(new SyntaxAnnotation("xs-lexical-id", id.ToString()));
+                .WithoutAnnotations(LexicalIdAnnotation)
+                .WithAdditionalAnnotations(new SyntaxAnnotation(LexicalIdAnnotation, id));
+        }
+
+        public static string SyntacticalExtensionIdAnnotation = "xs-syntax-extension";
+        public static string GetSyntacticalExtensionId(SyntaxNode node)
+        {
+            var annotation = node.GetAnnotations(SyntacticalExtensionIdAnnotation).FirstOrDefault();
+            if (annotation != null)
+                return annotation.Data;
+
+            return null;
+        }
+
+        public static SyntaxNode SetSyntacticalExtensionId(SyntaxNode node, out string id)
+        {
+            id = uniqueId();
+            return node
+                .WithoutAnnotations(SyntacticalExtensionIdAnnotation)
+                .WithAdditionalAnnotations(new SyntaxAnnotation(SyntacticalExtensionIdAnnotation, id));
         }
 
         public static SyntaxToken MarkToken(SyntaxToken token, string mark, object value)
@@ -142,6 +204,58 @@ namespace Excess.Compiler.Roslyn
         {
             string parameterString = TokensToString(parameters); //td: mapping
             return CSharp.ParseParameterList(parameterString);
+        }
+        public static bool isLexicalIdentifier(SyntaxToken token)
+        {
+            return isLexicalIdentifier(token.CSharpKind());
+        }
+
+        public static bool isLexicalIdentifier(SyntaxKind kind)
+        {
+            switch (kind)
+            {
+                case SyntaxKind.IdentifierToken:
+                case SyntaxKind.BoolKeyword:
+                case SyntaxKind.ByteKeyword:
+                case SyntaxKind.SByteKeyword:
+                case SyntaxKind.ShortKeyword:
+                case SyntaxKind.UShortKeyword:
+                case SyntaxKind.IntKeyword:
+                case SyntaxKind.UIntKeyword:
+                case SyntaxKind.LongKeyword:
+                case SyntaxKind.ULongKeyword:
+                case SyntaxKind.DoubleKeyword:
+                case SyntaxKind.FloatKeyword:
+                case SyntaxKind.DecimalKeyword:
+                case SyntaxKind.StringKeyword:
+                case SyntaxKind.CharKeyword:
+                case SyntaxKind.VoidKeyword:
+                case SyntaxKind.ObjectKeyword:
+                case SyntaxKind.NullKeyword:
+                    return true;
+            }
+
+            return false;
+        }
+
+        public static SyntaxNode ReplaceAnnotated(SyntaxNode node, string annotation, IEnumerable<KeyValuePair<string, Func<ISyntacticalMatchResult<SyntaxNode>, SyntaxNode>>> handlers)
+        {
+            var nodes = node.GetAnnotatedNodes(annotation);
+            return node.ReplaceNodes(nodes, (oldNode, newNode) =>
+            {
+                var data = oldNode.GetAnnotations(annotation).First().Data;
+                var dataHandlers = handlers
+                    .Where(h => h.Key == data);
+
+                var resultNode = newNode;
+                foreach (var handler in dataHandlers)
+                {
+                    RoslynSyntacticalMatchResult result = new RoslynSyntacticalMatchResult(new Scope(), null, resultNode);
+                    resultNode = handler.Value(result);
+                }
+                    
+                return resultNode.WithoutAnnotations(annotation);
+            });
         }
     }
 }

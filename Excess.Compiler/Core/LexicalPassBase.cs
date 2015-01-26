@@ -22,8 +22,8 @@ namespace Excess.Compiler.Core
             _text = text;
         }
 
-        Scope _scope;
-        IEventBus _events;
+        protected Scope _scope;
+        protected IEventBus _events;
 
         public override ICompilerPass Compile(IEventBus events, Scope scope)
         {
@@ -40,17 +40,31 @@ namespace Excess.Compiler.Core
             //calculate new text
             //td: !! mapping info
 
-            Dictionary<int, SourceSpan> pending = new Dictionary<int, SourceSpan>();
+            Dictionary<string, SourceSpan> pending = new Dictionary<string, SourceSpan>();
 
             StringBuilder newText = new StringBuilder();
+            string        currId  = null;
             foreach (var token in result)
             {
-                int lexicalId;
+                string lexicalId;
                 string toInsert = tokenToString(token, out lexicalId);
 
                 //store the actual position in the transformed stream of any tokens pending processing
-                if (lexicalId >= 0)
-                    pending[lexicalId] = new SourceSpan(newText.Length, toInsert.Length);
+                if (lexicalId != currId)
+                {
+                    if (currId == null) //start sequence
+                        pending[lexicalId] = new SourceSpan(newText.Length, toInsert.Length);
+
+                    currId = lexicalId;
+                }
+                else if (lexicalId != null)
+                {
+                    //augment span
+                    SourceSpan span = pending[lexicalId];
+                    span.Length += toInsert.Length;
+                }
+                else
+                    currId = null;
 
                 newText.Append(toInsert);
             }
@@ -72,12 +86,23 @@ namespace Excess.Compiler.Core
                 });
             }
 
-            return continuation(events, scope, newText.ToString(), pendingExtensions);
+            var pendingTransforms = new Dictionary<SourceSpan, ISyntaxTransform<TNode>>();
+            if (pending.Any())
+            {
+                events.poll<LexicalSyntaxTransformEvent<TNode>>().All(ev =>
+                {
+                    SourceSpan span = pending[ev.LexicalId];
+                    pendingTransforms[span] = ev.Transform;
+                    return true;
+                });
+            }
+
+            return continuation(events, scope, newText.ToString(), pendingExtensions, pendingTransforms);
         }
 
-        protected abstract string tokenToString(TToken token, out int lexicalId);
+        protected abstract string tokenToString(TToken token, out string lexicalId);
 
-        protected abstract ICompilerPass continuation(IEventBus events, Scope scope, string transformed, IEnumerable<PendingExtension<TToken, TNode>> extensions);
+        protected abstract ICompilerPass continuation(IEventBus events, Scope scope, string transformed, IEnumerable<PendingExtension<TToken, TNode>> extensions, IDictionary<SourceSpan, ISyntaxTransform<TNode>> transforms);
 
         private IEnumerable<ILexicalMatch<TToken, TNode>> GetMatchers(IEnumerable<LexicalMatchEvent<TToken, TNode>> events)
         {
@@ -102,7 +127,7 @@ namespace Excess.Compiler.Core
             {
                 IEnumerable<TToken> transformed = null;
                 int                 consumed = 0;
-                ILexicalMatchResult<TToken> result = new LexicalMatchResult<TToken>(new Scope(), _events);
+                ILexicalMatchResult<TToken, TNode> result = new LexicalMatchResult<TToken, TNode>(new Scope(), _events);
                 foreach (var matcher in matchers)
                 {
                     transformed = matcher.transform(Range(tokens, token, end), result, out consumed);
@@ -114,6 +139,13 @@ namespace Excess.Compiler.Core
                     yield return tokens[token];
                 else
                 {
+                    if (result.SyntacticalTransform != null)
+                    {
+                        string markId;
+                        transformed = markTokens(transformed, out markId);
+                        _events.schedule(new LexicalSyntaxTransformEvent<TNode>(markId, result.SyntacticalTransform));
+                    }
+
                     foreach (var tt in transformed)
                         yield return tt;
 
@@ -121,5 +153,7 @@ namespace Excess.Compiler.Core
                 }
             }
         }
+
+        protected abstract IEnumerable<TToken> markTokens(IEnumerable<TToken> transformed, out string id);
     }
 }

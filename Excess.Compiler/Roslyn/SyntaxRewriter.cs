@@ -11,13 +11,13 @@ namespace Excess.Compiler.Roslyn
     public class SyntaxRewriter : CSharpSyntaxRewriter
     {
         IEnumerable<ISyntacticalMatch<SyntaxNode>> _matchers;
-        IDictionary<int, Func<SyntaxNode, SyntaxNode>> _handlers;
+        IDictionary<string, Func<SyntaxNode, SyntaxNode>> _handlers;
         IEventBus _events;
         Scope _scope;
 
         public SyntaxRewriter(IEventBus events, Scope scope,
                               IEnumerable<ISyntacticalMatch<SyntaxNode>> matchers, 
-                              IDictionary<int, Func<SyntaxNode, SyntaxNode>> handlers)
+                              IDictionary<string, Func<SyntaxNode, SyntaxNode>> handlers)
         {
             _matchers = matchers;
             _handlers = handlers;
@@ -30,8 +30,8 @@ namespace Excess.Compiler.Roslyn
             if (node == null)
                 return  null;
 
-            int nodeID = RoslynCompiler.GetSyntaxId(node);
-            if (nodeID >= 0)
+            string nodeID = RoslynCompiler.GetSyntaxId(node);
+            if (nodeID != null)
             {
                 Func<SyntaxNode, SyntaxNode> handler;
                 if (_handlers.TryGetValue(nodeID, out handler))

@@ -16,9 +16,9 @@ namespace Excess.Compiler.Roslyn
             Preprocess = false;
         }
 
-        protected override SyntaxNode markNode(SyntaxNode node, int id)
+        protected override SyntaxNode markNode(SyntaxNode node, out string id)
         {
-            return RoslynCompiler.SetSyntaxId(node, id);
+            return RoslynCompiler.SetSyntaxId(node, out id);
         }
     }
 
