@@ -58,7 +58,7 @@ namespace Excess.Compiler.Roslyn
 
         private SyntaxNode processExtensions(SyntaxNode node, IEnumerable<SyntacticExtensionEvent<SyntaxNode>> events)
         {
-            ExtensionRewriter rewriter = new ExtensionRewriter(events, _events);
+            TransformExtensions rewriter = new TransformExtensions(events, _events);
             return rewriter.Visit(node);
         }
 

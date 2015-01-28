@@ -48,11 +48,11 @@ namespace Excess.Compiler
     public class SyntacticalExtension<TNode>
     {
         public ExtensionKind Kind { get; set; }
-        public TNode Keyword { get; set; }
-        public TNode Identifier { get; set; }
+        public string Keyword { get; set; }
+        public string Identifier { get; set; }
         public TNode Arguments { get; set; }
         public TNode Body { get; set; }
-        public Func<ISyntacticalMatchResult<TNode>, SyntacticalExtension<TNode>, IEnumerable<TNode>> Handler { get; set; }
+        public Func<ISyntacticalMatchResult<TNode>, SyntacticalExtension<TNode>, TNode> Handler { get; set; }
     }
 
     public interface ISyntaxAnalysis<TNode>
@@ -60,8 +60,8 @@ namespace Excess.Compiler
         ISyntaxAnalysis<TNode> looseStatements(Func<IEnumerable<TNode>, TNode> handler);
         ISyntaxAnalysis<TNode> looseMembers(Func<IEnumerable<TNode>, TNode> handler);
         ISyntaxAnalysis<TNode> looseTypes(Func<IEnumerable<TNode>, TNode> handler);
-        ISyntaxAnalysis<TNode> extension(string keyword, ExtensionKind kind, Func<ISyntacticalMatchResult<TNode>, SyntacticalExtension<TNode>, IEnumerable<TNode>> handler);
-        ISyntaxAnalysis<TNode> extension(string keyword, ExtensionKind kind, Func<TNode, SyntacticalExtension<TNode>, IEnumerable<TNode>> handler);
+        ISyntaxAnalysis<TNode> extension(string keyword, ExtensionKind kind, Func<ISyntacticalMatchResult<TNode>, SyntacticalExtension<TNode>, TNode> handler);
+        ISyntaxAnalysis<TNode> extension(string keyword, ExtensionKind kind, Func<TNode, SyntacticalExtension<TNode>, TNode> handler);
 
         ISyntacticalMatch<TNode> match(Func<TNode, bool> selector);
         ISyntacticalMatch<TNode> match<T>(Func<T, bool> selector) where T : TNode;

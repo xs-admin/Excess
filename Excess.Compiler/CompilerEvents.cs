@@ -96,7 +96,7 @@ namespace Excess.Compiler
 
     public class SyntacticExtensionEvent<TNode> : CompilerEvent
     {
-        public SyntacticExtensionEvent(string keyword, ExtensionKind kind, Func<ISyntacticalMatchResult<TNode>, SyntacticalExtension<TNode>, IEnumerable<TNode>> handler) :
+        public SyntacticExtensionEvent(string keyword, ExtensionKind kind, Func<ISyntacticalMatchResult<TNode>, SyntacticalExtension<TNode>, TNode> handler) :
             base(CompilerStage.Syntactical, "")
         {
             Keyword = keyword;
@@ -106,6 +106,6 @@ namespace Excess.Compiler
 
         public string Keyword { get; set; }
         public ExtensionKind Kind { get; set; }
-        public Func<ISyntacticalMatchResult<TNode>, SyntacticalExtension<TNode>, IEnumerable<TNode>> Handler { get; set; }
+        public Func<ISyntacticalMatchResult<TNode>, SyntacticalExtension<TNode>, TNode> Handler { get; set; }
     }
 }

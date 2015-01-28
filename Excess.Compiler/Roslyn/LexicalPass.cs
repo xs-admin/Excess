@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 
 namespace Excess.Compiler.Roslyn
 {
+    using Microsoft.CodeAnalysis.CSharp.Syntax;
     using Microsoft.CodeAnalysis.Text;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
@@ -57,6 +58,12 @@ namespace Excess.Compiler.Roslyn
             foreach (var extension in extensions)
             {
                 SyntaxNode extNode = Root.FindNode(new TextSpan(extension.Span.Start, extension.Span.Length));
+                switch (extension.Extension.Kind)
+                {
+                    case ExtensionKind.Code: extNode = extNode.FirstAncestorOrSelf<ExpressionStatementSyntax>(); break;
+                    case ExtensionKind.Member: extNode = extNode.FirstAncestorOrSelf<MemberDeclarationSyntax>(); break;
+                    case ExtensionKind.Type: extNode = extNode.FirstAncestorOrSelf<MemberDeclarationSyntax>(); break;
+                }
 
                 RoslynSyntacticalMatchResult result = new RoslynSyntacticalMatchResult(_scope, _events, extNode);
                 var resultNode = extension.Handler(result, extension.Extension);

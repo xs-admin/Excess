@@ -200,13 +200,13 @@ namespace Excess.Compiler.Core
 
         List<SyntacticExtensionEvent<TNode>> _extensions = new List<SyntacticExtensionEvent<TNode>>();
 
-        public ISyntaxAnalysis<TNode> extension(string keyword, ExtensionKind kind, Func<ISyntacticalMatchResult<TNode>, SyntacticalExtension<TNode>, IEnumerable<TNode>> handler)
+        public ISyntaxAnalysis<TNode> extension(string keyword, ExtensionKind kind, Func<ISyntacticalMatchResult<TNode>, SyntacticalExtension<TNode>, TNode> handler)
         {
             _extensions.Add(new SyntacticExtensionEvent<TNode>(keyword, kind, handler));
             return this;
         }
 
-        public ISyntaxAnalysis<TNode> extension(string keyword, ExtensionKind kind, Func<TNode, SyntacticalExtension<TNode>, IEnumerable<TNode>> handler)
+        public ISyntaxAnalysis<TNode> extension(string keyword, ExtensionKind kind, Func<TNode, SyntacticalExtension<TNode>, TNode> handler)
         {
             _extensions.Add(new SyntacticExtensionEvent<TNode>(keyword, kind, (result, ext) => handler(result.Node, ext)));
             return this;

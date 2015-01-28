@@ -12,278 +12,213 @@ namespace Excess.Compiler.Roslyn
     using System.Diagnostics;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
-    public class ExtensionRewriter : CSharpSyntaxRewriter
-    {
-        IEventBus _events;
+    //public class ExtensionRewriter : CSharpSyntaxVisitor
+    //{
+    //    IEventBus _events;
 
-        Dictionary<string, Func<ISyntacticalMatchResult<SyntaxNode>, SyntacticalExtension<SyntaxNode>, IEnumerable<SyntaxNode>>> _codeExtensions = new Dictionary<string, Func<ISyntacticalMatchResult<SyntaxNode>, SyntacticalExtension<SyntaxNode>, IEnumerable<SyntaxNode>>>();
-        Dictionary<string, Func<ISyntacticalMatchResult<SyntaxNode>, SyntacticalExtension<SyntaxNode>, IEnumerable<SyntaxNode>>> _memberExtensions = new Dictionary<string, Func<ISyntacticalMatchResult<SyntaxNode>, SyntacticalExtension<SyntaxNode>, IEnumerable<SyntaxNode>>>();
-        Dictionary<string, Func<ISyntacticalMatchResult<SyntaxNode>, SyntacticalExtension<SyntaxNode>, IEnumerable<SyntaxNode>>> _typeExtensions = new Dictionary<string, Func<ISyntacticalMatchResult<SyntaxNode>, SyntacticalExtension<SyntaxNode>, IEnumerable<SyntaxNode>>>();
+    //    Dictionary<string, Func<ISyntacticalMatchResult<SyntaxNode>, SyntacticalExtension<SyntaxNode>, IEnumerable<SyntaxNode>>> _codeExtensions = new Dictionary<string, Func<ISyntacticalMatchResult<SyntaxNode>, SyntacticalExtension<SyntaxNode>, IEnumerable<SyntaxNode>>>();
+    //    Dictionary<string, Func<ISyntacticalMatchResult<SyntaxNode>, SyntacticalExtension<SyntaxNode>, IEnumerable<SyntaxNode>>> _memberExtensions = new Dictionary<string, Func<ISyntacticalMatchResult<SyntaxNode>, SyntacticalExtension<SyntaxNode>, IEnumerable<SyntaxNode>>>();
+    //    Dictionary<string, Func<ISyntacticalMatchResult<SyntaxNode>, SyntacticalExtension<SyntaxNode>, IEnumerable<SyntaxNode>>> _typeExtensions = new Dictionary<string, Func<ISyntacticalMatchResult<SyntaxNode>, SyntacticalExtension<SyntaxNode>, IEnumerable<SyntaxNode>>>();
 
-        public ExtensionRewriter(IEnumerable<SyntacticExtensionEvent<SyntaxNode>> extensions, IEventBus events)
-        {
-            _events = events;
+    //    Dictionary<SyntaxNode, Dictionary<SyntaxNode, Func<ISyntacticalMatchResult<SyntaxNode>, IEnumerable<SyntaxNode>>>> _transform = new Dictionary<SyntaxNode, Dictionary<SyntaxNode, Func<ISyntacticalMatchResult<SyntaxNode>, IEnumerable<SyntaxNode>>>>();
 
-            foreach (var ev in extensions)
-            {
-                switch (ev.Kind)
-                {
-                    case ExtensionKind.Code: _codeExtensions[ev.Keyword] = ev.Handler; break;
-                    case ExtensionKind.Member: _memberExtensions[ev.Keyword] = ev.Handler; break;
-                    case ExtensionKind.Type: _typeExtensions[ev.Keyword] = ev.Handler; break;
-                    default: throw new NotImplementedException(); 
-                }
-            }
-        }
+    //    public ExtensionRewriter(IEnumerable<SyntacticExtensionEvent<SyntaxNode>> extensions, IEventBus events)
+    //    {
+    //        _events = events;
 
-        Dictionary<string, IEnumerable<MemberDeclarationSyntax>> _globalMembers = new Dictionary<string, IEnumerable<MemberDeclarationSyntax>>();
-        Dictionary<string, IEnumerable<UsingDirectiveSyntax>>    _usings = new Dictionary<string, IEnumerable<UsingDirectiveSyntax>>();
+    //        foreach (var ev in extensions)
+    //        {
+    //            switch (ev.Kind)
+    //            {
+    //                case ExtensionKind.Code:   _codeExtensions  [ev.Keyword] = ev.Handler; break;
+    //                case ExtensionKind.Member: _memberExtensions[ev.Keyword] = ev.Handler; break;
+    //                case ExtensionKind.Type:   _typeExtensions  [ev.Keyword] = ev.Handler; break;
+    //                default: throw new NotImplementedException(); 
+    //            }
+    //        }
+    //    }
 
-        public override SyntaxNode VisitCompilationUnit(CompilationUnitSyntax node)
-        {
-            var result = (CompilationUnitSyntax)base.Visit(node);
-            if (_globalMembers.Any())
-                result = result
-                    .WithMembers(CSharp.List(
-                        MergeMembers(result.Members, _globalMembers)));
+    //    public SyntaxTree rewrite(SyntaxTree tree)
+    //    {
+    //        var node = tree.GetRoot();
+    //        Visit(node);
 
-            if (_usings.Any())
-                result = result
-                    .WithUsings(CSharp.List(
-                        MergeUsings(result.Usings, _usings)));
+    //        return node.ReplaceNodes(_transform.Keys, (oldNode, newNode) =>
+    //        {
+    //            var children = _transform[oldNode];
 
-            return result;
-        }
+    //            Debug.Assert(oldNode.ChildNodes().Count() == newNode.ChildNodes().Count()); //no structural changes
+    //            var newChildren = oldNode.ChildNodes().GetEnumerator();
 
-        private IEnumerable<UsingDirectiveSyntax> MergeUsings(SyntaxList<UsingDirectiveSyntax> usings, Dictionary<string, IEnumerable<UsingDirectiveSyntax>> transform)
-        {
-            foreach (var directive in usings)
-            {
-                var usingId = RoslynCompiler.GetSyntacticalExtensionId(directive);
+    //            List<SyntaxNode> resultChildren = new List<SyntaxNode>();
+    //            foreach (var child in oldNode.ChildNodes())
+    //            {
+    //                var handler  = children[child];
+    //                var newChild = newChildren.Current; newChildren.MoveNext();
 
-                IEnumerable<UsingDirectiveSyntax> toReplace;
-                if (usingId != null && transform.TryGetValue(usingId, out toReplace))
-                {
-                    foreach (var uNode in toReplace)
-                        yield return uNode;
-                }
-                else
-                    yield return directive;
-            }
-        }
+    //                if (handler != null)
+    //                {
+    //                    var transformed = handler(result);
+    //                }
+    //                else
+    //                    resultChildren.Add(newChild); ;
+    //            }
 
-        private IEnumerable<MemberDeclarationSyntax> MergeMembers(SyntaxList<MemberDeclarationSyntax> members, Dictionary<string, IEnumerable<MemberDeclarationSyntax>> transform)
-        {
-            foreach (var member in members)
-            {
-                var memberId = RoslynCompiler.GetSyntacticalExtensionId(member);
+    //            return newNode.WithC
+    //        });
+    //    }
 
-                IEnumerable<MemberDeclarationSyntax> toReplace;
-                if (memberId != null && transform.TryGetValue(memberId, out toReplace))
-                {
-                    foreach (var rNode in toReplace)
-                        yield return rNode;
-                }
-                else
-                    yield return member;
-            }
-        }
+    //    public override void VisitBlock(BlockSyntax node)
+    //    {
+    //        if (!_codeExtensions.Any())
+    //            return; //bail on code is no extension is registered
 
-        public override SyntaxNode VisitNamespaceDeclaration(NamespaceDeclarationSyntax node)
-        {
-            var result = (NamespaceDeclarationSyntax)base.Visit(node);
-            if (_globalMembers.Any())
-            {
-                result = result
-                    .WithMembers(CSharp.List(
-                        MergeMembers(result.Members, _globalMembers)));
+    //        base.VisitBlock(node);
+    //    }
 
-                _globalMembers.Clear();
-            }
+    //    public override void VisitMethodDeclaration(MethodDeclarationSyntax method)
+    //    {
+    //        Debug.Assert(RoslynCompiler.GetSyntacticalExtensionId(method) == null);
 
-            return result;
-        }
+    //        SyntacticalExtension<SyntaxNode> extension;
+    //        method = processMethodExtension(method, out extension);
+    //        if (extension != null)
+    //        {
+    //            if (extension.Kind == ExtensionKind.Member)
+    //            {
+    //                addChild(method.Parent, method, extension);
+    //            }
+    //            else
+    //            {
+    //                //td: error, incorrect extension (i.e. a code extension being used inside a type)
+    //            }
+    //        }
 
-        Stack<Dictionary<string, IEnumerable<MemberDeclarationSyntax>>> _typeMembers = new Stack<Dictionary<string, IEnumerable<MemberDeclarationSyntax>>>();
+    //        base.VisitMethodDeclaration(method);
+    //    }
 
-        public override SyntaxNode VisitClassDeclaration(ClassDeclarationSyntax node)
-        {
-            pushType();
+    //    private MethodDeclarationSyntax processMethodExtension(MethodDeclarationSyntax method, out SyntacticalExtension<SyntaxNode> extension)
+    //    {
+    //        extension = null;
 
-            ClassDeclarationSyntax result = (ClassDeclarationSyntax)base.VisitClassDeclaration(node);
+    //        string extName = null;
+    //        string extIdentifier = null;
+    //        if (!method.ReturnType.IsMissing)
+    //        {
+    //            extName = method.ReturnType.ToString(); 
+    //            extIdentifier = method.Identifier.ToString();
+    //        }
+    //        else
+    //        {
+    //            extName = method.Identifier.ToString();
+    //        }
 
-            result = popType(result);
-            return result;
-        }
+    //        if (!_memberExtensions.ContainsKey(extName))
+    //            return method;
 
-        private ClassDeclarationSyntax popType(ClassDeclarationSyntax result)
-        {
-            var top = _typeMembers.Pop();
-            if (top.Count > 0)
-            {
-                result = result
-                    .WithMembers(CSharp.List(
-                        MergeMembers(result.Members, top)));
-            }
+    //        extension = new SyntacticalExtension<SyntaxNode>
+    //        {
+    //            Kind = ExtensionKind.Member,
+    //            Keyword = extName,
+    //            Identifier = extIdentifier,
+    //            Arguments = method.ParameterList,
+    //            Body = method.Body,
+    //            Handler = _memberExtensions[extName]
+    //        };
 
-            return result;
-        }
+    //        string id;
+    //        return (MethodDeclarationSyntax)RoslynCompiler.SetSyntacticalExtensionId(method, out id);
+    //    }
 
-        private void pushType()
-        {
-            _typeMembers.Push(new Dictionary<string, IEnumerable<MemberDeclarationSyntax>>());
-        }
+    //    public override void VisitInvocationExpression(InvocationExpressionSyntax call)
+    //    {
+    //        Debug.Assert(RoslynCompiler.GetSyntacticalExtensionId(call) == null);
 
-        Stack<Dictionary<string, IEnumerable<StatementSyntax>>> _codeStatements = new Stack<Dictionary<string, IEnumerable<StatementSyntax>>>();
-        public override SyntaxNode VisitBlock(BlockSyntax node)
-        {
-            if (!_codeExtensions.Any())
-                return node; //bail on code is no extension is registered
+    //        SyntacticalExtension<SyntaxNode> extension = processCodeExtension(call);
+    //        if (extension != null && extension.Kind != ExtensionKind.Code)
+    //        {
+    //            //td: error, incorrect extension (i.e. a type extension being used inside code)
+    //        }
 
-            pushCode();
-            BlockSyntax result = (BlockSyntax)base.VisitBlock(node);
-            result = popCode(result);
+    //        base.VisitInvocationExpression(call);
+    //    }
 
-            return result;
-        }
+    //    private SyntacticalExtension<SyntaxNode> processCodeExtension(InvocationExpressionSyntax call)
+    //    {
+    //        if (!(call.Expression is SimpleNameSyntax))
+    //            return null; //extensions are simple identifiers
 
-        private BlockSyntax popCode(BlockSyntax result)
-        {
-            var top = _typeMembers.Pop();
-            if (top.Count > 0)
-            {
-                result = result
-                    .WithStatements(CSharp.List(
-                        MergeStatements(result.Statements, top)));
-            }
+    //        var extName = call.Expression.ToString();
+    //        if (!_codeExtensions.ContainsKey(extName))
+    //            return null; //not an extension
 
-            return result;
-        }
+    //        StatementSyntax statement = null;
+    //        BlockSyntax     code      = null;
 
-        private IEnumerable<SyntaxNode> MergeStatements(IEnumerable<StatementSyntax> statements, Dictionary<string, IEnumerable<MemberDeclarationSyntax>> transform)
-        {
-            foreach (var statement in statements)
-            {
-                var memberId = RoslynCompiler.GetSyntacticalExtensionId(statement);
+    //        var parent = call.Parent;
+    //        while (parent != null)
+    //        {
+    //            if (parent is StatementSyntax)
+    //                statement = parent as StatementSyntax;
 
-                IEnumerable<MemberDeclarationSyntax> toReplace;
-                if (memberId != null && transform.TryGetValue(memberId, out toReplace))
-                {
-                    foreach (var rNode in toReplace)
-                        yield return rNode;
-                }
-                else
-                    yield return statement;
-            }
-        }
+    //            if (parent is BlockSyntax)
+    //            {
+    //                code = parent as BlockSyntax;
+    //                break;
+    //            }
 
-        private void pushCode()
-        {
-            _codeStatements.Push(new Dictionary<string, IEnumerable<StatementSyntax>>());
-        }
+    //            parent = parent.Parent;
+    //        }
 
-        public override SyntaxNode VisitMethodDeclaration(MethodDeclarationSyntax method)
-        {
-            Debug.Assert(RoslynCompiler.GetSyntacticalExtensionId(method) == null);
+    //        if (code == null || statement == null)
+    //            return null; //td: not sure
 
-            SyntacticalExtension<SyntaxNode> extension;
-            method = processMethodExtension(method, out extension);
-            if (extension == null)
-                return base.Visit(method); //not an extension
+    //        if (hasSemicolon(statement))
+    //        {
+    //            //td: syntaxis error
+    //            return null; 
+    //        }
 
-            bool isNamespaceItem = method.Parent is CompilationUnitSyntax
-                                || method.Parent is NamespaceDeclarationSyntax;
+    //        var extCode = NextStatement<BlockSyntax>(code, statement);
+    //        if (extCode == null)
+    //        {
+    //            //td: syntaxis error
+    //            return null;
+    //        }
 
-            if (extension.Kind != ExtensionKind.Member)
-            {
-                //td: error, incorrect extension (i.e. a code extension being used inside a type)
-                return null;
-            }
+    //        removeNode(extCode);
 
-            var results = TransformExtension(method, extension);
-            return processResults(method, ExtensionKind.Member, results);
-        }
+    //        var extension = new SyntacticalExtension<SyntaxNode>
+    //        {
+    //            Kind = ExtensionKind.Member,
+    //            Keyword = extName,
+    //            Identifier = null,
+    //            Arguments = call.ArgumentList,
+    //            Body = extCode,
+    //            Handler = _codeExtensions[extName]
+    //        };
 
-        private MethodDeclarationSyntax processMethodExtension(MethodDeclarationSyntax method, out SyntacticalExtension<SyntaxNode> extension)
-        {
-            throw new NotImplementedException();
-        }
+    //        addChild(code, statement, extension);
+    //        return extension;
+    //    }
 
-        private SyntaxNode processResults(SyntaxNode node, ExtensionKind kind,  IEnumerable<SyntaxNode> results)
-        {
-            if (results == null || !results.Any())
-                return null;
+    //    public override void VisitIncompleteMember(IncompleteMemberSyntax member)
+    //    {
+    //        Debug.Assert(RoslynCompiler.GetSyntacticalExtensionId(member) == null);
 
-            if (results.Take(2).Count() == 1)
-                return results.First();
+    //        SyntacticalExtension<SyntaxNode> extension;
+    //        member = processTypeExtension(member, out extension);
+    //        if (extension != null && extension.Kind != ExtensionKind.Type)
+    //        {
+    //            //td: error, incorrect extension
+    //        }
 
-            string id;
-            node = RoslynCompiler.SetSyntacticalExtensionId(node, out id);
+    //        base.VisitIncompleteMember(member);
+    //    }
 
-            switch (kind)
-            {
-                case ExtensionKind.Code: _codeStatements.Peek()[id] = results.OfType<StatementSyntax>(); break;
-                case ExtensionKind.Member: _typeMembers.Peek()[id] = results.OfType<MemberDeclarationSyntax>(); break;
-                case ExtensionKind.Type: _globalMembers[id] = results.OfType<MemberDeclarationSyntax>(); break;
-                default: throw new NotImplementedException();
-            }
-
-            return node;
-        }
-
-        private IEnumerable<SyntaxNode> TransformExtension(SyntaxNode node, SyntacticalExtension<SyntaxNode> extension)
-        {
-            RoslynSyntacticalMatchResult result = new RoslynSyntacticalMatchResult(new Scope(), _events, node);
-            return extension.Handler(result, extension);
-        }
-
-        public override SyntaxNode VisitInvocationExpression(InvocationExpressionSyntax call)
-        {
-            Debug.Assert(RoslynCompiler.GetSyntacticalExtensionId(call) == null);
-
-            SyntacticalExtension<SyntaxNode> extension;
-            call = processCodeExtension(call, out extension);
-            if (extension == null)
-                return base.Visit(call); //not an extension
-
-            if (extension.Kind != ExtensionKind.Code)
-            {
-                //td: error, incorrect extension (i.e. a type extension being used inside code)
-                return null;
-            }
-
-            var results = TransformExtension(call, extension);
-            return processResults(call, ExtensionKind.Code, results);
-        }
-
-
-        public override SyntaxNode VisitIncompleteMember(IncompleteMemberSyntax member)
-        {
-            Debug.Assert(RoslynCompiler.GetSyntacticalExtensionId(member) == null);
-
-            SyntacticalExtension<SyntaxNode> extension;
-            member = processTypeExtension(member, out extension);
-            if (extension == null)
-                return member; //not an extension, just an error, leave untouched
-
-            if (extension.Kind != ExtensionKind.Type)
-            {
-                //td: error, incorrect extension
-                return null;
-            }
-
-            var results = TransformExtension(member, extension);
-            return processResults(member, ExtensionKind.Type, results);
-        }
-
-        private InvocationExpressionSyntax processCodeExtension(InvocationExpressionSyntax call, out SyntacticalExtension<SyntaxNode> extension)
-        {
-            throw new NotImplementedException();
-        }
-
-        private IncompleteMemberSyntax processTypeExtension(IncompleteMemberSyntax member, out SyntacticalExtension<SyntaxNode> extension)
-        {
-            throw new NotImplementedException();
-        }
-    }
+    //    private IncompleteMemberSyntax processTypeExtension(IncompleteMemberSyntax member, out SyntacticalExtension<SyntaxNode> extension)
+    //    {
+    //        throw new NotImplementedException();
+    //    }
+    //}
 }

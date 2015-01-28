@@ -75,18 +75,6 @@ namespace Excess.Compiler.Tests
             return RoslynCompiler.ParseTokens(testResult);
         }
 
-        [TestMethod]
-        public void SyntacticalExtension()
-        {
-            RoslynCompiler compiler = new RoslynCompiler();
-            var lexical = compiler.Lexical();
-            lexical
-                .extension("my_ext", ExtensionKind.Code, myExtSyntactical);
-
-            var tree = compiler.ApplySyntacticalPass("void main() { my_ext(int i) { code(); } }");
-            Assert.IsTrue(tree.ToString() == "void main() { my_ext(int i=>{code(); });}");
-        }
-
         private SyntaxNode myExtSyntactical(ISyntacticalMatchResult<SyntaxNode> result, LexicalExtension<SyntaxToken> extension)
         {
             Assert.IsTrue(result.Node is ExpressionStatementSyntax);
@@ -166,46 +154,114 @@ namespace Excess.Compiler.Tests
             sintaxis
                 .extension("codeExtension", ExtensionKind.Code, codeExtension);
 
-            tree = compiler.ApplySyntacticalPass("class foo { void bar() {var v = codeExtension(param: \"foobar\") {bar();}} }");
-            Assert.IsTrue(tree.ToString() == "class foo { public void myMethod() {} foo (){}}");
+            tree = compiler.ApplySyntacticalPass("class foo { void bar() {codeExtension() {bar();}} }");
+            Assert.IsTrue(tree
+                .GetRoot()
+                .DescendantNodes()
+                .OfType<StatementSyntax>()
+                .Count() == 5); //must have added a couple of statements
+
+            tree = compiler.ApplySyntacticalPass("class foo { void bar() {var ce = codeExtension() {bar();}} }");
+            var localDeclStatement = tree
+                .GetRoot()
+                .DescendantNodes()
+                .OfType<LocalDeclarationStatementSyntax>()
+                .FirstOrDefault();
+
+            Assert.IsNotNull(localDeclStatement);
+            Assert.AreEqual(localDeclStatement.ToString(), "var ce = bar(7);");
+
+            tree = compiler.ApplySyntacticalPass("class foo { void bar() {ce = codeExtension() {bar();}} }");
+            var assignmentStatement = tree
+                .GetRoot()
+                .DescendantNodes()
+                .OfType<ExpressionStatementSyntax>()
+                .FirstOrDefault();
+
+            Assert.IsNotNull(assignmentStatement);
+            Assert.AreEqual(assignmentStatement.ToString(), "ce = bar(7);");
 
             //member extension
             sintaxis
                 .extension("memberExtension", ExtensionKind.Member, memberExtension);
 
             tree = compiler.ApplySyntacticalPass("class foo { memberExtension(param: \"foobar\") {int x = 3;} }");
-            Assert.IsTrue(tree.ToString() == "class foo { public void myMethod() {} foo (){}}");
+            var method = tree
+                .GetRoot()
+                .DescendantNodes()
+                .OfType<MethodDeclarationSyntax>()
+                .FirstOrDefault();
+
+            Assert.IsNotNull(method);
+            Assert.AreEqual(method.ParameterList.Parameters.Count, 0);
+            Assert.AreEqual(method.Body.Statements.Count, 3);
 
             //type extension
             sintaxis
-                .extension("typeExtension", ExtensionKind.Type, typeExtension)
-                .extension("typeCodeExtension", ExtensionKind.Type, typeCodeExtension);
+                .extension("typeExtension", ExtensionKind.Type, typeExtension);
 
-            tree = compiler.ApplySyntacticalPass("public typeExtension foo(param: \"foobar\") { void bar() {} }");
-            Assert.IsTrue(tree.ToString() == "class foo { public void myMethod() {} foo (){}}");
+            tree = compiler.ApplySyntacticalPass("public typeExtension foo(param: \"foobar\") { bar(); }");
 
-            tree = compiler.ApplySyntacticalPass("typeCodeExtension(param: \"foobar\") { int i = 0; }");
-            Assert.IsTrue(tree.ToString() == "class foo { public void myMethod() {} foo (){}}");
+            var @class = tree
+                .GetRoot()
+                .DescendantNodes()
+                .OfType<ClassDeclarationSyntax>()
+                .FirstOrDefault();
+
+            Assert.IsNotNull(@class);
+            Assert.AreEqual(@class.Identifier.ToString(), "foo");
+            var classMethod = @class
+                .Members
+                .OfType<MethodDeclarationSyntax>()
+                .FirstOrDefault();
+
+            Assert.IsNotNull(classMethod);
+            Assert.IsTrue(classMethod
+                .Body
+                .DescendantNodes()
+                .OfType<ExpressionStatementSyntax>()
+                .Count() == 1);
         }
 
-        private IEnumerable<SyntaxNode> typeCodeExtension(ISyntacticalMatchResult<SyntaxNode> arg1, SyntacticalExtension<SyntaxNode> arg2)
+        private SyntaxNode codeExtension(ISyntacticalMatchResult<SyntaxNode> result, SyntacticalExtension<SyntaxNode> extension)
         {
-            throw new NotImplementedException();
+            if (extension.Kind == ExtensionKind.Code)
+            {
+                var codeBlock = extension.Body as BlockSyntax;
+                Assert.IsNotNull(extension.Body);
+                return codeBlock.AddStatements(
+                    new[] {
+                    CSharp.ParseStatement("var myFoo = 5;"),
+                    CSharp.ParseStatement("bar(myFoo);")
+                });
+            }
+
+            Assert.AreEqual(extension.Kind, ExtensionKind.Expression);
+            return CSharp.ParseExpression("bar(7)");
         }
 
-        private IEnumerable<SyntaxNode> typeExtension(ISyntacticalMatchResult<SyntaxNode> arg1, SyntacticalExtension<SyntaxNode> arg2)
+        private SyntaxNode memberExtension(ISyntacticalMatchResult<SyntaxNode> result, SyntacticalExtension<SyntaxNode> extension)
         {
-            throw new NotImplementedException();
+            var memberDecl = result.Node as MethodDeclarationSyntax;
+            Assert.IsNotNull(memberDecl);
+
+            return memberDecl
+                .WithReturnType(CSharp.ParseTypeName("int"))
+                .WithIdentifier(CSharp.ParseToken("anotherName"))
+                .WithParameterList(CSharp.ParameterList())
+                .WithBody(memberDecl.Body
+                    .AddStatements(new[] {
+                        CSharp.ParseStatement("var myFoo = 5;"),
+                        CSharp.ParseStatement("bar(myFoo);")}));
         }
 
-        private IEnumerable<SyntaxNode> memberExtension(ISyntacticalMatchResult<SyntaxNode> arg1, SyntacticalExtension<SyntaxNode> arg2)
+        private SyntaxNode typeExtension(ISyntacticalMatchResult<SyntaxNode> result, SyntacticalExtension<SyntaxNode> extension)
         {
-            throw new NotImplementedException();
-        }
-
-        private IEnumerable<SyntaxNode> codeExtension(ISyntacticalMatchResult<SyntaxNode> arg1, SyntacticalExtension<SyntaxNode> arg2)
-        {
-            throw new NotImplementedException();
+            return CSharp.ClassDeclaration(extension.Identifier)
+                .WithMembers(CSharp.List<MemberDeclarationSyntax>( new[] {
+                        CSharp.MethodDeclaration(CSharp.ParseTypeName("int"), "myMethod")
+                            .WithBody((BlockSyntax)extension.Body)
+                }));
         }
 
         [TestMethod]

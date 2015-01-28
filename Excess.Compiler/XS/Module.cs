@@ -60,9 +60,9 @@ namespace Excess.Compiler.XS
             return RoslynCompiler.isLexicalIdentifier(kind) || kind == SyntaxKind.GreaterThanToken;
         }
 
-        static private IEnumerable<SyntaxNode> ProcessCodeFunction(ISyntacticalMatchResult<SyntaxNode> result, SyntacticalExtension<SyntaxNode> extension)
+        static private SyntaxNode ProcessCodeFunction(ISyntacticalMatchResult<SyntaxNode> result, SyntacticalExtension<SyntaxNode> extension)
         {
-            return new[] { result.Node };
+            return result.Node;
         }
     }
 }

@@ -104,6 +104,7 @@
     <Compile Include="Roslyn\SyntacticalPass.cs" />
     <Compile Include="Roslyn\SyntaxAnalysis.cs" />
     <Compile Include="Roslyn\SyntaxRewriter.cs" />
+    <Compile Include="Roslyn\TransformExtensions.cs" />
     <Compile Include="Scope.cs" />
     <Compile Include="SyntaxAnalysis.cs" />
     <Compile Include="XS\Module.cs" />
