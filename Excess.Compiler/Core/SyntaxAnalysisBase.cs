@@ -27,11 +27,20 @@ namespace Excess.Compiler.Core
             return Scope;
         }
 
-        public TNode schedule(string pass, TNode node, Func<TNode, TNode> handler)
+        public TNode schedule(TNode node, Func<TNode, TNode> handler, string pass)
         {
             string id;
             TNode result = markNode(node, out id);
             Events.schedule(pass, new SyntacticalNodeEvent<TNode>(id, handler, pass));
+            return result;
+        }
+
+        public TNode customExtension(TNode node, string extension, ExtensionKind kind)
+        {
+            string id;
+            TNode result = markNode(node, out id);
+
+            Events.schedule("syntactical-pass", new SyntacticExtensionEvent<TNode>(extension, kind, null, id));
             return result;
         }
 
@@ -130,14 +139,14 @@ namespace Excess.Compiler.Core
         public ISyntaxAnalysis<TNode> then(Func<TNode, TNode> handler)
         {
             Debug.Assert(_then == null);
-            _then = new FunctorSyntaxTransform<TNode>(handler);
+            _then = new FunctorSyntaxTransform<TNode>(handler, null);
             return _syntax;
         }
 
         public ISyntaxAnalysis<TNode> then(Func<ISyntacticalMatchResult<TNode>, TNode> handler)
         {
             Debug.Assert(_then == null);
-            _then = new FunctorSyntaxTransform<TNode>(handler);
+            _then = new FunctorSyntaxTransform<TNode>(handler, null);
             return _syntax;
         }
 

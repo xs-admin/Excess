@@ -28,11 +28,13 @@ namespace Excess.Compiler
         IEventBus Events { get; set; }
         bool Preprocess { get; set; }
 
-        TNode schedule(string pass, TNode node, Func<TNode, TNode> handler);
+        TNode schedule(TNode node, Func<TNode, TNode> handler, string pass = null);
+        TNode customExtension(TNode node, string extension, ExtensionKind kind);
     }
 
     public interface ISyntaxTransform<TNode>
     {
+        ISyntaxTransform<TNode> match(Func<TNode, bool> mapper);
         ISyntaxTransform<TNode> remove(string nodes);
         ISyntaxTransform<TNode> remove(Func<ISyntacticalMatchResult<TNode>, IEnumerable<TNode>> handler);
         ISyntaxTransform<TNode> replace(string nodes, Func<ISyntacticalMatchResult<TNode>, TNode> handler);
@@ -42,6 +44,8 @@ namespace Excess.Compiler
         ISyntaxTransform<TNode> addToScope(string nodes, bool type = false, bool @namespace = false);
         ISyntaxTransform<TNode> addToScope(Func<ISyntacticalMatchResult<TNode>, IEnumerable<TNode>> handler, bool type = false, bool @namespace = false);
 
+        //runtime
+        TNode mapTransform(TNode node);
         TNode transform(ISyntacticalMatchResult<TNode> result);
     }
 

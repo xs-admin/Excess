@@ -7,6 +7,8 @@ using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System.Diagnostics;
+using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace Excess.Compiler.XS
 {
@@ -19,7 +21,7 @@ namespace Excess.Compiler.XS
 
             //functions
             lexical
-                .match()
+                .match() //lambda
                     .any('(', '=', ',')
                     .token("function", named: "fn")
                     .enclosed('(', ')')
@@ -28,14 +30,15 @@ namespace Excess.Compiler.XS
                         .remove("fn")
                         .insert("=>", before: "brace"))
                 .match()
-                    .token(MemberFunction)
+                    //.token(startsMemberFunction)
                     .token("function", named: "fn")
-                    .identifier()
+                    .identifier(named: "id")
                     .enclosed('(', ')')
                     .token('{')
                     .then(lexical.transform()
                         .remove("fn")
-                        .then(ProcessMemberFunction));
+                        .then("id", ProcessMemberFunction, 
+                            mapper: MapMemberFunction));
 
             sintaxis
                 .match<MethodDeclarationSyntax>(method => method.ReturnType.ToString() == "function")
@@ -46,15 +49,35 @@ namespace Excess.Compiler.XS
         private static SyntaxNode ProcessUntypedFunction(SyntaxNode arg)
         {
             MethodDeclarationSyntax method = (MethodDeclarationSyntax)arg;
-            return method.WithReturnType(RoslynCompiler.@void); //td: schedule
+            return method.WithReturnType(RoslynCompiler.@void); //td: schedule semantic
         }
 
-        private static SyntaxNode ProcessMemberFunction(SyntaxNode arg)
+        private static bool MapMemberFunction(SyntaxNode node)
         {
-            throw new NotImplementedException();
+            return node is MethodDeclarationSyntax
+                || node is StatementSyntax;
         }
 
-        static private bool MemberFunction(SyntaxToken token)
+        private static SyntaxNode ProcessMemberFunction(ISyntacticalMatchResult<SyntaxNode> result)
+        {
+            var node = result.Node;
+            if (node is MethodDeclarationSyntax)
+            {
+                var method = node as MethodDeclarationSyntax;
+                if (method.ReturnType.IsMissing)
+                    return method.WithReturnType(RoslynCompiler.@void); //td: schedule type resolution
+
+                return node;
+            }
+
+            var statement = node as StatementSyntax;
+            Debug.Assert(statement != null); //td: error, maybe?
+
+            SyntaxNode returnValue = result.customExtension(statement, "function", ExtensionKind.Code);
+            return returnValue;
+        }
+
+        static private bool startsMemberFunction(SyntaxToken token)
         {
             var kind = token.CSharpKind();
             return RoslynCompiler.isLexicalIdentifier(kind) || kind == SyntaxKind.GreaterThanToken;
@@ -62,7 +85,12 @@ namespace Excess.Compiler.XS
 
         static private SyntaxNode ProcessCodeFunction(ISyntacticalMatchResult<SyntaxNode> result, SyntacticalExtension<SyntaxNode> extension)
         {
-            return result.Node;
+            var expr = CSharp.ParseStatement("var " + extension.Identifier + " = () => {};");
+            return expr
+                .ReplaceNode(expr
+                    .DescendantNodes()
+                    .OfType<ParenthesizedLambdaExpressionSyntax>()
+                    .First(), CSharp.ParenthesizedLambdaExpression((BlockSyntax)extension.Body));
         }
     }
 }

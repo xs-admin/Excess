@@ -68,6 +68,7 @@ namespace Excess.Compiler.Core
         public void schedule(string pass, CompilerEvent ev)
         {
             ev.Pass = pass;
+            _events.Add(ev);
         }
     }
 }

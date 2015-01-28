@@ -20,7 +20,6 @@ namespace Excess.Compiler
         Scope Scope { get; set; }
         IEventBus Events { get; set; }
         IEnumerable<TToken> Tokens { get; set; }
-        ISyntaxTransform<TNode> SyntacticalTransform { get; set; }
 
         dynamic context();
     }
@@ -74,9 +73,9 @@ namespace Excess.Compiler
         ILexicalTransform<TToken, TNode> replace(string named, string tokens);
         ILexicalTransform<TToken, TNode> remove(string named);
 
-        ILexicalTransform<TToken, TNode> then(Func<TNode, TNode> handler);
-        ILexicalTransform<TToken, TNode> then(Func<ISyntacticalMatchResult<TNode>, TNode> handler);
-        ILexicalTransform<TToken, TNode> then(ISyntaxTransform<TNode> transform);
+        ILexicalTransform<TToken, TNode> then(string named, Func<TNode, TNode> handler, Func<TNode, bool> mapper = null);
+        ILexicalTransform<TToken, TNode> then(string named, Func<ISyntacticalMatchResult<TNode>, TNode> handler, Func<TNode, bool> mapper = null);
+        ILexicalTransform<TToken, TNode> then(string named, ISyntaxTransform<TNode> transform, Func<TNode, bool> mapper = null);
 
         IEnumerable<TToken> transform(IEnumerable<TToken> tokens, ILexicalMatchResult<TToken, TNode> result);
     }

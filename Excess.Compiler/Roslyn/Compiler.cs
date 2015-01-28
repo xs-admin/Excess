@@ -124,6 +124,25 @@ namespace Excess.Compiler.Roslyn
                 .WithAdditionalAnnotations(new SyntaxAnnotation(SyntaxIdAnnotation, id));
         }
 
+
+        public static string NodeIdAnnotation = "xs-node";
+        public static SyntaxNode MarkNode(SyntaxNode node, string id)
+        {
+            return node
+                .WithoutAnnotations(NodeIdAnnotation)
+                .WithAdditionalAnnotations(new SyntaxAnnotation(NodeIdAnnotation, id));
+        }
+
+        public static string NodeMark(SyntaxNode node)
+        {
+            var annotation = node.GetAnnotations(NodeIdAnnotation).FirstOrDefault();
+            if (annotation != null)
+                return annotation.Data;
+
+            return null;
+        }
+
+
         public static string LexicalIdAnnotation = "xs-lexical-id";
         public static string GetLexicalId(SyntaxToken token)
         {

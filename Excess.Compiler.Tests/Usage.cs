@@ -263,29 +263,5 @@ namespace Excess.Compiler.Tests
                             .WithBody((BlockSyntax)extension.Body)
                 }));
         }
-
-        [TestMethod]
-        public void XSFunctions()
-        {
-            RoslynCompiler compiler = new RoslynCompiler();
-            XSModule.Apply(compiler);
-
-            //as lambda
-            ExpressionSyntax exprFunction = compiler.CompileExpression("call(10, function(x, y) {})");
-            Assert.IsTrue(exprFunction.DescendantNodes()
-                .OfType<ParenthesizedLambdaExpressionSyntax>()
-                .Any());
-
-            //as typed method
-            string result = compiler.ApplyLexicalPass("class foo { public int function bar() {}}");
-            Assert.IsTrue(result == "class foo { public int bar() {}}");
-
-            SyntaxTree tree = null;
-            string     text = null;
-            
-            //as untyped method
-            tree = compiler.ApplySyntacticalPass("class foo { public function bar() {}}", out text);
-            Assert.IsTrue(text == "class foo\r\n{\r\n    public void bar()\r\n    {\r\n    }\r\n}");
-        }
     }
 }

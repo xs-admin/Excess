@@ -9,13 +9,34 @@ using Excess.Compiler.Core;
 namespace Excess.Compiler.Roslyn
 {
     using Microsoft.CodeAnalysis.CSharp;
+    using System.Diagnostics;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
     public class RoslynLexicalTransform : LexicalTransform<SyntaxToken, SyntaxNode>
     {
+        public RoslynLexicalTransform()
+        {
+        }
+
         protected override IEnumerable<SyntaxToken> tokensFromString(string tokenString)
         {
             return RoslynCompiler.ParseTokens(tokenString);
+        }
+
+        protected override SyntaxToken markToken(SyntaxToken token, out string id)
+        {
+            id = RoslynCompiler.uniqueId();
+            return markToken(token, id);
+        }
+
+        protected override SyntaxToken markToken(SyntaxToken token, string id)
+        {
+            return RoslynCompiler.SetLexicalId(token, id);
+        }
+
+        protected override SyntaxNode getParent(SyntaxNode current)
+        {
+            return current.Parent;
         }
     }
 

@@ -32,16 +32,6 @@ namespace Excess.Compiler.Roslyn
             return CompilerStage.Lexical;
         }
 
-        protected override IEnumerable<SyntaxToken> markTokens(IEnumerable<SyntaxToken> tokens, out string id)
-        {
-            var uid = RoslynCompiler.uniqueId();
-            id = uid;
-            return tokens.Select(token  =>
-            {
-                return RoslynCompiler.SetLexicalId(token, uid);
-            });
-        }
-
         protected override ICompilerPass continuation(IEventBus events, Scope scope, string transformed, IEnumerable<PendingExtension<SyntaxToken, SyntaxNode>> extensions, IDictionary<SourceSpan, ISyntaxTransform<SyntaxNode>> transforms)
         {
             NewText = transformed;
@@ -54,10 +44,12 @@ namespace Excess.Compiler.Roslyn
 
         private SyntaxNode processPending(SyntaxNode root, IEnumerable<PendingExtension<SyntaxToken, SyntaxNode>> extensions, IDictionary<SourceSpan, ISyntaxTransform<SyntaxNode>> transforms)
         {
-            var replace = new Dictionary<SyntaxNode, SyntaxNode>();
+            var marks    = new Dictionary<SyntaxNode, string>();
+            var handlers = new Dictionary<string, Func<ISyntacticalMatchResult<SyntaxNode>, SyntaxNode>>();
+
             foreach (var extension in extensions)
             {
-                SyntaxNode extNode = Root.FindNode(new TextSpan(extension.Span.Start, extension.Span.Length));
+                SyntaxNode extNode = root.FindNode(new TextSpan(extension.Span.Start, extension.Span.Length));
                 switch (extension.Extension.Kind)
                 {
                     case ExtensionKind.Code: extNode = extNode.FirstAncestorOrSelf<ExpressionStatementSyntax>(); break;
@@ -65,26 +57,47 @@ namespace Excess.Compiler.Roslyn
                     case ExtensionKind.Type: extNode = extNode.FirstAncestorOrSelf<MemberDeclarationSyntax>(); break;
                 }
 
-                RoslynSyntacticalMatchResult result = new RoslynSyntacticalMatchResult(_scope, _events, extNode);
-                var resultNode = extension.Handler(result, extension.Extension);
+                string extMark = RoslynCompiler.uniqueId();
 
-                replace[extNode] = resultNode;
+                marks[extNode]    = extMark;
+                handlers[extMark] = TransformExtension(extension);
             }
 
             foreach (var transform in transforms)
             {
-                SyntaxNode transformNode = Root.FindNode(new TextSpan(transform.Key.Start, transform.Key.Length));
+                var transformNode = root.FindNode(new TextSpan(transform.Key.Start, transform.Key.Length));
+                transformNode = transform.Value.mapTransform(transformNode);
 
-                RoslynSyntacticalMatchResult result = new RoslynSyntacticalMatchResult(_scope, _events, transformNode);
-                var resultNode = transform.Value.transform(result);
-
-                replace[transformNode] = resultNode;
+                string xformMark = RoslynCompiler.uniqueId();
+                marks[transformNode] = xformMark;
+                handlers[xformMark] = ApplyTransform(transform.Value);
             }
 
-            if (replace.Count > 0)
-                return root.ReplaceNodes(replace.Keys, (oldNode, newNode) => replace[oldNode]);
+            if (marks.Count > 0)
+            {
+                root = root.ReplaceNodes(marks.Keys, (oldNode, newNode) => RoslynCompiler.MarkNode(newNode, marks[oldNode]));
+
+                root = root.ReplaceNodes(root.GetAnnotatedNodes(RoslynCompiler.NodeIdAnnotation), (oldNode, newNode) =>
+                {
+                    var mark    = RoslynCompiler.NodeMark(oldNode);
+                    var handler = handlers[mark];
+
+                    RoslynSyntacticalMatchResult result = new RoslynSyntacticalMatchResult(_scope, _events, newNode);
+                    return handler(result);
+                });
+            }
 
             return root;
+        }
+
+        private Func<ISyntacticalMatchResult<SyntaxNode>, SyntaxNode> ApplyTransform(ISyntaxTransform<SyntaxNode> transformer)
+        {
+            return result => transformer.transform(result);
+        }
+
+        private Func<ISyntacticalMatchResult<SyntaxNode>, SyntaxNode> TransformExtension(PendingExtension<SyntaxToken, SyntaxNode> extension)
+        {
+            return result => extension.Handler(result, extension.Extension);
         }
 
         protected override IEnumerable<SyntaxToken> parseTokens(string text)

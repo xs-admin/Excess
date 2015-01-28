@@ -52,7 +52,7 @@ namespace Excess.Compiler.Core
                 //store the actual position in the transformed stream of any tokens pending processing
                 if (lexicalId != currId)
                 {
-                    if (currId == null) //start sequence
+                    if (lexicalId != null)
                         pending[lexicalId] = new SourceSpan(newText.Length, toInsert.Length);
 
                     currId = lexicalId;
@@ -74,14 +74,17 @@ namespace Excess.Compiler.Core
             {
                 events.poll<LexicalExtensionEvent<TToken, TNode>>().All(ev =>
                 {
-                    SourceSpan span = pending[ev.LexicalId];
-                    pendingExtensions.Add(new PendingExtension<TToken, TNode>
+                    if (ev != null)
                     {
-                        Span = span,
-                        Extension = ev.Extension,
-                        Handler = ev.Handler,
-                    });
+                        SourceSpan span = pending[ev.LexicalId];
+                        pendingExtensions.Add(new PendingExtension<TToken, TNode>
+                        {
+                            Span = span,
+                            Extension = ev.Extension,
+                            Handler = ev.Handler,
+                        });
 
+                    }
                     return true;
                 });
             }
@@ -91,8 +94,11 @@ namespace Excess.Compiler.Core
             {
                 events.poll<LexicalSyntaxTransformEvent<TNode>>().All(ev =>
                 {
-                    SourceSpan span = pending[ev.LexicalId];
-                    pendingTransforms[span] = ev.Transform;
+                    if (ev != null)
+                    {
+                        SourceSpan span = pending[ev.LexicalId];
+                        pendingTransforms[span] = ev.Transform;
+                    }
                     return true;
                 });
             }
@@ -139,21 +145,14 @@ namespace Excess.Compiler.Core
                     yield return tokens[token];
                 else
                 {
-                    if (result.SyntacticalTransform != null)
-                    {
-                        string markId;
-                        transformed = markTokens(transformed, out markId);
-                        _events.schedule(new LexicalSyntaxTransformEvent<TNode>(markId, result.SyntacticalTransform));
-                    }
-
                     foreach (var tt in transformed)
+                    {
                         yield return tt;
+                    }
 
                     token += consumed - 1;
                 }
             }
         }
-
-        protected abstract IEnumerable<TToken> markTokens(IEnumerable<TToken> transformed, out string id);
     }
 }

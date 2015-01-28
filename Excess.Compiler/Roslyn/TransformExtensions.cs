@@ -20,6 +20,8 @@ namespace Excess.Compiler.Roslyn
         Dictionary<string, Func<ISyntacticalMatchResult<SyntaxNode>, SyntacticalExtension<SyntaxNode>, SyntaxNode>> _memberExtensions = new Dictionary<string, Func<ISyntacticalMatchResult<SyntaxNode>, SyntacticalExtension<SyntaxNode>, SyntaxNode>>();
         Dictionary<string, Func<ISyntacticalMatchResult<SyntaxNode>, SyntacticalExtension<SyntaxNode>, SyntaxNode>> _typeExtensions = new Dictionary<string, Func<ISyntacticalMatchResult<SyntaxNode>, SyntacticalExtension<SyntaxNode>, SyntaxNode>>();
 
+        Dictionary<string, SyntacticalExtension<SyntaxNode>> _customCode = new Dictionary<string, SyntacticalExtension<SyntaxNode>>();
+
         public TransformExtensions(IEnumerable<SyntacticExtensionEvent<SyntaxNode>> extensions, IEventBus events)
         {
             _events = events;
@@ -28,7 +30,19 @@ namespace Excess.Compiler.Roslyn
             {
                 switch (ev.Kind)
                 {
-                    case ExtensionKind.Code: _codeExtensions[ev.Keyword] = ev.Handler; break;
+                    case ExtensionKind.Code:
+                    {
+                        if (ev.Custom)
+                            _customCode[ev.Node] = new SyntacticalExtension<SyntaxNode>
+                            {
+                                Keyword = ev.Keyword,
+                                Handler = ev.Handler,
+                                Kind    = ev.Kind,
+                            };
+                        else
+                            _codeExtensions[ev.Keyword] = ev.Handler;
+                        break;
+                    }
                     case ExtensionKind.Member: _memberExtensions[ev.Keyword] = ev.Handler; break;
                     case ExtensionKind.Type: _typeExtensions[ev.Keyword] = ev.Handler; break;
                     default: throw new NotImplementedException();
@@ -176,63 +190,88 @@ namespace Excess.Compiler.Roslyn
 
         public override SyntaxNode VisitExpressionStatement(ExpressionStatementSyntax node)
         {
-            var expr = node.Expression;
-            InvocationExpressionSyntax call = null;
+            SyntacticalExtension<SyntaxNode> extension = customCodeExtension(node);
+            if (extension == null)
+            {
+                var expr = node.Expression;
+                InvocationExpressionSyntax call = null;
 
-            if (expr is InvocationExpressionSyntax)
-            {
-                call = expr as InvocationExpressionSyntax;
-            }
-            else if (expr is AssignmentExpressionSyntax)
-            {
-                var assignment = expr as AssignmentExpressionSyntax;
-                call = assignment.Right as InvocationExpressionSyntax;
-            }
-
-            if (call != null)
-            {
-                SyntacticalExtension<SyntaxNode> extension = codeExtension(call);
-                if (extension != null)
+                if (expr is InvocationExpressionSyntax)
+                    call = expr as InvocationExpressionSyntax;
+                else if (expr is AssignmentExpressionSyntax)
                 {
-
-                    if (extension.Kind != ExtensionKind.Code)
-                    {
-                        //td: error, incorrect extension (i.e. a code extension being used inside a type)
-                        return node;
-                    }
-
-                    _lookahead = CheckCodeExtension(node, extension); 
-                    return null;
+                    var assignment = expr as AssignmentExpressionSyntax;
+                    call = assignment.Right as InvocationExpressionSyntax;
                 }
+
+                if (call != null)
+                    extension = codeExtension(call);
+            }
+
+            if (extension != null)
+            {
+
+                if (extension.Kind != ExtensionKind.Code)
+                {
+                    //td: error, incorrect extension (i.e. a code extension being used inside a type)
+                    return node;
+                }
+
+                _lookahead = CheckCodeExtension(node, extension);
+                return null;
             }
 
             return node;
+        }
+
+        private SyntacticalExtension<SyntaxNode> customCodeExtension(ExpressionStatementSyntax node)
+        {
+            if (_customCode.Any())
+            {
+                string id = RoslynCompiler.GetSyntacticalExtensionId(node);
+                if (id != null)
+                {
+                    SyntacticalExtension<SyntaxNode> result;
+                    if (_customCode.TryGetValue(id, out result))
+                    {
+                        var invocation = (InvocationExpressionSyntax)node.Expression;
+                        result.Identifier = invocation.Expression.ToString();
+                        result.Arguments = invocation.ArgumentList;
+                        result.Handler = _codeExtensions[result.Keyword];
+                        return result;
+                    }
+                }
+            }
+
+            return null;
         }
 
         public override SyntaxNode VisitLocalDeclarationStatement(LocalDeclarationStatementSyntax node)
         {
             if (node.Declaration.Variables.Count == 1)
             {
-                var call = node
+                var variable = node
                     .Declaration
-                    .Variables[0]
-                    .Initializer
-                    .Value as InvocationExpressionSyntax;
+                    .Variables[0];
 
-                if (call != null)
+                if (variable.Initializer != null)
                 {
-                    SyntacticalExtension<SyntaxNode> extension = codeExtension(call);
-                    if (extension != null)
+                    var call = variable.Initializer.Value as InvocationExpressionSyntax;
+                    if (call != null)
                     {
-
-                        if (extension.Kind != ExtensionKind.Code)
+                        SyntacticalExtension<SyntaxNode> extension = codeExtension(call);
+                        if (extension != null)
                         {
-                            //td: error, incorrect extension (i.e. a code extension being used inside a type)
-                            return node;
-                        }
 
-                        _lookahead = CheckCodeExtension(node, extension); 
-                        return null;
+                            if (extension.Kind != ExtensionKind.Code)
+                            {
+                                //td: error, incorrect extension (i.e. a code extension being used inside a type)
+                                return node;
+                            }
+
+                            _lookahead = CheckCodeExtension(node, extension);
+                            return null;
+                        }
                     }
                 }
             }

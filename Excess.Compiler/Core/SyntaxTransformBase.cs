@@ -20,9 +20,9 @@ namespace Excess.Compiler.Core
                 if (nodes == null)
                     return node;
 
-                TNode scope = resolveScope(node, type, @namespace);
-                if (scope != null)
-                    return result.schedule("syntactical-pass", scope, n => addToNode(n, nodes));
+                TNode scopeNode = resolveScope(node, type, @namespace);
+                if (scopeNode != null)
+                    return result.schedule(scopeNode, n => addToNode(n, nodes));
 
                 return node;
             };
@@ -117,6 +117,37 @@ namespace Excess.Compiler.Core
         }
 
         private static Random _randId = new Random();
+
+        Func<TNode, bool> _mapper;
+        public ISyntaxTransform<TNode> match(Func<TNode, bool> mapper)
+        {
+            Debug.Assert(_mapper == null);
+            _mapper = mapper;
+            return this;
+        }
+
+        public TNode mapTransform(TNode node)
+        {
+            if (_mapper != null)
+            {
+                TNode current = node;
+                do
+                {
+                    if (_mapper(current))
+                        return current;
+
+                    current = getParent(current);
+                }
+                while (current != null);
+
+                return current;
+            }
+
+            return node;
+        }
+
+        protected abstract TNode getParent(TNode node);
+
         public TNode transform(ISyntacticalMatchResult<TNode> result)
         {
             Debug.Assert(_selectors.Count == _transformers.Count);
@@ -157,11 +188,10 @@ namespace Excess.Compiler.Core
                         var transformer = _transformers[i];
                         var selector    = _selectors[i];
 
-                            string uid;
-                            IEnumerable<TNode> nodes = null;
-                            if (selectorIds.TryGetValue(selector, out uid))
-                                nodes = findNodes(result.Node, "xs-syntax-transform", uid);
-
+                        string uid;
+                        IEnumerable<TNode> nodes = null;
+                        if (selectorIds.TryGetValue(selector, out uid))
+                            nodes = findNodes(result.Node, "xs-syntax-transform", uid);
 
                         var node = transformer(result, nodes);
                         if (node == null)
@@ -187,15 +217,18 @@ namespace Excess.Compiler.Core
     {
         Func<TNode, TNode> _functor;
         Func<ISyntacticalMatchResult<TNode>, TNode> _functorExtended;
+        Func<TNode, TNode> _mapper;
 
-        public FunctorSyntaxTransform(Func<TNode, TNode> handler)
+        public FunctorSyntaxTransform(Func<TNode, TNode> handler, Func<TNode, TNode> mapper)
         {
             _functor = handler;
+            _mapper = mapper;
         }
 
-        public FunctorSyntaxTransform(Func<ISyntacticalMatchResult<TNode>, TNode> handler)
+        public FunctorSyntaxTransform(Func<ISyntacticalMatchResult<TNode>, TNode> handler, Func<TNode, TNode> mapper)
         {
             _functorExtended = handler;
+            _mapper = mapper;
         }
 
         public ISyntaxTransform<TNode> remove(string nodes)
@@ -236,6 +269,19 @@ namespace Excess.Compiler.Core
         public ISyntaxTransform<TNode> addToScope(Func<ISyntacticalMatchResult<TNode>, IEnumerable<TNode>> handler, bool type = false, bool @namespace = false)
         {
             throw new InvalidOperationException();
+        }
+
+        public ISyntaxTransform<TNode> match(Func<TNode, bool> mapper)
+        {
+            throw new InvalidOperationException();
+        }
+
+        public TNode mapTransform(TNode node)
+        {
+            if (_mapper != null)
+                return _mapper(node);
+
+            return node;
         }
 
         public TNode transform(ISyntacticalMatchResult<TNode> result)

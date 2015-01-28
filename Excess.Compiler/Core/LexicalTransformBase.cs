@@ -36,44 +36,73 @@ namespace Excess.Compiler.Core
 
         protected struct TransformBinder
         {
-            public TransformBinder(Func<IEnumerable<TToken>> output_, ExistingToken existingToken_ = ExistingToken.Remove)
+            public TransformBinder(Func<IEnumerable<TToken>, IEnumerable<TToken>> output_, ExistingToken existingToken_ = ExistingToken.Remove)
             {
                 output  = output_;
                 extents = new TokenSpan();
                 existingToken = existingToken_;
             }
 
-            public TransformBinder(Func<IEnumerable<TToken>> _output, int begin_, int end_, ExistingToken existingToken_ = ExistingToken.Remove)
+            public TransformBinder(Func<IEnumerable<TToken>, IEnumerable<TToken>> _output, int begin_, int end_, ExistingToken existingToken_ = ExistingToken.Remove)
             {
                 output = _output;
                 extents = new TokenSpan(begin_, end_);
                 existingToken = existingToken_;
             }
 
-            public TransformBinder(Func<IEnumerable<TToken>> _output, TokenSpan _extents, ExistingToken existingToken_ = ExistingToken.Remove)
+            public TransformBinder(Func<IEnumerable<TToken>, IEnumerable<TToken>> _output, TokenSpan _extents, ExistingToken existingToken_ = ExistingToken.Remove)
             {
                 output = _output;
                 extents = _extents;
                 existingToken = existingToken_;
             }
 
-            public TokenSpan                 extents;
-            public Func<IEnumerable<TToken>> output;
-            public ExistingToken             existingToken;
+            public TokenSpan                                      extents;
+            public Func<IEnumerable<TToken>, IEnumerable<TToken>> output;
+            public ExistingToken                                  existingToken;
         }
 
         List<Func<ILexicalMatchResult<TToken, TNode>, TransformBinder>> _binders = new List<Func<ILexicalMatchResult<TToken, TNode>, TransformBinder>>();
 
-        private Func<IEnumerable<TToken>> TokensFromString(string tokens)
+        private Func<IEnumerable<TToken>, IEnumerable<TToken>> TokensFromString(string tokenString)
         {
-            return () => tokensFromString(tokens);
+            return tokens => tokensFromString(tokenString);
         }
 
-        private Func<IEnumerable<TToken>> EmptyTokens()
+        private IEnumerable<TToken> EmptyTokens(IEnumerable<TToken> tokens)
         {
-            return () => new TToken[] { };
+            return new TToken[] { };
         }
-        
+
+        private Func<IEnumerable<TToken>, IEnumerable<TToken>> MarkTokens(IEventBus events)
+        {
+            return tokens =>
+            {
+                return MarkTokenEnumerable(tokens, events);
+            };
+        }
+
+        private IEnumerable<TToken> MarkTokenEnumerable(IEnumerable<TToken> tokens, IEventBus events)
+        {
+            Debug.Assert(_syntactical != null);
+
+            string markId = null;
+            foreach (var token in tokens)
+            {
+                if (markId == null)
+                {
+                    var newToken = markToken(token, out markId);
+                    events.schedule(new LexicalSyntaxTransformEvent<TNode>(markId, _syntactical));
+                    yield return newToken;
+                }
+                else
+                    yield return markToken(token, markId);
+            }
+        }
+
+        protected abstract TToken markToken(TToken token, out string id);
+        protected abstract TToken markToken(TToken token, string id);
+
 
         public ILexicalTransform<TToken, TNode> insert(string tokens, string before = null, string after = null)
         {
@@ -121,7 +150,7 @@ namespace Excess.Compiler.Core
             _binders.Add(lexicalResult =>
             {
                 if (named != null)
-                    return new TransformBinder(EmptyTokens(), labelExtent(lexicalResult, named));
+                    return new TransformBinder(EmptyTokens, labelExtent(lexicalResult, named));
 
                 throw new InvalidOperationException("Must specify 'named'");
             });
@@ -130,32 +159,59 @@ namespace Excess.Compiler.Core
         }
 
         ISyntaxTransform<TNode> _syntactical;
-        public ILexicalTransform<TToken, TNode> then(Func<TNode, TNode> handler)
+
+        private Func<TNode, TNode> Mapper(Func<TNode, bool> selector)
         {
-            Debug.Assert(_syntactical == null);
-            _syntactical =new FunctorSyntaxTransform<TNode>(handler);
-            return this;
+            if (selector == null)
+                return null;
+
+            return node =>
+            {
+                TNode current = node;
+                do
+                {
+                    if (selector(current))
+                        return current;
+
+                    current = getParent(current);
+                }
+                while (current != null);
+
+                return default(TNode);
+            };
         }
 
-        public ILexicalTransform<TToken, TNode> then(Func<ISyntacticalMatchResult<TNode>, TNode> handler)
+        protected abstract TNode getParent(TNode current); //td: !!! services
+
+        public ILexicalTransform<TToken, TNode> then(string named, Func<TNode, TNode> handler, Func<TNode, bool> mapper = null)
         {
-            Debug.Assert(_syntactical == null);
-            _syntactical = new FunctorSyntaxTransform<TNode>(handler);
-            return this;
+
+            return then(named, new FunctorSyntaxTransform<TNode>(handler, Mapper(mapper)));
         }
 
-        public ILexicalTransform<TToken, TNode> then(ISyntaxTransform<TNode> transform)
+        public ILexicalTransform<TToken, TNode> then(string named, Func<ISyntacticalMatchResult<TNode>, TNode> handler, Func<TNode, bool> mapper = null)
+        {
+            return then(named, new FunctorSyntaxTransform<TNode>(handler, Mapper(mapper)));
+        }
+
+        public ILexicalTransform<TToken, TNode> then(string named, ISyntaxTransform<TNode> transform, Func<TNode, bool> mapper = null)
         {
             Debug.Assert(_syntactical == null);
             _syntactical = transform;
+
+            _binders.Add(lexicalResult =>
+            {
+                if (named != null)
+                    return new TransformBinder(MarkTokens(lexicalResult.Events), labelExtent(lexicalResult, named));
+
+                throw new InvalidOperationException("Must specify 'named'");
+            });
+
             return this;
         }
 
         public IEnumerable<TToken> transform(IEnumerable<TToken> tokens, ILexicalMatchResult<TToken, TNode> result)
         {
-            if (_syntactical != null)
-                result.SyntacticalTransform = _syntactical;
-
             var binderSelector = _binders
                 .Select<Func<ILexicalMatchResult<TToken, TNode>, TransformBinder>, TransformBinder>(f => f(result))
                 .OrderBy(binder => binder.extents.begin);
@@ -184,7 +240,7 @@ namespace Excess.Compiler.Core
                 if (binderBegin == currentToken)
                 {
                     var binder = binders[currentBinder];
-                    var binderResult = binder.output();
+                    var binderResult = binder.output(Range(tokens, binder.extents));
 
                     if (binder.existingToken == ExistingToken.PreInsert)
                         yield return token;
@@ -207,6 +263,22 @@ namespace Excess.Compiler.Core
                     yield return token;
 
                 currentToken++;
+            }
+        }
+
+        private IEnumerable<TToken> Range(IEnumerable<TToken> tokens, TokenSpan extents)
+        {
+            int current = -1;
+            foreach (var token in tokens)
+            {
+                current++;
+                if (extents.end < current)
+                    break;
+
+                if (extents.begin > current)
+                    continue;
+
+                yield return token;
             }
         }
 
@@ -293,17 +365,17 @@ namespace Excess.Compiler.Core
             throw new InvalidOperationException();
         }
 
-        public ILexicalTransform<TToken, TNode> then(Func<TNode, TNode> handler)
+        public ILexicalTransform<TToken, TNode> then(string token, Func<TNode, TNode> handler, Func<TNode, bool> mapper = null)
         {
             throw new InvalidOperationException();
         }
 
-        public ILexicalTransform<TToken, TNode> then(Func<ISyntacticalMatchResult<TNode>, TNode> handler)
+        public ILexicalTransform<TToken, TNode> then(string token, Func<ISyntacticalMatchResult<TNode>, TNode> handler, Func<TNode, bool> mapper = null)
         {
             throw new InvalidOperationException();
         }
 
-        public ILexicalTransform<TToken, TNode> then(ISyntaxTransform<TNode> transform)
+        public ILexicalTransform<TToken, TNode> then(string token, ISyntaxTransform<TNode> transform, Func<TNode, bool> mapper = null)
         {
             throw new InvalidOperationException();
         }

@@ -18,7 +18,7 @@ namespace Excess.Compiler.Roslyn
 
         protected override SyntaxNode markNode(SyntaxNode node, out string id)
         {
-            return RoslynCompiler.SetSyntaxId(node, out id);
+            return RoslynCompiler.SetSyntacticalExtensionId(node, out id);
         }
     }
 
@@ -74,6 +74,11 @@ namespace Excess.Compiler.Roslyn
             return parent.ReplaceNodes(nodeIds.Keys, (oldNode, newNode) => {
                 return newNode.WithAdditionalAnnotations(new SyntaxAnnotation(annotation, nodeIds[oldNode]));
             });
+        }
+
+        protected override SyntaxNode getParent(SyntaxNode node)
+        {
+            return node.Parent;
         }
     }
 
