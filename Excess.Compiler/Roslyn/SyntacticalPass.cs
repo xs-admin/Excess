@@ -58,7 +58,7 @@ namespace Excess.Compiler.Roslyn
 
         private SyntaxNode processExtensions(SyntaxNode node, IEnumerable<SyntacticExtensionEvent<SyntaxNode>> events)
         {
-            TransformExtensions rewriter = new TransformExtensions(events, _events);
+            TransformExtensions rewriter = new TransformExtensions(events, _scope);
             return rewriter.Visit(node);
         }
 
@@ -117,7 +117,7 @@ namespace Excess.Compiler.Roslyn
             return result;
         }
 
-        private IEnumerable<ISyntacticalMatch<SyntaxNode>> GetMatchers(IEnumerable<SyntacticalMatchEvent<SyntaxNode>> events)
+        private IEnumerable<ISyntacticalMatch<SyntaxToken, SyntaxNode, SemanticModel>> GetMatchers(IEnumerable<SyntacticalMatchEvent<SyntaxNode>> events)
         {
             foreach (var ev in events)
             {

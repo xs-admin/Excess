@@ -8,28 +8,14 @@ using System.Threading.Tasks;
 
 namespace Excess.Compiler.Roslyn
 {
-    public class RoslynSyntacticalMatchResult : BaseSyntacticalMatchResult<SyntaxNode>
-    {
-        public RoslynSyntacticalMatchResult(Scope scope, IEventBus events, SyntaxNode node = null)
-            : base(node, scope, events)
-        {
-            Preprocess = false;
-        }
-
-        protected override SyntaxNode markNode(SyntaxNode node, out string id)
-        {
-            return RoslynCompiler.SetSyntacticalExtensionId(node, out id);
-        }
-    }
-
-    public class RoslynSyntaxTransform : BaseSyntaxTransform<SyntaxNode>
+    public class RoslynSyntaxTransform : BaseSyntaxTransform<SyntaxToken, SyntaxNode, SemanticModel>
     {
 
         public RoslynSyntaxTransform()
         {
         }
 
-        public RoslynSyntaxTransform(Func<ISyntacticalMatchResult<SyntaxNode>, IEnumerable<SyntaxNode>, SyntaxNode> handler)
+        public RoslynSyntaxTransform(Func<SyntaxNode, Scope, IEnumerable<SyntaxNode>, SyntaxNode> handler)
         {
             _selectors.Add(null);
             _transformers.Add(handler);
@@ -45,15 +31,13 @@ namespace Excess.Compiler.Roslyn
             return node.RemoveNodes(nodes, SyntaxRemoveOptions.KeepEndOfLine);
         }
 
-        protected override SyntaxNode replaceNodes(ISyntacticalMatchResult<SyntaxNode> result, IEnumerable<SyntaxNode> nodes, Func<ISyntacticalMatchResult<SyntaxNode>, SyntaxNode> handler)
+        protected override SyntaxNode replaceNodes(SyntaxNode node, Scope scope, IEnumerable<SyntaxNode> nodes, Func<SyntaxNode, Scope, SyntaxNode> handler)
         {
-            return result.Node.ReplaceNodes(nodes, (oldNode, newNode) =>
+            return node.ReplaceNodes(nodes, (oldNode, newNode) =>
             {
                 //change the result temporarily, this might need revisiting
-                var oldResultNode = result.Node;
-                result.Node = newNode;
-                var returnValue = handler(result);
-                result.Node = oldResultNode;
+                var oldResulSyntaxNode = node;
+                var returnValue = handler(newNode, scope);
                 return returnValue;
             });
         }
@@ -82,9 +66,9 @@ namespace Excess.Compiler.Roslyn
         }
     }
 
-    public class RoslynSyntacticalMatch : BaseSyntacticalMatch<SyntaxNode>
+    public class RoslynSyntacticalMatch : BaseSyntacticalMatch<SyntaxToken, SyntaxNode, SemanticModel>
     {
-        public RoslynSyntacticalMatch(ISyntaxAnalysis<SyntaxNode> syntax) :
+        public RoslynSyntacticalMatch(ISyntaxAnalysis<SyntaxToken, SyntaxNode, SemanticModel> syntax) :
             base(syntax)
         {
         }
@@ -100,21 +84,21 @@ namespace Excess.Compiler.Roslyn
         }
     }
 
-    public class RoslynSyntaxAnalysis : BaseSyntaxAnalysis<SyntaxNode>
+    public class RoslynSyntaxAnalysis : BaseSyntaxAnalysis<SyntaxToken, SyntaxNode, SemanticModel>
     {
         protected override ISyntaxTransform<SyntaxNode> createTransform()
         {
             return new RoslynSyntaxTransform();
         }
 
-        protected override ISyntacticalMatch<SyntaxNode> createMatch(Func<SyntaxNode, bool> selector)
+        protected override ISyntacticalMatch<SyntaxToken, SyntaxNode, SemanticModel> createMatch(Func<SyntaxNode, bool> selector)
         {
             RoslynSyntacticalMatch result = new RoslynSyntacticalMatch(this);
             result.addMatcher(selector);
             return result;
         }
 
-        protected override ISyntaxTransform<SyntaxNode> createTransform(Func<ISyntacticalMatchResult<SyntaxNode>, IEnumerable<SyntaxNode>, SyntaxNode> handler)
+        protected override ISyntaxTransform<SyntaxNode> createTransform(Func<SyntaxNode, Scope, IEnumerable<SyntaxNode>, SyntaxNode> handler)
         {
             return new RoslynSyntaxTransform(handler);
         }

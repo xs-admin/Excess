@@ -11,56 +11,49 @@ namespace Excess.Compiler.Core
         public LexicalExtension<TToken> Extension { get; set; }
         public SourceSpan Span { get; set; }
         public TNode Node { get; set; }
-        public Func<ISyntacticalMatchResult<TNode>, LexicalExtension<TToken>, TNode> Handler { get; set; }
+        public Func<Scope, LexicalExtension<TToken>, TNode> Handler { get; set; }
     }
 
-    public abstract class BaseLexicalPass<TToken, TNode> : BasePass
+    public class BaseLexicalPass<TToken, TNode> 
     {
-        string _text;
-        public BaseLexicalPass(string text)
+        IEnumerable<ILexicalMatch<TToken, TNode>> _matchers;
+        ICompilerService<TToken, TNode>  _compiler;
+        public BaseLexicalPass(Scope scope, IEnumerable<ILexicalMatch<TToken, TNode>> matchers)
         {
-            _text = text;
+            _matchers = matchers;
+            _scope = scope;
+            _compiler = scope.GetService<TToken, TNode>();
         }
 
         protected Scope _scope;
-        protected IEventBus _events;
 
-        public override ICompilerPass Compile(IEventBus events, Scope scope)
+        public TNode Parse(string text, Dictionary<string, SourceSpan> annotations)
         {
-            _scope = scope;
-            _events = events;
-
-            var myEvents = events.poll(passId());
-            var matchEvents = myEvents.OfType<LexicalMatchEvent<TToken,TNode>>();
-
-            var tokens   = parseTokens(_text).ToArray();
-            var matchers = GetMatchers(matchEvents);
-            IEnumerable<TToken> result = transformTokens(tokens, 0, tokens.Length, matchers);
+            var tokens = _compiler.ParseTokens(text).ToArray();
+            var result = transformTokens(tokens, 0, tokens.Length, _matchers);
 
             //calculate new text
             //td: !! mapping info
-
-            Dictionary<string, SourceSpan> pending = new Dictionary<string, SourceSpan>();
 
             StringBuilder newText = new StringBuilder();
             string        currId  = null;
             foreach (var token in result)
             {
-                string lexicalId;
-                string toInsert = tokenToString(token, out lexicalId);
+                string excessId;
+                string toInsert = _compiler.TokenToString(token, out excessId);
 
                 //store the actual position in the transformed stream of any tokens pending processing
-                if (lexicalId != currId)
+                if (excessId != currId)
                 {
-                    if (lexicalId != null)
-                        pending[lexicalId] = new SourceSpan(newText.Length, toInsert.Length);
+                    if (excessId != null)
+                        annotations[excessId] = new SourceSpan(newText.Length, toInsert.Length);
 
-                    currId = lexicalId;
+                    currId = excessId;
                 }
-                else if (lexicalId != null)
+                else if (excessId != null)
                 {
                     //augment span
-                    SourceSpan span = pending[lexicalId];
+                    SourceSpan span = annotations[excessId];
                     span.Length += toInsert.Length;
                 }
                 else
@@ -69,57 +62,9 @@ namespace Excess.Compiler.Core
                 newText.Append(toInsert);
             }
 
-            var pendingExtensions = new List<PendingExtension<TToken, TNode>>();
-            if (pending.Any())
-            {
-                events.poll<LexicalExtensionEvent<TToken, TNode>>().All(ev =>
-                {
-                    if (ev != null)
-                    {
-                        SourceSpan span = pending[ev.LexicalId];
-                        pendingExtensions.Add(new PendingExtension<TToken, TNode>
-                        {
-                            Span = span,
-                            Extension = ev.Extension,
-                            Handler = ev.Handler,
-                        });
-
-                    }
-                    return true;
-                });
-            }
-
-            var pendingTransforms = new Dictionary<SourceSpan, ISyntaxTransform<TNode>>();
-            if (pending.Any())
-            {
-                events.poll<LexicalSyntaxTransformEvent<TNode>>().All(ev =>
-                {
-                    if (ev != null)
-                    {
-                        SourceSpan span = pending[ev.LexicalId];
-                        pendingTransforms[span] = ev.Transform;
-                    }
-                    return true;
-                });
-            }
-
-            return continuation(events, scope, newText.ToString(), pendingExtensions, pendingTransforms);
+            var root = _compiler.Parse(newText.ToString());
+            return _compiler.MarkTree(root);
         }
-
-        protected abstract string tokenToString(TToken token, out string lexicalId);
-
-        protected abstract ICompilerPass continuation(IEventBus events, Scope scope, string transformed, IEnumerable<PendingExtension<TToken, TNode>> extensions, IDictionary<SourceSpan, ISyntaxTransform<TNode>> transforms);
-
-        private IEnumerable<ILexicalMatch<TToken, TNode>> GetMatchers(IEnumerable<LexicalMatchEvent<TToken, TNode>> events)
-        {
-            foreach (var ev in events)
-            {
-                foreach (var matcher in ev.Matchers)
-                    yield return matcher;
-            }
-        }
-
-        protected abstract IEnumerable<TToken> parseTokens(string text);
 
         private static IEnumerable<TToken> Range(TToken[] tokens, int begin, int end)
         {
@@ -133,10 +78,9 @@ namespace Excess.Compiler.Core
             {
                 IEnumerable<TToken> transformed = null;
                 int                 consumed = 0;
-                ILexicalMatchResult<TToken, TNode> result = new LexicalMatchResult<TToken, TNode>(new Scope(), _events);
                 foreach (var matcher in matchers)
                 {
-                    transformed = matcher.transform(Range(tokens, token, end), result, out consumed);
+                    transformed = matcher.transform(Range(tokens, token, end), _scope, out consumed);
                     if (transformed != null)
                         break;
                 }

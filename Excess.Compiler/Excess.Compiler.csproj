@@ -85,8 +85,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Compiler.cs" />
-    <Compile Include="CompilerEvents.cs" />
     <Compile Include="Core\CompilerBase.cs" />
+    <Compile Include="Core\DocumentBase.cs" />
     <Compile Include="Core\EventBusBase.cs" />
     <Compile Include="Core\LexicalAnalisysBase.cs" />
     <Compile Include="Class1.cs" />
@@ -95,6 +95,7 @@
     <Compile Include="Core\PassBase.cs" />
     <Compile Include="Core\SyntaxAnalysisBase.cs" />
     <Compile Include="Core\SyntaxTransformBase.cs" />
+    <Compile Include="Document.cs" />
     <Compile Include="LexicalAnalysis.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Roslyn\Compiler.cs" />

@@ -58,9 +58,8 @@ namespace Excess.Compiler.XS
                 || node is StatementSyntax;
         }
 
-        private static SyntaxNode ProcessMemberFunction(ISyntacticalMatchResult<SyntaxNode> result)
+        private static SyntaxNode ProcessMemberFunction(SyntaxNode node, Scope scope)
         {
-            var node = result.Node;
             if (node is MethodDeclarationSyntax)
             {
                 var method = node as MethodDeclarationSyntax;
@@ -73,8 +72,9 @@ namespace Excess.Compiler.XS
             var statement = node as StatementSyntax;
             Debug.Assert(statement != null); //td: error, maybe?
 
-            SyntaxNode returnValue = result.customExtension(statement, "function", ExtensionKind.Code);
-            return returnValue;
+            var document = scope.GetDocument<SyntaxToken, SyntaxNode, SemanticModel>();
+            document.change(statement, null, "custom-extension");
+            return statement;
         }
 
         static private bool startsMemberFunction(SyntaxToken token)
@@ -83,7 +83,7 @@ namespace Excess.Compiler.XS
             return RoslynCompiler.isLexicalIdentifier(kind) || kind == SyntaxKind.GreaterThanToken;
         }
 
-        static private SyntaxNode ProcessCodeFunction(ISyntacticalMatchResult<SyntaxNode> result, SyntacticalExtension<SyntaxNode> extension)
+        static private SyntaxNode ProcessCodeFunction(SyntaxNode node, Scope result, SyntacticalExtension<SyntaxNode> extension)
         {
             var expr = CSharp.ParseStatement("var " + extension.Identifier + " = () => {};");
             return expr

@@ -13,7 +13,7 @@ namespace Excess.Compiler.Roslyn
     using Microsoft.CodeAnalysis.CSharp.Syntax;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
-    public class RoslynCompiler : CompilerBase<SyntaxToken, SyntaxNode>
+    public class RoslynCompiler : CompilerBase<SyntaxToken, SyntaxNode, SemanticModel>
     {
         public RoslynCompiler() : base(new RoslynLexicalAnalysis(), new RoslynSyntaxAnalysis())
         {
@@ -25,66 +25,66 @@ namespace Excess.Compiler.Roslyn
         }
 
         //out of interface methods, used for testing
-        public ExpressionSyntax CompileExpression(string expr)
-        {
-            var   pass   = new LexicalPass(expr);
-            Scope scope  = new Scope();
-            var   events = _lexical.produce();
+        //public ExpressionSyntax CompileExpression(string expr)
+        //{
+        //    var   pass   = new LexicalPass(expr);
+        //    Scope scope  = new Scope();
+        //    var   events = _lexical.produce();
 
-            _events.schedule("lexical-pass", events);
+        //    _events.schedule("lexical-pass", events);
 
-            pass.Compile(_events, scope);
+        //    pass.Compile(_events, scope);
 
-            return CSharp.ParseExpression(pass.NewText);
-        }
+        //    return CSharp.ParseExpression(pass.NewText);
+        //}
 
-        public SyntaxNode ApplyLexicalPass(string text, out string newText)
-        {
-            Scope scope = new Scope();
+        //public SyntaxNode ApplyLexicalPass(string text, out string newText)
+        //{
+        //    Scope scope = new Scope();
 
-            var pass = new LexicalPass(text);
-            var events = _lexical.produce();
+        //    var pass = new LexicalPass(text);
+        //    var events = _lexical.produce();
 
-            _events.schedule("lexical-pass", events);
+        //    _events.schedule("lexical-pass", events);
 
-            pass.Compile(_events, scope);
-            newText = pass.NewText;
-            return pass.Root;
-        }
+        //    pass.Compile(_events, scope);
+        //    newText = pass.NewText;
+        //    return pass.Root;
+        //}
 
-        public string ApplyLexicalPass(string text)
-        {
-            string result;
-            ApplyLexicalPass(text, out result);
-            return result;
-        }
+        //public string ApplyLexicalPass(string text)
+        //{
+        //    string result;
+        //    ApplyLexicalPass(text, out result);
+        //    return result;
+        //}
 
-        public SyntaxTree ApplySyntacticalPass(string text, out string result)
-        {
-            Scope scope = new Scope();
+        //public SyntaxTree ApplySyntacticalPass(string text, out string result)
+        //{
+        //    Scope scope = new Scope();
 
-            var lexicalPass   = new LexicalPass(text);
-            var lexicalEvents = _lexical.produce();
+        //    var lexicalPass   = new LexicalPass(text);
+        //    var lexicalEvents = _lexical.produce();
 
-            _events.schedule("lexical-pass", lexicalEvents);
+        //    _events.schedule("lexical-pass", lexicalEvents);
 
-            var syntacticalPass   = lexicalPass.Compile(_events, scope);
-            var syntacticalEvents = _sintaxis.produce();
+        //    var syntacticalPass   = lexicalPass.Compile(_events, scope);
+        //    var syntacticalEvents = _sintaxis.produce();
 
-            _events.schedule("syntactical-pass", syntacticalEvents);
-            syntacticalPass.Compile(_events, scope);
+        //    _events.schedule("syntactical-pass", syntacticalEvents);
+        //    syntacticalPass.Compile(_events, scope);
 
-            var tree = ((SyntacticalPass)syntacticalPass).Tree;
-            result = tree.GetRoot().NormalizeWhitespace().ToString();
+        //    var tree = ((SyntacticalPass)syntacticalPass).Tree;
+        //    result = tree.GetRoot().NormalizeWhitespace().ToString();
 
-            return tree;
-        }
+        //    return tree;
+        //}
 
-        public SyntaxTree ApplySyntacticalPass(string text)
-        {
-            string useless;
-            return ApplySyntacticalPass(text, out useless);
-        }
+        //public SyntaxTree ApplySyntacticalPass(string text)
+        //{
+        //    string useless;
+        //    return ApplySyntacticalPass(text, out useless);
+        //}
 
 
         //declarations
@@ -151,19 +151,6 @@ namespace Excess.Compiler.Roslyn
                 return annotation.Data;
 
             return null;
-        }
-
-        public static SyntaxToken SetLexicalId(SyntaxToken token, out string id)
-        {
-            id = uniqueId();
-            return SetLexicalId(token, id);
-        }
-
-        public static SyntaxToken SetLexicalId(SyntaxToken token, string id)
-        {
-            return token
-                .WithoutAnnotations(LexicalIdAnnotation)
-                .WithAdditionalAnnotations(new SyntaxAnnotation(LexicalIdAnnotation, id));
         }
 
         public static string SyntacticalExtensionIdAnnotation = "xs-syntax-extension";
@@ -257,24 +244,25 @@ namespace Excess.Compiler.Roslyn
             return false;
         }
 
-        public static SyntaxNode ReplaceAnnotated(SyntaxNode node, string annotation, IEnumerable<KeyValuePair<string, Func<ISyntacticalMatchResult<SyntaxNode>, SyntaxNode>>> handlers)
-        {
-            var nodes = node.GetAnnotatedNodes(annotation);
-            return node.ReplaceNodes(nodes, (oldNode, newNode) =>
-            {
-                var data = oldNode.GetAnnotations(annotation).First().Data;
-                var dataHandlers = handlers
-                    .Where(h => h.Key == data);
+        //td: refactor
+        //public static SyntaxNode ReplaceAnnotated(SyntaxNode node, string annotation, IEnumerable<KeyValuePair<string, Func<ISyntacticalMatchResult<SyntaxNode>, SyntaxNode>>> handlers)
+        //{
+        //    var nodes = node.GetAnnotatedNodes(annotation);
+        //    return node.ReplaceNodes(nodes, (oldNode, newNode) =>
+        //    {
+        //        var data = oldNode.GetAnnotations(annotation).First().Data;
+        //        var dataHandlers = handlers
+        //            .Where(h => h.Key == data);
 
-                var resultNode = newNode;
-                foreach (var handler in dataHandlers)
-                {
-                    RoslynSyntacticalMatchResult result = new RoslynSyntacticalMatchResult(new Scope(), null, resultNode);
-                    resultNode = handler.Value(result);
-                }
-                    
-                return resultNode.WithoutAnnotations(annotation);
-            });
-        }
+        //        var resultNode = newNode;
+        //        foreach (var handler in dataHandlers)
+        //        {
+        //            RoslynSyntacticalMatchResult result = new RoslynSyntacticalMatchResult(new Scope(), null, resultNode);
+        //            resultNode = handler.Value(result);
+        //        }
+
+        //        return resultNode.WithoutAnnotations(annotation);
+        //    });
+        //}
     }
 }

@@ -6,47 +6,32 @@ using System.Threading.Tasks;
 
 namespace Excess.Compiler
 {
-    public interface ISyntacticalMatch<TNode>
+    public interface ISyntacticalMatch<TToken, TNode, TModel>
     {
-        ISyntacticalMatch<TNode> children(Func<TNode, bool> handler, string named = null);
-        ISyntacticalMatch<TNode> children<T>(Func<T, bool> handler = null, string named = null) where T : TNode;
-        ISyntacticalMatch<TNode> descendants(Func<TNode, bool> handler, string named = null);
-        ISyntacticalMatch<TNode> descendants<T>(Func<T, bool> handler = null, string named = null) where T : TNode;
+        ISyntacticalMatch<TToken, TNode, TModel> children(Func<TNode, bool> handler, string named = null);
+        ISyntacticalMatch<TToken, TNode, TModel> children<T>(Func<T, bool> handler = null, string named = null) where T : TNode;
+        ISyntacticalMatch<TToken, TNode, TModel> descendants(Func<TNode, bool> handler, string named = null);
+        ISyntacticalMatch<TToken, TNode, TModel> descendants<T>(Func<T, bool> handler = null, string named = null) where T : TNode;
 
-        ISyntaxAnalysis<TNode> then(Func<TNode, TNode> handler);
-        ISyntaxAnalysis<TNode> then(Func<ISyntacticalMatchResult<TNode>, TNode> handler);
-        ISyntaxAnalysis<TNode> then(ISyntaxTransform<TNode> transform);
+        ISyntaxAnalysis<TToken, TNode, TModel> then(Func<TNode, TNode> handler);
+        ISyntaxAnalysis<TToken, TNode, TModel> then(Func<TNode, Scope, TNode> handler);
+        ISyntaxAnalysis<TToken, TNode, TModel> then(ISyntaxTransform<TNode> transform);
 
-        bool matches(TNode node, ISyntacticalMatchResult<TNode> result);
-        TNode transform(TNode node, ISyntacticalMatchResult<TNode> result);
-    }
-
-    public interface ISyntacticalMatchResult<TNode>
-    {
-        TNode Node { get; set; }
-        Scope Scope { get; set; }
-        IEventBus Events { get; set; }
-        bool Preprocess { get; set; }
-
-        TNode schedule(TNode node, Func<TNode, TNode> handler, string pass = null);
-        TNode customExtension(TNode node, string extension, ExtensionKind kind);
+        bool matches(TNode node, Scope result);
     }
 
     public interface ISyntaxTransform<TNode>
     {
         ISyntaxTransform<TNode> match(Func<TNode, bool> mapper);
         ISyntaxTransform<TNode> remove(string nodes);
-        ISyntaxTransform<TNode> remove(Func<ISyntacticalMatchResult<TNode>, IEnumerable<TNode>> handler);
-        ISyntaxTransform<TNode> replace(string nodes, Func<ISyntacticalMatchResult<TNode>, TNode> handler);
+        ISyntaxTransform<TNode> remove(Func<TNode, Scope, IEnumerable<TNode>> handler);
+        ISyntaxTransform<TNode> replace(string nodes, Func<TNode, Scope, TNode> handler);
         ISyntaxTransform<TNode> replace(string nodes, Func<TNode, TNode> handler);
-        ISyntaxTransform<TNode> replace(Func<ISyntacticalMatchResult<TNode>, IEnumerable<TNode>> selector, Func<ISyntacticalMatchResult<TNode>, TNode> handler);
-        ISyntaxTransform<TNode> replace(Func<ISyntacticalMatchResult<TNode>, IEnumerable<TNode>> selector, Func<TNode, TNode> handler);
+        ISyntaxTransform<TNode> replace(Func<TNode, Scope, IEnumerable<TNode>> selector, Func<TNode, Scope, TNode> handler);
+        ISyntaxTransform<TNode> replace(Func<TNode, Scope, IEnumerable<TNode>> selector, Func<TNode, TNode> handler);
         ISyntaxTransform<TNode> addToScope(string nodes, bool type = false, bool @namespace = false);
-        ISyntaxTransform<TNode> addToScope(Func<ISyntacticalMatchResult<TNode>, IEnumerable<TNode>> handler, bool type = false, bool @namespace = false);
+        ISyntaxTransform<TNode> addToScope(Func<TNode, Scope, IEnumerable<TNode>> handler, bool type = false, bool @namespace = false);
 
-        //runtime
-        TNode mapTransform(TNode node);
-        TNode transform(ISyntacticalMatchResult<TNode> result);
     }
 
     public class SyntacticalExtension<TNode>
@@ -56,25 +41,25 @@ namespace Excess.Compiler
         public string Identifier { get; set; }
         public TNode Arguments { get; set; }
         public TNode Body { get; set; }
-        public Func<ISyntacticalMatchResult<TNode>, SyntacticalExtension<TNode>, TNode> Handler { get; set; }
+        public Func<TNode, Scope, SyntacticalExtension<TNode>, TNode> Handler { get; set; }
     }
 
-    public interface ISyntaxAnalysis<TNode>
+    public interface ISyntaxAnalysis<TToken, TNode, TModel>
     {
-        ISyntaxAnalysis<TNode> looseStatements(Func<IEnumerable<TNode>, TNode> handler);
-        ISyntaxAnalysis<TNode> looseMembers(Func<IEnumerable<TNode>, TNode> handler);
-        ISyntaxAnalysis<TNode> looseTypes(Func<IEnumerable<TNode>, TNode> handler);
-        ISyntaxAnalysis<TNode> extension(string keyword, ExtensionKind kind, Func<ISyntacticalMatchResult<TNode>, SyntacticalExtension<TNode>, TNode> handler);
-        ISyntaxAnalysis<TNode> extension(string keyword, ExtensionKind kind, Func<TNode, SyntacticalExtension<TNode>, TNode> handler);
+        ISyntaxAnalysis<TToken, TNode, TModel> looseStatements(Func<IEnumerable<TNode>, TNode> handler);
+        ISyntaxAnalysis<TToken, TNode, TModel> looseMembers(Func<IEnumerable<TNode>, TNode> handler);
+        ISyntaxAnalysis<TToken, TNode, TModel> looseTypes(Func<IEnumerable<TNode>, TNode> handler);
+        ISyntaxAnalysis<TToken, TNode, TModel> extension(string keyword, ExtensionKind kind, Func<TNode, Scope, SyntacticalExtension<TNode>, TNode> handler);
+        ISyntaxAnalysis<TToken, TNode, TModel> extension(string keyword, ExtensionKind kind, Func<TNode, SyntacticalExtension<TNode>, TNode> handler);
 
-        ISyntacticalMatch<TNode> match(Func<TNode, bool> selector);
-        ISyntacticalMatch<TNode> match<T>(Func<T, bool> selector) where T : TNode;
-        ISyntacticalMatch<TNode> match<T>() where T : TNode;
+        ISyntacticalMatch<TToken, TNode, TModel> match(Func<TNode, bool> selector);
+        ISyntacticalMatch<TToken, TNode, TModel> match<T>(Func<T, bool> selector) where T : TNode;
+        ISyntacticalMatch<TToken, TNode, TModel> match<T>() where T : TNode;
 
         ISyntaxTransform<TNode> transform();
-        ISyntaxTransform<TNode> transform(Func<ISyntacticalMatchResult<TNode>, TNode> handler);
+        ISyntaxTransform<TNode> transform(Func<TNode, Scope, TNode> handler);
         ISyntaxTransform<TNode> transform(Func<TNode, TNode> handler);
 
-        IEnumerable<CompilerEvent> produce();
+        void apply(IDocument<TToken, TNode, TModel> document);
     }
 }

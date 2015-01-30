@@ -14,17 +14,17 @@ namespace Excess.Compiler.Roslyn
 
     public class TransformExtensions : CSharpSyntaxRewriter
     {
-        IEventBus _events;
+        Scope _scope;
 
-        Dictionary<string, Func<ISyntacticalMatchResult<SyntaxNode>, SyntacticalExtension<SyntaxNode>, SyntaxNode>> _codeExtensions = new Dictionary<string, Func<ISyntacticalMatchResult<SyntaxNode>, SyntacticalExtension<SyntaxNode>, SyntaxNode>>();
-        Dictionary<string, Func<ISyntacticalMatchResult<SyntaxNode>, SyntacticalExtension<SyntaxNode>, SyntaxNode>> _memberExtensions = new Dictionary<string, Func<ISyntacticalMatchResult<SyntaxNode>, SyntacticalExtension<SyntaxNode>, SyntaxNode>>();
-        Dictionary<string, Func<ISyntacticalMatchResult<SyntaxNode>, SyntacticalExtension<SyntaxNode>, SyntaxNode>> _typeExtensions = new Dictionary<string, Func<ISyntacticalMatchResult<SyntaxNode>, SyntacticalExtension<SyntaxNode>, SyntaxNode>>();
+        Dictionary<string, Func<SyntaxNode, Scope, SyntacticalExtension<SyntaxNode>, SyntaxNode>> _codeExtensions = new Dictionary<string, Func<SyntaxNode, Scope, SyntacticalExtension<SyntaxNode>, SyntaxNode>>();
+        Dictionary<string, Func<SyntaxNode, Scope, SyntacticalExtension<SyntaxNode>, SyntaxNode>> _memberExtensions = new Dictionary<string, Func<SyntaxNode, Scope, SyntacticalExtension<SyntaxNode>, SyntaxNode>>();
+        Dictionary<string, Func<SyntaxNode, Scope, SyntacticalExtension<SyntaxNode>, SyntaxNode>> _typeExtensions = new Dictionary<string, Func<SyntaxNode, Scope, SyntacticalExtension<SyntaxNode>, SyntaxNode>>();
 
         Dictionary<string, SyntacticalExtension<SyntaxNode>> _customCode = new Dictionary<string, SyntacticalExtension<SyntaxNode>>();
 
-        public TransformExtensions(IEnumerable<SyntacticExtensionEvent<SyntaxNode>> extensions, IEventBus events)
+        public TransformExtensions(IEnumerable<SyntacticExtensionEvent<SyntaxNode>> extensions, Scope scope)
         {
-            _events = events;
+            _scope = scope;
 
             foreach (var ev in extensions)
             {
@@ -54,16 +54,16 @@ namespace Excess.Compiler.Roslyn
         {
             public bool Matched { get; set; }
             public SyntaxNode Result { get; set; }
-            public Func<SyntaxNode, LookAheadResult> Continuation { get; set; }
+            public Func<SyntaxNode, Scope, LookAheadResult> Continuation { get; set; }
         }
 
-        Func<SyntaxNode, LookAheadResult> _lookahead;
+        Func<SyntaxNode, Scope, LookAheadResult> _lookahead;
 
         public override SyntaxNode Visit(SyntaxNode node)
         {
             if (_lookahead != null)
             {
-                var result = _lookahead(node);
+                var result = _lookahead(node, _scope);
                 _lookahead = result.Continuation;
                 return result.Result;
             }
@@ -81,8 +81,7 @@ namespace Excess.Compiler.Roslyn
                     case ExtensionKind.Member:
                     case ExtensionKind.Type:
                     {
-                        RoslynSyntacticalMatchResult result = new RoslynSyntacticalMatchResult(new Scope(), _events, method);
-                        return extension.Handler(result, extension);
+                        return extension.Handler(method, new Scope(), extension);
                     }
                     default:
                     {
@@ -158,11 +157,11 @@ namespace Excess.Compiler.Roslyn
             return node; //error, stop processing
         }
 
-        private Func<SyntaxNode, LookAheadResult> MatchTypeExtension(IncompleteMemberSyntax incomplete, SyntacticalExtension<SyntaxNode> extension)
+        private Func<SyntaxNode, Scope, LookAheadResult> MatchTypeExtension(IncompleteMemberSyntax incomplete, SyntacticalExtension<SyntaxNode> extension)
         {
-            return node =>
+            return (node, scope) =>
             {
-                var resultNode = node;
+                var resulSyntaxNode = node;
                 if (node is ClassDeclarationSyntax)
                 {
                     ClassDeclarationSyntax clazz = (ClassDeclarationSyntax)node;
@@ -170,15 +169,14 @@ namespace Excess.Compiler.Roslyn
                         .WithAttributeLists(incomplete.AttributeLists)
                         .WithModifiers(incomplete.Modifiers);
 
-                    RoslynSyntacticalMatchResult result = new RoslynSyntacticalMatchResult(new Scope(), _events, clazz);
-                    resultNode = extension.Handler(result, extension);
+                    resulSyntaxNode = extension.Handler(node, new Scope(), extension);
                 }
 
                 //td: error?, expecting class
                 return new LookAheadResult
                 {
-                    Matched = resultNode != null,
-                    Result = resultNode 
+                    Matched = resulSyntaxNode != null,
+                    Result = resulSyntaxNode 
                 };
             };
         }
@@ -300,36 +298,35 @@ namespace Excess.Compiler.Roslyn
         }
 
         //rewriters
-        private Func<SyntaxNode, LookAheadResult> CheckCodeExtension(SyntaxNode original, SyntacticalExtension<SyntaxNode> extension)
+        private Func<SyntaxNode, Scope, LookAheadResult> CheckCodeExtension(SyntaxNode original, SyntacticalExtension<SyntaxNode> extension)
         {
-            return node =>
+            return (node, scope) =>
             {
                 var code = node as BlockSyntax;
                 if (code == null)
                     return new LookAheadResult { Matched = false };
 
-                RoslynSyntacticalMatchResult result = new RoslynSyntacticalMatchResult(new Scope(), _events, node);
                 extension.Body = code;
 
-                SyntaxNode resultNode = null;
+                SyntaxNode resulSyntaxNode = null;
 
                 if (original is LocalDeclarationStatementSyntax)
                 {
                     extension.Kind = ExtensionKind.Expression;
-                    resultNode = extension.Handler(result, extension);
-                    if (!(resultNode is ExpressionSyntax))
+                    resulSyntaxNode = extension.Handler(node, new Scope(), extension);
+                    if (!(resulSyntaxNode is ExpressionSyntax))
                     {
                         //td: error, expecting expression
                         return new LookAheadResult { Matched = false };
                     }
 
                     var localDecl = original as LocalDeclarationStatementSyntax;
-                    resultNode = localDecl
+                    resulSyntaxNode = localDecl
                         .WithDeclaration(localDecl.Declaration
                             .WithVariables(CSharp.SeparatedList(new[] {
                                 localDecl.Declaration.Variables[0]
                                     .WithInitializer(localDecl.Declaration.Variables[0].Initializer
-                                        .WithValue((ExpressionSyntax)resultNode))})))
+                                        .WithValue((ExpressionSyntax)resulSyntaxNode))})))
                         .WithSemicolonToken(CSharp.ParseToken(";"));
                 }
                 else if (original is ExpressionStatementSyntax)
@@ -339,21 +336,21 @@ namespace Excess.Compiler.Roslyn
                     if (assignment != null)
                     {
                         extension.Kind = ExtensionKind.Expression;
-                        resultNode = extension.Handler(result, extension);
-                        if (!(resultNode is ExpressionSyntax))
+                        resulSyntaxNode = extension.Handler(node, scope, extension);
+                        if (!(resulSyntaxNode is ExpressionSyntax))
                         {
                             //td: error, expecting expression
                             return new LookAheadResult { Matched = false };
                         }
 
-                        resultNode = exprStatement
+                        resulSyntaxNode = exprStatement
                             .WithExpression(assignment
-                                .WithRight((ExpressionSyntax)resultNode))
+                                .WithRight((ExpressionSyntax)resulSyntaxNode))
                             .WithSemicolonToken(CSharp.ParseToken(";"));
                     }
                     else
                     {
-                        resultNode = extension.Handler(result, extension);
+                        resulSyntaxNode = extension.Handler(node, scope, extension);
                     }
                 }
                 else
@@ -362,7 +359,7 @@ namespace Excess.Compiler.Roslyn
                 return new LookAheadResult
                 {
                     Matched = true,
-                    Result = resultNode,
+                    Result = resulSyntaxNode,
                 };
             };
         }

@@ -10,18 +10,16 @@ namespace Excess.Compiler.Roslyn
 {
     public class SyntaxRewriter : CSharpSyntaxRewriter
     {
-        IEnumerable<ISyntacticalMatch<SyntaxNode>> _matchers;
+        IEnumerable<ISyntacticalMatch<SyntaxToken, SyntaxNode, SemanticModel>> _matchers;
         IDictionary<string, Func<SyntaxNode, SyntaxNode>> _handlers;
-        IEventBus _events;
         Scope _scope;
 
-        public SyntaxRewriter(IEventBus events, Scope scope,
-                              IEnumerable<ISyntacticalMatch<SyntaxNode>> matchers, 
+        public SyntaxRewriter(Scope scope,
+                              IEnumerable<ISyntacticalMatch<SyntaxToken, SyntaxNode, SemanticModel>> matchers, 
                               IDictionary<string, Func<SyntaxNode, SyntaxNode>> handlers)
         {
             _matchers = matchers;
             _handlers = handlers;
-            _events   = events;
             _scope    = scope;
         }
 
@@ -38,7 +36,6 @@ namespace Excess.Compiler.Roslyn
                     return handler(base.Visit(node));
             }
 
-            ISyntacticalMatchResult<SyntaxNode> matchResult = new RoslynSyntacticalMatchResult(new Scope(), _events);
             bool transformed = false;
             foreach (var matcher in _matchers)
             {

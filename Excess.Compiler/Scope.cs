@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Excess.Compiler;
+using System;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
@@ -13,8 +14,21 @@ namespace Excess.Compiler
         {
         }
 
+
+        public ICompilerService<TToken, TNode> GetService<TToken, TNode>()
+        {
+            return get<ICompilerService<TToken, TNode>>();
+        }
+
+        public IDocument<TToken, TNode, TModel> GetDocument<TToken, TNode, TModel>()
+        {
+            return get<IDocument<TToken, TNode, TModel>>();
+        }
+
         //DynamicObject
         Dictionary<string, object> _values = new Dictionary<string, object>();
+
+
         public override bool TryGetMember(GetMemberBinder binder, out object result)
         {
             _values.TryGetValue(binder.Name, out result);

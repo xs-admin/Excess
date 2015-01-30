@@ -7,42 +7,25 @@ using System.Threading.Tasks;
 
 namespace Excess.Compiler.Core
 {
-    //Helper class to be used in a similar role as Roslyn's TextSpan
-    public class SourceSpan
+    public abstract class CompilerBase<TToken, TNode, TModel> : ICompiler<TToken, TNode, TModel>
     {
-        public SourceSpan()
-        {
-        }
-
-        public SourceSpan(int start, int length)
-        {
-            Start = start;
-            Length = length;
-        }
-
-        public int Start { get; internal set; }
-        public int Length { get; internal set; }
-    }
-
-    public abstract class CompilerBase<TToken, TNode> : ICompiler<TToken, TNode>
-    {
-        protected ILexicalAnalysis<TToken, TNode> _lexical;
-        protected ISyntaxAnalysis<TNode>   _sintaxis;
+        protected ILexicalAnalysis<TToken, TNode, TModel> _lexical;
+        protected ISyntaxAnalysis<TToken, TNode, TModel>  _sintaxis;
         protected IEventBus                _events = new BaseEventBus();
         protected CompilerStage            _stage  = CompilerStage.Started;
 
-        public CompilerBase(ILexicalAnalysis<TToken, TNode> lexical, ISyntaxAnalysis<TNode> sintaxis)
+        public CompilerBase(ILexicalAnalysis<TToken, TNode, TModel> lexical, ISyntaxAnalysis<TToken, TNode, TModel> sintaxis)
         {
             _lexical  = lexical;
             _sintaxis = sintaxis;
         }
 
-        public ILexicalAnalysis<TToken, TNode> Lexical()
+        public ILexicalAnalysis<TToken, TNode, TModel> Lexical()
         {
             return _lexical;
         }
 
-        public ISyntaxAnalysis<TNode> Sintaxis()
+        public ISyntaxAnalysis<TToken, TNode, TModel> Sintaxis()
         {
             return _sintaxis;
         }
