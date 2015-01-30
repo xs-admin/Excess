@@ -11,13 +11,15 @@ namespace Excess.Compiler.Core
     {
         protected ILexicalAnalysis<TToken, TNode, TModel> _lexical;
         protected ISyntaxAnalysis<TToken, TNode, TModel>  _sintaxis;
-        protected IEventBus                _events = new BaseEventBus();
-        protected CompilerStage            _stage  = CompilerStage.Started;
+        protected CompilerStage                           _stage  = CompilerStage.Started;
+        protected IDocument<TToken, TNode, TModel>        _document;
 
         public CompilerBase(ILexicalAnalysis<TToken, TNode, TModel> lexical, ISyntaxAnalysis<TToken, TNode, TModel> sintaxis)
         {
             _lexical  = lexical;
             _sintaxis = sintaxis;
+
+            Scope _scope = new Scope(); //td: !! scope tree
         }
 
         public ILexicalAnalysis<TToken, TNode, TModel> Lexical()
@@ -30,34 +32,26 @@ namespace Excess.Compiler.Core
             return _sintaxis;
         }
 
-        ICompilerPass _pass;
-        public ICompilerPass Compile(string text, CompilerStage stage)
+        public bool Compile(string text, CompilerStage stage)
         {
-            Debug.Assert(_pass == null);
+            Debug.Assert(_document == null); //td:
+            _document = createDocument();
 
-            _pass = initialPass(text);
-            if (_pass.Stage < stage)
-                _pass = Advance(stage);
-
-            return _pass;
+            _document.applyChanges(stage);
+            return _document.hasErrors();
         }
 
-        public ICompilerPass CompileAll(string text)
+        protected abstract IDocument<TToken, TNode, TModel> createDocument();
+
+        public bool CompileAll(string text)
         {
             return Compile(text, CompilerStage.Finished);
         }
 
-        Scope _scope = new Scope(); //td: !! scope tree
-        public ICompilerPass Advance(CompilerStage stage)
+        public bool Advance(CompilerStage stage)
         {
-            while (_pass != null && _pass.Stage < stage)
-            {
-                _pass = _pass.Compile(_events, _scope);
-            }
-
-            return _pass;
+            _document.applyChanges(stage);
+            return _document.hasErrors();
         }
-
-        public abstract ICompilerPass initialPass(string text);
     }
 }

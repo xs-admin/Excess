@@ -19,72 +19,64 @@ namespace Excess.Compiler.Roslyn
         {
         }
 
-        public override ICompilerPass initialPass(string text)
+        protected override IDocument<SyntaxToken, SyntaxNode, SemanticModel> createDocument()
         {
-            return new LexicalPass(text);
+            return new RoslynDocument(new Scope());
         }
 
+        //public override ICompilerPass initialPass(string text)
+        //{
+        //    return new LexicalPass(text);
+        //}
+
         //out of interface methods, used for testing
-        //public ExpressionSyntax CompileExpression(string expr)
-        //{
-        //    var   pass   = new LexicalPass(expr);
-        //    Scope scope  = new Scope();
-        //    var   events = _lexical.produce();
+        public ExpressionSyntax CompileExpression(string expr)
+        {
+            var   document = new RoslynDocument(new Scope());
+            var   handler  = _lexical as IDocumentHandler<SyntaxToken, SyntaxNode, SemanticModel>;
 
-        //    _events.schedule("lexical-pass", events);
+            handler.apply(document);
+            document.applyChanges(CompilerStage.Lexical);
 
-        //    pass.Compile(_events, scope);
+            return CSharp.ParseExpression(document.LexicalText);
+        }
 
-        //    return CSharp.ParseExpression(pass.NewText);
-        //}
+        public SyntaxNode ApplyLexicalPass(string text, out string newText)
+        {
+            var document = new RoslynDocument(new Scope());
+            var handler = _lexical as IDocumentHandler<SyntaxToken, SyntaxNode, SemanticModel>;
 
-        //public SyntaxNode ApplyLexicalPass(string text, out string newText)
-        //{
-        //    Scope scope = new Scope();
+            handler.apply(document);
+            document.applyChanges(CompilerStage.Lexical);
 
-        //    var pass = new LexicalPass(text);
-        //    var events = _lexical.produce();
+            newText = document.LexicalText;
+            return document.Root;
+        }
 
-        //    _events.schedule("lexical-pass", events);
+        public string ApplyLexicalPass(string text)
+        {
+            string result;
+            ApplyLexicalPass(text, out result);
+            return result;
+        }
 
-        //    pass.Compile(_events, scope);
-        //    newText = pass.NewText;
-        //    return pass.Root;
-        //}
+        public SyntaxTree ApplySyntacticalPass(string text, out string result)
+        {
+            var document = new RoslynDocument(new Scope());
+            var handler = _lexical as IDocumentHandler<SyntaxToken, SyntaxNode, SemanticModel>;
 
-        //public string ApplyLexicalPass(string text)
-        //{
-        //    string result;
-        //    ApplyLexicalPass(text, out result);
-        //    return result;
-        //}
+            handler.apply(document);
+            document.applyChanges(CompilerStage.Syntactical);
 
-        //public SyntaxTree ApplySyntacticalPass(string text, out string result)
-        //{
-        //    Scope scope = new Scope();
+            result = document.LexicalText;
+            return document.Root.SyntaxTree;
+        }
 
-        //    var lexicalPass   = new LexicalPass(text);
-        //    var lexicalEvents = _lexical.produce();
-
-        //    _events.schedule("lexical-pass", lexicalEvents);
-
-        //    var syntacticalPass   = lexicalPass.Compile(_events, scope);
-        //    var syntacticalEvents = _sintaxis.produce();
-
-        //    _events.schedule("syntactical-pass", syntacticalEvents);
-        //    syntacticalPass.Compile(_events, scope);
-
-        //    var tree = ((SyntacticalPass)syntacticalPass).Tree;
-        //    result = tree.GetRoot().NormalizeWhitespace().ToString();
-
-        //    return tree;
-        //}
-
-        //public SyntaxTree ApplySyntacticalPass(string text)
-        //{
-        //    string useless;
-        //    return ApplySyntacticalPass(text, out useless);
-        //}
+        public SyntaxTree ApplySyntacticalPass(string text)
+        {
+            string useless;
+            return ApplySyntacticalPass(text, out useless);
+        }
 
 
         //declarations

@@ -36,9 +36,10 @@ namespace Excess.Compiler.XS
                     .enclosed('(', ')')
                     .token('{')
                     .then(lexical.transform()
-                        .remove("fn")
-                        .then("id", ProcessMemberFunction, 
-                            mapper: MapMemberFunction));
+                        .remove("fn"));
+                        //td: !!!
+                        //.then("id", ProcessMemberFunction, 
+                        //    mapper: MapMemberFunction));
 
             sintaxis
                 .match<MethodDeclarationSyntax>(method => method.ReturnType.ToString() == "function")

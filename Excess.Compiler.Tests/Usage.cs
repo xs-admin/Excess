@@ -36,11 +36,6 @@ namespace Excess.Compiler.Tests
                         .replace("open",  "{")
                         .replace("close", "}"));
 
-            var events  = lexical.produce();
-            int evCount = events.Count();
-
-            Assert.IsTrue(evCount == 1);
-
             ExpressionSyntax exprFunction = compiler.CompileExpression("call(10, function(x, y) {})");
             Assert.IsTrue(exprFunction.DescendantNodes()
                 .OfType<ParenthesizedLambdaExpressionSyntax>()
@@ -65,7 +60,7 @@ namespace Excess.Compiler.Tests
             Assert.IsTrue(lexicalResult == "my_ext_replaced int i = code(); ");
         }
 
-        private IEnumerable<SyntaxToken> myExtLexical(LexicalExtension<SyntaxToken> extension, ILexicalMatchResult<SyntaxToken, SyntaxNode> result)
+        private IEnumerable<SyntaxToken> myExtLexical(LexicalExtension<SyntaxToken> extension, Scope scope)
         {
             string testResult = "my_ext_replaced "
                               + RoslynCompiler.TokensToString(extension.Arguments)
@@ -75,21 +70,23 @@ namespace Excess.Compiler.Tests
             return RoslynCompiler.ParseTokens(testResult);
         }
 
-        private SyntaxNode myExtSyntactical(ISyntacticalMatchResult<SyntaxNode> result, LexicalExtension<SyntaxToken> extension)
+        private SyntaxNode myExtSyntactical(Scope scope, LexicalExtension<SyntaxToken> extension)
         {
-            Assert.IsTrue(result.Node is ExpressionStatementSyntax);
-            var node = result.Node as ExpressionStatementSyntax;
+            Assert.IsTrue(false);
+            return null;
+            //Assert.IsTrue(result.Node is ExpressionStatementSyntax);
+            //var node = result.Node as ExpressionStatementSyntax;
 
-            Assert.IsTrue(node.ToString() == "__extension();");
+            //Assert.IsTrue(node.ToString() == "__extension();");
 
-            var call = (node.Expression as InvocationExpressionSyntax)
-                .WithExpression(CSharp.ParseExpression("my_ext"))
-                .WithArgumentList(CSharp.ArgumentList(CSharp.SeparatedList(new[] {
-                    CSharp.Argument(CSharp.ParenthesizedLambdaExpression(
-                        parameterList: RoslynCompiler.ParseParameterList(extension.Arguments), 
-                        body:          RoslynCompiler.ParseCode(extension.Body)))})));
-            
-            return node.WithExpression(call);
+            //var call = (node.Expression as InvocationExpressionSyntax)
+            //    .WithExpression(CSharp.ParseExpression("my_ext"))
+            //    .WithArgumentList(CSharp.ArgumentList(CSharp.SeparatedList(new[] {
+            //        CSharp.Argument(CSharp.ParenthesizedLambdaExpression(
+            //            parameterList: RoslynCompiler.ParseParameterList(extension.Arguments), 
+            //            body:          RoslynCompiler.ParseCode(extension.Body)))})));
+
+            //return node.WithExpression(call);
         }
 
         [TestMethod]
@@ -223,7 +220,7 @@ namespace Excess.Compiler.Tests
                 .Count() == 1);
         }
 
-        private SyntaxNode codeExtension(ISyntacticalMatchResult<SyntaxNode> result, SyntacticalExtension<SyntaxNode> extension)
+        private SyntaxNode codeExtension(SyntaxNode node, SyntacticalExtension<SyntaxNode> extension)
         {
             if (extension.Kind == ExtensionKind.Code)
             {
@@ -240,22 +237,23 @@ namespace Excess.Compiler.Tests
             return CSharp.ParseExpression("bar(7)");
         }
 
-        private SyntaxNode memberExtension(ISyntacticalMatchResult<SyntaxNode> result, SyntacticalExtension<SyntaxNode> extension)
+        private SyntaxNode memberExtension(SyntaxNode node, SyntacticalExtension<SyntaxNode> extension)
         {
-            var memberDecl = result.Node as MethodDeclarationSyntax;
-            Assert.IsNotNull(memberDecl);
+            //var memberDecl = result.Node as MethodDeclarationSyntax;
+            //Assert.IsNotNull(memberDecl);
 
-            return memberDecl
-                .WithReturnType(CSharp.ParseTypeName("int"))
-                .WithIdentifier(CSharp.ParseToken("anotherName"))
-                .WithParameterList(CSharp.ParameterList())
-                .WithBody(memberDecl.Body
-                    .AddStatements(new[] {
-                        CSharp.ParseStatement("var myFoo = 5;"),
-                        CSharp.ParseStatement("bar(myFoo);")}));
+            //return memberDecl
+            //    .WithReturnType(CSharp.ParseTypeName("int"))
+            //    .WithIdentifier(CSharp.ParseToken("anotherName"))
+            //    .WithParameterList(CSharp.ParameterList())
+            //    .WithBody(memberDecl.Body
+            //        .AddStatements(new[] {
+            //            CSharp.ParseStatement("var myFoo = 5;"),
+            //            CSharp.ParseStatement("bar(myFoo);")}));
+            return null;
         }
 
-        private SyntaxNode typeExtension(ISyntacticalMatchResult<SyntaxNode> result, SyntacticalExtension<SyntaxNode> extension)
+        private SyntaxNode typeExtension(SyntaxNode node, SyntacticalExtension<SyntaxNode> extension)
         {
             return CSharp.ClassDeclaration(extension.Identifier)
                 .WithMembers(CSharp.List<MemberDeclarationSyntax>( new[] {

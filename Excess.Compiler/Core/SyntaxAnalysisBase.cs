@@ -151,17 +151,17 @@ namespace Excess.Compiler.Core
             return this;
         }
 
-        List<SyntacticExtensionEvent<TNode>> _extensions = new List<SyntacticExtensionEvent<TNode>>();
+        List<SyntacticalExtension<TNode>> _extensions = new List<SyntacticalExtension<TNode>>();
 
         public ISyntaxAnalysis<TToken, TNode, TModel> extension(string keyword, ExtensionKind kind, Func<TNode, Scope, SyntacticalExtension<TNode>, TNode> handler)
         {
-            _extensions.Add(new SyntacticExtensionEvent<TNode>(keyword, kind, handler));
+            _extensions.Add(new SyntacticalExtension<TNode>(keyword, kind, handler));
             return this;
         }
 
         public ISyntaxAnalysis<TToken, TNode, TModel> extension(string keyword, ExtensionKind kind, Func<TNode, SyntacticalExtension<TNode>, TNode> handler)
         {
-            _extensions.Add(new SyntacticExtensionEvent<TNode>(keyword, kind, (node, scope, ext) => handler(node, ext)));
+            _extensions.Add(new SyntacticalExtension<TNode>(keyword, kind, (node, scope, ext) => handler(node, ext)));
             return this;
         }
 

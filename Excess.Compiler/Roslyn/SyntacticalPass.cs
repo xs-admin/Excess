@@ -10,120 +10,118 @@ using System.Threading.Tasks;
 
 namespace Excess.Compiler.Roslyn
 {
-    public class SyntacticalPass : BasePass
-    {
-        SyntaxNode _root;
-        public SyntacticalPass(SyntaxNode root)
-        {
-            _root = root;
-        }
+    //public class SyntacticalPass : BasePass
+    //{
+    //    SyntaxNode _root;
+    //    public SyntacticalPass(SyntaxNode root)
+    //    {
+    //        _root = root;
+    //    }
 
-        public SyntaxTree Tree { get { return _root.SyntaxTree; } }
-        protected override string passId()
-        {
-            return "syntactical-pass";
-        }
+    //    public SyntaxTree Tree { get { return _root.SyntaxTree; } }
+    //    protected override string passId()
+    //    {
+    //        return "syntactical-pass";
+    //    }
 
-        protected override CompilerStage passStage()
-        {
-            return CompilerStage.Syntactical;
-        }
+    //    protected override CompilerStage passStage()
+    //    {
+    //        return CompilerStage.Syntactical;
+    //    }
 
-        //td: !!! move this to base pass
-        IEventBus _events;
-        Scope     _scope; 
-        public override ICompilerPass Compile(IEventBus events, Scope scope)
-        {
-            _events = events;
-            _scope  = scope;
+    //    //td: !!! move this to base pass
+    //    Scope _scope; 
+    //    public override ICompilerPass Compile(Scope scope)
+    //    {
+    //        _scope  = scope;
 
-            var myEvents        = events.poll(passId());
-            var extensionEvents = myEvents.OfType<SyntacticExtensionEvent<SyntaxNode>>();
-            var matchEvents     = myEvents.OfType<SyntacticalMatchEvent<SyntaxNode>>();
-            var customEvents    = myEvents.OfType<SyntacticalNodeEvent<SyntaxNode>> ();
+    //        var myEvents        = events.poll(passId());
+    //        var extensionEvents = myEvents.OfType<SyntacticExtensionEvent<SyntaxNode>>();
+    //        var matchEvents     = myEvents.OfType<SyntacticalMatchEvent<SyntaxNode>>();
+    //        var customEvents    = myEvents.OfType<SyntacticalNodeEvent<SyntaxNode>> ();
 
-            _root = processExtensions(_root, extensionEvents);
+    //        _root = processExtensions(_root, extensionEvents);
 
-            var matchers = GetMatchers(matchEvents);
-            var handlers = GetHandlers(customEvents);
+    //        var matchers = GetMatchers(matchEvents);
+    //        var handlers = GetHandlers(customEvents);
 
-            SyntaxRewriter pass = new SyntaxRewriter(_events, _scope, matchers, handlers);
-            _root = pass.Visit(_root);
+    //        SyntaxRewriter pass = new SyntaxRewriter(_events, _scope, matchers, handlers);
+    //        _root = pass.Visit(_root);
 
-            if (events.check("syntactical-pass").Any())
-                return this;
+    //        if (events.check("syntactical-pass").Any())
+    //            return this;
 
-            return null; //td: !!!
-        }
+    //        return null; //td: !!!
+    //    }
 
-        private SyntaxNode processExtensions(SyntaxNode node, IEnumerable<SyntacticExtensionEvent<SyntaxNode>> events)
-        {
-            TransformExtensions rewriter = new TransformExtensions(events, _scope);
-            return rewriter.Visit(node);
-        }
+    //    private SyntaxNode processExtensions(SyntaxNode node, IEnumerable<SyntacticExtensionEvent<SyntaxNode>> events)
+    //    {
+    //        TransformExtensions rewriter = new TransformExtensions(events, _scope);
+    //        return rewriter.Visit(node);
+    //    }
 
-        private SyntaxNode extensionNode(PendingExtension<SyntaxToken, SyntaxNode> extension)
-        {
-            SyntaxNode result = extension.Node;
-            switch (extension.Extension.Kind)
-            {
-                case ExtensionKind.Code:
-                    result = extension.Node
-                        .AncestorsAndSelf()
+    //    private SyntaxNode extensionNode(PendingExtension<SyntaxToken, SyntaxNode> extension)
+    //    {
+    //        SyntaxNode result = extension.Node;
+    //        switch (extension.Extension.Kind)
+    //        {
+    //            case ExtensionKind.Code:
+    //                result = extension.Node
+    //                    .AncestorsAndSelf()
                     
-                        .OfType<ExpressionStatementSyntax>()
-                        .FirstOrDefault();
+    //                    .OfType<ExpressionStatementSyntax>()
+    //                    .FirstOrDefault();
 
-                    if (result == null)
-                    {
-                        //td: error, malformed code extension
-                    }
-                    break;
+    //                if (result == null)
+    //                {
+    //                    //td: error, malformed code extension
+    //                }
+    //                break;
 
-                case ExtensionKind.Member:
-                    result = extension.Node
-                        .AncestorsAndSelf()
-                        .OfType<MemberDeclarationSyntax>()
-                        .FirstOrDefault();
+    //            case ExtensionKind.Member:
+    //                result = extension.Node
+    //                    .AncestorsAndSelf()
+    //                    .OfType<MemberDeclarationSyntax>()
+    //                    .FirstOrDefault();
 
-                    if (result == null)
-                    {
-                        //td: error, malformed member extension
-                    }
-                    break;
+    //                if (result == null)
+    //                {
+    //                    //td: error, malformed member extension
+    //                }
+    //                break;
 
-                case ExtensionKind.Type:
-                    result = extension.Node
-                        .AncestorsAndSelf()
-                        .OfType<TypeDeclarationSyntax>()
-                        .FirstOrDefault();
+    //            case ExtensionKind.Type:
+    //                result = extension.Node
+    //                    .AncestorsAndSelf()
+    //                    .OfType<TypeDeclarationSyntax>()
+    //                    .FirstOrDefault();
 
-                    if (result == null)
-                    {
-                        //td: error, malformed type extension
-                    }
-                    break;
-            }
+    //                if (result == null)
+    //                {
+    //                    //td: error, malformed type extension
+    //                }
+    //                break;
+    //        }
 
-            return result;
-        }
+    //        return result;
+    //    }
 
-        private Dictionary<string, Func<SyntaxNode, SyntaxNode>> GetHandlers(IEnumerable<SyntacticalNodeEvent<SyntaxNode>> events)
-        {
-            var result = new Dictionary<string, Func<SyntaxNode, SyntaxNode>>();
-            foreach(var ev in events)
-                result[ev.Node] = ev.Handler;
+    //    private Dictionary<string, Func<SyntaxNode, SyntaxNode>> GetHandlers(IEnumerable<SyntacticalNodeEvent<SyntaxNode>> events)
+    //    {
+    //        var result = new Dictionary<string, Func<SyntaxNode, SyntaxNode>>();
+    //        foreach(var ev in events)
+    //            result[ev.Node] = ev.Handler;
 
-            return result;
-        }
+    //        return result;
+    //    }
 
-        private IEnumerable<ISyntacticalMatch<SyntaxToken, SyntaxNode, SemanticModel>> GetMatchers(IEnumerable<SyntacticalMatchEvent<SyntaxNode>> events)
-        {
-            foreach (var ev in events)
-            {
-                foreach (var matcher in ev.Matchers)
-                    yield return matcher;
-            }
-        }
-    }
+    //    private IEnumerable<ISyntacticalMatch<SyntaxToken, SyntaxNode, SemanticModel>> GetMatchers(IEnumerable<SyntacticalMatchEvent<SyntaxNode>> events)
+    //    {
+    //        foreach (var ev in events)
+    //        {
+    //            foreach (var matcher in ev.Matchers)
+    //                yield return matcher;
+    //        }
+    //    }
+    //}
 }

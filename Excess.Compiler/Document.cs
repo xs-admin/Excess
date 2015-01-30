@@ -16,6 +16,12 @@ namespace Excess.Compiler
 
         void applyChanges();
         void applyChanges(CompilerStage stage);
+        bool hasErrors();
+    }
+
+    public interface IDocumentHandler<TToken, TNode, TModel>
+    {
+        void apply(IDocument<TToken, TNode, TModel> document);
     }
 
     //Helper class to be used in a similar role as Roslyn's TextSpan

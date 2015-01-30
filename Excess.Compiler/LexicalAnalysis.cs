@@ -54,8 +54,6 @@ namespace Excess.Compiler
 
         ILexicalAnalysis<TToken, TNode, TModel> then(Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>> handler);
         ILexicalAnalysis<TToken, TNode, TModel> then(ILexicalTransform<TToken, TNode> transform);
-
-        IEnumerable<TToken> transform(IEnumerable<TToken> enumerable, Scope result, out int consumed);
     }
 
     public interface ILexicalTransform<TToken, TNode>
@@ -95,8 +93,5 @@ namespace Excess.Compiler
         ILexicalAnalysis<TToken, TNode, TModel> extension(string keyword, ExtensionKind kind, Func<LexicalExtension<TToken>, Scope, IEnumerable<TToken>> handler);
         ILexicalAnalysis<TToken, TNode, TModel> extension(string keyword, ExtensionKind kind, Func<Scope, LexicalExtension<TToken>, TNode> handler);
         ILexicalTransform<TToken, TNode> transform();
-
-
-        IEnumerable<CompilerEvent> produce();
     }
 }

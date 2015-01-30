@@ -15,22 +15,14 @@ namespace Excess.Compiler
         Finished,
     }
 
-    public interface ICompilerPass
-    {
-        string Id { get; }
-        CompilerStage Stage { get; }
-
-        ICompilerPass Compile(IEventBus events, Scope scope);
-    }
-
     public interface ICompiler<TToken, TNode, TModel>
     {
         ILexicalAnalysis<TToken, TNode, TModel> Lexical();
         ISyntaxAnalysis<TToken, TNode, TModel> Sintaxis();
 
-        ICompilerPass Compile(string text, CompilerStage stage = CompilerStage.Started);
-        ICompilerPass CompileAll(string text);
-        ICompilerPass Advance(CompilerStage stage);
+        bool Compile(string text, CompilerStage stage = CompilerStage.Started);
+        bool CompileAll(string text);
+        bool Advance(CompilerStage stage);
     }
 
     public interface ICompilerService<TToken, TNode>

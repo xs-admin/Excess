@@ -12,9 +12,9 @@ namespace Excess.Compiler.Roslyn
     using Microsoft.CodeAnalysis.Text;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
-    public class LexicalPass : BaseLexicalPass<SyntaxToken, SyntaxNode>
-    {
-        //td: refactor
+    //td: refactor
+    //public class LexicalPass : BaseLexicalPass<SyntaxToken, SyntaxNode>
+    //{
         //    public LexicalPass(string text) :
         //        base(text)
         //    {
@@ -112,5 +112,5 @@ namespace Excess.Compiler.Roslyn
         //        lexicalId = RoslynCompiler.GetLexicalId(token);
         //        return token.ToFullString();
         //    }
-        }
+        //}
     }

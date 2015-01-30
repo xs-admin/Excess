@@ -10,17 +10,14 @@ namespace Excess.Compiler.Roslyn
 {
     public class SyntaxRewriter : CSharpSyntaxRewriter
     {
-        IEnumerable<ISyntacticalMatch<SyntaxToken, SyntaxNode, SemanticModel>> _matchers;
-        IDictionary<string, Func<SyntaxNode, SyntaxNode>> _handlers;
+        IEnumerable<Func<SyntaxNode, Scope, SyntaxNode>> _transformers;
         Scope _scope;
 
         public SyntaxRewriter(Scope scope,
-                              IEnumerable<ISyntacticalMatch<SyntaxToken, SyntaxNode, SemanticModel>> matchers, 
-                              IDictionary<string, Func<SyntaxNode, SyntaxNode>> handlers)
+                              IEnumerable<Func<SyntaxNode, Scope, SyntaxNode>> transformers)
         {
-            _matchers = matchers;
-            _handlers = handlers;
-            _scope    = scope;
+            _transformers = transformers;
+            _scope        = scope;
         }
 
         public override SyntaxNode Visit(SyntaxNode node)
@@ -28,35 +25,15 @@ namespace Excess.Compiler.Roslyn
             if (node == null)
                 return  null;
 
-            string nodeID = RoslynCompiler.GetSyntaxId(node);
-            if (nodeID != null)
+            var result = node;
+            foreach (var transformer in _transformers)
             {
-                Func<SyntaxNode, SyntaxNode> handler;
-                if (_handlers.TryGetValue(nodeID, out handler))
-                    return handler(base.Visit(node));
+                result = transformer(result, _scope);
+                if (result == null)
+                    return null;
             }
 
-            bool transformed = false;
-            foreach (var matcher in _matchers)
-            {
-                if (matcher.matches(node, matchResult))
-                {
-                    matchResult.Node = node;
-                    transformed = true;
-                    if (matchResult.Preprocess)
-                    {
-                        var pre = matcher.transform(node, matchResult);
-                        node = base.Visit(pre);
-                    }
-                    else
-                    {
-                        var post = base.Visit(node);
-                        node = matcher.transform(post, matchResult);
-                    }
-                }
-            }
-
-            return transformed? node :  base.Visit(node);
+            return base.Visit(result);
         }
     }
 }

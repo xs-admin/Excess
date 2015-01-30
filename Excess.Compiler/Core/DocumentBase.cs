@@ -9,8 +9,8 @@ namespace Excess.Compiler.Core
 {
     public abstract class BaseDocument<TToken, TNode, TModel> : IDocument<TToken, TNode, TModel>
     {
-        Scope _scope;    
-        ICompilerService<TToken, TNode> _compiler;
+        protected Scope _scope;    
+        protected ICompilerService<TToken, TNode> _compiler;
         public BaseDocument(Scope scope)
         {
             _scope = scope;
@@ -83,15 +83,15 @@ namespace Excess.Compiler.Core
 
         }
 
-        string _text;
-        TNode  _root;
+        protected string _text;
+        protected TNode  _root;
         private void applyLexical()
         {
             if (_root != null)
                 return; //already applied
 
-            BaseLexicalPass<TToken, TNode> pass = new BaseLexicalPass<TToken, TNode>(_scope, matchers);
-            Dictionary<string, SourceSpan> annotations = new Dictionary<string, SourceSpan>();
+            BaseLexicalPass<TToken, TNode, TModel> pass = new BaseLexicalPass<TToken, TNode, TModel>(_scope, _lexical);
+            Dictionary<string, SourceSpan> annotations  = new Dictionary<string, SourceSpan>();
             _root = pass.Parse(_text, annotations);
             _root = processAnnotations(_root, annotations);
 
@@ -122,6 +122,11 @@ namespace Excess.Compiler.Core
             }
         }
 
+        private IEnumerable<Change> poll(List<Change> changes, string kind)
+        {
+            throw new NotImplementedException();
+        }
+
         protected abstract TNode transform(TNode root, Dictionary<int, Func<TNode, Scope, TNode>> transformers);
         protected abstract TNode processAnnotations(TNode node, Dictionary<string, SourceSpan> annotations);
 
@@ -131,6 +136,11 @@ namespace Excess.Compiler.Core
         }
 
         public IEnumerable<TToken> change(IEnumerable<TToken> tokens, Func<TNode, Scope, TNode> transform, string kind = null)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool hasErrors()
         {
             throw new NotImplementedException();
         }

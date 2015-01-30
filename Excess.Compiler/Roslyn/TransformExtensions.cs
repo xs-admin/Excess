@@ -22,29 +22,17 @@ namespace Excess.Compiler.Roslyn
 
         Dictionary<string, SyntacticalExtension<SyntaxNode>> _customCode = new Dictionary<string, SyntacticalExtension<SyntaxNode>>();
 
-        public TransformExtensions(IEnumerable<SyntacticExtensionEvent<SyntaxNode>> extensions, Scope scope)
+        public TransformExtensions(IEnumerable<SyntacticalExtension<SyntaxNode>> extensions, Scope scope)
         {
             _scope = scope;
 
-            foreach (var ev in extensions)
+            foreach (var extension in extensions)
             {
-                switch (ev.Kind)
+                switch (extension.Kind)
                 {
-                    case ExtensionKind.Code:
-                    {
-                        if (ev.Custom)
-                            _customCode[ev.Node] = new SyntacticalExtension<SyntaxNode>
-                            {
-                                Keyword = ev.Keyword,
-                                Handler = ev.Handler,
-                                Kind    = ev.Kind,
-                            };
-                        else
-                            _codeExtensions[ev.Keyword] = ev.Handler;
-                        break;
-                    }
-                    case ExtensionKind.Member: _memberExtensions[ev.Keyword] = ev.Handler; break;
-                    case ExtensionKind.Type: _typeExtensions[ev.Keyword] = ev.Handler; break;
+                    case ExtensionKind.Code: _codeExtensions[extension.Keyword] = extension.Handler; break;
+                    case ExtensionKind.Member: _memberExtensions[extension.Keyword] = extension.Handler; break;
+                    case ExtensionKind.Type: _typeExtensions[extension.Keyword] = extension.Handler; break;
                     default: throw new NotImplementedException();
                 }
             }

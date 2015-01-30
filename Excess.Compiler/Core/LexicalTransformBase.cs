@@ -36,40 +36,44 @@ namespace Excess.Compiler.Core
 
         protected struct TransformBinder
         {
-            public TransformBinder(Func<IEnumerable<TToken>, IEnumerable<TToken>> output_, ExistingToken existingToken_ = ExistingToken.Remove)
+            public TransformBinder(Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>> output_, ExistingToken existingToken_ = ExistingToken.Remove)
             {
                 output  = output_;
                 extents = new TokenSpan();
                 existingToken = existingToken_;
             }
 
-            public TransformBinder(Func<IEnumerable<TToken>, IEnumerable<TToken>> _output, int begin_, int end_, ExistingToken existingToken_ = ExistingToken.Remove)
+            public TransformBinder(Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>> _output, int begin_, int end_, ExistingToken existingToken_ = ExistingToken.Remove)
             {
                 output = _output;
                 extents = new TokenSpan(begin_, end_);
                 existingToken = existingToken_;
             }
 
-            public TransformBinder(Func<IEnumerable<TToken>, IEnumerable<TToken>> _output, TokenSpan _extents, ExistingToken existingToken_ = ExistingToken.Remove)
+            public TransformBinder(Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>> _output, TokenSpan _extents, ExistingToken existingToken_ = ExistingToken.Remove)
             {
                 output = _output;
                 extents = _extents;
                 existingToken = existingToken_;
             }
 
-            public TokenSpan                                      extents;
-            public Func<IEnumerable<TToken>, IEnumerable<TToken>> output;
-            public ExistingToken                                  existingToken;
+            public TokenSpan                                             extents;
+            public Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>> output;
+            public ExistingToken                                         existingToken;
         }
 
         List<Func<Scope, TransformBinder>> _binders = new List<Func<Scope, TransformBinder>>();
 
-        private Func<IEnumerable<TToken>, IEnumerable<TToken>> TokensFromString(string tokenString)
+        private Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>> TokensFromString(string tokenString)
         {
-            return tokens => tokensFromString(tokenString);
+            return (tokens, scope) =>
+            {
+                var compiler = scope.GetService<TToken, TNode>();
+                return compiler.ParseTokens(tokenString);
+            };
         }
 
-        private IEnumerable<TToken> EmptyTokens(IEnumerable<TToken> tokens)
+        private IEnumerable<TToken> EmptyTokens(IEnumerable<TToken> tokens, Scope scope)
         {
             return new TToken[] { };
         }
@@ -149,7 +153,7 @@ namespace Excess.Compiler.Core
             _binders.Add(scope =>
             {
                 if (named != null)
-                    return new TransformBinder(MarkTokens(scope.Events), labelExtent(scope, named));
+                    return new TransformBinder(MarkTokens(), labelExtent(scope, named));
 
                 throw new InvalidOperationException("Must specify 'named'");
             });
@@ -157,10 +161,15 @@ namespace Excess.Compiler.Core
             return this;
         }
 
-        public IEnumerable<TToken> transform(IEnumerable<TToken> tokens, Scope result)
+        private Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>> MarkTokens()
+        {
+            throw new NotImplementedException();
+        }
+
+        public IEnumerable<TToken> transform(IEnumerable<TToken> tokens, Scope scope)
         {
             var binderSelector = _binders
-                .Select<Func<TNode, Scope, TransformBinder>, TransformBinder>(f => f(result))
+                .Select<Func<Scope, TransformBinder>, TransformBinder>(f => f(scope))
                 .OrderBy(binder => binder.extents.begin);
 
             TransformBinder[] binders       = binderSelector.ToArray();
@@ -187,7 +196,7 @@ namespace Excess.Compiler.Core
                 if (binderBegin == currentToken)
                 {
                     var binder = binders[currentBinder];
-                    var binderResult = binder.output(Range(tokens, binder.extents));
+                    var binderResult = binder.output(Range(tokens, binder.extents), scope);
 
                     if (binder.existingToken == ExistingToken.PreInsert)
                         yield return token;

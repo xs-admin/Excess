@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Excess.Compiler.Core
 {
-    public abstract class BaseLexicalMatch<TToken, TNode, TModel> : ILexicalMatch<TToken, TNode>
+    public abstract class BaseLexicalMatch<TToken, TNode, TModel> : ILexicalMatch<TToken, TNode, TModel>
     {
         private ILexicalAnalysis<TToken, TNode, TModel> _lexical;
         private ILexicalTransform<TToken, TNode> _transform;
@@ -81,17 +81,17 @@ namespace Excess.Compiler.Core
             return token => token.ToString() == value;
         }
 
-        public ILexicalMatch<TToken, TNode> enclosed(string open, string close, string start, string end, string contents)
+        public ILexicalMatch<TToken, TNode, TModel> enclosed(string open, string close, string start, string end, string contents)
         {
             return enclosed(MatchString(open), MatchString(close), start, end, contents);
         }
 
-        public ILexicalMatch<TToken, TNode> enclosed(char open, char close, string start = null, string end = null, string contents = null)
+        public ILexicalMatch<TToken, TNode, TModel> enclosed(char open, char close, string start = null, string end = null, string contents = null)
         {
             return enclosed(MatchString(open.ToString()), MatchString(close.ToString()), start, end, contents);
         }
 
-        public ILexicalMatch<TToken, TNode> enclosed(Func<TToken, bool> open, Func<TToken, bool> close, string start = null, string end = null, string contents = null)
+        public ILexicalMatch<TToken, TNode, TModel> enclosed(Func<TToken, bool> open, Func<TToken, bool> close, string start = null, string end = null, string contents = null)
         {
             _matchers.Add(MatchEnclosed(open, close, start, end, contents));
             return this;
@@ -148,90 +148,90 @@ namespace Excess.Compiler.Core
             };
         }
 
-        public ILexicalMatch<TToken, TNode> many(params string[] anyOf)
+        public ILexicalMatch<TToken, TNode, TModel> many(params string[] anyOf)
         {
             return many(MatchStringArray(anyOf));
         }
 
-        public ILexicalMatch<TToken, TNode> many(params char[] anyOf)
+        public ILexicalMatch<TToken, TNode, TModel> many(params char[] anyOf)
         {
             return many(MatchStringArray(anyOf.Select<char, string>(ch => ch.ToString())));
         }
 
-        public ILexicalMatch<TToken, TNode> many(string[] anyOf, string named = null)
+        public ILexicalMatch<TToken, TNode, TModel> many(string[] anyOf, string named = null)
         {
             return many(MatchStringArray(anyOf), named);
         }
 
-        public ILexicalMatch<TToken, TNode> many(char[] anyOf, string named = null)
+        public ILexicalMatch<TToken, TNode, TModel> many(char[] anyOf, string named = null)
         {
             return many(MatchStringArray(anyOf.Select<char, string>( ch => ch.ToString())), named);
         }
 
-        public ILexicalMatch<TToken, TNode> many(Func<TToken, bool> tokens, string named = null)
+        public ILexicalMatch<TToken, TNode, TModel> many(Func<TToken, bool> tokens, string named = null)
         {
             _matchers.Add(MatchMany(tokens, named));
             return this;
         }
 
-        public ILexicalMatch<TToken, TNode> manyOrNone(params string[] anyOf)
+        public ILexicalMatch<TToken, TNode, TModel> manyOrNone(params string[] anyOf)
         {
             return manyOrNone(MatchStringArray(anyOf));
         }
 
-        public ILexicalMatch<TToken, TNode> manyOrNone(params char[] anyOf)
+        public ILexicalMatch<TToken, TNode, TModel> manyOrNone(params char[] anyOf)
         {
             return manyOrNone(MatchStringArray(anyOf.Select<char, string>(ch => ch.ToString())));
         }
 
-        public ILexicalMatch<TToken, TNode> manyOrNone(string[] anyOf, string named = null)
+        public ILexicalMatch<TToken, TNode, TModel> manyOrNone(string[] anyOf, string named = null)
         {
             return manyOrNone(MatchStringArray(anyOf), named);
         }
 
-        public ILexicalMatch<TToken, TNode> manyOrNone(char[] anyOf, string named = null)
+        public ILexicalMatch<TToken, TNode, TModel> manyOrNone(char[] anyOf, string named = null)
         {
             return manyOrNone(MatchStringArray(anyOf.Select<char, string>(ch => ch.ToString())), named);
         }
 
-        public ILexicalMatch<TToken, TNode> manyOrNone(Func<TToken, bool> tokens, string named = null)
+        public ILexicalMatch<TToken, TNode, TModel> manyOrNone(Func<TToken, bool> tokens, string named = null)
         {
             _matchers.Add(MatchMany(tokens, named, true));
             return this;
         }
 
-        public ILexicalMatch<TToken, TNode> token(char value, string named = null)
+        public ILexicalMatch<TToken, TNode, TModel> token(char value, string named = null)
         {
             return token(MatchString(value.ToString()), named);
         }
 
-        public ILexicalMatch<TToken, TNode> token(string value, string named = null)
+        public ILexicalMatch<TToken, TNode, TModel> token(string value, string named = null)
         {
             return token(MatchString(value), named);
         }
 
-        public ILexicalMatch<TToken, TNode> token(Func<TToken, bool> matcher, string named = null)
+        public ILexicalMatch<TToken, TNode, TModel> token(Func<TToken, bool> matcher, string named = null)
         {
             _matchers.Add(MatchOne(matcher, named));
             return this;
         }
 
-        public ILexicalMatch<TToken, TNode> any(params string[] anyOf)
+        public ILexicalMatch<TToken, TNode, TModel> any(params string[] anyOf)
         {
             return any(MatchStringArray(anyOf));
         }
 
-        public ILexicalMatch<TToken, TNode> any(params char[] anyOf)
+        public ILexicalMatch<TToken, TNode, TModel> any(params char[] anyOf)
         {
             return any(MatchStringArray(anyOf.Select<char, string>(ch => ch.ToString())));
         }
 
-        public ILexicalMatch<TToken, TNode> any(string[] anyOf, string named = null)
+        public ILexicalMatch<TToken, TNode, TModel> any(string[] anyOf, string named = null)
         {
             return any(MatchStringArray(anyOf), named);
         }
 
-        public ILexicalMatch<TToken, TNode> any(char[] anyOf, string named = null)
+        public ILexicalMatch<TToken, TNode, TModel> any(char[] anyOf, string named = null)
         {
             return any(MatchStringArray(anyOf.Select<char, string>(ch => ch.ToString())), named);
         }
@@ -251,33 +251,33 @@ namespace Excess.Compiler.Core
             };
         }
 
-        public ILexicalMatch<TToken, TNode> any(Func<TToken, bool> handler, string named = null)
+        public ILexicalMatch<TToken, TNode, TModel> any(Func<TToken, bool> handler, string named = null)
         {
             _matchers.Add(MatchOne(handler, named));
             return this;
         }
 
-        public ILexicalMatch<TToken, TNode> optional(params string[] anyOf)
+        public ILexicalMatch<TToken, TNode, TModel> optional(params string[] anyOf)
         {
             return any(MatchStringArray(anyOf));
         }
 
-        public ILexicalMatch<TToken, TNode> optional(params char[] anyOf)
+        public ILexicalMatch<TToken, TNode, TModel> optional(params char[] anyOf)
         {
             return any(MatchStringArray(anyOf.Select<char, string>(ch => ch.ToString())));
         }
 
-        public ILexicalMatch<TToken, TNode> optional(string[] anyOf, string named = null)
+        public ILexicalMatch<TToken, TNode, TModel> optional(string[] anyOf, string named = null)
         {
             return any(MatchStringArray(anyOf), named);
         }
 
-        public ILexicalMatch<TToken, TNode> optional(char[] anyOf, string named = null)
+        public ILexicalMatch<TToken, TNode, TModel> optional(char[] anyOf, string named = null)
         {
             return any(MatchStringArray(anyOf.Select<char, string>(ch => ch.ToString())), named);
         }
 
-        public ILexicalMatch<TToken, TNode> optional(Func<TToken, bool> handler, string named = null)
+        public ILexicalMatch<TToken, TNode, TModel> optional(Func<TToken, bool> handler, string named = null)
         {
             _matchers.Add(MatchOne(handler, named, true));
             return this;
@@ -290,7 +290,7 @@ namespace Excess.Compiler.Core
 
         protected abstract bool isIdentifier(TToken token);
 
-        public ILexicalMatch<TToken, TNode> identifier(string named = null, bool optional = false)
+        public ILexicalMatch<TToken, TNode, TModel> identifier(string named = null, bool optional = false)
         {
             _matchers.Add(MatchOne(MatchIdentifier(), named, optional));
             return this;
@@ -356,10 +356,10 @@ namespace Excess.Compiler.Core
 
     public abstract class LexicalAnalysis<TToken, TNode, TModel> :  ILexicalAnalysis<TToken, TNode, TModel>
     {
-        private List<ILexicalMatch<TToken, TNode>> _matchers = new List<ILexicalMatch<TToken, TNode>>();
-        protected abstract ILexicalMatch<TToken, TNode> createMatch();
+        private List<ILexicalMatch<TToken, TNode, TModel>> _matchers = new List<ILexicalMatch<TToken, TNode, TModel>>();
+        protected abstract ILexicalMatch<TToken, TNode, TModel> createMatch();
 
-        public ILexicalMatch<TToken, TNode> match()
+        public ILexicalMatch<TToken, TNode, TModel> match()
         {
             var result = createMatch();
             _matchers.Add(result);
@@ -448,11 +448,5 @@ namespace Excess.Compiler.Core
             _matchers.Add(result);
             return this;
         }
-
-        public IEnumerable<CompilerEvent> produce()
-        {
-            return new[] { new LexicalMatchEvent<TToken, TNode>(_matchers) };
-        }
-
     }
 }

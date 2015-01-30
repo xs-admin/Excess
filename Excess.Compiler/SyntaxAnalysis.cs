@@ -36,6 +36,17 @@ namespace Excess.Compiler
 
     public class SyntacticalExtension<TNode>
     {
+        public SyntacticalExtension()
+        {
+        }
+
+        public SyntacticalExtension(string keyword, ExtensionKind kind, Func<TNode, Scope, SyntacticalExtension<TNode>, TNode> handler)
+        {
+            Keyword = keyword;
+            Kind = kind;
+            Handler = handler;
+        }
+
         public ExtensionKind Kind { get; set; }
         public string Keyword { get; set; }
         public string Identifier { get; set; }
@@ -59,7 +70,5 @@ namespace Excess.Compiler
         ISyntaxTransform<TNode> transform();
         ISyntaxTransform<TNode> transform(Func<TNode, Scope, TNode> handler);
         ISyntaxTransform<TNode> transform(Func<TNode, TNode> handler);
-
-        void apply(IDocument<TToken, TNode, TModel> document);
     }
 }

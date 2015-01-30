@@ -14,13 +14,13 @@ namespace Excess.Compiler.Core
         public Func<Scope, LexicalExtension<TToken>, TNode> Handler { get; set; }
     }
 
-    public class BaseLexicalPass<TToken, TNode> 
+    public class BaseLexicalPass<TToken, TNode, TModel> 
     {
-        IEnumerable<ILexicalMatch<TToken, TNode>> _matchers;
-        ICompilerService<TToken, TNode>  _compiler;
-        public BaseLexicalPass(Scope scope, IEnumerable<ILexicalMatch<TToken, TNode>> matchers)
+        IEnumerable<Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>>> _transformers;
+        ICompilerService<TToken, TNode> _compiler;
+        public BaseLexicalPass(Scope scope, IEnumerable<Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>>> transformers)
         {
-            _matchers = matchers;
+            _transformers = transformers;
             _scope = scope;
             _compiler = scope.GetService<TToken, TNode>();
         }
@@ -30,7 +30,7 @@ namespace Excess.Compiler.Core
         public TNode Parse(string text, Dictionary<string, SourceSpan> annotations)
         {
             var tokens = _compiler.ParseTokens(text).ToArray();
-            var result = transformTokens(tokens, 0, tokens.Length, _matchers);
+            var result = transformTokens(tokens, 0, tokens.Length, _transformers);
 
             //calculate new text
             //td: !! mapping info
@@ -72,17 +72,21 @@ namespace Excess.Compiler.Core
                 yield return tokens[i];
         }
 
-        private IEnumerable<TToken> transformTokens(TToken[] tokens, int begin, int end, IEnumerable<ILexicalMatch<TToken, TNode>> matchers)
+        private IEnumerable<TToken> transformTokens(TToken[] tokens, int begin, int end, IEnumerable<Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>>> transformers)
         {
             for (int token = 0; token < end; token++)
             {
                 IEnumerable<TToken> transformed = null;
                 int                 consumed = 0;
-                foreach (var matcher in matchers)
+                Scope               scope = new Scope();
+                foreach (var transformer in transformers)
                 {
-                    transformed = matcher.transform(Range(tokens, token, end), _scope, out consumed);
+                    transformed = transformer(Range(tokens, token, end), scope);
                     if (transformed != null)
+                    {
+                        consumed = (int)scope.get("consumed");
                         break;
+                    }
                 }
 
                 if (transformed == null)
