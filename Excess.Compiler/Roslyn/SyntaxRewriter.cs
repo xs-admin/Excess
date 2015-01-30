@@ -13,8 +13,8 @@ namespace Excess.Compiler.Roslyn
         IEnumerable<Func<SyntaxNode, Scope, SyntaxNode>> _transformers;
         Scope _scope;
 
-        public SyntaxRewriter(Scope scope,
-                              IEnumerable<Func<SyntaxNode, Scope, SyntaxNode>> transformers)
+        public SyntaxRewriter(IEnumerable<Func<SyntaxNode, Scope, SyntaxNode>> transformers, 
+                              Scope scope)
         {
             _transformers = transformers;
             _scope        = scope;

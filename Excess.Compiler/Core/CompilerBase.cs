@@ -13,13 +13,14 @@ namespace Excess.Compiler.Core
         protected ISyntaxAnalysis<TToken, TNode, TModel>  _sintaxis;
         protected CompilerStage                           _stage  = CompilerStage.Started;
         protected IDocument<TToken, TNode, TModel>        _document;
+        protected Scope                                   _scope;
 
-        public CompilerBase(ILexicalAnalysis<TToken, TNode, TModel> lexical, ISyntaxAnalysis<TToken, TNode, TModel> sintaxis)
+        public CompilerBase(ILexicalAnalysis<TToken, TNode, TModel> lexical, ISyntaxAnalysis<TToken, TNode, TModel> sintaxis, Scope scope)
         {
             _lexical  = lexical;
             _sintaxis = sintaxis;
 
-            Scope _scope = new Scope(); //td: !! scope tree
+            _scope = new Scope(scope); 
         }
 
         public ILexicalAnalysis<TToken, TNode, TModel> Lexical()

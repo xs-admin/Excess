@@ -13,15 +13,114 @@ namespace Excess.Compiler.Roslyn
     using Microsoft.CodeAnalysis.CSharp.Syntax;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
+    public class CompilerService : ICompilerService<SyntaxToken, SyntaxNode, SemanticModel>
+    {
+        public string TokenToString(SyntaxToken token, out string xsId)
+        {
+            xsId = RoslynCompiler.TokenMark(token);
+            return token.ToFullString();
+        }
+
+        public string TokenToString(SyntaxToken token, out int xsId)
+        {
+            string xsStr = RoslynCompiler.TokenMark(token);
+            xsId = xsStr == null ? -1 : int.Parse(xsStr);
+            return token.ToFullString();
+        }
+
+        public string TokenToString(SyntaxToken token)
+        {
+            return token.ToFullString();
+        }
+
+        public SyntaxToken MarkToken(SyntaxToken token, out int xsId)
+        {
+            string strId = RoslynCompiler.uniqueId();
+                    xsId = int.Parse(strId);
+            return RoslynCompiler.MarkToken(token, strId);
+        }
+
+        public SyntaxToken MarkToken(SyntaxToken token)
+        {
+            string strId = RoslynCompiler.uniqueId();
+            return RoslynCompiler.MarkToken(token, strId);
+        }
+
+        public IEnumerable<SyntaxToken> MarkTokens(IEnumerable<SyntaxToken> tokens, out int xsId)
+        {
+            string strId = RoslynCompiler.uniqueId();
+                    xsId = int.Parse(strId);
+
+            return tokens.Select(token => RoslynCompiler.MarkToken(token, strId));
+        }
+
+        public SyntaxNode MarkNode(SyntaxNode node, out int xsId)
+        {
+            string strId = RoslynCompiler.uniqueId();
+            xsId = int.Parse(strId);
+            return RoslynCompiler.MarkNode(node, strId); 
+        }
+
+        public SyntaxNode MarkNode(SyntaxNode node)
+        {
+            return RoslynCompiler.MarkNode(node, RoslynCompiler.uniqueId()); //td: scope ids
+        }
+
+        public SyntaxNode MarkTree(SyntaxNode node)
+        {
+            //td: optimize?
+            return node.ReplaceNodes(node.DescendantNodes(), (oldNode, newNode) =>
+            {
+                return MarkNode(newNode);
+            });
+        }
+
+        public int GetExcessId(SyntaxToken token)
+        {
+            string xsStr = RoslynCompiler.TokenMark(token);
+            return xsStr == null ? -1 : int.Parse(xsStr);
+        }
+
+        public int GetExcessId(SyntaxNode node)
+        {
+            string xsStr = RoslynCompiler.NodeMark(node);
+            return xsStr == null ? -1 : int.Parse(xsStr);
+        }
+
+        public SyntaxNode Parse(string text)
+        {
+            return CSharp.ParseSyntaxTree(text).GetRoot();
+        }
+
+        public IEnumerable<SyntaxToken> ParseTokens(string text)
+        {
+            return CSharp.ParseTokens(text);
+        }
+
+    }
+
     public class RoslynCompiler : CompilerBase<SyntaxToken, SyntaxNode, SemanticModel>
     {
-        public RoslynCompiler() : base(new RoslynLexicalAnalysis(), new RoslynSyntaxAnalysis())
+        public RoslynCompiler(Scope scope = null) : base(new RoslynLexicalAnalysis(), new RoslynSyntaxAnalysis(), scope)
         {
+            _scope.set<ICompilerService<SyntaxToken, SyntaxNode, SemanticModel>>(new CompilerService());
         }
 
         protected override IDocument<SyntaxToken, SyntaxNode, SemanticModel> createDocument()
         {
-            return new RoslynDocument(new Scope());
+            var result = new RoslynDocument(_scope);
+            _scope.set<IDocument<SyntaxToken, SyntaxNode, SemanticModel>>(result);
+
+            applyLexical(result);
+            return result;
+        }
+
+        private void applyLexical(RoslynDocument document)
+        {
+            var handler = _lexical as IDocumentHandler<SyntaxToken, SyntaxNode, SemanticModel>;
+            Debug.Assert(handler != null);
+
+            handler.apply(document);
         }
 
         //public override ICompilerPass initialPass(string text)
@@ -32,8 +131,9 @@ namespace Excess.Compiler.Roslyn
         //out of interface methods, used for testing
         public ExpressionSyntax CompileExpression(string expr)
         {
-            var   document = new RoslynDocument(new Scope());
+            var   document = new RoslynDocument(_scope, expr);
             var   handler  = _lexical as IDocumentHandler<SyntaxToken, SyntaxNode, SemanticModel>;
+            _scope.set<IDocument<SyntaxToken, SyntaxNode, SemanticModel>>(document);
 
             handler.apply(document);
             document.applyChanges(CompilerStage.Lexical);
@@ -43,8 +143,9 @@ namespace Excess.Compiler.Roslyn
 
         public SyntaxNode ApplyLexicalPass(string text, out string newText)
         {
-            var document = new RoslynDocument(new Scope());
+            var document = new RoslynDocument(_scope, text);
             var handler = _lexical as IDocumentHandler<SyntaxToken, SyntaxNode, SemanticModel>;
+            _scope.set<IDocument<SyntaxToken, SyntaxNode, SemanticModel>>(document);
 
             handler.apply(document);
             document.applyChanges(CompilerStage.Lexical);
@@ -62,10 +163,13 @@ namespace Excess.Compiler.Roslyn
 
         public SyntaxTree ApplySyntacticalPass(string text, out string result)
         {
-            var document = new RoslynDocument(new Scope());
-            var handler = _lexical as IDocumentHandler<SyntaxToken, SyntaxNode, SemanticModel>;
+            var document = new RoslynDocument(_scope, text); //we actually dont touch our own state during these calls
+            var lHandler = _lexical as IDocumentHandler<SyntaxToken, SyntaxNode, SemanticModel>;
+            var sHandler = _sintaxis as IDocumentHandler<SyntaxToken, SyntaxNode, SemanticModel>;
 
-            handler.apply(document);
+            lHandler.apply(document);
+            sHandler.apply(document);
+
             document.applyChanges(CompilerStage.Syntactical);
 
             result = document.LexicalText;
@@ -98,42 +202,38 @@ namespace Excess.Compiler.Roslyn
             return (++_seed).ToString();
         }
 
-        public static string SyntaxIdAnnotation = "xs-syntax-id";
-        public static string GetSyntaxId(SyntaxNode node)
-        {
-            var annotation = node.GetAnnotations(SyntaxIdAnnotation).FirstOrDefault();
-            if (annotation != null)
-                return annotation.Data;
-
-            return null;
-        }
-
-        public static SyntaxNode SetSyntaxId(SyntaxNode node, out string id)
-        {
-            id = uniqueId();
-            return node
-                .WithoutAnnotations(SyntaxIdAnnotation)
-                .WithAdditionalAnnotations(new SyntaxAnnotation(SyntaxIdAnnotation, id));
-        }
-
-
         public static string NodeIdAnnotation = "xs-node";
         public static SyntaxNode MarkNode(SyntaxNode node, string id)
         {
             return node
                 .WithoutAnnotations(NodeIdAnnotation)
-                .WithAdditionalAnnotations(new SyntaxAnnotation(NodeIdAnnotation, id));
+                .WithAdditionalAnnotations(new SyntaxAnnotation(NodeIdAnnotation + id, id));
         }
 
         public static string NodeMark(SyntaxNode node)
         {
             var annotation = node.GetAnnotations(NodeIdAnnotation).FirstOrDefault();
             if (annotation != null)
-                return annotation.Data;
+                return annotation.Data.Remove(0, NodeIdAnnotation.Length);
 
             return null;
         }
 
+        public static SyntaxToken MarkToken(SyntaxToken token, string id)
+        {
+            return token
+                .WithoutAnnotations(NodeIdAnnotation)
+                .WithAdditionalAnnotations(new SyntaxAnnotation(NodeIdAnnotation, id));
+        }
+
+        public static string TokenMark(SyntaxToken token)
+        {
+            var annotation = token.GetAnnotations(NodeIdAnnotation).FirstOrDefault();
+            if (annotation != null)
+                return annotation.Data;
+
+            return null;
+        }
 
         public static string LexicalIdAnnotation = "xs-lexical-id";
         public static string GetLexicalId(SyntaxToken token)
@@ -235,26 +335,5 @@ namespace Excess.Compiler.Roslyn
 
             return false;
         }
-
-        //td: refactor
-        //public static SyntaxNode ReplaceAnnotated(SyntaxNode node, string annotation, IEnumerable<KeyValuePair<string, Func<ISyntacticalMatchResult<SyntaxNode>, SyntaxNode>>> handlers)
-        //{
-        //    var nodes = node.GetAnnotatedNodes(annotation);
-        //    return node.ReplaceNodes(nodes, (oldNode, newNode) =>
-        //    {
-        //        var data = oldNode.GetAnnotations(annotation).First().Data;
-        //        var dataHandlers = handlers
-        //            .Where(h => h.Key == data);
-
-        //        var resultNode = newNode;
-        //        foreach (var handler in dataHandlers)
-        //        {
-        //            RoslynSyntacticalMatchResult result = new RoslynSyntacticalMatchResult(new Scope(), null, resultNode);
-        //            resultNode = handler.Value(result);
-        //        }
-
-        //        return resultNode.WithoutAnnotations(annotation);
-        //    });
-        //}
     }
 }

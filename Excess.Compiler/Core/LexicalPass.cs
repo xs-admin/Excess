@@ -14,20 +14,20 @@ namespace Excess.Compiler.Core
         public Func<Scope, LexicalExtension<TToken>, TNode> Handler { get; set; }
     }
 
-    public class BaseLexicalPass<TToken, TNode, TModel> 
+    public class LexicalPass<TToken, TNode, TModel> 
     {
         IEnumerable<Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>>> _transformers;
-        ICompilerService<TToken, TNode> _compiler;
-        public BaseLexicalPass(Scope scope, IEnumerable<Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>>> transformers)
+        ICompilerService<TToken, TNode, TModel> _compiler;
+        public LexicalPass(Scope scope, IEnumerable<Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>>> transformers)
         {
             _transformers = transformers;
-            _scope = scope;
-            _compiler = scope.GetService<TToken, TNode>();
+            _scope = new Scope(scope);
+            _compiler = scope.GetService<TToken, TNode, TModel>();
         }
 
         protected Scope _scope;
 
-        public TNode Parse(string text, Dictionary<string, SourceSpan> annotations)
+        public TNode Parse(string text, Dictionary<string, SourceSpan> annotations, out string resultText)
         {
             var tokens = _compiler.ParseTokens(text).ToArray();
             var result = transformTokens(tokens, 0, tokens.Length, _transformers);
@@ -62,7 +62,8 @@ namespace Excess.Compiler.Core
                 newText.Append(toInsert);
             }
 
-            var root = _compiler.Parse(newText.ToString());
+            resultText = newText.ToString();
+            var root   = _compiler.Parse(resultText);
             return _compiler.MarkTree(root);
         }
 
@@ -78,13 +79,13 @@ namespace Excess.Compiler.Core
             {
                 IEnumerable<TToken> transformed = null;
                 int                 consumed = 0;
-                Scope               scope = new Scope();
+                Scope               scope = new Scope(_scope);
                 foreach (var transformer in transformers)
                 {
                     transformed = transformer(Range(tokens, token, end), scope);
                     if (transformed != null)
                     {
-                        consumed = (int)scope.get("consumed");
+                        consumed = (int)scope.get("_consumed");
                         break;
                     }
                 }

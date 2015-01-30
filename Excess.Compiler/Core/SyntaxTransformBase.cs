@@ -126,14 +126,9 @@ namespace Excess.Compiler.Core
             return this;
         }
 
-        protected abstract TNode getParent(TNode node);
-
-        protected abstract TNode resolveScope(TNode node, bool type, bool @namespace);
         protected abstract TNode removeNodes(TNode node, IEnumerable<TNode> nodes);
-        protected abstract TNode replaceNodes(TNode node, Scope result, IEnumerable<TNode> nodes, Func<TNode, Scope , TNode> handler);
+        protected abstract TNode replaceNodes(TNode node, Scope scope, IEnumerable<TNode> nodes, Func<TNode, Scope, TNode> handler);
         protected abstract TNode addToNode(TNode node, IEnumerable<TNode> nodes);
-        protected abstract IEnumerable<TNode> findNodes(TNode parent, string annotation, string data);
-        protected abstract TNode markNodes(TNode parent, string annotation, Dictionary<TNode, string> nodeIds);
     }
 
     public class FunctorSyntaxTransform<TNode> : ISyntaxTransform<TNode>

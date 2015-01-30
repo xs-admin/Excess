@@ -25,18 +25,21 @@ namespace Excess.Compiler
         bool Advance(CompilerStage stage);
     }
 
-    public interface ICompilerService<TToken, TNode>
+    public interface ICompilerService<TToken, TNode, TModel>
     {
         string TokenToString(TToken token, out string xsId);
+        string TokenToString(TToken token, out int xsId);
         string TokenToString(TToken token);
         TToken MarkToken(TToken token, out int xsId);
-        TToken MarkToken(TToken token, int xsId);
-        IEnumerable<TToken> ParseTokens(string text);
+        TToken MarkToken(TToken token);
         TNode MarkNode(TNode node, out int xsId);
-        TNode MarkNode(TNode node, string xsId);
+        TNode MarkNode(TNode node);
         TNode MarkTree(TNode node);
         int GetExcessId(TToken token);
         int GetExcessId(TNode node);
+
+        IEnumerable<TToken> ParseTokens(string text);
         TNode Parse(string text);
+        IEnumerable<TToken> MarkTokens(IEnumerable<TToken> tokens, out int xsId);
     }
 }

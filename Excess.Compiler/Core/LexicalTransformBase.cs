@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Excess.Compiler.Core
 {
-    public abstract class LexicalTransform<TToken, TNode> : ILexicalTransform<TToken, TNode>
+    public class LexicalTransform<TToken, TNode, TModel> : ILexicalTransform<TToken, TNode>
     {
         protected class TokenSpan
         {
@@ -62,13 +62,13 @@ namespace Excess.Compiler.Core
             public ExistingToken                                         existingToken;
         }
 
-        List<Func<Scope, TransformBinder>> _binders = new List<Func<Scope, TransformBinder>>();
+        List<Func<IEnumerable<TToken>, Scope, TransformBinder>> _binders = new List<Func<IEnumerable<TToken>, Scope, TransformBinder>>();
 
         private Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>> TokensFromString(string tokenString)
         {
             return (tokens, scope) =>
             {
-                var compiler = scope.GetService<TToken, TNode>();
+                var compiler = scope.GetService<TToken, TNode, TModel>();
                 return compiler.ParseTokens(tokenString);
             };
         }
@@ -78,21 +78,21 @@ namespace Excess.Compiler.Core
             return new TToken[] { };
         }
 
-        public ILexicalTransform<TToken, TNode> insert(string tokens, string before = null, string after = null)
+        public ILexicalTransform<TToken, TNode> insert(string tokenString, string before = null, string after = null)
         {
-            _binders.Add(scope =>
+            _binders.Add((tokens, scope) =>
             {
                 TokenSpan     extents;
                 ExistingToken existing = ExistingToken.PreInsert;
                 if (before != null)
                 {
-                    extents = labelExtent(scope, before);
+                    extents = labelExtent(tokens, scope, before);
                     extents.end = extents.begin;
                     existing = ExistingToken.PostInsert;
                 }
                 else if (after != null)
                 {
-                    extents = labelExtent(scope, after);
+                    extents = labelExtent(tokens, scope, after);
                     extents.begin = extents.end;
                 }
                 else
@@ -100,18 +100,18 @@ namespace Excess.Compiler.Core
                     throw new InvalidOperationException("Must specify either 'after' or 'before'");
                 }
 
-                return new TransformBinder(TokensFromString(tokens), extents, existing);
+                return new TransformBinder(TokensFromString(tokenString), extents, existing);
             });
 
             return this;
         }
 
-        public ILexicalTransform<TToken, TNode> replace(string named, string tokens)
+        public ILexicalTransform<TToken, TNode> replace(string named, string tokenString)
         {
-            _binders.Add(scope =>
+            _binders.Add((tokens, scope) =>
             {
                 if (named != null)
-                    return new TransformBinder(TokensFromString(tokens), labelExtent(scope, named));
+                    return new TransformBinder(TokensFromString(tokenString), labelExtent(tokens, scope, named));
 
                 throw new InvalidOperationException("Must specify either 'after' or 'before'");
             });
@@ -121,10 +121,10 @@ namespace Excess.Compiler.Core
 
         public ILexicalTransform<TToken, TNode> remove(string named)
         {
-            _binders.Add(scope =>
+            _binders.Add((tokens, scope) =>
             {
                 if (named != null)
-                    return new TransformBinder(EmptyTokens, labelExtent(scope, named));
+                    return new TransformBinder(EmptyTokens, labelExtent(tokens, scope, named));
 
                 throw new InvalidOperationException("Must specify 'named'");
             });
@@ -150,10 +150,10 @@ namespace Excess.Compiler.Core
             Debug.Assert(_syntactical == null);
             _syntactical = transform;
 
-            _binders.Add(scope =>
+            _binders.Add((tokens, scope) =>
             {
                 if (named != null)
-                    return new TransformBinder(MarkTokens(), labelExtent(scope, named));
+                    return new TransformBinder(MarkTokens(), labelExtent(tokens, scope, named));
 
                 throw new InvalidOperationException("Must specify 'named'");
             });
@@ -169,7 +169,7 @@ namespace Excess.Compiler.Core
         public IEnumerable<TToken> transform(IEnumerable<TToken> tokens, Scope scope)
         {
             var binderSelector = _binders
-                .Select<Func<Scope, TransformBinder>, TransformBinder>(f => f(scope))
+                .Select<Func<IEnumerable<TToken>, Scope, TransformBinder>, TransformBinder>(f => f(tokens, scope))
                 .OrderBy(binder => binder.extents.begin);
 
             TransformBinder[] binders       = binderSelector.ToArray();
@@ -238,7 +238,7 @@ namespace Excess.Compiler.Core
             }
         }
 
-        private TokenSpan labelExtent(Scope scope, string label)
+        private TokenSpan labelExtent(IEnumerable<TToken> tokens, Scope scope, string label)
         {
             dynamic context = scope;
             object value    = scope.get<object>(label);
@@ -251,7 +251,7 @@ namespace Excess.Compiler.Core
                 {
                     TToken valueToken = (TToken)value;
                     int    idx = 0;
-                    foreach (var token in context.Tokens)
+                    foreach (var token in tokens)
                     {
                         if (valueToken.Equals(token))
                         {
@@ -268,14 +268,14 @@ namespace Excess.Compiler.Core
 
                 if (value is IEnumerable<TToken>)
                 {
-                    var tokens     = value as IEnumerable<TToken>;
-                    var tokenCount = tokens.Count();
+                    var valueTokens = value as IEnumerable<TToken>;
+                    var tokenCount = valueTokens.Count();
                     if (tokenCount <= 0)
                         return null;
 
-                    var firstToken = tokens.First();
+                    var firstToken = valueTokens.First();
                     int idx = 0;
-                    foreach (var token in context.Tokens)
+                    foreach (var token in tokens)
                     {
                         if (firstToken.Equals(token))
                         {

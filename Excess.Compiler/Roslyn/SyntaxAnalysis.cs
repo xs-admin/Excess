@@ -102,5 +102,22 @@ namespace Excess.Compiler.Roslyn
         {
             return new RoslynSyntaxTransform(handler);
         }
+
+        protected override SyntaxNode extensions(SyntaxNode node, Scope scope)
+        {
+            ExtensionRewriter rewriter = new ExtensionRewriter(_extensions, scope);
+            return rewriter.Visit(node);
+        }
+
+        protected override SyntaxNode matchers(SyntaxNode node, Scope scope)
+        {
+            SyntaxRewriter rewriter = new SyntaxRewriter(_matchers)
+        }
+
+        protected override SyntaxNode normalize(SyntaxNode node, Scope scope)
+        {
+            return node; //td: 
+        }
+
     }
 }

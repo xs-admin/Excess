@@ -10,19 +10,29 @@ namespace Excess.Compiler
 {
     public class Scope : DynamicObject
     {
-        public Scope()
+        Scope _parent;
+        public Scope(Scope parent)
         {
+            _parent = parent;
         }
 
 
-        public ICompilerService<TToken, TNode> GetService<TToken, TNode>()
+        public ICompilerService<TToken, TNode, TModel> GetService<TToken, TNode, TModel>()
         {
-            return get<ICompilerService<TToken, TNode>>();
+            var result = get<ICompilerService<TToken, TNode, TModel>>();
+            if (result == null && _parent != null)
+                result = _parent.GetService<TToken, TNode, TModel>();
+
+            return result;
         }
 
         public IDocument<TToken, TNode, TModel> GetDocument<TToken, TNode, TModel>()
         {
-            return get<IDocument<TToken, TNode, TModel>>();
+            var result = get<IDocument<TToken, TNode, TModel>>();
+            if (result == null && _parent != null)
+                result = _parent.GetDocument<TToken, TNode, TModel>();
+
+            return result;
         }
 
         //DynamicObject
@@ -44,22 +54,37 @@ namespace Excess.Compiler
         public T get<T>() where T : class
         {
             string thash = typeof(T).GetHashCode().ToString();
-            return _values[thash] as T;
+            return get<T>(thash);
         }
 
         public T get<T>(string id) where T : class
         {
-            return _values[id] as T;
+            object result;
+            if (_values.TryGetValue(id, out result))
+                return (T)result;
+
+            return default(T);
         }
 
         public object get(string id)
         {
-            return _values[id];
+            object result;
+            if (_values.TryGetValue(id, out result))
+                return result;
+
+            return null;
         }
 
-        internal void set(string id, object value)
+        public void set(string id, object value)
         {
             _values[id] = value;
         }
+
+        public void set<T>(T t) where T : class
+        {
+            string id = typeof(T).GetHashCode().ToString();
+            _values[id] = t;
+        }
+
     }
 }

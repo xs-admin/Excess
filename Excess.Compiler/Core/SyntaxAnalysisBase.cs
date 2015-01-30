@@ -127,7 +127,8 @@ namespace Excess.Compiler.Core
         ISyntaxTransform<TNode> _then;
     }
 
-    public abstract class BaseSyntaxAnalysis<TToken, TNode, TModel> : ISyntaxAnalysis<TToken, TNode, TModel>
+    public abstract class BaseSyntaxAnalysis<TToken, TNode, TModel> : ISyntaxAnalysis<TToken, TNode, TModel>,
+                                                                      IDocumentHandler<TToken, TNode, TModel>
     {
         private Func<IEnumerable<TNode>, TNode> _looseMembers;
         private Func<IEnumerable<TNode>, TNode> _looseStatements;
@@ -151,7 +152,7 @@ namespace Excess.Compiler.Core
             return this;
         }
 
-        List<SyntacticalExtension<TNode>> _extensions = new List<SyntacticalExtension<TNode>>();
+        protected List<SyntacticalExtension<TNode>> _extensions = new List<SyntacticalExtension<TNode>>();
 
         public ISyntaxAnalysis<TToken, TNode, TModel> extension(string keyword, ExtensionKind kind, Func<TNode, Scope, SyntacticalExtension<TNode>, TNode> handler)
         {
@@ -207,7 +208,22 @@ namespace Excess.Compiler.Core
 
         public ISyntaxTransform<TNode> transform(Func<TNode, Scope, TNode> handler)
         {
-            return transform(handler);
+            return createTransform((node, scope, childre) => handler(node, scope));
         }
+
+        public void apply(IDocument<TToken, TNode, TModel> document)
+        {
+            if (_extensions.Any())
+                document.change(extensions, "syntactical-extensions");
+
+            document.change(normalize, "syntactical-normalize");
+
+            if (_matchers.Any())
+                document.change(matchers);
+        }
+
+        protected abstract TNode matchers(TNode node, Scope scope);
+        protected abstract TNode normalize(TNode node, Scope scope);
+        protected abstract TNode extensions(TNode node, Scope scope);
     }
 }

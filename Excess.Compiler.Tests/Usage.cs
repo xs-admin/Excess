@@ -55,12 +55,34 @@ namespace Excess.Compiler.Tests
             lexical
                 .extension("my_ext", ExtensionKind.Code, myExtLexical);
 
-            string lexicalResult = compiler.ApplyLexicalPass("my_ext(int i) { code(); }");
+            string lResult = compiler.ApplyLexicalPass("my_ext(int i) { code(); }");
+            Assert.IsTrue(lResult == "my_ext_replaced int i = code(); ");
 
-            Assert.IsTrue(lexicalResult == "my_ext_replaced int i = code(); ");
+            lexical
+                .extension("my_ext_s", ExtensionKind.Member, myExtSyntactical);
+
+            SyntaxNode sResult = compiler.ApplyLexicalPass("my_ext_s(int i) { code(); }", out lResult);
+
+            Assert.IsTrue(lResult == "void __extension() {}");
+
+            var method = sResult
+                .DescendantNodes()
+                .OfType<MethodDeclarationSyntax>()
+                .FirstOrDefault();
+
+            Assert.IsNotNull(method);
+            Assert.IsTrue(method
+                .ParameterList
+                .Parameters
+                .Count == 1);
+
+            Assert.IsTrue(method
+                .Body
+                .Statements
+                .Count == 1);
         }
 
-        private IEnumerable<SyntaxToken> myExtLexical(LexicalExtension<SyntaxToken> extension, Scope scope)
+        private IEnumerable<SyntaxToken> myExtLexical(IEnumerable<SyntaxToken> tokens, Scope scope, LexicalExtension<SyntaxToken> extension)
         {
             string testResult = "my_ext_replaced "
                               + RoslynCompiler.TokensToString(extension.Arguments)
@@ -70,23 +92,28 @@ namespace Excess.Compiler.Tests
             return RoslynCompiler.ParseTokens(testResult);
         }
 
-        private SyntaxNode myExtSyntactical(Scope scope, LexicalExtension<SyntaxToken> extension)
+        private SyntaxNode myExtSyntactical(SyntaxNode node, Scope scope, LexicalExtension<SyntaxToken> extension)
         {
-            Assert.IsTrue(false);
-            return null;
-            //Assert.IsTrue(result.Node is ExpressionStatementSyntax);
-            //var node = result.Node as ExpressionStatementSyntax;
+            Assert.IsTrue(node is MethodDeclarationSyntax);
+            var method = node as MethodDeclarationSyntax;
 
-            //Assert.IsTrue(node.ToString() == "__extension();");
+            Assert.IsTrue(method.Identifier.ToString() == "__extension");
 
-            //var call = (node.Expression as InvocationExpressionSyntax)
-            //    .WithExpression(CSharp.ParseExpression("my_ext"))
-            //    .WithArgumentList(CSharp.ArgumentList(CSharp.SeparatedList(new[] {
-            //        CSharp.Argument(CSharp.ParenthesizedLambdaExpression(
-            //            parameterList: RoslynCompiler.ParseParameterList(extension.Arguments), 
-            //            body:          RoslynCompiler.ParseCode(extension.Body)))})));
+            var argString = RoslynCompiler.TokensToString(extension.Arguments);
 
-            //return node.WithExpression(call);
+            Assert.IsTrue(argString == "int i");
+            var arguments = CSharp.ParseParameterList("(" + argString + ")");
+
+            var codeString = RoslynCompiler.TokensToString(extension.Body);
+            var codeNode   = CSharp.ParseStatement("{" + codeString + "}");
+
+            Assert.IsTrue(codeNode is BlockSyntax);
+            var code = codeNode as BlockSyntax;
+
+            return method
+                .WithIdentifier(CSharp.ParseToken("my_ext_s"))
+                .WithParameterList(arguments)
+                .WithBody(code);
         }
 
         [TestMethod]
@@ -98,7 +125,7 @@ namespace Excess.Compiler.Tests
             //simple match
             sintaxis
                 .match<ClassDeclarationSyntax>(c => !c.Members.OfType<ConstructorDeclarationSyntax>().Any())
-                    .then(sintaxis.transform(addConstructor));
+                    .then(addConstructor);
 
             var tree = compiler.ApplySyntacticalPass("class foo { } class bar { bar() {} }");
 

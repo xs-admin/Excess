@@ -17,7 +17,7 @@ namespace Excess.Compiler
         ISyntaxAnalysis<TToken, TNode, TModel> then(Func<TNode, Scope, TNode> handler);
         ISyntaxAnalysis<TToken, TNode, TModel> then(ISyntaxTransform<TNode> transform);
 
-        bool matches(TNode node, Scope result);
+        bool matches(TNode node, Scope scope);
     }
 
     public interface ISyntaxTransform<TNode>

@@ -90,8 +90,8 @@ namespace Excess.Compiler
     public interface ILexicalAnalysis<TToken, TNode, TModel>
     {
         ILexicalMatch<TToken, TNode, TModel> match(); 
-        ILexicalAnalysis<TToken, TNode, TModel> extension(string keyword, ExtensionKind kind, Func<LexicalExtension<TToken>, Scope, IEnumerable<TToken>> handler);
-        ILexicalAnalysis<TToken, TNode, TModel> extension(string keyword, ExtensionKind kind, Func<Scope, LexicalExtension<TToken>, TNode> handler);
+        ILexicalAnalysis<TToken, TNode, TModel> extension(string keyword, ExtensionKind kind, Func<IEnumerable<TToken>, Scope, LexicalExtension<TToken>, IEnumerable<TToken>> handler);
+        ILexicalAnalysis<TToken, TNode, TModel> extension(string keyword, ExtensionKind kind, Func<TNode, Scope, LexicalExtension<TToken>, TNode> handler);
         ILexicalTransform<TToken, TNode> transform();
     }
 }

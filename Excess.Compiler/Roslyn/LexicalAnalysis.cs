@@ -25,17 +25,11 @@ namespace Excess.Compiler.Roslyn
         }
     }
 
-    public class RoslynLexicalAnalysis : LexicalAnalysis<SyntaxToken, SyntaxNode, SemanticModel>
+    public class RoslynLexicalAnalysis : BaseLexicalAnalysis<SyntaxToken, SyntaxNode, SemanticModel>
     {
         protected override ILexicalMatch<SyntaxToken, SyntaxNode, SemanticModel> createMatch()
         {
             return new RoslynLexicalMatch(this);
         }
-
-        public override ILexicalTransform<SyntaxToken, SyntaxNode> transform()
-        {
-            throw new NotImplementedException();
-        }
-
     }
 }

@@ -1,224 +1,355 @@
-﻿using System;
+﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Excess.Compiler.Roslyn
 {
-    using System.Diagnostics;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
-    //public class ExtensionRewriter : CSharpSyntaxVisitor
-    //{
-    //    IEventBus _events;
+    public class ExtensionRewriter : CSharpSyntaxRewriter
+    {
+        Scope _scope;
 
-    //    Dictionary<string, Func<ISyntacticalMatchResult<SyntaxNode>, SyntacticalExtension<SyntaxNode>, IEnumerable<SyntaxNode>>> _codeExtensions = new Dictionary<string, Func<ISyntacticalMatchResult<SyntaxNode>, SyntacticalExtension<SyntaxNode>, IEnumerable<SyntaxNode>>>();
-    //    Dictionary<string, Func<ISyntacticalMatchResult<SyntaxNode>, SyntacticalExtension<SyntaxNode>, IEnumerable<SyntaxNode>>> _memberExtensions = new Dictionary<string, Func<ISyntacticalMatchResult<SyntaxNode>, SyntacticalExtension<SyntaxNode>, IEnumerable<SyntaxNode>>>();
-    //    Dictionary<string, Func<ISyntacticalMatchResult<SyntaxNode>, SyntacticalExtension<SyntaxNode>, IEnumerable<SyntaxNode>>> _typeExtensions = new Dictionary<string, Func<ISyntacticalMatchResult<SyntaxNode>, SyntacticalExtension<SyntaxNode>, IEnumerable<SyntaxNode>>>();
+        Dictionary<string, Func<SyntaxNode, Scope, SyntacticalExtension<SyntaxNode>, SyntaxNode>> _codeExtensions = new Dictionary<string, Func<SyntaxNode, Scope, SyntacticalExtension<SyntaxNode>, SyntaxNode>>();
+        Dictionary<string, Func<SyntaxNode, Scope, SyntacticalExtension<SyntaxNode>, SyntaxNode>> _memberExtensions = new Dictionary<string, Func<SyntaxNode, Scope, SyntacticalExtension<SyntaxNode>, SyntaxNode>>();
+        Dictionary<string, Func<SyntaxNode, Scope, SyntacticalExtension<SyntaxNode>, SyntaxNode>> _typeExtensions = new Dictionary<string, Func<SyntaxNode, Scope, SyntacticalExtension<SyntaxNode>, SyntaxNode>>();
 
-    //    Dictionary<SyntaxNode, Dictionary<SyntaxNode, Func<ISyntacticalMatchResult<SyntaxNode>, IEnumerable<SyntaxNode>>>> _transform = new Dictionary<SyntaxNode, Dictionary<SyntaxNode, Func<ISyntacticalMatchResult<SyntaxNode>, IEnumerable<SyntaxNode>>>>();
+        Dictionary<string, SyntacticalExtension<SyntaxNode>> _customCode = new Dictionary<string, SyntacticalExtension<SyntaxNode>>();
 
-    //    public ExtensionRewriter(IEnumerable<SyntacticExtensionEvent<SyntaxNode>> extensions, IEventBus events)
-    //    {
-    //        _events = events;
+        public ExtensionRewriter(IEnumerable<SyntacticalExtension<SyntaxNode>> extensions, Scope scope)
+        {
+            _scope = scope;
 
-    //        foreach (var ev in extensions)
-    //        {
-    //            switch (ev.Kind)
-    //            {
-    //                case ExtensionKind.Code:   _codeExtensions  [ev.Keyword] = ev.Handler; break;
-    //                case ExtensionKind.Member: _memberExtensions[ev.Keyword] = ev.Handler; break;
-    //                case ExtensionKind.Type:   _typeExtensions  [ev.Keyword] = ev.Handler; break;
-    //                default: throw new NotImplementedException(); 
-    //            }
-    //        }
-    //    }
+            foreach (var extension in extensions)
+            {
+                switch (extension.Kind)
+                {
+                    case ExtensionKind.Code:   _codeExtensions  [extension.Keyword] = extension.Handler; break;
+                    case ExtensionKind.Member: _memberExtensions[extension.Keyword] = extension.Handler; break;
+                    case ExtensionKind.Type:   _typeExtensions  [extension.Keyword] = extension.Handler; break;
+                    default: throw new NotImplementedException();
+                }
+            }
+        }
 
-    //    public SyntaxTree rewrite(SyntaxTree tree)
-    //    {
-    //        var node = tree.GetRoot();
-    //        Visit(node);
+        class LookAheadResult
+        {
+            public bool Matched { get; set; }
+            public SyntaxNode Result { get; set; }
+            public Func<SyntaxNode, Scope, LookAheadResult> Continuation { get; set; }
+        }
 
-    //        return node.ReplaceNodes(_transform.Keys, (oldNode, newNode) =>
-    //        {
-    //            var children = _transform[oldNode];
+        Func<SyntaxNode, Scope, LookAheadResult> _lookahead;
 
-    //            Debug.Assert(oldNode.ChildNodes().Count() == newNode.ChildNodes().Count()); //no structural changes
-    //            var newChildren = oldNode.ChildNodes().GetEnumerator();
+        public override SyntaxNode Visit(SyntaxNode node)
+        {
+            if (_lookahead != null)
+            {
+                var result = _lookahead(node, _scope);
+                _lookahead = result.Continuation;
+                return result.Result;
+            }
 
-    //            List<SyntaxNode> resultChildren = new List<SyntaxNode>();
-    //            foreach (var child in oldNode.ChildNodes())
-    //            {
-    //                var handler  = children[child];
-    //                var newChild = newChildren.Current; newChildren.MoveNext();
+            return base.Visit(node);
+        }
 
-    //                if (handler != null)
-    //                {
-    //                    var transformed = handler(result);
-    //                }
-    //                else
-    //                    resultChildren.Add(newChild); ;
-    //            }
+        public override SyntaxNode VisitMethodDeclaration(MethodDeclarationSyntax method)
+        {
+            SyntacticalExtension<SyntaxNode> extension = methodExtension(method);
+            if (extension != null)
+            {
+                switch (extension.Kind)
+                {
+                    case ExtensionKind.Member:
+                    case ExtensionKind.Type:
+                    {
+                        return extension.Handler(method, new Scope(_scope), extension);
+                    }
+                    default:
+                    {
+                        //td: error, incorrect extension (i.e. a code extension being used inside a type)
+                        return null;
+                    }
+                }
+            }
 
-    //            return newNode.WithC
-    //        });
-    //    }
+            return base.VisitMethodDeclaration(method);
+        }
 
-    //    public override void VisitBlock(BlockSyntax node)
-    //    {
-    //        if (!_codeExtensions.Any())
-    //            return; //bail on code is no extension is registered
+        private SyntacticalExtension<SyntaxNode> methodExtension(MethodDeclarationSyntax method)
+        {
+            string extName = null;
+            string extIdentifier = null;
+            if (!method.ReturnType.IsMissing)
+            {
+                extName = method.ReturnType.ToString();
+                extIdentifier = method.Identifier.ToString();
+            }
+            else
+            {
+                extName = method.Identifier.ToString();
+            }
 
-    //        base.VisitBlock(node);
-    //    }
+            if (method.Parent is CompilationUnitSyntax || method.Parent is NamespaceDeclarationSyntax)
+            {
+                if (_typeExtensions.ContainsKey(extName))
+                    return new SyntacticalExtension<SyntaxNode>
+                    {
+                        Kind = ExtensionKind.Type,
+                        Keyword = extName,
+                        Identifier = extIdentifier,
+                        Arguments = method.ParameterList,
+                        Body = method.Body,
+                        Handler = _typeExtensions[extName]
+                    };
+            }
 
-    //    public override void VisitMethodDeclaration(MethodDeclarationSyntax method)
-    //    {
-    //        Debug.Assert(RoslynCompiler.GetSyntacticalExtensionId(method) == null);
 
-    //        SyntacticalExtension<SyntaxNode> extension;
-    //        method = processMethodExtension(method, out extension);
-    //        if (extension != null)
-    //        {
-    //            if (extension.Kind == ExtensionKind.Member)
-    //            {
-    //                addChild(method.Parent, method, extension);
-    //            }
-    //            else
-    //            {
-    //                //td: error, incorrect extension (i.e. a code extension being used inside a type)
-    //            }
-    //        }
+            if (!_memberExtensions.ContainsKey(extName))
+                return null;
 
-    //        base.VisitMethodDeclaration(method);
-    //    }
+            return new SyntacticalExtension<SyntaxNode>
+            {
+                Kind = ExtensionKind.Member,
+                Keyword = extName,
+                Identifier = extIdentifier,
+                Arguments = method.ParameterList,
+                Body = method.Body,
+                Handler = _memberExtensions[extName]
+            };
+        }
 
-    //    private MethodDeclarationSyntax processMethodExtension(MethodDeclarationSyntax method, out SyntacticalExtension<SyntaxNode> extension)
-    //    {
-    //        extension = null;
+        public override SyntaxNode VisitIncompleteMember(IncompleteMemberSyntax node)
+        {
+            SyntacticalExtension<SyntaxNode> extension = typeExtension(node);
+            if (extension != null)
+            {
+                if (extension.Kind == ExtensionKind.Type)
+                {
+                    _lookahead = MatchTypeExtension(node, extension); 
+                    return null; //remove the incomplete member
+                }
+                else
+                {
+                    //td: error, incorrect extension (i.e. a code extension being used inside a type)
+                    return null;
+                }
+            }
 
-    //        string extName = null;
-    //        string extIdentifier = null;
-    //        if (!method.ReturnType.IsMissing)
-    //        {
-    //            extName = method.ReturnType.ToString(); 
-    //            extIdentifier = method.Identifier.ToString();
-    //        }
-    //        else
-    //        {
-    //            extName = method.Identifier.ToString();
-    //        }
+            return node; //error, stop processing
+        }
 
-    //        if (!_memberExtensions.ContainsKey(extName))
-    //            return method;
+        private Func<SyntaxNode, Scope, LookAheadResult> MatchTypeExtension(IncompleteMemberSyntax incomplete, SyntacticalExtension<SyntaxNode> extension)
+        {
+            return (node, scope) =>
+            {
+                var resulSyntaxNode = node;
+                if (node is ClassDeclarationSyntax)
+                {
+                    ClassDeclarationSyntax clazz = (ClassDeclarationSyntax)node;
+                    clazz = clazz
+                        .WithAttributeLists(incomplete.AttributeLists)
+                        .WithModifiers(incomplete.Modifiers);
 
-    //        extension = new SyntacticalExtension<SyntaxNode>
-    //        {
-    //            Kind = ExtensionKind.Member,
-    //            Keyword = extName,
-    //            Identifier = extIdentifier,
-    //            Arguments = method.ParameterList,
-    //            Body = method.Body,
-    //            Handler = _memberExtensions[extName]
-    //        };
+                    resulSyntaxNode = extension.Handler(node, scope, extension);
+                }
 
-    //        string id;
-    //        return (MethodDeclarationSyntax)RoslynCompiler.SetSyntacticalExtensionId(method, out id);
-    //    }
+                //td: error?, expecting class
+                return new LookAheadResult
+                {
+                    Matched = resulSyntaxNode != null,
+                    Result = resulSyntaxNode 
+                };
+            };
+        }
 
-    //    public override void VisitInvocationExpression(InvocationExpressionSyntax call)
-    //    {
-    //        Debug.Assert(RoslynCompiler.GetSyntacticalExtensionId(call) == null);
+        private SyntacticalExtension<SyntaxNode> typeExtension(IncompleteMemberSyntax node)
+        {
+            throw new NotImplementedException(); 
+        }
 
-    //        SyntacticalExtension<SyntaxNode> extension = processCodeExtension(call);
-    //        if (extension != null && extension.Kind != ExtensionKind.Code)
-    //        {
-    //            //td: error, incorrect extension (i.e. a type extension being used inside code)
-    //        }
+        public override SyntaxNode VisitExpressionStatement(ExpressionStatementSyntax node)
+        {
+            SyntacticalExtension<SyntaxNode> extension = customCodeExtension(node);
+            if (extension == null)
+            {
+                var expr = node.Expression;
+                InvocationExpressionSyntax call = null;
 
-    //        base.VisitInvocationExpression(call);
-    //    }
+                if (expr is InvocationExpressionSyntax)
+                    call = expr as InvocationExpressionSyntax;
+                else if (expr is AssignmentExpressionSyntax)
+                {
+                    var assignment = expr as AssignmentExpressionSyntax;
+                    call = assignment.Right as InvocationExpressionSyntax;
+                }
 
-    //    private SyntacticalExtension<SyntaxNode> processCodeExtension(InvocationExpressionSyntax call)
-    //    {
-    //        if (!(call.Expression is SimpleNameSyntax))
-    //            return null; //extensions are simple identifiers
+                if (call != null)
+                    extension = codeExtension(call);
+            }
 
-    //        var extName = call.Expression.ToString();
-    //        if (!_codeExtensions.ContainsKey(extName))
-    //            return null; //not an extension
+            if (extension != null)
+            {
 
-    //        StatementSyntax statement = null;
-    //        BlockSyntax     code      = null;
+                if (extension.Kind != ExtensionKind.Code)
+                {
+                    //td: error, incorrect extension (i.e. a code extension being used inside a type)
+                    return node;
+                }
 
-    //        var parent = call.Parent;
-    //        while (parent != null)
-    //        {
-    //            if (parent is StatementSyntax)
-    //                statement = parent as StatementSyntax;
+                _lookahead = CheckCodeExtension(node, extension);
+                return null;
+            }
 
-    //            if (parent is BlockSyntax)
-    //            {
-    //                code = parent as BlockSyntax;
-    //                break;
-    //            }
+            return node;
+        }
 
-    //            parent = parent.Parent;
-    //        }
+        private SyntacticalExtension<SyntaxNode> customCodeExtension(ExpressionStatementSyntax node)
+        {
+            if (_customCode.Any())
+            {
+                string id = RoslynCompiler.GetSyntacticalExtensionId(node);
+                if (id != null)
+                {
+                    SyntacticalExtension<SyntaxNode> result;
+                    if (_customCode.TryGetValue(id, out result))
+                    {
+                        var invocation = (InvocationExpressionSyntax)node.Expression;
+                        result.Identifier = invocation.Expression.ToString();
+                        result.Arguments = invocation.ArgumentList;
+                        result.Handler = _codeExtensions[result.Keyword];
+                        return result;
+                    }
+                }
+            }
 
-    //        if (code == null || statement == null)
-    //            return null; //td: not sure
+            return null;
+        }
 
-    //        if (hasSemicolon(statement))
-    //        {
-    //            //td: syntaxis error
-    //            return null; 
-    //        }
+        public override SyntaxNode VisitLocalDeclarationStatement(LocalDeclarationStatementSyntax node)
+        {
+            if (node.Declaration.Variables.Count == 1)
+            {
+                var variable = node
+                    .Declaration
+                    .Variables[0];
 
-    //        var extCode = NextStatement<BlockSyntax>(code, statement);
-    //        if (extCode == null)
-    //        {
-    //            //td: syntaxis error
-    //            return null;
-    //        }
+                if (variable.Initializer != null)
+                {
+                    var call = variable.Initializer.Value as InvocationExpressionSyntax;
+                    if (call != null)
+                    {
+                        SyntacticalExtension<SyntaxNode> extension = codeExtension(call);
+                        if (extension != null)
+                        {
 
-    //        removeNode(extCode);
+                            if (extension.Kind != ExtensionKind.Code)
+                            {
+                                //td: error, incorrect extension (i.e. a code extension being used inside a type)
+                                return node;
+                            }
 
-    //        var extension = new SyntacticalExtension<SyntaxNode>
-    //        {
-    //            Kind = ExtensionKind.Member,
-    //            Keyword = extName,
-    //            Identifier = null,
-    //            Arguments = call.ArgumentList,
-    //            Body = extCode,
-    //            Handler = _codeExtensions[extName]
-    //        };
+                            _lookahead = CheckCodeExtension(node, extension);
+                            return null;
+                        }
+                    }
+                }
+            }
 
-    //        addChild(code, statement, extension);
-    //        return extension;
-    //    }
+            return base.VisitLocalDeclarationStatement(node);
+        }
 
-    //    public override void VisitIncompleteMember(IncompleteMemberSyntax member)
-    //    {
-    //        Debug.Assert(RoslynCompiler.GetSyntacticalExtensionId(member) == null);
+        private SyntacticalExtension<SyntaxNode> codeExtension(InvocationExpressionSyntax call)
+        {
+            if (!(call.Expression is SimpleNameSyntax))
+                return null; //extensions are simple identifiers
 
-    //        SyntacticalExtension<SyntaxNode> extension;
-    //        member = processTypeExtension(member, out extension);
-    //        if (extension != null && extension.Kind != ExtensionKind.Type)
-    //        {
-    //            //td: error, incorrect extension
-    //        }
+            var extName = call.Expression.ToString();
+            if (!_codeExtensions.ContainsKey(extName))
+                return null; //not an extension
 
-    //        base.VisitIncompleteMember(member);
-    //    }
+            return new SyntacticalExtension<SyntaxNode>
+            {
+                Kind = ExtensionKind.Code,
+                Keyword = extName,
+                Identifier = null,
+                Arguments = call.ArgumentList,
+                Body = null,
+                Handler = _codeExtensions[extName]
+            };
+        }
 
-    //    private IncompleteMemberSyntax processTypeExtension(IncompleteMemberSyntax member, out SyntacticalExtension<SyntaxNode> extension)
-    //    {
-    //        throw new NotImplementedException();
-    //    }
-    //}
+        //rewriters
+        private Func<SyntaxNode, Scope, LookAheadResult> CheckCodeExtension(SyntaxNode original, SyntacticalExtension<SyntaxNode> extension)
+        {
+            return (node, scope) =>
+            {
+                var code = node as BlockSyntax;
+                if (code == null)
+                    return new LookAheadResult { Matched = false };
+
+                extension.Body = code;
+
+                SyntaxNode resulSyntaxNode = null;
+
+                if (original is LocalDeclarationStatementSyntax)
+                {
+                    extension.Kind = ExtensionKind.Expression;
+                    resulSyntaxNode = extension.Handler(node, scope, extension);
+                    if (!(resulSyntaxNode is ExpressionSyntax))
+                    {
+                        //td: error, expecting expression
+                        return new LookAheadResult { Matched = false };
+                    }
+
+                    var localDecl = original as LocalDeclarationStatementSyntax;
+                    resulSyntaxNode = localDecl
+                        .WithDeclaration(localDecl.Declaration
+                            .WithVariables(CSharp.SeparatedList(new[] {
+                                localDecl.Declaration.Variables[0]
+                                    .WithInitializer(localDecl.Declaration.Variables[0].Initializer
+                                        .WithValue((ExpressionSyntax)resulSyntaxNode))})))
+                        .WithSemicolonToken(CSharp.ParseToken(";"));
+                }
+                else if (original is ExpressionStatementSyntax)
+                {
+                    var exprStatement = original as ExpressionStatementSyntax;
+                    var assignment = exprStatement.Expression as AssignmentExpressionSyntax;
+                    if (assignment != null)
+                    {
+                        extension.Kind = ExtensionKind.Expression;
+                        resulSyntaxNode = extension.Handler(node, scope, extension);
+                        if (!(resulSyntaxNode is ExpressionSyntax))
+                        {
+                            //td: error, expecting expression
+                            return new LookAheadResult { Matched = false };
+                        }
+
+                        resulSyntaxNode = exprStatement
+                            .WithExpression(assignment
+                                .WithRight((ExpressionSyntax)resulSyntaxNode))
+                            .WithSemicolonToken(CSharp.ParseToken(";"));
+                    }
+                    else
+                    {
+                        resulSyntaxNode = extension.Handler(node, scope, extension);
+                    }
+                }
+                else
+                    throw new NotImplementedException();
+
+                return new LookAheadResult
+                {
+                    Matched = true,
+                    Result = resulSyntaxNode,
+                };
+            };
+        }
+    }
 }

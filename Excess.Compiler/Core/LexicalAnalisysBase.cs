@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Dynamic;
 using System.Linq;
 using System.Text;
@@ -7,7 +8,8 @@ using System.Threading.Tasks;
 
 namespace Excess.Compiler.Core
 {
-    public abstract class BaseLexicalMatch<TToken, TNode, TModel> : ILexicalMatch<TToken, TNode, TModel>
+    public abstract class BaseLexicalMatch<TToken, TNode, TModel> : ILexicalMatch<TToken, TNode, TModel>,
+                                                                    IDocumentHandler<TToken, TNode, TModel>
     {
         private ILexicalAnalysis<TToken, TNode, TModel> _lexical;
         private ILexicalTransform<TToken, TNode> _transform;
@@ -16,6 +18,21 @@ namespace Excess.Compiler.Core
         public BaseLexicalMatch(ILexicalAnalysis<TToken, TNode, TModel> lexical)
         {
             _lexical = lexical;
+        }
+
+        public void apply(IDocument<TToken, TNode, TModel> document)
+        {
+            document.change(ApplyMatchers);
+        }
+
+        private IEnumerable<TToken> ApplyMatchers(IEnumerable<TToken> tokens, Scope scope)
+        {
+            int consumed = 0;
+            var result = transform(tokens, scope, out consumed);
+            if (result != null)
+                scope.set("_consumed", consumed);
+
+            return result;
         }
 
         protected class EnclosedState
@@ -308,7 +325,7 @@ namespace Excess.Compiler.Core
             return _lexical;
         }
 
-        public IEnumerable<TToken> transform(IEnumerable<TToken> tokens, Scope result, out int consumed)
+        public IEnumerable<TToken> transform(IEnumerable<TToken> tokens, Scope scope, out int consumed)
         {
             consumed = 0;
 
@@ -329,7 +346,7 @@ namespace Excess.Compiler.Core
                 do
                 {
                     var matcher = _matchers[currMatcher];
-                    var matchResult = matcher(token, result);
+                    var matchResult = matcher(token, scope);
                     switch (matchResult)
                     {
                         case TokenMatch.Match:
@@ -349,14 +366,26 @@ namespace Excess.Compiler.Core
                 while (keepMatching);
             }
 
-            return _transform.transform(tokens.Take(consumed), result);
+            return _transform.transform(tokens.Take(consumed), scope);
         }
 
     }
 
-    public abstract class LexicalAnalysis<TToken, TNode, TModel> :  ILexicalAnalysis<TToken, TNode, TModel>
+    public abstract class BaseLexicalAnalysis<TToken, TNode, TModel> :  ILexicalAnalysis<TToken, TNode, TModel>,
+                                                                        IDocumentHandler<TToken, TNode, TModel>
     {
         private List<ILexicalMatch<TToken, TNode, TModel>> _matchers = new List<ILexicalMatch<TToken, TNode, TModel>>();
+
+        public void apply(IDocument<TToken, TNode, TModel> document)
+        {
+            foreach (var matcher in _matchers)
+            {
+                var handler = matcher as IDocumentHandler<TToken, TNode, TModel>;
+                Debug.Assert(handler != null);
+                handler.apply(document);
+            }
+        }
+
         protected abstract ILexicalMatch<TToken, TNode, TModel> createMatch();
 
         public ILexicalMatch<TToken, TNode, TModel> match()
@@ -366,9 +395,12 @@ namespace Excess.Compiler.Core
             return result;
         }
 
-        public abstract ILexicalTransform<TToken, TNode> transform();
+        public virtual ILexicalTransform<TToken, TNode> transform()
+        {
+            return new LexicalTransform<TToken, TNode, TModel>();
+        }
 
-        private Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>> ReplaceExtension(string keyword, ExtensionKind kind, Func<LexicalExtension<TToken>, Scope, IEnumerable<TToken>> handler)
+        private Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>> ReplaceExtension(string keyword, ExtensionKind kind, Func<IEnumerable<TToken>, Scope, LexicalExtension<TToken>, IEnumerable<TToken>> handler)
         {
             return (tokens, scope) =>
             {
@@ -383,18 +415,17 @@ namespace Excess.Compiler.Core
                     Body = context.body,
                 };
 
-                return handler(extension, scope);
+                return handler(tokens, scope, extension);
             };
         }
 
         Dictionary<int, Func<Scope, LexicalExtension<TToken>, TNode>> _extensions = new Dictionary<int, Func<Scope, LexicalExtension<TToken>, TNode>>();
 
-        private Func<LexicalExtension<TToken>, Scope, IEnumerable<TToken>> SyntacticalExtension(Func<Scope, LexicalExtension<TToken>, TNode> handler)
+        private Func<IEnumerable<TToken>, Scope, LexicalExtension<TToken>, IEnumerable<TToken>> SyntacticalExtension(Func<TNode, Scope, LexicalExtension<TToken>, TNode> handler)
         {
-            return (extension, scope) =>
+            return (tokens, scope, extension) =>
             {
-                var tokens   = null as IEnumerable<TToken>;
-                var compiler = scope.GetService<TToken, TNode>();
+                var compiler = scope.GetService<TToken, TNode, TModel>();
 
                 //insert some placeholders, depending on the extension kind
                 switch (extension.Kind)
@@ -406,12 +437,12 @@ namespace Excess.Compiler.Core
                     }
                     case ExtensionKind.Member:
                     {
-                        tokens = compiler.ParseTokens("void __extension() {};");
+                        tokens = compiler.ParseTokens("void __extension() {}");
                         break;
                     }
                     case ExtensionKind.Type:
                     {
-                        tokens = compiler.ParseTokens("class __extension() {};");
+                        tokens = compiler.ParseTokens("class __extension() {}");
                         break;
                     }
 
@@ -424,17 +455,17 @@ namespace Excess.Compiler.Core
             };
         }
 
-        private Func<TNode, Scope, TNode> TransformLexicalExtension(LexicalExtension<TToken> extension, Func<Scope, LexicalExtension<TToken>, TNode> handler)
+        private Func<TNode, Scope, TNode> TransformLexicalExtension(LexicalExtension<TToken> extension, Func<TNode, Scope, LexicalExtension<TToken>, TNode> handler)
         {
-            return (node, scope) => handler(scope, extension);
+            return (node, scope) => handler(node, scope, extension);
         }
 
-        public ILexicalAnalysis<TToken, TNode, TModel> extension(string keyword, ExtensionKind kind, Func<Scope, LexicalExtension<TToken>, TNode> handler)
+        public ILexicalAnalysis<TToken, TNode, TModel> extension(string keyword, ExtensionKind kind, Func<TNode, Scope, LexicalExtension<TToken>, TNode> handler)
         {
             return extension(keyword, kind, SyntacticalExtension(handler));
         }
 
-        public ILexicalAnalysis<TToken, TNode, TModel> extension(string keyword, ExtensionKind kind, Func<LexicalExtension<TToken>, Scope, IEnumerable<TToken>> handler)
+        public ILexicalAnalysis<TToken, TNode, TModel> extension(string keyword, ExtensionKind kind, Func<IEnumerable<TToken>, Scope, LexicalExtension<TToken>, IEnumerable<TToken>> handler)
         {
             var result = createMatch();
 
