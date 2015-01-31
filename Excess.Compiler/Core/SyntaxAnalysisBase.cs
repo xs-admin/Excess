@@ -8,7 +8,8 @@ using System.Threading.Tasks;
 
 namespace Excess.Compiler.Core
 {
-    public abstract class BaseSyntacticalMatch<TToken, TNode, TModel> : ISyntacticalMatch<TToken, TNode, TModel>
+    public abstract class BaseSyntacticalMatch<TToken, TNode, TModel> : ISyntacticalMatch<TToken, TNode, TModel>,
+                                                                        IDocumentHandler<TToken, TNode, TModel>
     {
         ISyntaxAnalysis<TToken, TNode, TModel> _syntax;
 
@@ -92,39 +93,42 @@ namespace Excess.Compiler.Core
             return this;
         }
 
+        Func<TNode, Scope, TNode> _then;
         public ISyntaxAnalysis<TToken, TNode, TModel> then(Func<TNode, TNode> handler)
         {
-            Debug.Assert(_then == null);
-            _then = new FunctorSyntaxTransform<TNode>(handler);
-            return _syntax;
+            return then((node, scope) => handler(node));
+        }
+
+        public ISyntaxAnalysis<TToken, TNode, TModel> then(ISyntaxTransform<TNode> transform)
+        {
+            return then((node, scope) => transform.transform(node, scope));
         }
 
         public ISyntaxAnalysis<TToken, TNode, TModel> then(Func<TNode, Scope, TNode> handler)
         {
             Debug.Assert(_then == null);
-            _then = new FunctorSyntaxTransform<TNode>(handler);
+            _then = handler;
             return _syntax;
         }
 
-        public ISyntaxAnalysis<TToken, TNode, TModel> then(ISyntaxTransform<TNode> transform)
+        public void apply(IDocument<TToken, TNode, TModel> document)
         {
-            Debug.Assert(_then == null);
-            _then = transform;
-            return _syntax;
+            document.change(transform);
         }
 
-        public bool matches(TNode node, Scope scope)
+        private TNode transform(TNode node, Scope scope)
         {
+            if (_then == null)
+                return node;
+
             foreach (var matcher in _matchers)
             {
                 if (!matcher(node, scope))
-                    return false;
+                    return node;
             }
 
-            return true;
+            return _then(node, scope);
         }
-
-        ISyntaxTransform<TNode> _then;
     }
 
     public abstract class BaseSyntaxAnalysis<TToken, TNode, TModel> : ISyntaxAnalysis<TToken, TNode, TModel>,
@@ -168,7 +172,8 @@ namespace Excess.Compiler.Core
 
         protected abstract ISyntacticalMatch<TToken, TNode, TModel> createMatch(Func<TNode, bool> selector);
 
-        List<ISyntacticalMatch<TToken, TNode, TModel>> _matchers = new List<ISyntacticalMatch<TToken, TNode, TModel>>();
+        protected List<ISyntacticalMatch<TToken, TNode, TModel>> _matchers = new List<ISyntacticalMatch<TToken, TNode, TModel>>();
+
         public ISyntacticalMatch<TToken, TNode, TModel> match(Func<TNode, bool> selector)
         {
             var matcher = createMatch(selector);
@@ -218,11 +223,15 @@ namespace Excess.Compiler.Core
 
             document.change(normalize, "syntactical-normalize");
 
-            if (_matchers.Any())
-                document.change(matchers);
+            foreach(var matcher in _matchers)
+            {
+                var handler = matcher as IDocumentHandler<TToken, TNode, TModel>;
+                Debug.Assert(handler != null);
+
+                handler.apply(document);
+            }
         }
 
-        protected abstract TNode matchers(TNode node, Scope scope);
         protected abstract TNode normalize(TNode node, Scope scope);
         protected abstract TNode extensions(TNode node, Scope scope);
     }

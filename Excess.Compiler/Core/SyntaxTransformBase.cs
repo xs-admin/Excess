@@ -30,6 +30,8 @@ namespace Excess.Compiler.Core
             };
         }
 
+        protected abstract TNode resolveScope(TNode node, bool type, bool @namespace);
+
         Func<TNode, Scope, IEnumerable<TNode>> SelectFromScope(string nodes)
         {
             return (node, scope) =>
@@ -102,7 +104,7 @@ namespace Excess.Compiler.Core
             return this;
         }
 
-        public ISyntaxTransform<TNode> replace(Func<TNode, Scope, IEnumerable<TNode>> selector, Func<TNode, Scope , TNode> handler)
+        public ISyntaxTransform<TNode> replace(Func<TNode, Scope, IEnumerable<TNode>> selector, Func<TNode, Scope, TNode> handler)
         {
             _selectors.Add(selector);
             _transformers.Add(ReplaceNodes(handler));
@@ -116,89 +118,73 @@ namespace Excess.Compiler.Core
             return this;
         }
 
-        private static Random _randId = new Random();
-
-        Func<TNode, bool> _mapper;
-        public ISyntaxTransform<TNode> match(Func<TNode, bool> mapper)
-        {
-            Debug.Assert(_mapper == null);
-            _mapper = mapper;
-            return this;
-        }
-
         protected abstract TNode removeNodes(TNode node, IEnumerable<TNode> nodes);
         protected abstract TNode replaceNodes(TNode node, Scope scope, IEnumerable<TNode> nodes, Func<TNode, Scope, TNode> handler);
         protected abstract TNode addToNode(TNode node, IEnumerable<TNode> nodes);
-    }
-
-    public class FunctorSyntaxTransform<TNode> : ISyntaxTransform<TNode>
-    {
-        Func<TNode, TNode>         _functor;
-        Func<TNode, Scope , TNode> _functorExtended;
-
-        public FunctorSyntaxTransform(Func<TNode, TNode> handler)
-        {
-            _functor = handler;
-        }
-
-        public FunctorSyntaxTransform(Func<TNode, Scope , TNode> handler)
-        {
-            _functorExtended = handler;
-        }
-
-        public ISyntaxTransform<TNode> remove(string nodes)
-        {
-            throw new InvalidOperationException();
-        }
-
-        public ISyntaxTransform<TNode> remove(Func<TNode, Scope, IEnumerable<TNode>> handler)
-        {
-            throw new InvalidOperationException();
-        }
-
-        public ISyntaxTransform<TNode> replace(string nodes, Func<TNode, Scope , TNode> handler)
-        {
-            throw new InvalidOperationException();
-        }
-
-        public ISyntaxTransform<TNode> replace(string nodes, Func<TNode, TNode> handler)
-        {
-            throw new InvalidOperationException();
-        }
-
-        public ISyntaxTransform<TNode> replace(Func<TNode, Scope, IEnumerable<TNode>> selector, Func<TNode, Scope , TNode> handler)
-        {
-            throw new InvalidOperationException();
-        }
-
-        public ISyntaxTransform<TNode> replace(Func<TNode, Scope, IEnumerable<TNode>> selector, Func<TNode, TNode> handler)
-        {
-            throw new InvalidOperationException();
-        }
-
-        public ISyntaxTransform<TNode> addToScope(string nodes, bool type = false, bool @namespace = false)
-        {
-            throw new InvalidOperationException();
-        }
-
-        public ISyntaxTransform<TNode> addToScope(Func<TNode, Scope, IEnumerable<TNode>> handler, bool type = false, bool @namespace = false)
-        {
-            throw new InvalidOperationException();
-        }
-
-        public ISyntaxTransform<TNode> match(Func<TNode, bool> mapper)
-        {
-            throw new InvalidOperationException();
-        }
 
         public TNode transform(TNode node, Scope scope)
         {
-            if (_functorExtended != null)
-                return _functorExtended(node, scope);
+            var compiler = scope.GetService<TToken, TNode, TModel>();
 
-            return _functor(node);
-        }
+            Debug.Assert(compiler != null && _selectors.Count == _transformers.Count);
+            switch (_transformers.Count)
+            {
+                case 0: return node;
+                case 1:
+                {
+                    //do not track on single transformations
+                    var selector = _selectors[0];
+                    IEnumerable<TNode> nodes = selector != null? selector(node, scope) : new TNode[] { };
+                    var resultNode = _transformers[0](node, scope, nodes);
+                    return resultNode;
+                }
+                default:
+                {
+                    //problem here is there are dependency nodes obtained 
+                    //during match, so tracking should be performed.
+                    //I never got the roslyn one to work for some reason.
+                    //so, td:
 
+                    var selectorIds = new Dictionary<object, List<string>>();
+                    foreach (var selector in _selectors)
+                    {
+                        var sNodes = selector(node, scope);
+                        if (sNodes.Any())
+                        {
+                            foreach (var sNode in sNodes)
+                            {
+                                var xsid = compiler.GetExcessId(sNode).ToString();
+
+                                List<string> selectorNodes;
+                                if (!selectorIds.TryGetValue(selector, out selectorNodes))
+                                {
+                                    selectorNodes = new List<string>();
+                                    selectorIds[selector] = selectorNodes;
+                                }
+
+                                selectorNodes.Add(xsid);
+                            }
+                        }
+                    }
+
+                    for (int i = 0;  i < _transformers.Count; i++)
+                    {
+                        var transformer = _transformers[i];
+                        var selector    = _selectors[i];
+
+                        IEnumerable<TNode> nodes = null;
+                        List<string> nodeIds;
+                        if (selectorIds.TryGetValue(selector, out nodeIds))
+                            nodes = compiler.Find(node, nodeIds);
+
+                        node = transformer(node, scope, nodes);
+                        if (node == null)
+                            return default(TNode);
+                    }
+
+                    return node;
+                }
+            }
+        }    
     }
-
 }

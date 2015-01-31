@@ -40,7 +40,10 @@ namespace Excess.Compiler.Tests
 
             //as code function
             tree = compiler.ApplySyntacticalPass("class foo { public function bar() { function foobar(int x) {return 3;}}}", out text);
-            Assert.IsTrue(text == "class foo\r\n{\r\n    public void bar()\r\n    {\r\n    }\r\n}");
+            Assert.IsTrue(tree.GetRoot()
+                .DescendantNodes()
+                .OfType<ParenthesizedLambdaExpressionSyntax>()
+                .Any()); //code functions replaced by a lambda declaration
         }
     }
 }

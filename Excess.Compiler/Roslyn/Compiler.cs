@@ -56,8 +56,15 @@ namespace Excess.Compiler.Roslyn
 
         public SyntaxNode MarkNode(SyntaxNode node, out int xsId)
         {
-            string strId = RoslynCompiler.uniqueId();
-            xsId = int.Parse(strId);
+            string strId = GetExcessStringId(node);
+            if (strId != null)
+            {
+                xsId = int.Parse(strId);
+                return node;
+            }
+
+            strId = RoslynCompiler.uniqueId();
+            xsId  = int.Parse(strId);
             return RoslynCompiler.MarkNode(node, strId); 
         }
 
@@ -87,6 +94,11 @@ namespace Excess.Compiler.Roslyn
             return xsStr == null ? -1 : int.Parse(xsStr);
         }
 
+        public string GetExcessStringId(SyntaxNode node)
+        {
+            return RoslynCompiler.NodeMark(node);
+        }
+
         public SyntaxNode Parse(string text)
         {
             return CSharp.ParseSyntaxTree(text).GetRoot();
@@ -97,6 +109,21 @@ namespace Excess.Compiler.Roslyn
             return CSharp.ParseTokens(text);
         }
 
+        public IEnumerable<SyntaxNode> Find(SyntaxNode node, IEnumerable<string> xsIds)
+        {
+            //td: optimize
+            foreach (var id in xsIds)
+            {
+                var result = FindNode(node, id);
+                if (result != null)
+                    yield return result;
+            }
+        }
+
+        public SyntaxNode FindNode(SyntaxNode node, string xsId)
+        {
+            return node.GetAnnotatedNodes(RoslynCompiler.NodeIdAnnotation + xsId).FirstOrDefault();
+        }
     }
 
     public class RoslynCompiler : CompilerBase<SyntaxToken, SyntaxNode, SemanticModel>
@@ -122,11 +149,6 @@ namespace Excess.Compiler.Roslyn
 
             handler.apply(document);
         }
-
-        //public override ICompilerPass initialPass(string text)
-        //{
-        //    return new LexicalPass(text);
-        //}
 
         //out of interface methods, used for testing
         public ExpressionSyntax CompileExpression(string expr)
@@ -172,7 +194,7 @@ namespace Excess.Compiler.Roslyn
 
             document.applyChanges(CompilerStage.Syntactical);
 
-            result = document.LexicalText;
+            result = document.Root.NormalizeWhitespace().ToFullString();
             return document.Root.SyntaxTree;
         }
 
@@ -207,14 +229,19 @@ namespace Excess.Compiler.Roslyn
         {
             return node
                 .WithoutAnnotations(NodeIdAnnotation)
-                .WithAdditionalAnnotations(new SyntaxAnnotation(NodeIdAnnotation + id, id));
+                .WithAdditionalAnnotations(
+                    new SyntaxAnnotation(NodeIdAnnotation + id),
+                    new SyntaxAnnotation(NodeIdAnnotation, id));
         }
 
         public static string NodeMark(SyntaxNode node)
         {
-            var annotation = node.GetAnnotations(NodeIdAnnotation).FirstOrDefault();
+            var annotation = node
+                .GetAnnotations(NodeIdAnnotation)
+                    .FirstOrDefault();
+
             if (annotation != null)
-                return annotation.Data.Remove(0, NodeIdAnnotation.Length);
+                return annotation.Data;
 
             return null;
         }
@@ -334,6 +361,41 @@ namespace Excess.Compiler.Roslyn
             }
 
             return false;
+        }
+
+        static public Func<SyntaxNode, Scope, SyntaxNode> RemoveStatement(SyntaxNode statement)
+        {
+            string statementId = NodeMark(statement);
+            return (node, scope) =>
+            {
+                BlockSyntax code = (BlockSyntax)node;
+                return code.RemoveNode(FindNode(code.Statements, statementId), SyntaxRemoveOptions.KeepTrailingTrivia);
+            };
+        }
+
+        static public SyntaxNode FindNode<T>(SyntaxList<T> nodes, string id) where T : SyntaxNode
+        {
+            foreach (var node in nodes)
+            {
+                if (NodeMark(node) == id)
+                    return node;
+            }
+
+            return null;
+        }
+
+        static public StatementSyntax NextStatement(BlockSyntax code, StatementSyntax statement)
+        {
+            var found = false;
+            foreach (var stment in code.Statements)
+            {
+                if (found)
+                    return stment;
+
+                found = stment == statement;
+            }
+
+            return null;
         }
     }
 }

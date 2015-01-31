@@ -41,5 +41,6 @@ namespace Excess.Compiler
         IEnumerable<TToken> ParseTokens(string text);
         TNode Parse(string text);
         IEnumerable<TToken> MarkTokens(IEnumerable<TToken> tokens, out int xsId);
+        IEnumerable<TNode> Find(TNode node, IEnumerable<string> xsIds);
     }
 }

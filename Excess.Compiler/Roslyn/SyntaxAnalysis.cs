@@ -41,28 +41,9 @@ namespace Excess.Compiler.Roslyn
                 return returnValue;
             });
         }
-
         protected override SyntaxNode resolveScope(SyntaxNode node, bool type, bool @namespace)
         {
             throw new NotImplementedException();
-        }
-
-        protected override IEnumerable<SyntaxNode> findNodes(SyntaxNode parent, string annotation, string data)
-        {
-            return parent.GetAnnotatedNodes(annotation)
-                .Where(node => node.GetAnnotations(annotation).First().Data == data);
-        }
-
-        protected override SyntaxNode markNodes(SyntaxNode parent, string annotation, Dictionary<SyntaxNode, string> nodeIds)
-        {
-            return parent.ReplaceNodes(nodeIds.Keys, (oldNode, newNode) => {
-                return newNode.WithAdditionalAnnotations(new SyntaxAnnotation(annotation, nodeIds[oldNode]));
-            });
-        }
-
-        protected override SyntaxNode getParent(SyntaxNode node)
-        {
-            return node.Parent;
         }
     }
 
@@ -107,11 +88,6 @@ namespace Excess.Compiler.Roslyn
         {
             ExtensionRewriter rewriter = new ExtensionRewriter(_extensions, scope);
             return rewriter.Visit(node);
-        }
-
-        protected override SyntaxNode matchers(SyntaxNode node, Scope scope)
-        {
-            SyntaxRewriter rewriter = new SyntaxRewriter(_matchers)
         }
 
         protected override SyntaxNode normalize(SyntaxNode node, Scope scope)

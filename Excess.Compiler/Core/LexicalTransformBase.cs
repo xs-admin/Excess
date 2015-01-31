@@ -132,28 +132,23 @@ namespace Excess.Compiler.Core
             return this;
         }
 
-        ISyntaxTransform<TNode> _syntactical;
-
         public ILexicalTransform<TToken, TNode> then(string named, Func<TNode, TNode> handler)
         {
 
-            return then(named, new FunctorSyntaxTransform<TNode>(handler));
-        }
-
-        public ILexicalTransform<TToken, TNode> then(string named, Func<TNode, Scope , TNode> handler)
-        {
-            return then(named, new FunctorSyntaxTransform<TNode>(handler));
+            return then(named, (node, scope) => handler(node));
         }
 
         public ILexicalTransform<TToken, TNode> then(string named, ISyntaxTransform<TNode> transform)
         {
-            Debug.Assert(_syntactical == null);
-            _syntactical = transform;
+            return then(named, (node, scope) => transform.transform(node, scope));
+        }
 
+        public ILexicalTransform<TToken, TNode> then(string named, Func<TNode, Scope, TNode> handler)
+        {
             _binders.Add((tokens, scope) =>
             {
                 if (named != null)
-                    return new TransformBinder(MarkTokens(), labelExtent(tokens, scope, named));
+                    return new TransformBinder(Schedule(handler), labelExtent(tokens, scope, named));
 
                 throw new InvalidOperationException("Must specify 'named'");
             });
@@ -161,9 +156,14 @@ namespace Excess.Compiler.Core
             return this;
         }
 
-        private Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>> MarkTokens()
+        private Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>> Schedule(Func<TNode, Scope, TNode> handler)
         {
-            throw new NotImplementedException();
+            return (tokens, scope) =>
+            {
+                var document = scope.GetDocument<TToken, TNode, TModel>();
+                return document.change(tokens, handler, kind:"lexical-extension");
+            };
+            
         }
 
         public IEnumerable<TToken> transform(IEnumerable<TToken> tokens, Scope scope)

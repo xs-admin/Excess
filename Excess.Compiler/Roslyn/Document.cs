@@ -59,7 +59,18 @@ namespace Excess.Compiler.Roslyn
                 nodes[tNode] = transformer.Value;
             }
 
-            return node.ReplaceNodes(nodes.Keys, (oldNode, newNode) => nodes[oldNode](newNode, _scope));
+            IEnumerable<SyntaxNode> toReplace = nodes.Keys;
+            return node.ReplaceNodes(toReplace, (oldNode, newNode) =>
+            {
+                Func<SyntaxNode, Scope, SyntaxNode> handler;
+                if (nodes.TryGetValue(oldNode, out handler))
+                {
+                    var result = handler(newNode, _scope);
+                    return result;
+                }
+
+                return newNode;
+            });
         }
 
         protected override SyntaxNode syntacticalTransform(SyntaxNode node, Scope scope, IEnumerable<Func<SyntaxNode, Scope, SyntaxNode>> transformers)

@@ -266,18 +266,17 @@ namespace Excess.Compiler.Tests
 
         private SyntaxNode memberExtension(SyntaxNode node, SyntacticalExtension<SyntaxNode> extension)
         {
-            //var memberDecl = result.Node as MethodDeclarationSyntax;
-            //Assert.IsNotNull(memberDecl);
+            var memberDecl = node as MethodDeclarationSyntax;
+            Assert.IsNotNull(memberDecl);
 
-            //return memberDecl
-            //    .WithReturnType(CSharp.ParseTypeName("int"))
-            //    .WithIdentifier(CSharp.ParseToken("anotherName"))
-            //    .WithParameterList(CSharp.ParameterList())
-            //    .WithBody(memberDecl.Body
-            //        .AddStatements(new[] {
-            //            CSharp.ParseStatement("var myFoo = 5;"),
-            //            CSharp.ParseStatement("bar(myFoo);")}));
-            return null;
+            return memberDecl
+                .WithReturnType(CSharp.ParseTypeName("int"))
+                .WithIdentifier(CSharp.ParseToken("anotherName"))
+                .WithParameterList(CSharp.ParameterList())
+                .WithBody(memberDecl.Body
+                    .AddStatements(new[] {
+                        CSharp.ParseStatement("var myFoo = 5;"),
+                        CSharp.ParseStatement("bar(myFoo);")}));
         }
 
         private SyntaxNode typeExtension(SyntaxNode node, SyntacticalExtension<SyntaxNode> extension)

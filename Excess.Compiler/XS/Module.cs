@@ -36,15 +36,8 @@ namespace Excess.Compiler.XS
                     .enclosed('(', ')')
                     .token('{')
                     .then(lexical.transform()
-                        .remove("fn"));
-                        //td: !!!
-                        //.then("id", ProcessMemberFunction, 
-                        //    mapper: MapMemberFunction));
-
-            sintaxis
-                .match<MethodDeclarationSyntax>(method => method.ReturnType.ToString() == "function")
-                    .then(ProcessUntypedFunction)
-                .extension("function", ExtensionKind.Code, ProcessCodeFunction);
+                        .remove("fn")
+                        .then("id", ProcessMemberFunction));
         }
 
         private static SyntaxNode ProcessUntypedFunction(SyntaxNode arg)
@@ -70,28 +63,58 @@ namespace Excess.Compiler.XS
                 return node;
             }
 
-            var statement = node as StatementSyntax;
+            var statement = node
+                .AncestorsAndSelf()
+                .OfType<StatementSyntax>()
+                .FirstOrDefault();
+
             Debug.Assert(statement != null); //td: error, maybe?
+            Debug.Assert(statement is ExpressionStatementSyntax);
 
+            var invocation = (statement as ExpressionStatementSyntax)
+                .Expression as InvocationExpressionSyntax;
+            Debug.Assert(invocation != null);
+
+            var function = invocation.Expression as IdentifierNameSyntax;
+            Debug.Assert(function != null);
+
+            BlockSyntax parent = statement.Parent as BlockSyntax;
+            Debug.Assert(parent != null); //td: error, maybe?
+
+            var body = RoslynCompiler.NextStatement(parent, statement) as BlockSyntax;
+            if (body == null)
+            {
+                //td: error, function declaration must be followed by a block of code
+                return node;
+            }
+
+            //We are not allowed to modify parents, so schedule the removal of the code
             var document = scope.GetDocument<SyntaxToken, SyntaxNode, SemanticModel>();
-            document.change(statement, null, "custom-extension");
-            return statement;
+            document.change(parent, RoslynCompiler.RemoveStatement(body));
+            document.change(statement, ProcessCodeFunction(function, body));
+            return node;
         }
 
-        static private bool startsMemberFunction(SyntaxToken token)
+        private static Func<SyntaxNode, Scope, SyntaxNode> ProcessCodeFunction(IdentifierNameSyntax name, BlockSyntax body)
         {
-            var kind = token.CSharpKind();
-            return RoslynCompiler.isLexicalIdentifier(kind) || kind == SyntaxKind.GreaterThanToken;
-        }
+            return (node, scope) => 
+            {
+                LocalDeclarationStatementSyntax localDeclaration = (LocalDeclarationStatementSyntax)CSharp.ParseStatement("var id = () => {}");
+                var variable = localDeclaration.Declaration.Variables[0];
+                var lambda = variable.Initializer.Value as ParenthesizedLambdaExpressionSyntax;
+                Debug.Assert(lambda != null);
 
-        static private SyntaxNode ProcessCodeFunction(SyntaxNode node, Scope result, SyntacticalExtension<SyntaxNode> extension)
-        {
-            var expr = CSharp.ParseStatement("var " + extension.Identifier + " = () => {};");
-            return expr
-                .ReplaceNode(expr
-                    .DescendantNodes()
-                    .OfType<ParenthesizedLambdaExpressionSyntax>()
-                    .First(), CSharp.ParenthesizedLambdaExpression((BlockSyntax)extension.Body));
+                return localDeclaration
+                    .WithDeclaration(localDeclaration
+                        .Declaration
+                        .WithVariables(CSharp.SeparatedList(new[] {
+                                variable
+                                    .WithIdentifier(name.Identifier)
+                                    .WithInitializer(variable.Initializer
+                                        .WithValue(lambda
+                                            //.WithParameterList(invocation.ArgumentList) //td: extension arguments
+                                            .WithBody(body)))})));
+            };
         }
     }
 }

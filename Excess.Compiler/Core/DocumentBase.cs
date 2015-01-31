@@ -150,7 +150,7 @@ namespace Excess.Compiler.Core
             return applyNodeChanges(root, null, stage);
         }
 
-        private TNode applyNodeChanges(TNode root, string kind, CompilerStage stage)
+        private TNode applyNodeChanges(TNode node, string kind, CompilerStage stage)
         {
             List<Change> changeList = null;
             switch (stage)
@@ -160,6 +160,8 @@ namespace Excess.Compiler.Core
                 default: throw new NotImplementedException();
             }
 
+            if (!changeList.Any())
+                return node;
 
             IEnumerable<Change> changes;
             if (kind != null)
@@ -171,7 +173,7 @@ namespace Excess.Compiler.Core
             }
 
             if (changes == null || !changes.Any())
-                return root;
+                return node;
 
             var transformers = new Dictionary<int, Func<TNode, Scope, TNode>>();
             foreach (var change in changes)
@@ -180,7 +182,7 @@ namespace Excess.Compiler.Core
                 transformers[change.ID] = change.Transform;
             }
 
-            return transform(root, transformers);
+            return transform(node, transformers);
         }
 
         protected IEnumerable<Change> poll(List<Change> changes, string kind)

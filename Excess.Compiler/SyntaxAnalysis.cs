@@ -16,13 +16,10 @@ namespace Excess.Compiler
         ISyntaxAnalysis<TToken, TNode, TModel> then(Func<TNode, TNode> handler);
         ISyntaxAnalysis<TToken, TNode, TModel> then(Func<TNode, Scope, TNode> handler);
         ISyntaxAnalysis<TToken, TNode, TModel> then(ISyntaxTransform<TNode> transform);
-
-        bool matches(TNode node, Scope scope);
     }
 
     public interface ISyntaxTransform<TNode>
     {
-        ISyntaxTransform<TNode> match(Func<TNode, bool> mapper);
         ISyntaxTransform<TNode> remove(string nodes);
         ISyntaxTransform<TNode> remove(Func<TNode, Scope, IEnumerable<TNode>> handler);
         ISyntaxTransform<TNode> replace(string nodes, Func<TNode, Scope, TNode> handler);
@@ -31,6 +28,8 @@ namespace Excess.Compiler
         ISyntaxTransform<TNode> replace(Func<TNode, Scope, IEnumerable<TNode>> selector, Func<TNode, TNode> handler);
         ISyntaxTransform<TNode> addToScope(string nodes, bool type = false, bool @namespace = false);
         ISyntaxTransform<TNode> addToScope(Func<TNode, Scope, IEnumerable<TNode>> handler, bool type = false, bool @namespace = false);
+
+        TNode transform(TNode node, Scope scope);
 
     }
 
