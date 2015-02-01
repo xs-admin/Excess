@@ -13,13 +13,18 @@ namespace Excess.Compiler.Core
         protected ICompilerService<TToken, TNode, TModel> _compiler;
         public BaseDocument(Scope scope)
         {
-            _scope    = scope;
+            _scope    = new Scope(scope);
             _compiler = _scope.GetService<TToken, TNode, TModel>();
+
+            //setup the node repository
+            //td: per document?
+            _scope.set<IDictionary<int, Scope>>(new Dictionary<int, Scope>());
         }
 
 
         protected string _text;
         public string Text { get { return _text; } set { update(value); } }
+        public TModel Model { get; set; }
 
         protected void update(string text)
         {
@@ -42,6 +47,7 @@ namespace Excess.Compiler.Core
             public int ID { get; set; }
             public string Kind { get; set; }
             public Func<TNode, Scope, TNode> Transform { get; set; }
+            public Func<TNode, TModel, Scope, TNode> SemanticalTransform { get; set; }
         }
 
         List<Change> _lexicalChanges = new List<Change>();
@@ -91,29 +97,77 @@ namespace Excess.Compiler.Core
             int nodeId;
             TNode result = _compiler.MarkNode(node, out nodeId);
 
-            _syntacticalChanges.Add(new Change
+            if (_stage <= CompilerStage.Syntactical)
+            {
+                _syntacticalChanges.Add(new Change
+                {
+                    ID = nodeId,
+                    Kind = kind,
+                    Transform = transform
+                });
+            }
+            else
+            {
+                Debug.Assert(_stage == CompilerStage.Semantical);
+                _semanticalChanges.Add(new Change
+                {
+                    ID = nodeId,
+                    Kind = kind,
+                    SemanticalTransform = (snode, model, scope) => transform(snode, scope)
+                });
+            }
+
+            return result;
+        }
+
+        List<Func<TNode, TModel, Scope, TNode>> _semantical = new List<Func<TNode, TModel, Scope, TNode>>();
+        public void change(Func<TNode, TModel, Scope, TNode> transform, string kind = null)
+        {
+            Debug.Assert(kind == null); //td: 
+
+            _semantical.Add(transform);
+        }
+
+        List<Change> _semanticalChanges = new List<Change>();
+        public TNode change(TNode node, Func<TNode, TModel, Scope, TNode> transform, string kind)
+        {
+            int nodeId;
+            TNode result = _compiler.MarkNode(node, out nodeId);
+
+            _semanticalChanges.Add(new Change
             {
                 ID = nodeId,
                 Kind = kind,
-                Transform = transform
+                SemanticalTransform = transform
             });
 
             return result;
         }
 
-        public void applyChanges()
+        protected CompilerStage _stage = CompilerStage.Started;
+        public bool applyChanges()
         {
-            applyChanges(CompilerStage.Finished);
+            return applyChanges(CompilerStage.Finished);
         }
 
-        public void applyChanges(CompilerStage stage)
+        public bool applyChanges(CompilerStage stage)
         {
-            if (stage >= CompilerStage.Lexical)
+            if (stage < _stage)
+                return true;
+
+            var oldStage = _stage;
+            _stage = stage;
+
+            if (oldStage < CompilerStage.Lexical && stage >= CompilerStage.Lexical)
                 applyLexical();
 
-            if (stage >= CompilerStage.Syntactical)
+            if (oldStage < CompilerStage.Syntactical && stage >= CompilerStage.Syntactical)
                 applySyntactical();
 
+            if (oldStage <= CompilerStage.Semantical && stage >= CompilerStage.Semantical)
+                return applySemantical();
+
+            return true;
         }
 
         public bool hasErrors()
@@ -135,10 +189,30 @@ namespace Excess.Compiler.Core
             notifyResultText(resultText);
 
             if (annotations.Any())
-                _root = processAnnotations(_root, annotations);
+            {
+                foreach (var annotation in annotations)
+                {
+                    TNode aNode = _compiler.Find(_root, annotation.Value);
+                    Debug.Assert(aNode != null);
+
+                    //change the id of the change from token to node
+                    int annotationId = int.Parse(annotation.Key);
+                    foreach (var change in _lexicalChanges)
+                    {
+                        if (change.ID == annotationId)
+                        {
+                            change.ID = _compiler.GetExcessId(aNode);
+                            Debug.Assert(change.ID >= 0);
+                        }
+                    }
+                }
+            }
 
             //allow extensions writers to perform one last rewrite before the syntactical 
             _root = applyNodeChanges(_root, "lexical-extension", CompilerStage.Lexical);
+
+            //move any pending changes to the syntactical pass
+            _syntacticalChanges.AddRange(_lexicalChanges);
         }
 
         protected virtual void notifyResultText(string resultText)
@@ -157,6 +231,7 @@ namespace Excess.Compiler.Core
             {
                 case CompilerStage.Lexical:     changeList = _lexicalChanges; break;
                 case CompilerStage.Syntactical: changeList = _syntacticalChanges; break;
+                case CompilerStage.Semantical:  changeList = _semanticalChanges; break;
                 default: throw new NotImplementedException();
             }
 
@@ -175,14 +250,28 @@ namespace Excess.Compiler.Core
             if (changes == null || !changes.Any())
                 return node;
 
-            var transformers = new Dictionary<int, Func<TNode, Scope, TNode>>();
-            foreach (var change in changes)
+            if (stage == CompilerStage.Semantical)
             {
-                Debug.Assert(change.Transform != null);
-                transformers[change.ID] = change.Transform;
-            }
+                var transformers = new Dictionary<int, Func<TNode, TModel, Scope, TNode>>();
+                foreach (var change in changes)
+                {
+                    Debug.Assert(change.SemanticalTransform != null);
+                    transformers[change.ID] = change.SemanticalTransform;
+                }
 
-            return transform(node, transformers);
+                return transform(node, transformers);
+            }
+            else
+            {
+                var transformers = new Dictionary<int, Func<TNode, Scope, TNode>>();
+                foreach (var change in changes)
+                {
+                    if (change.Transform != null)
+                        transformers[change.ID] = change.Transform;
+                }
+
+                return transform(node, transformers);
+            }
         }
 
         protected IEnumerable<Change> poll(List<Change> changes, string kind)
@@ -199,8 +288,7 @@ namespace Excess.Compiler.Core
         }
 
         protected abstract TNode transform(TNode root, Dictionary<int, Func<TNode, Scope, TNode>> transformers);
-        protected abstract TNode processAnnotations(TNode node, Dictionary<string, SourceSpan> annotations);
-
+        protected abstract TNode transform(TNode root, Dictionary<int, Func<TNode, TModel, Scope, TNode>> transformers);
 
         private void applySyntactical()
         {
@@ -210,7 +298,12 @@ namespace Excess.Compiler.Core
             if (_syntactical.Any())
                 _root = syntacticalTransform(_root, _scope, _syntactical);
 
-            _root = applyNodeChanges(_root, CompilerStage.Syntactical);
+            TNode oldRoot;
+            do
+            {
+                oldRoot = _root;
+                _root   = applyNodeChanges(_root, CompilerStage.Syntactical);
+            } while (!oldRoot.Equals(_root));
         }
 
         protected abstract TNode syntacticalTransform(TNode node, Scope scope, IEnumerable<Func<TNode, Scope, TNode>> transformers);
@@ -224,5 +317,15 @@ namespace Excess.Compiler.Core
             return node;
         }
 
+        private bool applySemantical()
+        {
+            foreach (var semantical in _semantical)
+            {
+                _root = semantical(_root, Model, _scope);
+            }
+
+            _root = applyNodeChanges(_root, CompilerStage.Semantical);
+            return !_semanticalChanges.Any(); 
+        }
     }
 }

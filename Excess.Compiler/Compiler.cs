@@ -19,6 +19,7 @@ namespace Excess.Compiler
     {
         ILexicalAnalysis<TToken, TNode, TModel> Lexical();
         ISyntaxAnalysis<TToken, TNode, TModel> Sintaxis();
+        ISemanticAnalysis<TToken, TNode, TModel> Semantics();
 
         bool Compile(string text, CompilerStage stage = CompilerStage.Started);
         bool CompileAll(string text);
@@ -42,5 +43,6 @@ namespace Excess.Compiler
         TNode Parse(string text);
         IEnumerable<TToken> MarkTokens(IEnumerable<TToken> tokens, out int xsId);
         IEnumerable<TNode> Find(TNode node, IEnumerable<string> xsIds);
+        TNode Find(TNode node, SourceSpan value);
     }
 }

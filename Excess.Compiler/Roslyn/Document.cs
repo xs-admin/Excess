@@ -31,20 +31,6 @@ namespace Excess.Compiler.Roslyn
             LexicalText = resultText;
         }
 
-        protected override SyntaxNode processAnnotations(SyntaxNode node, Dictionary<string, SourceSpan> annotations)
-        {
-            var nodes = new Dictionary<SyntaxNode, string>();
-            foreach(var annotation in annotations)
-            {
-                SyntaxNode aNode = node.FindNode(new TextSpan(annotation.Value.Start, annotation.Value.Length));
-                Debug.Assert(aNode != null);
-
-                nodes[aNode] = annotation.Key;
-            }
-
-            return node.ReplaceNodes(nodes.Keys, (oldNode, newNode) => RoslynCompiler.MarkNode(newNode, nodes[oldNode]));
-        }
-
         protected override SyntaxNode transform(SyntaxNode node, Dictionary<int, Func<SyntaxNode, Scope, SyntaxNode>> transformers)
         {
             var nodes = new Dictionary<SyntaxNode, Func<SyntaxNode, Scope, SyntaxNode>> ();
@@ -66,6 +52,36 @@ namespace Excess.Compiler.Roslyn
                 if (nodes.TryGetValue(oldNode, out handler))
                 {
                     var result = handler(newNode, _scope);
+                    return result;
+                }
+
+                return newNode;
+            });
+        }
+
+        protected override SyntaxNode transform(SyntaxNode node, Dictionary<int, Func<SyntaxNode, SemanticModel, Scope, SyntaxNode>> transformers)
+        {
+            Debug.Assert(Model != null);
+
+            var nodes = new Dictionary<SyntaxNode, Func<SyntaxNode, SemanticModel, Scope, SyntaxNode>>();
+            foreach (var transformer in transformers)
+            {
+                SyntaxNode tNode = node
+                    .GetAnnotatedNodes(RoslynCompiler.NodeIdAnnotation + transformer.Key.ToString())
+                    .First();
+
+                Debug.Assert(tNode != null); //td: cases
+
+                nodes[tNode] = transformer.Value;
+            }
+
+            IEnumerable<SyntaxNode> toReplace = nodes.Keys;
+            return node.ReplaceNodes(toReplace, (oldNode, newNode) =>
+            {
+                Func<SyntaxNode, SemanticModel, Scope, SyntaxNode> handler;
+                if (nodes.TryGetValue(oldNode, out handler))
+                {
+                    var result = handler(newNode, Model, _scope);
                     return result;
                 }
 

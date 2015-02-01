@@ -255,14 +255,29 @@ namespace Excess.Compiler.Core
 
         private static Func<TToken, Scope, TokenMatch> MatchOne(Func<TToken, bool> match, string named, bool matchNone = false)
         {
-            return (token, result) =>
+            return (token, scope) =>
             {
                 var matches = match(token);
                 if (!matches)
                     return matchNone ? TokenMatch.MatchAndStay : TokenMatch.UnMatch;
 
                 if (named != null)
-                    result.set(named, token);
+                    scope.set(named, token);
+
+                return TokenMatch.Match;
+            };
+        }
+
+        private static Func<TToken, Scope, TokenMatch> MatchUntil(Func<TToken, bool> match, string named)
+        {
+            return (token, scope) =>
+            {
+                var matches = match(token);
+                if (!matches)
+                    return TokenMatch.MatchAndContinue;
+
+                if (named != null)
+                    scope.set(named, token); //td: keep all
 
                 return TokenMatch.Match;
             };
@@ -310,6 +325,22 @@ namespace Excess.Compiler.Core
         public ILexicalMatch<TToken, TNode, TModel> identifier(string named = null, bool optional = false)
         {
             _matchers.Add(MatchOne(MatchIdentifier(), named, optional));
+            return this;
+        }
+
+        public ILexicalMatch<TToken, TNode, TModel> until(char token, string named = null)
+        {
+            return until(MatchString(token.ToString()), named);
+        }
+
+        public ILexicalMatch<TToken, TNode, TModel> until(string token, string named = null)
+        {
+            return until(MatchString(token.ToString()), named);
+        }
+
+        public ILexicalMatch<TToken, TNode, TModel> until(Func<TToken, bool> matcher, string named = null)
+        {
+            _matchers.Add(MatchUntil(matcher, named));
             return this;
         }
 

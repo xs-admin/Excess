@@ -5,6 +5,8 @@ using System.Dynamic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.CodeAnalysis;
+using System.Diagnostics;
 
 namespace Excess.Compiler
 {
@@ -35,9 +37,61 @@ namespace Excess.Compiler
             return result;
         }
 
+        public Scope CreateScope<TToken, TNode, TModel>(TNode node)
+        {
+            var service = GetService<TToken, TNode, TModel>();
+            if (service == null)
+                return null;
+
+            int id = service.GetExcessId(node);
+            if (id < 0)
+                return null;
+
+            IDictionary<int, Scope> repository = GetScopeRepository();
+            Debug.Assert(repository != null);
+
+            Scope result;
+            if (!repository.TryGetValue(id, out result))
+            {
+                result = new Scope(this); //td: find parent scope
+                repository[id] = result;
+            }
+
+            return result;
+        }
+
+        public Scope GetScope<TToken, TNode, TModel>(TNode node)
+        {
+            var service = GetService<TToken, TNode, TModel>();
+            if (service == null)
+                return null;
+
+            int id = service.GetExcessId(node);
+            if (id < 0)
+                return null;
+
+            IDictionary<int, Scope> repository = GetScopeRepository();
+            Debug.Assert(repository != null);
+
+            Scope result;
+            if (repository.TryGetValue(id, out result))
+                return result;
+
+            return null;
+        }
+
+        private IDictionary<int, Scope> GetScopeRepository()
+        {
+            var result = get<IDictionary<int, Scope>>();
+            if (result == null && _parent != null)
+                result = _parent.GetScopeRepository();
+
+            return result;
+        }
+
+
         //DynamicObject
         Dictionary<string, object> _values = new Dictionary<string, object>();
-
 
         public override bool TryGetMember(GetMemberBinder binder, out object result)
         {

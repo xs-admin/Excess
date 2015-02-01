@@ -9,16 +9,18 @@ namespace Excess.Compiler.Core
 {
     public abstract class CompilerBase<TToken, TNode, TModel> : ICompiler<TToken, TNode, TModel>
     {
-        protected ILexicalAnalysis<TToken, TNode, TModel> _lexical;
-        protected ISyntaxAnalysis<TToken, TNode, TModel>  _sintaxis;
-        protected CompilerStage                           _stage  = CompilerStage.Started;
-        protected IDocument<TToken, TNode, TModel>        _document;
-        protected Scope                                   _scope;
+        protected ILexicalAnalysis<TToken, TNode, TModel>  _lexical;
+        protected ISyntaxAnalysis<TToken, TNode, TModel>   _sintaxis;
+        protected ISemanticAnalysis<TToken, TNode, TModel> _semantics;
+        protected CompilerStage                            _stage  = CompilerStage.Started;
+        protected IDocument<TToken, TNode, TModel>         _document;
+        protected Scope                                    _scope;
 
-        public CompilerBase(ILexicalAnalysis<TToken, TNode, TModel> lexical, ISyntaxAnalysis<TToken, TNode, TModel> sintaxis, Scope scope)
+        public CompilerBase(ILexicalAnalysis<TToken, TNode, TModel> lexical, ISyntaxAnalysis<TToken, TNode, TModel> sintaxis, ISemanticAnalysis<TToken, TNode, TModel> semantics, Scope scope)
         {
             _lexical  = lexical;
             _sintaxis = sintaxis;
+            _semantics = semantics;
 
             _scope = new Scope(scope); 
         }
@@ -32,6 +34,12 @@ namespace Excess.Compiler.Core
         {
             return _sintaxis;
         }
+
+        public ISemanticAnalysis<TToken, TNode, TModel> Semantics()
+        {
+            return _semantics;
+        }
+
 
         public bool Compile(string text, CompilerStage stage)
         {

@@ -11,6 +11,7 @@ namespace Excess.Compiler.Roslyn
 {
     using Microsoft.CodeAnalysis.CSharp;
     using Microsoft.CodeAnalysis.CSharp.Syntax;
+    using Microsoft.CodeAnalysis.Text;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
     public class CompilerService : ICompilerService<SyntaxToken, SyntaxNode, SemanticModel>
@@ -120,6 +121,11 @@ namespace Excess.Compiler.Roslyn
             }
         }
 
+        public SyntaxNode Find(SyntaxNode node, SourceSpan span)
+        {
+            return node.FindNode(new TextSpan(span.Start, span.Length));
+        }
+
         public SyntaxNode FindNode(SyntaxNode node, string xsId)
         {
             return node.GetAnnotatedNodes(RoslynCompiler.NodeIdAnnotation + xsId).FirstOrDefault();
@@ -128,7 +134,11 @@ namespace Excess.Compiler.Roslyn
 
     public class RoslynCompiler : CompilerBase<SyntaxToken, SyntaxNode, SemanticModel>
     {
-        public RoslynCompiler(Scope scope = null) : base(new RoslynLexicalAnalysis(), new RoslynSyntaxAnalysis(), scope)
+        public RoslynCompiler(Scope scope = null) : 
+            base(new RoslynLexicalAnalysis(), 
+                 new RoslynSyntaxAnalysis(),
+                 new RoslynSemanticAnalysis(),
+                 scope)
         {
             _scope.set<ICompilerService<SyntaxToken, SyntaxNode, SemanticModel>>(new CompilerService());
         }
@@ -202,6 +212,59 @@ namespace Excess.Compiler.Roslyn
         {
             string useless;
             return ApplySyntacticalPass(text, out useless);
+        }
+
+        public SyntaxTree ApplySemanticalPass(string text, out string result)
+        {
+            var document  = new RoslynDocument(_scope, text); 
+            var lHandler  = _lexical as IDocumentHandler<SyntaxToken, SyntaxNode, SemanticModel>;
+            var sHandler  = _sintaxis as IDocumentHandler<SyntaxToken, SyntaxNode, SemanticModel>;
+            var ssHandler = _semantics as IDocumentHandler<SyntaxToken, SyntaxNode, SemanticModel>;
+
+            lHandler.apply(document);
+            sHandler.apply(document);
+            ssHandler.apply(document);
+
+            document.applyChanges(CompilerStage.Syntactical);
+            var tree = document.Root.SyntaxTree;
+
+            var compilation = CSharpCompilation.Create("semantical-pass",
+                syntaxTrees: new[] { tree },
+                references: new[]
+                {
+                    MetadataReference.CreateFromAssembly(typeof(object).Assembly),
+                    MetadataReference.CreateFromAssembly(typeof(Enumerable).Assembly),
+                    MetadataReference.CreateFromAssembly(typeof(Dictionary<int, int>).Assembly),
+                },
+                options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+
+            while (true)
+            {
+                document.Model = compilation.GetSemanticModel(tree);
+                if (document.applyChanges(CompilerStage.Semantical))
+                    break;
+
+                var oldTree = tree;
+                tree = document.Root.SyntaxTree;
+                compilation = compilation.ReplaceSyntaxTree(oldTree, tree);
+            } 
+
+            result = document.Root.NormalizeWhitespace().ToFullString();
+            return document.Root.SyntaxTree;
+        }
+
+        public static Func<SyntaxNode, Scope, SyntaxNode> AddMember(MemberDeclarationSyntax member)
+        {
+            return (node, scope) =>
+            {
+                Debug.Assert(node is TypeDeclarationSyntax);
+
+                if (node is ClassDeclarationSyntax)
+                    return (node as ClassDeclarationSyntax).AddMembers(member);
+
+                Debug.Assert(false); //td: case
+                return node;                        
+            };
         }
 
 
@@ -396,6 +459,61 @@ namespace Excess.Compiler.Roslyn
             }
 
             return null;
+        }
+
+        static public bool HasVisibilityModifier(MethodDeclarationSyntax member)
+        {
+            foreach(var modifier in member.Modifiers)
+            {
+                switch (modifier.CSharpKind())
+                {
+                    case SyntaxKind.PublicKeyword:
+                    case SyntaxKind.PrivateKeyword:
+                    case SyntaxKind.ProtectedKeyword:
+                    case SyntaxKind.InternalKeyword:
+                        return true;
+                }
+            }
+
+            return false;
+        }
+
+        static public Func<SyntaxNode, Scope, SyntaxNode> AddInitializers(StatementSyntax initializer)
+        {
+            return (node, scope) =>
+            {
+                ClassDeclarationSyntax decl = (ClassDeclarationSyntax)node;
+
+                var found = false;
+                var result = decl.ReplaceNodes(decl
+                    .DescendantNodes()
+                    .OfType<ConstructorDeclarationSyntax>(), (oldConstuctor, newConstuctor) =>
+                    {
+                        found = true;
+                        return newConstuctor.WithBody(SyntaxFactory.Block().
+                                                WithStatements(SyntaxFactory.List(
+                                                    newConstuctor.Body.Statements.Union(
+                                                    new[] { initializer} ))));
+                    });
+
+                if (!found)
+                {
+                    result = result.WithMembers(SyntaxFactory.List(
+                                        result.Members.Union(
+                                        new MemberDeclarationSyntax[]{
+                                            SyntaxFactory.ConstructorDeclaration(decl.Identifier.ToString()).
+                                                WithBody(SyntaxFactory.Block().
+                                                    WithStatements(SyntaxFactory.List(new[] {
+                                                        initializer })))})));
+                }
+
+                return result;
+            };
+        }
+
+        public static Func<SyntaxNode, Scope, SyntaxNode> ReplaceNode(SyntaxNode newNode)
+        {
+            return (node, scope) => newNode;
         }
     }
 }

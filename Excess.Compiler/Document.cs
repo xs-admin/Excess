@@ -13,12 +13,16 @@ namespace Excess.Compiler
         IEnumerable<TToken> change(IEnumerable<TToken> tokens, Func<TNode, Scope, TNode> transform, string kind = null);
         void change(Func<TNode, Scope, TNode> transform, string kind = null);
         TNode change(TNode node, Func<TNode, Scope, TNode> transform, string kind = null);
+        void change(Func<TNode, TModel, Scope, TNode> transform, string kind = null);
+        TNode change(TNode node, Func<TNode, TModel, Scope, TNode> transform, string kind = null);
 
-        void applyChanges();
-        void applyChanges(CompilerStage stage);
+        bool applyChanges();
+        bool applyChanges(CompilerStage stage);
         bool hasErrors();
 
         string Text { get; set; }
+
+        TModel Model { get; set; }
     }
 
     public interface IDocumentHandler<TToken, TNode, TModel>
