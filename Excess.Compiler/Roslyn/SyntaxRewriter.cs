@@ -28,7 +28,12 @@ namespace Excess.Compiler.Roslyn
             var result = node;
             foreach (var transformer in _transformers)
             {
-                result = transformer(result, _scope);
+                var before = result;
+                    result = transformer(result, _scope);
+
+                if (result != before)
+                    result = RoslynCompiler.UpdateExcessId(result, before);
+
                 if (result == null)
                     return null;
             }

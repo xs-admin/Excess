@@ -56,6 +56,7 @@ namespace Excess.Compiler
         ILexicalMatch<TToken, TNode, TModel> until(string token, string named = null);
         ILexicalMatch<TToken, TNode, TModel> until(Func<TToken, bool> matcher, string named = null);
 
+        ILexicalAnalysis<TToken, TNode, TModel> then(Func<TNode, Scope, TNode> handler);
         ILexicalAnalysis<TToken, TNode, TModel> then(Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>> handler);
         ILexicalAnalysis<TToken, TNode, TModel> then(ILexicalTransform<TToken, TNode> transform);
     }

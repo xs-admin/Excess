@@ -275,6 +275,7 @@ namespace Excess.Compiler.Roslyn
         public static TypeSyntax @int     = CSharp.PredefinedType(CSharp.Token(SyntaxKind.IntKeyword));
         public static TypeSyntax @string  = CSharp.PredefinedType(CSharp.Token(SyntaxKind.StringKeyword));
         public static TypeSyntax @boolean = CSharp.PredefinedType(CSharp.Token(SyntaxKind.BoolKeyword));
+        public static TypeSyntax @dynamic = CSharp.ParseTypeName("dynamic");
 
         //modifiers
         public static SyntaxTokenList @public  = CSharp.TokenList(CSharp.Token(SyntaxKind.PublicKeyword));
@@ -461,9 +462,9 @@ namespace Excess.Compiler.Roslyn
             return null;
         }
 
-        static public bool HasVisibilityModifier(MethodDeclarationSyntax member)
+        public static bool HasVisibilityModifier(SyntaxTokenList modifiers)
         {
-            foreach(var modifier in member.Modifiers)
+            foreach(var modifier in modifiers)
             {
                 switch (modifier.CSharpKind())
                 {
@@ -514,6 +515,83 @@ namespace Excess.Compiler.Roslyn
         public static Func<SyntaxNode, Scope, SyntaxNode> ReplaceNode(SyntaxNode newNode)
         {
             return (node, scope) => newNode;
+        }
+
+        public static SyntaxNode UpdateExcessId(SyntaxNode node, SyntaxNode before)
+        {
+            string oldId = NodeMark(before);
+            Debug.Assert(oldId != null);
+
+            string newId = NodeMark(node);
+            if (newId == null)
+                return MarkNode(node, oldId); //mark substitutions
+
+            return node;
+        }
+
+        public static TypeSyntax ConstantType(ExpressionSyntax value)
+        {
+            switch (value.CSharpKind())
+            {
+                case SyntaxKind.NumericLiteralExpression:
+                { 
+                    var valueStr = value.ToString();
+                    
+                    int val;
+                    double dval;
+                    if (int.TryParse(valueStr, out val))
+                        return @int;
+                    else if (double.TryParse(valueStr, out dval))
+                        return @double;
+
+                    break;
+                }
+
+                case SyntaxKind.StringLiteralExpression: 
+                    return @string;
+                
+                case SyntaxKind.TrueLiteralExpression:
+                case SyntaxKind.FalseLiteralExpression:
+                    return @boolean;
+            }
+
+            return null;
+        }
+
+        public static TypeSyntax GetReturnType(BlockSyntax code, SemanticModel model)
+        {
+            ControlFlowAnalysis cfa = model.AnalyzeControlFlow(code);
+            if (!cfa.ReturnStatements.Any())
+                return @void;
+
+            ITypeSymbol rt = null;
+            foreach (var rs in cfa.ReturnStatements)
+            {
+                ReturnStatementSyntax rss = (ReturnStatementSyntax)rs;
+                ITypeSymbol type = model.GetSpeculativeTypeInfo(rss.Expression.SpanStart, rss.Expression, SpeculativeBindingOption.BindAsExpression).Type;
+
+                if (type == null)
+                    continue;
+
+                if (type.TypeKind == TypeKind.Error)
+                {
+                    rt = null;
+                    break;
+                }
+
+                if (rt == null)
+                    rt = type;
+                else if (rt != type)
+                {
+                    rt = null;
+                    break;
+                }
+            }
+
+            if (rt == null)
+                return @dynamic;
+
+            return CSharp.ParseTypeName(rt.Name);
         }
     }
 }

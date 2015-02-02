@@ -108,6 +108,7 @@
     <Compile Include="SyntaxAnalysis.cs" />
     <Compile Include="XS\Events.cs" />
     <Compile Include="XS\Functions.cs" />
+    <Compile Include="XS\Members.cs" />
     <Compile Include="XS\Module.cs" />
     <Compile Include="XS\TypeDef.cs" />
   </ItemGroup>

@@ -17,8 +17,8 @@ namespace Excess.Compiler.XS
     {
         static public void Apply(RoslynCompiler compiler)
         {
-            var lexical = compiler.Lexical();
-            var sintaxis = compiler.Sintaxis();
+            var lexical   = compiler.Lexical();
+            var semantics = compiler.Semantics();
 
             lexical
                 .match() //lambda
@@ -36,48 +36,23 @@ namespace Excess.Compiler.XS
                     .token('{')
                     .then(lexical.transform()
                         .remove("fn")
-                        .then("id", ProcessMemberFunction))
-
-                //methods 
-                .match()
-                    .token("method", named: "fn")
-                    .identifier(named: "id")
-                    .enclosed('(', ')')
-                    .token('{')
-                    .then(lexical.transform()
-                        .remove("fn")
-                        .then("id", ProcessMethod));
-        }
-
-        private static SyntaxNode ProcessMethod(SyntaxNode node, Scope scope)
-        {
-            if (!(node is MethodDeclarationSyntax))
-            {
-                //td: error
-                return node;
-            }
-
-            var method = node as MethodDeclarationSyntax;
-
-            if (!RoslynCompiler.HasVisibilityModifier(method))
-                method = method.AddModifiers(CSharp.Token(SyntaxKind.PublicKeyword));
-
-            if (method.ReturnType.IsMissing)
-            {
-                //td: schedule type resolution
-                return method.WithReturnType(RoslynCompiler.@void);
-            }
-
-            return method;
+                        .then("id", ProcessMemberFunction));
+            semantics
+                .error("CS0246", FunctionType);
         }
 
         private static SyntaxNode ProcessMemberFunction(SyntaxNode node, Scope scope)
         {
+            var document = scope.GetDocument<SyntaxToken, SyntaxNode, SemanticModel>();
+
             if (node is MethodDeclarationSyntax)
             {
                 var method = node as MethodDeclarationSyntax;
                 if (method.ReturnType.IsMissing)
-                    return method.WithReturnType(RoslynCompiler.@void); //td: schedule type resolution
+                {
+                    document.change(method, ReturnType);
+                    return method.WithReturnType(RoslynCompiler.@void); 
+                }
 
                 return node;
             }
@@ -110,10 +85,66 @@ namespace Excess.Compiler.XS
 
             //We are not allowed to modify parents, so schedule the removal of the code
             //And its insertion in the final lambda variable
-            var document = scope.GetDocument<SyntaxToken, SyntaxNode, SemanticModel>();
             document.change(parent, RoslynCompiler.RemoveStatement(body));
             document.change(statement, ProcessCodeFunction(function, body));
             return node;
+        }
+
+        private static SyntaxNode ReturnType(SyntaxNode node, SemanticModel model, Scope scope)
+        {
+            var method = (MethodDeclarationSyntax)node;
+            var type = RoslynCompiler.GetReturnType(method.Body, model);
+
+            return method.WithReturnType(type);
+        }
+
+        private static void FunctionType(SyntaxNode node, SemanticModel model, Scope scope)
+        {
+            TypeSyntax newType = null;
+            if (node is GenericNameSyntax)
+            {
+                var generic = node as GenericNameSyntax;
+                if (generic.Identifier.ToString() == "function")
+                {
+                    List<TypeSyntax> arguments  = new List<TypeSyntax>();
+                    TypeSyntax       returnType = null;
+
+                    bool first = true;
+                    foreach (var arg in generic.TypeArgumentList.Arguments)
+                    {
+                        if (first)
+                        {
+                            first = false;
+                            if (arg.ToString() != "void")
+                                returnType = arg;
+                        }
+                        else
+                            arguments.Add(arg);
+                    }
+
+                    if (returnType == null)
+                        newType = generic
+                            .WithIdentifier(CSharp.Identifier("Action"))
+                            .WithTypeArgumentList(CSharp.TypeArgumentList(CSharp.SeparatedList(
+                                arguments)));
+                    else
+                        newType = generic
+                            .WithIdentifier(CSharp.Identifier("Func"))
+                            .WithTypeArgumentList(CSharp.TypeArgumentList(CSharp.SeparatedList(
+                                arguments
+                                    .Union(new[] { returnType}))));
+                }
+            }
+            else if (node.ToString() == "function")
+            {
+                newType = CSharp.ParseTypeName("Action");
+            }
+
+            if (newType != null)
+            {
+                var document = scope.GetDocument<SyntaxToken, SyntaxNode, SemanticModel>();
+                document.change(node, RoslynCompiler.ReplaceNode(newType));
+            }
         }
 
         private static Func<SyntaxNode, Scope, SyntaxNode> ProcessCodeFunction(IdentifierNameSyntax name, BlockSyntax body)

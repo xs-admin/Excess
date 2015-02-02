@@ -298,12 +298,10 @@ namespace Excess.Compiler.Core
             if (_syntactical.Any())
                 _root = syntacticalTransform(_root, _scope, _syntactical);
 
-            TNode oldRoot;
             do
             {
-                oldRoot = _root;
-                _root   = applyNodeChanges(_root, CompilerStage.Syntactical);
-            } while (!oldRoot.Equals(_root));
+                _root = applyNodeChanges(_root, CompilerStage.Syntactical);
+            } while (_syntacticalChanges.Any());
         }
 
         protected abstract TNode syntacticalTransform(TNode node, Scope scope, IEnumerable<Func<TNode, Scope, TNode>> transformers);

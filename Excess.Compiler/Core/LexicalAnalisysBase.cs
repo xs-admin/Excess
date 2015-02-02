@@ -344,6 +344,20 @@ namespace Excess.Compiler.Core
             return this;
         }
 
+        public ILexicalAnalysis<TToken, TNode, TModel> then(Func<TNode, Scope, TNode> handler)
+        {
+            return then(new LexicalFunctorTransform<TToken, TNode>(ScheduleThen(handler)));
+        }
+
+        private Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>> ScheduleThen(Func<TNode, Scope, TNode> handler)
+        {
+            return (tokens, scope) =>
+            {
+                var document = scope.GetDocument<TToken, TNode, TModel>();
+                return document.change(tokens, handler);
+            };
+        }
+
         public ILexicalAnalysis<TToken, TNode, TModel> then(Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>> handler)
         {
             _transform = new LexicalFunctorTransform<TToken, TNode>(handler);

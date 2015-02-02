@@ -91,6 +91,7 @@ namespace Excess.Compiler.XS
                 return null;
             }
 
+            //td: error, malformed typedef
             return node;
         }
 
