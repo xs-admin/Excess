@@ -100,6 +100,12 @@ namespace Excess.Compiler.Roslyn
             return RoslynCompiler.NodeMark(node);
         }
 
+        public bool isIdentifier(SyntaxToken token)
+        {
+            return RoslynCompiler.isLexicalIdentifier(token.CSharpKind());
+        }
+
+
         public SyntaxNode Parse(string text)
         {
             return CSharp.ParseSyntaxTree(text).GetRoot();
@@ -107,7 +113,8 @@ namespace Excess.Compiler.Roslyn
 
         public IEnumerable<SyntaxToken> ParseTokens(string text)
         {
-            return CSharp.ParseTokens(text);
+            return CSharp.ParseTokens(text)
+                .Where(token => token.CSharpKind() != SyntaxKind.EndOfFileToken);
         }
 
         public IEnumerable<SyntaxNode> Find(SyntaxNode node, IEnumerable<string> xsIds)
@@ -267,7 +274,6 @@ namespace Excess.Compiler.Roslyn
             };
         }
 
-
         //declarations
         public static TypeSyntax @void    = CSharp.PredefinedType(CSharp.Token(SyntaxKind.VoidKeyword));
         public static TypeSyntax @object  = CSharp.PredefinedType(CSharp.Token(SyntaxKind.ObjectKeyword));
@@ -326,34 +332,6 @@ namespace Excess.Compiler.Roslyn
             return null;
         }
 
-        public static string LexicalIdAnnotation = "xs-lexical-id";
-        public static string GetLexicalId(SyntaxToken token)
-        {
-            var annotation = token.GetAnnotations(LexicalIdAnnotation).FirstOrDefault();
-            if (annotation != null)
-                return annotation.Data;
-
-            return null;
-        }
-
-        public static string SyntacticalExtensionIdAnnotation = "xs-syntax-extension";
-        public static string GetSyntacticalExtensionId(SyntaxNode node)
-        {
-            var annotation = node.GetAnnotations(SyntacticalExtensionIdAnnotation).FirstOrDefault();
-            if (annotation != null)
-                return annotation.Data;
-
-            return null;
-        }
-
-        public static SyntaxNode SetSyntacticalExtensionId(SyntaxNode node, out string id)
-        {
-            id = uniqueId();
-            return node
-                .WithoutAnnotations(SyntacticalExtensionIdAnnotation)
-                .WithAdditionalAnnotations(new SyntaxAnnotation(SyntacticalExtensionIdAnnotation, id));
-        }
-
         public static SyntaxToken MarkToken(SyntaxToken token, string mark, object value)
         {
             var result = value == null ? new SyntaxAnnotation(mark) :
@@ -381,12 +359,6 @@ namespace Excess.Compiler.Roslyn
                 result.Append(token.ToFullString());
 
             return result.ToString();
-        }
-
-        public static BlockSyntax ParseCode(IEnumerable<SyntaxToken> tokens)
-        {
-            string code = TokensToString(tokens); //td: mapping
-            return (BlockSyntax)CSharp.ParseStatement("{" + code + "}");
         }
 
         public static ParameterListSyntax ParseParameterList(IEnumerable<SyntaxToken> parameters)

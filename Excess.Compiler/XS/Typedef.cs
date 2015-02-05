@@ -32,7 +32,7 @@ namespace Excess.Compiler.XS
                     .until(';', named: "definition")
                     .then(compiler.Lexical().transform()
                         .remove("keyword")
-                        .then("definition", Typedef));
+                        .then(Typedef, referenceToken: "definition"));
 
             semantics
                 .error("CS0246", FixMissingType);

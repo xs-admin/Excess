@@ -38,6 +38,7 @@ namespace Excess.Compiler
         TNode MarkTree(TNode node);
         int GetExcessId(TToken token);
         int GetExcessId(TNode node);
+        bool isIdentifier(TToken token);
 
         IEnumerable<TToken> ParseTokens(string text);
         TNode Parse(string text);

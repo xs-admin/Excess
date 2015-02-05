@@ -56,7 +56,7 @@ namespace Excess.Compiler.Tests
                 .extension("my_ext", ExtensionKind.Code, myExtLexical);
 
             string lResult = compiler.ApplyLexicalPass("my_ext(int i) { code(); }");
-            Assert.IsTrue(lResult == "my_ext_replaced int i = code(); ");
+            Assert.IsTrue(lResult == "my_ext_replaced (int i)  = { code(); }"); 
 
             lexical
                 .extension("my_ext_s", ExtensionKind.Member, myExtSyntactical);
@@ -101,11 +101,11 @@ namespace Excess.Compiler.Tests
 
             var argString = RoslynCompiler.TokensToString(extension.Arguments);
 
-            Assert.IsTrue(argString == "int i");
-            var arguments = CSharp.ParseParameterList("(" + argString + ")");
+            Assert.IsTrue(argString == "(int i) ");
+            var arguments = CSharp.ParseParameterList(argString);
 
             var codeString = RoslynCompiler.TokensToString(extension.Body);
-            var codeNode   = CSharp.ParseStatement("{" + codeString + "}");
+            var codeNode   = CSharp.ParseStatement(codeString);
 
             Assert.IsTrue(codeNode is BlockSyntax);
             var code = codeNode as BlockSyntax;

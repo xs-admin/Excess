@@ -27,7 +27,7 @@ namespace Excess.Compiler.Core
 
         protected Scope _scope;
 
-        public TNode Parse(string text, Dictionary<string, SourceSpan> annotations, out string resultText)
+        public TNode NoParse(string text, Dictionary<string, SourceSpan> annotations, out string resultText)
         {
             var tokens = _compiler.ParseTokens(text).ToArray();
             var result = transformTokens(tokens, 0, tokens.Length, _transformers);

@@ -89,6 +89,7 @@
     <Compile Include="Core\DocumentBase.cs" />
     <Compile Include="Core\LexicalAnalisysBase.cs" />
     <Compile Include="Class1.cs" />
+    <Compile Include="Core\LexicalMatchResult.cs" />
     <Compile Include="Core\LexicalPass.cs" />
     <Compile Include="Core\LexicalTransformBase.cs" />
     <Compile Include="Core\SyntaxAnalysisBase.cs" />
@@ -106,6 +107,7 @@
     <Compile Include="Scope.cs" />
     <Compile Include="SemanticAnalysis.cs" />
     <Compile Include="SyntaxAnalysis.cs" />
+    <Compile Include="XS\Arrays.cs" />
     <Compile Include="XS\Events.cs" />
     <Compile Include="XS\Functions.cs" />
     <Compile Include="XS\Members.cs" />

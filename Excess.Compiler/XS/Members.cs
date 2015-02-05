@@ -29,7 +29,7 @@ namespace Excess.Compiler.XS
                     .token('{')
                     .then(lexical.transform()
                         .remove("keyword")
-                        .then("id", Method))
+                        .then(Method, referenceToken: "id"))
 
                 //properties
                 .match()
@@ -43,7 +43,7 @@ namespace Excess.Compiler.XS
                     .identifier(named: "id")
                     .then(lexical.transform()
                         .remove("keyword")
-                        .then("id", Property));
+                        .then(Property, referenceToken: "id"));
 
             sintaxis
                 //constructor

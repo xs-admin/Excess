@@ -36,7 +36,7 @@ namespace Excess.Compiler.XS
                     .token('{')
                     .then(lexical.transform()
                         .remove("fn")
-                        .then("id", ProcessMemberFunction));
+                        .then(ProcessMemberFunction, referenceToken: "id"));
             semantics
                 .error("CS0246", FunctionType);
         }

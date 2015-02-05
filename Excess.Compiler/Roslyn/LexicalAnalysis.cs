@@ -12,24 +12,7 @@ namespace Excess.Compiler.Roslyn
     using System.Diagnostics;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
-    public class RoslynLexicalMatch : BaseLexicalMatch<SyntaxToken, SyntaxNode, SemanticModel>
-    {
-        public RoslynLexicalMatch(ILexicalAnalysis<SyntaxToken, SyntaxNode, SemanticModel> lexical) :
-            base(lexical)
-        {
-        }
-
-        protected override bool isIdentifier(SyntaxToken token)
-        {
-            return RoslynCompiler.isLexicalIdentifier(token);
-        }
-    }
-
     public class RoslynLexicalAnalysis : BaseLexicalAnalysis<SyntaxToken, SyntaxNode, SemanticModel>
     {
-        protected override ILexicalMatch<SyntaxToken, SyntaxNode, SemanticModel> createMatch()
-        {
-            return new RoslynLexicalMatch(this);
-        }
     }
 }

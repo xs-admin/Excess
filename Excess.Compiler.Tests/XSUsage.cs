@@ -28,8 +28,8 @@ namespace Excess.Compiler.Tests
                 .Any());
 
             //as typed method
-            string result = compiler.ApplyLexicalPass("class foo { public int function bar() {}}");
-            Assert.IsTrue(result == "class foo { public int bar() {}}");
+            string result = compiler.ApplyLexicalPass("class foo { public int function bar(int x) {}}");
+            Assert.IsTrue(result == "class foo { public int bar(int x) {}}");
 
             SyntaxTree tree = null;
             string text = null;
@@ -79,7 +79,7 @@ namespace Excess.Compiler.Tests
             XSModule.Apply(compiler);
 
             SyntaxTree tree = null;
-            string     text = null;
+            string text = null;
 
             //typed method
             tree = compiler.ApplySyntacticalPass("class foo { int method bar() {}}", out text);
@@ -230,6 +230,18 @@ namespace Excess.Compiler.Tests
                 .Declaration
                 .Type
                 .ToString() == "List<int>"); //must be equivalent to the last test
+        }
+
+        [TestMethod]
+        public void Arrays()
+        {
+            RoslynCompiler compiler = new RoslynCompiler();
+            XSModule.Apply(compiler);
+
+            ExpressionSyntax exprArray = compiler.CompileExpression("x = [[1, 2, 3], [4, 5, 6]]");
+            Assert.IsTrue(exprArray.DescendantNodes()
+                .OfType<ImplicitArrayCreationExpressionSyntax>()
+                .Count() == 2);
         }
     }
 }

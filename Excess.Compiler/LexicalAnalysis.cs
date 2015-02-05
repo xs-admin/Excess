@@ -4,15 +4,43 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
+using System.Diagnostics;
 
 namespace Excess.Compiler
 {
-    public enum TokenMatch
+    public class TokenSpan
     {
-        Match,
-        UnMatch,
-        MatchAndContinue,
-        MatchAndStay,
+        public TokenSpan(int start, int length)
+        {
+            Start  = start;
+            Length = length;
+        }
+
+        public int Start { get; set; }
+        public int Length { get; set; }
+    }
+
+    public class LexicalMatchItem
+    {
+        public LexicalMatchItem(TokenSpan span, string identifier, bool literal = false)
+        {
+            Span = span;
+            Identifier = identifier;
+            Literal = false;
+        }
+
+        public TokenSpan Span { get; set; }
+        public string Identifier { get; set; }
+        public bool Literal { get; set; }
+    }
+
+    public interface ILexicalMatchResult<TToken, TNode>
+    {
+        int Consumed { get; }
+        IEnumerable<LexicalMatchItem> Items { get; }
+        ILexicalTransform<TToken, TNode> Transform { get; set; }
+
+        IEnumerable<TToken> GetTokens(IEnumerable<TToken> input, string identifier);
     }
 
     public interface ILexicalMatch<TToken, TNode, TModel>
@@ -23,9 +51,9 @@ namespace Excess.Compiler
 
         ILexicalMatch<TToken, TNode, TModel> any(params char[] anyOf);
         ILexicalMatch<TToken, TNode, TModel> any(params string[] anyOf);
-        ILexicalMatch<TToken, TNode, TModel> any(char[] anyOf, string named = null);
-        ILexicalMatch<TToken, TNode, TModel> any(string[] anyOf, string named = null);
-        ILexicalMatch<TToken, TNode, TModel> any(Func<TToken, bool> anyOf, string named = null);
+        ILexicalMatch<TToken, TNode, TModel> any(char[] anyOf, string named = null, bool matchDocumentStart = false);
+        ILexicalMatch<TToken, TNode, TModel> any(string[] anyOf, string named = null, bool matchDocumentStart = false);
+        ILexicalMatch<TToken, TNode, TModel> any(Func<TToken, bool> anyOf, string named = null, bool matchDocumentStart = false);
 
         ILexicalMatch<TToken, TNode, TModel> optional(params char[] anyOf);
         ILexicalMatch<TToken, TNode, TModel> optional(params string[] anyOf);
@@ -58,7 +86,10 @@ namespace Excess.Compiler
 
         ILexicalAnalysis<TToken, TNode, TModel> then(Func<TNode, Scope, TNode> handler);
         ILexicalAnalysis<TToken, TNode, TModel> then(Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>> handler);
+        ILexicalAnalysis<TToken, TNode, TModel> then(Func<IEnumerable<TToken>, ILexicalMatchResult<TToken, TNode>, Scope, IEnumerable<TToken>> handler);
         ILexicalAnalysis<TToken, TNode, TModel> then(ILexicalTransform<TToken, TNode> transform);
+
+        ILexicalMatchResult<TToken, TNode> match(IEnumerable<TToken> tokens, Scope scope);
     }
 
     public interface ILexicalTransform<TToken, TNode>
@@ -67,11 +98,10 @@ namespace Excess.Compiler
         ILexicalTransform<TToken, TNode> replace(string named, string tokens);
         ILexicalTransform<TToken, TNode> remove(string named);
 
-        ILexicalTransform<TToken, TNode> then(string named, Func<TNode, TNode> handler);
-        ILexicalTransform<TToken, TNode> then(string named, Func<TNode, Scope, TNode> handler);
-        ILexicalTransform<TToken, TNode> then(string named, ISyntaxTransform<TNode> transform);
+        ILexicalTransform<TToken, TNode> then(Func<TNode, TNode> handler, string referenceToken = null);
+        ILexicalTransform<TToken, TNode> then(Func<TNode, Scope, TNode> handler, string referenceToken = null);
 
-        IEnumerable<TToken> transform(IEnumerable<TToken> tokens, Scope result);
+        IEnumerable<TToken> transform(IEnumerable<TToken> tokens, ILexicalMatchResult<TToken, TNode> match, Scope scope);
     }
 
     public enum ExtensionKind

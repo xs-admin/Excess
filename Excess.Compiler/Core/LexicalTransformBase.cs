@@ -9,68 +9,10 @@ namespace Excess.Compiler.Core
 {
     public class LexicalTransform<TToken, TNode, TModel> : ILexicalTransform<TToken, TNode>
     {
-        protected class TokenSpan
+        private IEnumerable<TToken> TokensFromString(string tokenString, Scope scope)
         {
-            public TokenSpan()
-            {
-                begin = -1;
-                end   = -1;
-            }
-
-            public TokenSpan(int _begin, int _end)
-            {
-                begin = _begin;
-                end = _end;
-            }
-
-            public int begin;
-            public int end;
-        }
-
-        public enum ExistingToken
-        {
-            Remove,
-            PreInsert,
-            PostInsert
-        }
-
-        protected struct TransformBinder
-        {
-            public TransformBinder(Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>> output_, ExistingToken existingToken_ = ExistingToken.Remove)
-            {
-                output  = output_;
-                extents = new TokenSpan();
-                existingToken = existingToken_;
-            }
-
-            public TransformBinder(Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>> _output, int begin_, int end_, ExistingToken existingToken_ = ExistingToken.Remove)
-            {
-                output = _output;
-                extents = new TokenSpan(begin_, end_);
-                existingToken = existingToken_;
-            }
-
-            public TransformBinder(Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>> _output, TokenSpan _extents, ExistingToken existingToken_ = ExistingToken.Remove)
-            {
-                output = _output;
-                extents = _extents;
-                existingToken = existingToken_;
-            }
-
-            public TokenSpan                                             extents;
-            public Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>> output;
-            public ExistingToken                                         existingToken;
-        }
-
-        List<Func<IEnumerable<TToken>, Scope, TransformBinder>> _binders = new List<Func<IEnumerable<TToken>, Scope, TransformBinder>>();
-
-        private Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>> TokensFromString(string tokenString)
-        {
-            return (tokens, scope) =>
-            {
-                var compiler = scope.GetService<TToken, TNode, TModel>();
-                return compiler.ParseTokens(tokenString);
-            };
+            var compiler = scope.GetService<TToken, TNode, TModel>();
+            return compiler.ParseTokens(tokenString);
         }
 
         private IEnumerable<TToken> EmptyTokens(IEnumerable<TToken> tokens, Scope scope)
@@ -78,231 +20,123 @@ namespace Excess.Compiler.Core
             return new TToken[] { };
         }
 
+        class Transformer
+        {
+            public string Item { get; set; }
+            public Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>> Handler { get; set; }
+            public int Priority { get; set; }
+        }
+
+        List<Transformer> _transformers = new List<Transformer>();
+
         public ILexicalTransform<TToken, TNode> insert(string tokenString, string before = null, string after = null)
         {
-            _binders.Add((tokens, scope) =>
-            {
-                TokenSpan     extents;
-                ExistingToken existing = ExistingToken.PreInsert;
-                if (before != null)
-                {
-                    extents = labelExtent(tokens, scope, before);
-                    extents.end = extents.begin;
-                    existing = ExistingToken.PostInsert;
-                }
-                else if (after != null)
-                {
-                    extents = labelExtent(tokens, scope, after);
-                    extents.begin = extents.end;
-                }
-                else
-                {
-                    throw new InvalidOperationException("Must specify either 'after' or 'before'");
-                }
 
-                return new TransformBinder(TokensFromString(tokenString), extents, existing);
-            });
+            if (before != null)
+                AddTransformer(before, (tokens, scope) => TokensFromString(tokenString, scope).Union(tokens), 0);
+            else if (after != null)
+                AddTransformer(after, (tokens, scope) => TokensFromString(tokenString, scope).Union(tokens), 0);
+            else
+            {
+                throw new InvalidOperationException("Must specify either 'after' or 'before'");
+            }
 
             return this;
         }
 
+        private void AddTransformer(string target, Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>> handler, int priority)
+        {
+            _transformers.Add(new Transformer
+            {
+                Item = target,
+                Handler = handler,
+                Priority = priority
+            });
+        }
+
         public ILexicalTransform<TToken, TNode> replace(string named, string tokenString)
         {
-            _binders.Add((tokens, scope) =>
-            {
-                if (named != null)
-                    return new TransformBinder(TokensFromString(tokenString), labelExtent(tokens, scope, named));
-
-                throw new InvalidOperationException("Must specify either 'after' or 'before'");
-            });
+            if (named != null)
+                AddTransformer(named, (tokens, scope) => TokensFromString(tokenString, scope), -1);
+            else
+                throw new InvalidOperationException("Must specify 'named'");
 
             return this;
         }
 
         public ILexicalTransform<TToken, TNode> remove(string named)
         {
-            _binders.Add((tokens, scope) =>
+            if (named != null)
             {
-                if (named != null)
-                    return new TransformBinder(EmptyTokens, labelExtent(tokens, scope, named));
-
+                AddTransformer(named, (tokens, scope) => new TToken[] { }, -1);
+            }
+            else
                 throw new InvalidOperationException("Must specify 'named'");
-            });
 
             return this;
         }
 
-        public ILexicalTransform<TToken, TNode> then(string named, Func<TNode, TNode> handler)
+        public ILexicalTransform<TToken, TNode> then(Func<TNode, TNode> handler, string referenceToken = null)
         {
-
-            return then(named, (node, scope) => handler(node));
+            return then((node, scope) => handler(node), referenceToken);
         }
 
-        public ILexicalTransform<TToken, TNode> then(string named, ISyntaxTransform<TNode> transform)
+        string                    _refToken;
+        Func<TNode, Scope, TNode> _syntactical;
+        public ILexicalTransform<TToken, TNode> then(Func<TNode, Scope, TNode> handler, string referenceToken = null)
         {
-            return then(named, (node, scope) => transform.transform(node, scope));
-        }
-
-        public ILexicalTransform<TToken, TNode> then(string named, Func<TNode, Scope, TNode> handler)
-        {
-            _binders.Add((tokens, scope) =>
-            {
-                if (named != null)
-                    return new TransformBinder(Schedule(handler), labelExtent(tokens, scope, named));
-
-                throw new InvalidOperationException("Must specify 'named'");
-            });
+            Debug.Assert(_syntactical == null);
+            _refToken = referenceToken;
+            _syntactical = handler;
 
             return this;
         }
 
-        private Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>> Schedule(Func<TNode, Scope, TNode> handler)
+        public IEnumerable<TToken> transform(IEnumerable<TToken> tokens, ILexicalMatchResult<TToken, TNode> match, Scope scope)
         {
-            return (tokens, scope) =>
+            var sorted = _transformers.OrderBy(t => t.Priority);
+
+            foreach (var item in match.Items)
             {
-                var document = scope.GetDocument<TToken, TNode, TModel>();
-                return document.change(tokens, handler, kind:"lexical-extension");
-            };
-            
-        }
-
-        public IEnumerable<TToken> transform(IEnumerable<TToken> tokens, Scope scope)
-        {
-            var binderSelector = _binders
-                .Select<Func<IEnumerable<TToken>, Scope, TransformBinder>, TransformBinder>(f => f(tokens, scope))
-                .OrderBy(binder => binder.extents.begin);
-
-            TransformBinder[] binders       = binderSelector.ToArray();
-            int               currentToken  = 0;
-            int               currentBinder = -1;
-            int               binderCount   = binders.Length;
-            int               skipTokens    = 0;
-            int               binderBegin   = -1;
-
-            foreach (var token in tokens)
-            {
-                if (skipTokens > 0)
+                IEnumerable<TToken> result = match.GetTokens(tokens, item.Identifier);
+                foreach (var transformer in sorted)
                 {
-                    skipTokens--;
-                    continue;
+                    if (transformer.Item == item.Identifier)
+                        result = transformer.Handler(result, scope);
                 }
 
-                while (currentBinder < binderCount && binderBegin < currentToken)
-                {
-                    currentBinder++;
-                    binderBegin = binders[currentBinder].extents.begin;
-                }
-
-                if (binderBegin == currentToken)
-                {
-                    var binder = binders[currentBinder];
-                    var binderResult = binder.output(Range(tokens, binder.extents), scope);
-
-                    if (binder.existingToken == ExistingToken.PreInsert)
-                        yield return token;
-
-                    foreach (var binderToken in binderResult)
-                        yield return binderToken;
-
-                    if (binder.existingToken == ExistingToken.PostInsert)
-                        yield return token;
-
-                    skipTokens = binder.extents.end - binderBegin;
-
-                    currentBinder++;
-                    if (currentBinder < binderCount)
-                        binderBegin = binders[currentBinder].extents.begin;
-                    else
-                        binderBegin = int.MaxValue;
-                }
-                else
+                foreach (var token in result)
                     yield return token;
-
-                currentToken++;
             }
-        }
-
-        private IEnumerable<TToken> Range(IEnumerable<TToken> tokens, TokenSpan extents)
-        {
-            int current = -1;
-            foreach (var token in tokens)
-            {
-                current++;
-                if (extents.end < current)
-                    break;
-
-                if (extents.begin > current)
-                    continue;
-
-                yield return token;
-            }
-        }
-
-        private TokenSpan labelExtent(IEnumerable<TToken> tokens, Scope scope, string label)
-        {
-            dynamic context = scope;
-            object value    = scope.get<object>(label);
-            if (value != null)
-            {
-                if (value is TokenSpan)
-                    return (TokenSpan)value;
-
-                if (value is TToken)
-                {
-                    TToken valueToken = (TToken)value;
-                    int    idx = 0;
-                    foreach (var token in tokens)
-                    {
-                        if (valueToken.Equals(token))
-                        {
-                            TokenSpan retValue = new TokenSpan(idx, idx);
-                            scope.set(label, retValue);
-                            return retValue;
-                        }
-
-                        idx++;
-                    }
-
-                    return null;
-                }
-
-                if (value is IEnumerable<TToken>)
-                {
-                    var valueTokens = value as IEnumerable<TToken>;
-                    var tokenCount = valueTokens.Count();
-                    if (tokenCount <= 0)
-                        return null;
-
-                    var firstToken = valueTokens.First();
-                    int idx = 0;
-                    foreach (var token in tokens)
-                    {
-                        if (firstToken.Equals(token))
-                        {
-                            TokenSpan retValue = new TokenSpan(idx, idx + tokenCount);
-                            scope.set(label, retValue);
-                            return retValue;
-                        }
-
-                        idx++;
-                    }
-
-                    return null;
-                }
-            }
-
-
-            return null;
         }
     }
 
     public class LexicalFunctorTransform<TToken, TNode> : ILexicalTransform<TToken, TNode>
     {
-        Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>> _functor;
+        Func<IEnumerable<TToken>, ILexicalMatchResult<TToken, TNode>, Scope, IEnumerable<TToken>> _functor;
 
         public LexicalFunctorTransform(Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>> functor)
         {
+            _functor = WithScope(functor);
+        }
+
+        public LexicalFunctorTransform(Func<IEnumerable<TToken>, ILexicalMatchResult<TToken, TNode>, Scope, IEnumerable<TToken>> functor)
+        {
             _functor = functor;
+        }
+
+        private static Func<IEnumerable<TToken>, ILexicalMatchResult<TToken, TNode>, Scope, IEnumerable<TToken>> WithScope(Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>> functor)
+        {
+            return (tokens, match, scope) =>
+            {
+                foreach (var item in match.Items)
+                {
+                    if (item.Identifier != null)
+                        scope.set(item.Identifier, match.GetTokens(tokens, item.Identifier));
+                }
+
+                return functor(tokens, scope);
+            };
         }
 
         public ILexicalTransform<TToken, TNode> insert(string tokens, string before = null, string after = null)
@@ -320,24 +154,24 @@ namespace Excess.Compiler.Core
             throw new InvalidOperationException();
         }
 
-        public ILexicalTransform<TToken, TNode> then(string token, Func<TNode, TNode> handler)
+        public ILexicalTransform<TToken, TNode> then(Func<TNode, TNode> handler, string token)
         {
             throw new InvalidOperationException();
         }
 
-        public ILexicalTransform<TToken, TNode> then(string token, Func<TNode, Scope , TNode> handler)
+        public ILexicalTransform<TToken, TNode> then(Func<TNode, Scope , TNode> handler, string token)
         {
             throw new InvalidOperationException();
         }
 
-        public ILexicalTransform<TToken, TNode> then(string token, ISyntaxTransform<TNode> transform)
+        public ILexicalTransform<TToken, TNode> then(ISyntaxTransform<TNode> transform, string token)
         {
             throw new InvalidOperationException();
         }
 
-        public IEnumerable<TToken> transform(IEnumerable<TToken> tokens, Scope scope)
+        public IEnumerable<TToken> transform(IEnumerable<TToken> tokens, ILexicalMatchResult<TToken, TNode> match, Scope scope)
         {
-            return _functor(tokens, scope);
+            return _functor(tokens, match, scope);
         }
     }
 }

@@ -170,7 +170,7 @@ namespace Excess.Compiler.XS
             return (node, scope) =>
             {
                 EventFieldDeclarationSyntax @event  = (EventFieldDeclarationSyntax)node;
-                ParameterListSyntax         @params = CSharp.ParseParameterList("(" + RoslynCompiler.TokensToString(args) + ")");
+                ParameterListSyntax         @params = CSharp.ParseParameterList(RoslynCompiler.TokensToString(args));
 
                 var variable = @event
                     .Declaration

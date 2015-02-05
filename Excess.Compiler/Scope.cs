@@ -129,6 +129,30 @@ namespace Excess.Compiler
             return null;
         }
 
+        public T find<T>() where T : class
+        {
+            string thash = typeof(T).GetHashCode().ToString();
+            return find<T>(thash);
+        }
+
+        public T find<T>(string id) where T : class
+        {
+            object result;
+            if (_values.TryGetValue(id, out result))
+                return (T)result;
+
+            return _parent != null? _parent.find<T>(id) : default(T);
+        }
+
+        public object find(string id)
+        {
+            object result;
+            if (_values.TryGetValue(id, out result))
+                return result;
+
+            return _parent != null ? _parent.find(id) : null;
+        }
+
         public void set(string id, object value)
         {
             _values[id] = value;
@@ -140,5 +164,9 @@ namespace Excess.Compiler
             _values[id] = t;
         }
 
+        public bool has(string id)
+        {
+            return _values.ContainsKey(id);
+        }
     }
 }

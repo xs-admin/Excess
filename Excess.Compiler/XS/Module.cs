@@ -16,10 +16,11 @@ namespace Excess.Compiler.XS
     {
         static public void Apply(RoslynCompiler compiler)
         {
-            Functions .Apply(compiler);
-            Members   .Apply(compiler);
-            Events    .Apply(compiler);
-            TypeDef   .Apply(compiler);
+            Functions   .Apply(compiler);
+            Members     .Apply(compiler);
+            Events      .Apply(compiler);
+            TypeDef     .Apply(compiler);
+            Arrays      .Apply(compiler);  
          }
     }
 }

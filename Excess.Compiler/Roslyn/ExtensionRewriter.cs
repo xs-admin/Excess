@@ -20,8 +20,6 @@ namespace Excess.Compiler.Roslyn
         Dictionary<string, Func<SyntaxNode, Scope, SyntacticalExtension<SyntaxNode>, SyntaxNode>> _memberExtensions = new Dictionary<string, Func<SyntaxNode, Scope, SyntacticalExtension<SyntaxNode>, SyntaxNode>>();
         Dictionary<string, Func<SyntaxNode, Scope, SyntacticalExtension<SyntaxNode>, SyntaxNode>> _typeExtensions = new Dictionary<string, Func<SyntaxNode, Scope, SyntacticalExtension<SyntaxNode>, SyntaxNode>>();
 
-        Dictionary<string, SyntacticalExtension<SyntaxNode>> _customCode = new Dictionary<string, SyntacticalExtension<SyntaxNode>>();
-
         public ExtensionRewriter(IEnumerable<SyntacticalExtension<SyntaxNode>> extensions, Scope scope)
         {
             _scope = scope;
@@ -176,22 +174,16 @@ namespace Excess.Compiler.Roslyn
 
         public override SyntaxNode VisitExpressionStatement(ExpressionStatementSyntax node)
         {
-            SyntacticalExtension<SyntaxNode> extension = customCodeExtension(node);
-            if (extension == null)
+            var extension = null as SyntacticalExtension<SyntaxNode>;
+            var expr = node.Expression;
+            InvocationExpressionSyntax call = null;
+
+            if (expr is InvocationExpressionSyntax)
+                call = expr as InvocationExpressionSyntax;
+            else if (expr is AssignmentExpressionSyntax)
             {
-                var expr = node.Expression;
-                InvocationExpressionSyntax call = null;
-
-                if (expr is InvocationExpressionSyntax)
-                    call = expr as InvocationExpressionSyntax;
-                else if (expr is AssignmentExpressionSyntax)
-                {
-                    var assignment = expr as AssignmentExpressionSyntax;
-                    call = assignment.Right as InvocationExpressionSyntax;
-                }
-
-                if (call != null)
-                    extension = codeExtension(call);
+                var assignment = expr as AssignmentExpressionSyntax;
+                call = assignment.Right as InvocationExpressionSyntax;
             }
 
             if (extension != null)
@@ -208,28 +200,6 @@ namespace Excess.Compiler.Roslyn
             }
 
             return node;
-        }
-
-        private SyntacticalExtension<SyntaxNode> customCodeExtension(ExpressionStatementSyntax node)
-        {
-            if (_customCode.Any())
-            {
-                string id = RoslynCompiler.GetSyntacticalExtensionId(node);
-                if (id != null)
-                {
-                    SyntacticalExtension<SyntaxNode> result;
-                    if (_customCode.TryGetValue(id, out result))
-                    {
-                        var invocation = (InvocationExpressionSyntax)node.Expression;
-                        result.Identifier = invocation.Expression.ToString();
-                        result.Arguments = invocation.ArgumentList;
-                        result.Handler = _codeExtensions[result.Keyword];
-                        return result;
-                    }
-                }
-            }
-
-            return null;
         }
 
         public override SyntaxNode VisitLocalDeclarationStatement(LocalDeclarationStatementSyntax node)

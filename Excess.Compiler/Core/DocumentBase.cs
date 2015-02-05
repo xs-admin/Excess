@@ -178,41 +178,84 @@ namespace Excess.Compiler.Core
         protected TNode _root;
         private void applyLexical()
         {
-            if (_root != null)
-                return; //already applied
+            Debug.Assert(_root == null);
 
-            LexicalPass<TToken, TNode, TModel> pass = new LexicalPass<TToken, TNode, TModel>(_scope, _lexical);
-            Dictionary<string, SourceSpan> annotations  = new Dictionary<string, SourceSpan>();
+            //apply the lexical pass
+            var tokens = _compiler.ParseTokens(_text);
+            foreach (var lexical in _lexical)
+                tokens = lexical(tokens, new Scope(_scope));
+
+            //build modified text for syntactic parsing
             string resultText;
-            _root = pass.Parse(_text, annotations, out resultText);
+            Dictionary<string, SourceSpan> annotations = new Dictionary<string, SourceSpan>();
+            _root = calculateNewText(tokens, annotations, out resultText);
 
+            //maybe someone needs to know? 
             notifyResultText(resultText);
 
-            if (annotations.Any())
-            {
-                foreach (var annotation in annotations)
-                {
-                    TNode aNode = _compiler.Find(_root, annotation.Value);
-                    Debug.Assert(aNode != null);
-
-                    //change the id of the change from token to node
-                    int annotationId = int.Parse(annotation.Key);
-                    foreach (var change in _lexicalChanges)
-                    {
-                        if (change.ID == annotationId)
-                        {
-                            change.ID = _compiler.GetExcessId(aNode);
-                            Debug.Assert(change.ID >= 0);
-                        }
-                    }
-                }
-            }
+            //update from token to node
+            processAnnotations(annotations);
 
             //allow extensions writers to perform one last rewrite before the syntactical 
             _root = applyNodeChanges(_root, "lexical-extension", CompilerStage.Lexical);
 
             //move any pending changes to the syntactical pass
             _syntacticalChanges.AddRange(_lexicalChanges);
+        }
+
+        private TNode calculateNewText(IEnumerable<TToken> tokens, Dictionary<string, SourceSpan> annotations, out string modifiedText)
+        {
+            //td: !! mapping info
+            StringBuilder newText = new StringBuilder();
+            string currId = null;
+            foreach (var token in tokens)
+            {
+                string excessId;
+                string toInsert = _compiler.TokenToString(token, out excessId);
+
+                //store the actual position in the transformed stream of any tokens pending processing
+                if (excessId != currId)
+                {
+                    if (excessId != null)
+                        annotations[excessId] = new SourceSpan(newText.Length, toInsert.Length);
+
+                    currId = excessId;
+                }
+                else if (excessId != null)
+                {
+                    //augment span
+                    SourceSpan span = annotations[excessId];
+                    span.Length += toInsert.Length;
+                }
+                else
+                    currId = null;
+
+                newText.Append(toInsert);
+            }
+
+            modifiedText = newText.ToString();
+            var root = _compiler.Parse(modifiedText);
+            return _compiler.MarkTree(root);
+        }
+
+        private void processAnnotations(Dictionary<string, SourceSpan> annotations)
+        {
+            foreach (var annotation in annotations)
+            {
+                TNode aNode = _compiler.Find(_root, annotation.Value);
+                Debug.Assert(aNode != null);
+
+                //change the id of the change from token to node
+                int annotationId = int.Parse(annotation.Key);
+                foreach (var change in _lexicalChanges)
+                {
+                    if (change.ID == annotationId)
+                    {
+                        change.ID = _compiler.GetExcessId(aNode);
+                        Debug.Assert(change.ID >= 0);
+                    }
+                }
+            }
         }
 
         protected virtual void notifyResultText(string resultText)

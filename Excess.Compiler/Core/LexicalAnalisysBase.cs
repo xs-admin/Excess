@@ -8,88 +8,165 @@ using System.Threading.Tasks;
 
 namespace Excess.Compiler.Core
 {
-    public abstract class BaseLexicalMatch<TToken, TNode, TModel> : ILexicalMatch<TToken, TNode, TModel>,
-                                                                    IDocumentHandler<TToken, TNode, TModel>
+    public class BaseLexicalMatchResult<TToken, TNode> : ILexicalMatchResult<TToken, TNode>
     {
-        private ILexicalAnalysis<TToken, TNode, TModel> _lexical;
-        private ILexicalTransform<TToken, TNode> _transform;
-        private List<Func<TToken, Scope, TokenMatch>> _matchers = new List<Func<TToken, Scope, TokenMatch>>();
-
-        public BaseLexicalMatch(ILexicalAnalysis<TToken, TNode, TModel> lexical)
+        List<LexicalMatchItem> _items;
+        public BaseLexicalMatchResult(List<LexicalMatchItem> items, ILexicalTransform<TToken, TNode> transform)
         {
-            _lexical = lexical;
+            Items = items;
+            Transform = transform;
+
+            Consumed = 0;
+            foreach (var item in items)
+                Consumed += item.Span.Length;
         }
 
-        public void apply(IDocument<TToken, TNode, TModel> document)
-        {
-            document.change(ApplyMatchers);
-        }
+        public int Consumed { get; private set; }
+        public IEnumerable<LexicalMatchItem> Items { get; private set; }
+        public ILexicalTransform<TToken, TNode> Transform { get; set; }
 
-        private IEnumerable<TToken> ApplyMatchers(IEnumerable<TToken> tokens, Scope scope)
+        public IEnumerable<TToken> GetTokens(IEnumerable<TToken> tokens, string identifier)
         {
-            int consumed = 0;
-            var result = transform(tokens, scope, out consumed);
-            if (result != null)
-                scope.set("_consumed", consumed);
-
-            return result;
-        }
-
-        protected class EnclosedState
-        {
-            public EnclosedState()
+            Debug.Assert(identifier != null);
+            foreach (var item in _items)
             {
-                DepthCount = 1;
+                if (item.Identifier == identifier)
+                    return tokens
+                        .Skip(item.Span.Start)
+                        .Take(item.Span.Length);
             }
 
-            public int DepthCount        { get; set; }
-            public List<TToken> Contents { get; set; }
+            return null;
+        }
+    }
+
+    public class BaseLexicalMatch<TToken, TNode, TModel> : ILexicalMatch<TToken, TNode, TModel>
+    {
+        ILexicalAnalysis<TToken, TNode, TModel> _lexical;
+        ILexicalTransform<TToken, TNode> _transform;
+        List<Func<MatchResultBuilder, Scope, bool>> _matchers = new List<Func<MatchResultBuilder, Scope, bool>>();
+        ICompilerService<TToken, TNode, TModel> _compiler;
+
+        public BaseLexicalMatch(ILexicalAnalysis<TToken, TNode, TModel> lexical, ICompilerService<TToken, TNode, TModel> compiler)
+        {
+            _lexical = lexical;
+            _compiler = compiler;
         }
 
-        private static Func<TToken, Scope, TokenMatch> MatchEnclosed(Func<TToken, bool> open, Func<TToken, bool> close, string start, string end, string contents)
+        private class MatchResultBuilder
         {
-            return (token, scope) =>
+
+            IEnumerable<TToken> _tokens;
+            List<LexicalMatchItem> _items = new List<LexicalMatchItem>();
+            ILexicalTransform<TToken, TNode> _transform;
+
+            public MatchResultBuilder(IEnumerable<TToken> tokens, ILexicalTransform<TToken, TNode> transform)
             {
-                dynamic context = scope;
-                if (context._state == null)
+                _tokens = tokens;
+                _transform = transform;
+            }
+
+            public TToken Peek()
+            {
+                return _tokens.FirstOrDefault();
+            }
+
+            public IEnumerable<TToken> Remaining()
+            {
+                return _tokens;
+            }
+
+            int _current = 0;
+            public TokenSpan Consume(int count)
+            {
+                var result = new TokenSpan(_current, count);
+                _current += count;
+                _tokens = _tokens.Take(count);
+                return result;
+            }
+
+            List<LexicalMatchItem> _results = new List<LexicalMatchItem>();
+            public void AddResult(int length, string identifier, bool literal = false)
+            {
+                _results.Add(new LexicalMatchItem(Consume(length), identifier, literal));
+            }
+
+            public bool isDocumentStart()
+            {
+                return _current == 0;
+            }
+
+            public bool Any()
+            {
+                return _tokens.Any();
+            }
+
+            internal TToken Take()
+            {
+                _current++;
+                var result = _tokens.First();
+                _tokens = _tokens.Skip(1);
+                return result;
+            }
+
+            internal ILexicalMatchResult<TToken, TNode> GetResult()
+            {
+                return new BaseLexicalMatchResult<TToken, TNode>(_items, _transform);
+            }
+        }
+
+        public ILexicalMatchResult<TToken, TNode> match(IEnumerable<TToken> tokens, Scope scope)
+        {
+            var builder = new MatchResultBuilder(tokens, _transform);
+            var inner = new Scope(scope);
+            foreach (var matcher in _matchers)
+            {
+                if (!matcher(builder, inner))
+                    return null;
+            }
+
+            return builder.GetResult();
+        }
+
+
+        //matchers
+        private static Func<MatchResultBuilder, Scope, bool> MatchEnclosed(Func<TToken, bool> open, Func<TToken, bool> close, string start, string end, string contents)
+        {
+            return (match, scope) =>
+            {
+                if (!open(match.Peek()))
+                    return false;
+
+                if (start != null)
+                    match.AddResult(1, start);
+
+                int contentLength = 0;
+                int depthCount    = 1;
+                foreach (var token in match.Remaining())
                 {
-                    if (!open(token))
-                        return TokenMatch.UnMatch;
-
-                    var initialState = new EnclosedState();
-                    if (start != null)
-                        scope.set(start, token);
-
-                    if (contents != null)
+                    if (open(token))
+                        depthCount++;
+                    else if (close(token))
                     {
-                        initialState.Contents = new List<TToken>();
-                        scope.set(contents, initialState.Contents);
-                    }
+                        depthCount--;
+                        if (depthCount == 0)
+                        {
+                            if (end != null)
+                            {
+                                match.AddResult(contentLength - 1, contents);
+                                match.AddResult(1, end);
+                            }
+                            else
+                                match.AddResult(contentLength, contents);
 
-                    context._state = initialState;
-                    return TokenMatch.MatchAndContinue;
+                            return true;
+                        }
+
+                        contentLength++;
+                    }
                 }
 
-                EnclosedState state = context._state;
-                if (open(token))
-                    state.DepthCount++;
-                else if (close(token))
-                {
-                    state.DepthCount--;
-                    if (state.DepthCount == 0)
-                    {
-                        if (end != null)
-                            scope.set(end, token);
-
-                        context._state = null;
-                        return TokenMatch.Match;
-                    }
-                }
-
-                if (state.Contents != null)
-                    state.Contents.Add(token);
-
-                return TokenMatch.MatchAndContinue;
+                return false;
             };
         }
 
@@ -114,39 +191,24 @@ namespace Excess.Compiler.Core
             return this;
         }
 
-        private static Func<TToken, Scope, TokenMatch> MatchMany(Func<TToken, bool> match, string named, bool matchNone = false)
+        private static Func<MatchResultBuilder, Scope, bool> MatchMany(Func<TToken, bool> selector, string named, bool matchNone = false, bool literal = false)
         {
-            return (token, scope) =>
+            return (match, scope) =>
             {
-                var matches = match(token);
-
-                dynamic context = scope;
-                if (context._state == null)
+                int matched = 0;
+                while (match.Any())
                 {
-                    if (!matches)
-                        return matchNone ? TokenMatch.Match : TokenMatch.UnMatch;
+                    if (!selector(match.Take()))
+                        break;
 
-                    var state = new List<TToken>();
-                    state.Add(token);
-
-                    if (named != null)
-                        scope.set(named, state);
-
-                    context._state = state;
+                    matched++;
                 }
 
-                if (matches)
-                {
-                    if (named != null)
-                    {
-                        List<TToken> namedResult = context._state;
-                        namedResult.Add(token);
-                    }
+                if (matched == 0 && !matchNone)
+                    return false;
 
-                    return TokenMatch.MatchAndContinue;
-                }
-
-                return TokenMatch.UnMatch;
+                match.AddResult(matched, named, literal);
+                return true;
             };
         }
 
@@ -243,49 +305,64 @@ namespace Excess.Compiler.Core
             return any(MatchStringArray(anyOf.Select<char, string>(ch => ch.ToString())));
         }
 
-        public ILexicalMatch<TToken, TNode, TModel> any(string[] anyOf, string named = null)
+        public ILexicalMatch<TToken, TNode, TModel> any(string[] anyOf, string named = null, bool matchDocumentStart = false)
         {
-            return any(MatchStringArray(anyOf), named);
+            return any(MatchStringArray(anyOf), named, matchDocumentStart);
         }
 
-        public ILexicalMatch<TToken, TNode, TModel> any(char[] anyOf, string named = null)
+        public ILexicalMatch<TToken, TNode, TModel> any(char[] anyOf, string named = null, bool matchDocumentStart = false)
         {
-            return any(MatchStringArray(anyOf.Select<char, string>(ch => ch.ToString())), named);
+            return any(MatchStringArray(anyOf.Select<char, string>(ch => ch.ToString())), named, matchDocumentStart);
         }
 
-        private static Func<TToken, Scope, TokenMatch> MatchOne(Func<TToken, bool> match, string named, bool matchNone = false)
+        private static Func<MatchResultBuilder, Scope, bool> MatchOne(Func<TToken, bool> selector, string named = null, bool matchNone = false, bool matchDocumentStart = false)
         {
-            return (token, scope) =>
+            return (match, scope) =>
             {
-                var matches = match(token);
-                if (!matches)
-                    return matchNone ? TokenMatch.MatchAndStay : TokenMatch.UnMatch;
+                if (selector(match.Peek()))
+                {
+                    match.AddResult(1, named);
+                    return true;
+                }
 
-                if (named != null)
-                    scope.set(named, token);
+                if (matchNone || (matchDocumentStart && match.isDocumentStart()))
+                {
+                    match.AddResult(0, named);
+                    return true;
+                }
 
-                return TokenMatch.Match;
+                return false;
             };
         }
 
-        private static Func<TToken, Scope, TokenMatch> MatchUntil(Func<TToken, bool> match, string named)
+        private static Func<MatchResultBuilder, Scope, bool> MatchUntil(Func<TToken, bool> selector, string named = null, string matchNamed = null)
         {
-            return (token, scope) =>
+            return (match, scope) =>
             {
-                var matches = match(token);
-                if (!matches)
-                    return TokenMatch.MatchAndContinue;
+                int contentLength = 0;
+                foreach (var token in match.Remaining())
+                {
+                    if (selector(token))
+                    {
+                        if (matchNamed != null)
+                        {
+                            match.AddResult(contentLength - 1, named);
+                            match.AddResult(1, matchNamed);
+                        }
+                        else
+                            match.AddResult(contentLength, named);
 
-                if (named != null)
-                    scope.set(named, token); //td: keep all
+                        return true;
+                    }
+                }
 
-                return TokenMatch.Match;
+                return false;
             };
         }
 
-        public ILexicalMatch<TToken, TNode, TModel> any(Func<TToken, bool> handler, string named = null)
+        public ILexicalMatch<TToken, TNode, TModel> any(Func<TToken, bool> handler, string named = null, bool matchDocumentStart = false)
         {
-            _matchers.Add(MatchOne(handler, named));
+            _matchers.Add(MatchOne(handler, named, matchDocumentStart));
             return this;
         }
 
@@ -317,10 +394,8 @@ namespace Excess.Compiler.Core
 
         private Func<TToken, bool> MatchIdentifier()
         {
-            return token => isIdentifier(token); 
+            return token => _compiler.isIdentifier(token); 
         }
-
-        protected abstract bool isIdentifier(TToken token);
 
         public ILexicalMatch<TToken, TNode, TModel> identifier(string named = null, bool optional = false)
         {
@@ -370,50 +445,11 @@ namespace Excess.Compiler.Core
             return _lexical;
         }
 
-        public IEnumerable<TToken> transform(IEnumerable<TToken> tokens, Scope scope, out int consumed)
+        public ILexicalAnalysis<TToken, TNode, TModel> then(Func<IEnumerable<TToken>, ILexicalMatchResult<TToken, TNode>, Scope, IEnumerable<TToken>> handler)
         {
-            consumed = 0;
-
-            int currMatcher = 0;
-            foreach (var token in tokens)
-            {
-                if (currMatcher >= _matchers.Count)
-                {
-                    if (consumed > 0)
-                        break;
-
-                    return null;
-                }
-
-                consumed++;
-
-                bool keepMatching = false;
-                do
-                {
-                    var matcher = _matchers[currMatcher];
-                    var matchResult = matcher(token, scope);
-                    switch (matchResult)
-                    {
-                        case TokenMatch.Match:
-                        case TokenMatch.MatchAndContinue:
-                        case TokenMatch.MatchAndStay:
-                        {
-                            if (matchResult != TokenMatch.MatchAndContinue)
-                                currMatcher++;
-
-                            keepMatching = matchResult == TokenMatch.MatchAndStay;
-                            break;
-                        }
-                        case TokenMatch.UnMatch:
-                            return null;
-                    }
-                }
-                while (keepMatching);
-            }
-
-            return _transform.transform(tokens.Take(consumed), scope);
+            _transform = new LexicalFunctorTransform<TToken, TNode>(handler);
+            return _lexical;
         }
-
     }
 
     public abstract class BaseLexicalAnalysis<TToken, TNode, TModel> :  ILexicalAnalysis<TToken, TNode, TModel>,
@@ -423,21 +459,133 @@ namespace Excess.Compiler.Core
 
         public void apply(IDocument<TToken, TNode, TModel> document)
         {
-            foreach (var matcher in _matchers)
-            {
-                var handler = matcher as IDocumentHandler<TToken, TNode, TModel>;
-                Debug.Assert(handler != null);
-                handler.apply(document);
-            }
+            document.change(LexicalPass);
         }
 
-        protected abstract ILexicalMatch<TToken, TNode, TModel> createMatch();
+        ICompilerService<TToken, TNode, TModel> _compiler;
+        private IEnumerable<TToken> LexicalPass(IEnumerable<TToken> tokens, Scope scope)
+        {
+            _compiler = scope.GetService<TToken, TNode, TModel>();
+
+            var allTokens = tokens.ToArray();
+            return TransformSpan(allTokens, new TokenSpan(0, allTokens.Length), scope);
+        }
+
+        private class MatchInfo
+        {
+            public TokenSpan Span { get; set; }
+            public ILexicalMatchResult<TToken, TNode> Match { get; set; }
+        }
+
+        private IEnumerable<TToken> TransformSpan(TToken[] tokens, TokenSpan span, Scope scope)
+        {
+            var builders = new List<MatchInfo>();
+
+            int currentToken = 0;
+            while (currentToken < span.Length)
+            {
+                var remaining = Range(tokens, currentToken, span.Length - currentToken);
+
+                ILexicalMatchResult<TToken, TNode> result = null;
+                foreach (var matcher in _matchers)
+                {
+                    result = matcher.match(remaining, scope);
+                    if (result != null)
+                        break;
+                }
+
+                if (result != null)
+                {
+                    builders.Add(new MatchInfo { Span = new TokenSpan(currentToken, result.Consumed), Match = result });
+                    currentToken += result.Consumed;
+                }
+                else
+                    currentToken++;
+            }
+
+            return TransformBuilders(tokens, builders, scope);
+        }
+
+        private IEnumerable<TToken> TransformBuilders(TToken[] tokens, List<MatchInfo> builders, Scope scope)
+        {
+            int current = 0;
+            foreach (var builder in builders)
+            {
+                if (builder.Span.Start > current)
+                {
+                    for (int i = current; i < builder.Span.Start; i++)
+                        yield return tokens[current]; //literal
+                }
+
+                var matchedTokens = buildMatchResult(tokens, builder, scope);
+                var transformer = builder.Match.Transform;
+
+                Debug.Assert(transformer != null);
+                var matchTokens = transformer.transform(matchedTokens, builder.Match, scope);
+                foreach (var matchToken in matchTokens)
+                    yield return matchToken;
+            }
+
+            for (int i = current; i < tokens.Length; i++)
+                yield return tokens[current]; //finish
+        }
+
+        private IEnumerable<TToken> buildMatchResult(TToken[] tokens, MatchInfo builder, Scope scope)
+        {
+            List<LexicalMatchItem> resultItems = new List<LexicalMatchItem>();
+            IEnumerable<TToken> resultTokens = new TToken[] { };
+
+            int last = builder.Span.Start;
+            int current = builder.Span.Start;
+            foreach (var item in builder.Match.Items)
+            {
+                if (item.Span.Length > 1)
+                {
+                    IEnumerable<TToken> itemTokens;
+                    if (!item.Literal)
+                        itemTokens = TransformSpan(tokens, item.Span, scope);
+                    else
+                        itemTokens = Range(tokens, item.Span);
+
+                    resultTokens = resultTokens.Union(itemTokens);
+                    item.Span.Start = current;
+                    current += resultTokens.Count();
+                }
+                else
+                {
+                    resultTokens = resultTokens.Union(new[] { tokens[item.Span.Start] });
+                    item.Span.Start = current;
+                    current++;
+                }
+
+                resultItems.Add(item);
+            }
+
+            builder.Match = new BaseLexicalMatchResult<TToken, TNode>(resultItems, builder.Match.Transform);
+            return resultTokens;
+        }
+
+        private IEnumerable<TToken> Range(TToken[] tokens, TokenSpan span)
+        {
+            return Range(tokens, span.Start, span.Length);
+        }
+
+        private IEnumerable<TToken> Range(TToken[] tokens, int start, int length)
+        {
+            for (int i = 0; i < length; i++)
+                yield return tokens[start + i];
+        }
 
         public ILexicalMatch<TToken, TNode, TModel> match()
         {
             var result = createMatch();
             _matchers.Add(result);
             return result;
+        }
+
+        private ILexicalMatch<TToken, TNode, TModel> createMatch()
+        {
+            return new BaseLexicalMatch<TToken, TNode, TModel>(this, _compiler);
         }
 
         public virtual ILexicalTransform<TToken, TNode> transform()
