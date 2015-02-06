@@ -47,6 +47,11 @@ namespace Excess.Compiler.Roslyn
             return RoslynCompiler.MarkToken(token, strId);
         }
 
+        public SyntaxToken InitToken(SyntaxToken token, int xsId)
+        {
+            return RoslynCompiler.MarkToken(token, xsId.ToString());
+        }
+
         public IEnumerable<SyntaxToken> MarkTokens(IEnumerable<SyntaxToken> tokens, out int xsId)
         {
             string strId = RoslynCompiler.uniqueId();
@@ -406,6 +411,16 @@ namespace Excess.Compiler.Roslyn
             {
                 BlockSyntax code = (BlockSyntax)node;
                 return code.RemoveNode(FindNode(code.Statements, statementId), SyntaxRemoveOptions.KeepTrailingTrivia);
+            };
+        }
+
+        static public Func<SyntaxNode, Scope, SyntaxNode> RemoveMember(SyntaxNode member)
+        {
+            string membertId = NodeMark(member);
+            return (node, scope) =>
+            {
+                var clazz = (ClassDeclarationSyntax)node;
+                return clazz.RemoveNode(FindNode(clazz.Members, membertId), SyntaxRemoveOptions.KeepTrailingTrivia);
             };
         }
 

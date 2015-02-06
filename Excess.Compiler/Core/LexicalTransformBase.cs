@@ -35,7 +35,7 @@ namespace Excess.Compiler.Core
             if (before != null)
                 AddTransformer(before, (tokens, scope) => TokensFromString(tokenString, scope).Union(tokens), 0);
             else if (after != null)
-                AddTransformer(after, (tokens, scope) => TokensFromString(tokenString, scope).Union(tokens), 0);
+                AddTransformer(after, (tokens, scope) => tokens.Union(TokensFromString(tokenString, scope)), 0);
             else
             {
                 throw new InvalidOperationException("Must specify either 'after' or 'before'");
@@ -94,19 +94,42 @@ namespace Excess.Compiler.Core
 
         public IEnumerable<TToken> transform(IEnumerable<TToken> tokens, ILexicalMatchResult<TToken, TNode> match, Scope scope)
         {
-            var sorted = _transformers.OrderBy(t => t.Priority);
+            var sorted    = _transformers.OrderBy(t => t.Priority);
+            var compiler  = scope.GetService<TToken, TNode, TModel>();
+            var needsMark = _syntactical != null;
+            int id        = -1;
 
             foreach (var item in match.Items)
             {
-                IEnumerable<TToken> result = match.GetTokens(tokens, item.Identifier);
+                IEnumerable<TToken> result = match.GetTokens(tokens, item.Span);
                 foreach (var transformer in sorted)
                 {
                     if (transformer.Item == item.Identifier)
                         result = transformer.Handler(result, scope);
                 }
 
+                if (_refToken != null)
+                    needsMark = item.Identifier == _refToken;
+
                 foreach (var token in result)
-                    yield return token;
+                {
+                    if (needsMark)
+                    {
+                        TToken marked;
+                        if (id < 0)
+                        {
+                            var document = scope.GetDocument<TToken, TNode, TModel>();
+                            marked = document.change(token, _syntactical);
+                            id = compiler.GetExcessId(marked);
+                        }
+                        else
+                            marked = compiler.InitToken(token, id);
+
+                        yield return marked;
+                    }
+                    else 
+                        yield return token;
+                }
             }
         }
     }
@@ -131,8 +154,15 @@ namespace Excess.Compiler.Core
             {
                 foreach (var item in match.Items)
                 {
-                    if (item.Identifier != null)
-                        scope.set(item.Identifier, match.GetTokens(tokens, item.Identifier));
+                    if (item.Identifier != null && item.Span.Length > 0)
+                    {
+                        var idTokens = match.GetTokens(tokens, item.Span);
+
+                        if (item.Span.Length == 1)
+                            scope.set(item.Identifier, idTokens.First());
+                        else
+                            scope.set(item.Identifier, idTokens);
+                    }
                 }
 
                 return functor(tokens, scope);

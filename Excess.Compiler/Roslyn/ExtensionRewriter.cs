@@ -186,6 +186,9 @@ namespace Excess.Compiler.Roslyn
                 call = assignment.Right as InvocationExpressionSyntax;
             }
 
+            if (call != null)
+                extension = codeExtension(call);
+
             if (extension != null)
             {
 

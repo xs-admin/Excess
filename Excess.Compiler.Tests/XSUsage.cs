@@ -19,7 +19,8 @@ namespace Excess.Compiler.Tests
         public void Functions()
         {
             RoslynCompiler compiler = new RoslynCompiler();
-            XSModule.Apply(compiler);
+            XS.Functions.Apply(compiler);
+            //XSModule.Apply(compiler);
 
             //as lambda
             ExpressionSyntax exprFunction = compiler.CompileExpression("call(10, function(x, y) {})");
@@ -241,7 +242,7 @@ namespace Excess.Compiler.Tests
             ExpressionSyntax exprArray = compiler.CompileExpression("x = [[1, 2, 3], [4, 5, 6]]");
             Assert.IsTrue(exprArray.DescendantNodes()
                 .OfType<ImplicitArrayCreationExpressionSyntax>()
-                .Count() == 2);
+                .Count() == 3);
         }
     }
 }

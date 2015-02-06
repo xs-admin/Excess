@@ -59,11 +59,11 @@ namespace Excess.Compiler.Roslyn
             });
         }
 
-        protected override SyntaxNode transform(SyntaxNode node, Dictionary<int, Func<SyntaxNode, SemanticModel, Scope, SyntaxNode>> transformers)
+        protected override SyntaxNode transform(SyntaxNode node, Dictionary<int, Func<SyntaxNode, SyntaxNode, SemanticModel, Scope, SyntaxNode>> transformers)
         {
             Debug.Assert(Model != null);
 
-            var nodes = new Dictionary<SyntaxNode, Func<SyntaxNode, SemanticModel, Scope, SyntaxNode>>();
+            var nodes = new Dictionary<SyntaxNode, Func<SyntaxNode, SyntaxNode, SemanticModel, Scope, SyntaxNode>>();
             foreach (var transformer in transformers)
             {
                 SyntaxNode tNode = node
@@ -78,10 +78,10 @@ namespace Excess.Compiler.Roslyn
             IEnumerable<SyntaxNode> toReplace = nodes.Keys;
             return node.ReplaceNodes(toReplace, (oldNode, newNode) =>
             {
-                Func<SyntaxNode, SemanticModel, Scope, SyntaxNode> handler;
+                Func<SyntaxNode, SyntaxNode, SemanticModel, Scope, SyntaxNode> handler;
                 if (nodes.TryGetValue(oldNode, out handler))
                 {
-                    var result = handler(newNode, Model, _scope);
+                    var result = handler(oldNode, newNode, Model, _scope);
                     return result;
                 }
 

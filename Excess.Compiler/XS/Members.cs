@@ -159,12 +159,13 @@ namespace Excess.Compiler.XS
             return method;
         }
 
-        private static SyntaxNode FixReturnType(SyntaxNode node, SemanticModel model, Scope scope)
+        private static SyntaxNode FixReturnType(SyntaxNode node, SyntaxNode newNode, SemanticModel model, Scope scope)
         {
             var method = (MethodDeclarationSyntax)node;
             var type = RoslynCompiler.GetReturnType(method.Body, model);
 
-            return method.WithReturnType(type);
+            return (newNode as MethodDeclarationSyntax)
+                .WithReturnType(type);
         }
     }
 }

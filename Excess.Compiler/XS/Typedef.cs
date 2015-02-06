@@ -32,7 +32,7 @@ namespace Excess.Compiler.XS
                     .until(';', named: "definition")
                     .then(compiler.Lexical().transform()
                         .remove("keyword")
-                        .then(Typedef, referenceToken: "definition"));
+                        .then(Typedef));
 
             semantics
                 .error("CS0246", FixMissingType);
@@ -66,32 +66,43 @@ namespace Excess.Compiler.XS
 
         private static SyntaxNode Typedef(SyntaxNode node, Scope scope)
         {
-            if (node is FieldDeclarationSyntax)
+            var field = node
+                .AncestorsAndSelf()
+                .OfType<FieldDeclarationSyntax>()
+                .FirstOrDefault();
+
+            if (field == null)
             {
-                var field = node as FieldDeclarationSyntax;
-                if (field.Declaration.Variables.Count != 1)
-                {
-                    //td: error, malformed typedef
-                    return node;
-                }
-
-                var variable = field
-                    .Declaration
-                    .Variables[0];
-
-                Debug.Assert(variable.Initializer == null || variable.Initializer.IsMissing);
-
-                var type       = field.Declaration.Type;
-                var identifier = variable.Identifier;
-
-                var parentScope = scope.CreateScope<SyntaxToken, SyntaxNode, SemanticModel>(field.Parent);
-                Debug.Assert(parentScope != null);
-
-                parentScope.set("__tdef" + identifier.ToString(), type);
-                return null;
+                //td: error, malformed typedef
+                return node;
             }
 
-            //td: error, malformed typedef
+
+            if (field.Declaration.Variables.Count != 1)
+            {
+                //td: error, malformed typedef
+                return node;
+            }
+
+            var variable = field
+                .Declaration
+                .Variables[0];
+
+            Debug.Assert(variable.Initializer == null || variable.Initializer.IsMissing);
+
+            var type       = field.Declaration.Type;
+            var identifier = variable.Identifier;
+
+            var parentScope = scope.CreateScope<SyntaxToken, SyntaxNode, SemanticModel>(field.Parent);
+            Debug.Assert(parentScope != null);
+
+            parentScope.set("__tdef" + identifier.ToString(), type);
+
+            //schedule deletion
+            var document = scope.GetDocument<SyntaxToken, SyntaxNode, SemanticModel>();
+            document.change(field.Parent, RoslynCompiler.RemoveMember(field));
+
+            //return intact
             return node;
         }
 

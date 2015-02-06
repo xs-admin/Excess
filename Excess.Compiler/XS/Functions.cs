@@ -13,7 +13,7 @@ using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace Excess.Compiler.XS
 {
-    class Functions
+    public class Functions
     {
         static public void Apply(RoslynCompiler compiler)
         {
@@ -90,12 +90,13 @@ namespace Excess.Compiler.XS
             return node;
         }
 
-        private static SyntaxNode ReturnType(SyntaxNode node, SemanticModel model, Scope scope)
+        private static SyntaxNode ReturnType(SyntaxNode node, SyntaxNode newNode, SemanticModel model, Scope scope)
         {
             var method = (MethodDeclarationSyntax)node;
             var type = RoslynCompiler.GetReturnType(method.Body, model);
 
-            return method.WithReturnType(type);
+            return (newNode as MethodDeclarationSyntax)
+                .WithReturnType(type);
         }
 
         private static void FunctionType(SyntaxNode node, SemanticModel model, Scope scope)

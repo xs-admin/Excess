@@ -14,7 +14,7 @@ namespace Excess.Compiler
         void change(Func<TNode, Scope, TNode> transform, string kind = null);
         TNode change(TNode node, Func<TNode, Scope, TNode> transform, string kind = null);
         void change(Func<TNode, TModel, Scope, TNode> transform, string kind = null);
-        TNode change(TNode node, Func<TNode, TModel, Scope, TNode> transform, string kind = null);
+        TNode change(TNode node, Func<TNode, TNode, TModel, Scope, TNode> transform, string kind = null);
 
         bool applyChanges();
         bool applyChanges(CompilerStage stage);
@@ -23,6 +23,7 @@ namespace Excess.Compiler
         string Text { get; set; }
 
         TModel Model { get; set; }
+        Scope Scope { get; }
     }
 
     public interface IDocumentHandler<TToken, TNode, TModel>

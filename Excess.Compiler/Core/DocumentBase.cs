@@ -25,6 +25,7 @@ namespace Excess.Compiler.Core
         protected string _text;
         public string Text { get { return _text; } set { update(value); } }
         public TModel Model { get; set; }
+        public Scope Scope { get { return _scope; } }
 
         protected void update(string text)
         {
@@ -47,7 +48,7 @@ namespace Excess.Compiler.Core
             public int ID { get; set; }
             public string Kind { get; set; }
             public Func<TNode, Scope, TNode> Transform { get; set; }
-            public Func<TNode, TModel, Scope, TNode> SemanticalTransform { get; set; }
+            public Func<TNode, TNode, TModel, Scope, TNode> SemanticalTransform { get; set; }
         }
 
         List<Change> _lexicalChanges = new List<Change>();
@@ -113,7 +114,7 @@ namespace Excess.Compiler.Core
                 {
                     ID = nodeId,
                     Kind = kind,
-                    SemanticalTransform = (snode, model, scope) => transform(snode, scope)
+                    SemanticalTransform = (oldNode, newNode, model, scope) => transform(newNode, scope)
                 });
             }
 
@@ -129,7 +130,7 @@ namespace Excess.Compiler.Core
         }
 
         List<Change> _semanticalChanges = new List<Change>();
-        public TNode change(TNode node, Func<TNode, TModel, Scope, TNode> transform, string kind)
+        public TNode change(TNode node, Func<TNode, TNode, TModel, Scope, TNode> transform, string kind)
         {
             int nodeId;
             TNode result = _compiler.MarkNode(node, out nodeId);
@@ -295,7 +296,7 @@ namespace Excess.Compiler.Core
 
             if (stage == CompilerStage.Semantical)
             {
-                var transformers = new Dictionary<int, Func<TNode, TModel, Scope, TNode>>();
+                var transformers = new Dictionary<int, Func<TNode, TNode, TModel, Scope, TNode>>();
                 foreach (var change in changes)
                 {
                     Debug.Assert(change.SemanticalTransform != null);
@@ -331,7 +332,7 @@ namespace Excess.Compiler.Core
         }
 
         protected abstract TNode transform(TNode root, Dictionary<int, Func<TNode, Scope, TNode>> transformers);
-        protected abstract TNode transform(TNode root, Dictionary<int, Func<TNode, TModel, Scope, TNode>> transformers);
+        protected abstract TNode transform(TNode root, Dictionary<int, Func<TNode, TNode, TModel, Scope, TNode>> transformers);
 
         private void applySyntactical()
         {

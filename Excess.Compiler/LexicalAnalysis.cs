@@ -39,8 +39,7 @@ namespace Excess.Compiler
         int Consumed { get; }
         IEnumerable<LexicalMatchItem> Items { get; }
         ILexicalTransform<TToken, TNode> Transform { get; set; }
-
-        IEnumerable<TToken> GetTokens(IEnumerable<TToken> input, string identifier);
+        IEnumerable<TToken> GetTokens(IEnumerable<TToken> tokens, TokenSpan span);
     }
 
     public interface ILexicalMatch<TToken, TNode, TModel>

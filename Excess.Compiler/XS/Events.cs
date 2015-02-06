@@ -59,13 +59,13 @@ namespace Excess.Compiler.XS
             return document.change(result, SemanticEventHandler);
         }
 
-        private static SyntaxNode SemanticEventHandler(SyntaxNode node, SemanticModel model, Scope scope)
+        private static SyntaxNode SemanticEventHandler(SyntaxNode oldNode, SyntaxNode node, SemanticModel model, Scope scope)
         {
             var mthd       = (MethodDeclarationSyntax)node;
             var methdArgs  = mthd.ParameterList;
             var methodName = "on_" + mthd.Identifier.ToString();
 
-            ISymbol     self = model.GetDeclaredSymbol(mthd);
+            ISymbol     self = model.GetDeclaredSymbol(oldNode);
             ITypeSymbol type = (ITypeSymbol)self.ContainingSymbol;
 
             string evName = mthd.Identifier.ToString();

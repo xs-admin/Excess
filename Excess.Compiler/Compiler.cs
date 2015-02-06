@@ -35,6 +35,7 @@ namespace Excess.Compiler
         TToken MarkToken(TToken token);
         TNode MarkNode(TNode node, out int xsId);
         TNode MarkNode(TNode node);
+        TToken InitToken(TToken token, int xsId);
         TNode MarkTree(TNode node);
         int GetExcessId(TToken token);
         int GetExcessId(TNode node);
