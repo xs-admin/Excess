@@ -96,6 +96,7 @@
     <Compile Include="Core\SyntaxTransformBase.cs" />
     <Compile Include="Document.cs" />
     <Compile Include="Extensions\Asynch.cs" />
+    <Compile Include="Extensions\Contract.cs" />
     <Compile Include="Extensions\Match.cs" />
     <Compile Include="LexicalAnalysis.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

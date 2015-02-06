@@ -143,5 +143,35 @@ namespace Excess.Compiler.Tests
                 .OfType<ParenthesizedLambdaExpressionSyntax>()
                 .Count() == 2); //must have added a callback for asynch and another for synch
         }
+
+        [TestMethod]
+        public void Contract()
+        {
+            RoslynCompiler compiler = new RoslynCompiler();
+            Extensions.Contract.Apply(compiler);
+
+            SyntaxTree tree = null;
+            string text = null;
+
+            //event handler usage
+            var Usage = @"
+                class foo
+                {
+                    void bar(int x, object y)
+                    {
+                        contract()
+                        {
+                            x > 3;
+                            y != null;
+                        }
+                    }
+                }";
+
+            tree = compiler.ApplySemanticalPass(Usage, out text);
+            Assert.IsTrue(tree.GetRoot()
+                .DescendantNodes()
+                .OfType<IfStatementSyntax>()
+                .Count() == 2); //must have added an if for each contract condition
+        }
     }
 }
