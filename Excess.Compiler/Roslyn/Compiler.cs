@@ -279,6 +279,53 @@ namespace Excess.Compiler.Roslyn
             };
         }
 
+        public static Func<SyntaxNode, Scope, SyntaxNode> AddStatement(StatementSyntax statement, SyntaxNode before = null, SyntaxNode after = null)
+        {
+            return (node, scope) =>
+            {
+                var block = node as BlockSyntax;
+                Debug.Assert(block != null);
+                    
+                IEnumerable<StatementSyntax> newStatements = InsertStatement(block, statement, before, after);
+                return block
+                    .WithStatements(CSharp.List(
+                        newStatements));
+            };
+        }
+
+        private static IEnumerable<StatementSyntax> InsertStatement(BlockSyntax block, StatementSyntax statement, SyntaxNode before, SyntaxNode after)
+        {
+            Debug.Assert(before != null || after != null);
+
+            string target = before != null ?
+                RoslynCompiler.NodeMark(before) :
+                RoslynCompiler.NodeMark(after);
+
+            Debug.Assert(target != null);
+                                            
+            foreach (var st in block.Statements)
+            {
+                string id = RoslynCompiler.NodeMark(st);
+                if (id == target)
+                {
+                    if (before != null)
+                    {
+                        yield return statement;
+                        yield return st;
+                    }
+                    else
+                    {
+                        yield return st;
+                        yield return statement;
+                    }
+                }
+                else
+                    yield return st;
+            }
+        }
+
+
+
         //declarations
         public static TypeSyntax @void    = CSharp.PredefinedType(CSharp.Token(SyntaxKind.VoidKeyword));
         public static TypeSyntax @object  = CSharp.PredefinedType(CSharp.Token(SyntaxKind.ObjectKeyword));

@@ -267,7 +267,8 @@ namespace Excess.Compiler.Roslyn
                 if (code == null)
                     return new LookAheadResult { Matched = false };
 
-                extension.Body = code;
+                _lookahead = null;
+                extension.Body = base.Visit(code);
 
                 SyntaxNode resulSyntaxNode = null;
 
@@ -312,6 +313,8 @@ namespace Excess.Compiler.Roslyn
                     else
                     {
                         resulSyntaxNode = extension.Handler(node, scope, extension);
+                        if (resulSyntaxNode != null)
+                            resulSyntaxNode = RoslynCompiler.UpdateExcessId(resulSyntaxNode, node);
                     }
                 }
                 else
