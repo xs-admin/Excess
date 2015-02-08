@@ -25,6 +25,9 @@ namespace Excess.Compiler.Core
             _scope = new Scope(scope); 
         }
 
+        List<Type> _dependencies = new List<Type>();
+        public ICollection<Type> Dependencies { get { return _dependencies; } }
+
         public ILexicalAnalysis<TToken, TNode, TModel> Lexical()
         {
             return _lexical;

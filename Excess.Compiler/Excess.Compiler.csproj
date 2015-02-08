@@ -22,6 +22,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <UseVSHostingProcess>true</UseVSHostingProcess>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -88,9 +89,6 @@
     <Compile Include="Core\CompilerBase.cs" />
     <Compile Include="Core\DocumentBase.cs" />
     <Compile Include="Core\LexicalAnalisysBase.cs" />
-    <Compile Include="Class1.cs" />
-    <Compile Include="Core\LexicalMatchResult.cs" />
-    <Compile Include="Core\LexicalPass.cs" />
     <Compile Include="Core\LexicalTransformBase.cs" />
     <Compile Include="Core\SyntaxAnalysisBase.cs" />
     <Compile Include="Core\SyntaxTransformBase.cs" />
@@ -100,6 +98,7 @@
     <Compile Include="Extensions\Match.cs" />
     <Compile Include="LexicalAnalysis.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Roslyn\Compilation.cs" />
     <Compile Include="Roslyn\Compiler.cs" />
     <Compile Include="Roslyn\Document.cs" />
     <Compile Include="Roslyn\LexicalAnalysis.cs" />

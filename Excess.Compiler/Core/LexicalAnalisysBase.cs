@@ -113,8 +113,6 @@ namespace Excess.Compiler.Core
             {
                 if (!matcher(builder, inner))
                     return null;
-
-                string debug = "xxx";
             }
 
             return builder.GetResult();

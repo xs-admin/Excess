@@ -20,8 +20,6 @@ namespace Excess.Web.Controllers
 
         public ActionResult GetSamples()
         {
-            Compiler.Class1 ccc = new Compiler.Class1();
-
             var samples = from sample in _db.Samples
                           select new
                           {

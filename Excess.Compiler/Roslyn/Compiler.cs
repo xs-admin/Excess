@@ -195,7 +195,7 @@ namespace Excess.Compiler.Roslyn
             document.applyChanges(CompilerStage.Lexical);
 
             newText = document.LexicalText;
-            return document.Root;
+            return document.SyntaxRoot;
         }
 
         public string ApplyLexicalPass(string text)
@@ -216,8 +216,8 @@ namespace Excess.Compiler.Roslyn
 
             document.applyChanges(CompilerStage.Syntactical);
 
-            result = document.Root.NormalizeWhitespace().ToFullString();
-            return document.Root.SyntaxTree;
+            result = document.SyntaxRoot.NormalizeWhitespace().ToFullString();
+            return document.SyntaxRoot.SyntaxTree;
         }
 
         public SyntaxTree ApplySyntacticalPass(string text)
@@ -238,7 +238,7 @@ namespace Excess.Compiler.Roslyn
             ssHandler.apply(document);
 
             document.applyChanges(CompilerStage.Syntactical);
-            var tree = document.Root.SyntaxTree;
+            var tree = document.SyntaxRoot.SyntaxTree;
 
             var compilation = CSharpCompilation.Create("semantical-pass",
                 syntaxTrees: new[] { tree },
@@ -257,12 +257,12 @@ namespace Excess.Compiler.Roslyn
                     break;
 
                 var oldTree = tree;
-                tree = document.Root.SyntaxTree;
+                tree = document.SyntaxRoot.SyntaxTree;
                 compilation = compilation.ReplaceSyntaxTree(oldTree, tree);
             } 
 
-            result = document.Root.NormalizeWhitespace().ToFullString();
-            return document.Root.SyntaxTree;
+            result = document.SyntaxRoot.NormalizeWhitespace().ToFullString();
+            return document.SyntaxRoot.SyntaxTree;
         }
 
         public static Func<SyntaxNode, Scope, SyntaxNode> AddMember(MemberDeclarationSyntax member)
@@ -347,6 +347,7 @@ namespace Excess.Compiler.Roslyn
         }
 
         public static string NodeIdAnnotation = "xs-node";
+
         public static SyntaxNode MarkNode(SyntaxNode node, string id)
         {
             return node

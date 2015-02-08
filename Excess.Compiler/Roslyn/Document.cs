@@ -24,7 +24,14 @@ namespace Excess.Compiler.Roslyn
         }
 
         public string LexicalText { get; internal set; }
-        public SyntaxNode Root { get { return _root; } }
+        public SyntaxNode SyntaxRoot { get { return _root; } }
+
+        public CompilerStage Stage { get; internal set; }
+
+        public Diagnostic Error(Diagnostic error)
+        {
+            throw new NotImplementedException();
+        }
 
         protected override void notifyResultText(string resultText)
         {

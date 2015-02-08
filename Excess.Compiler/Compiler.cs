@@ -15,11 +15,18 @@ namespace Excess.Compiler
         Finished,
     }
 
+    public interface ICompilerInjector<TToken, TNode, TModel>
+    {
+        void apply(ICompiler<TToken, TNode, TModel> document);
+    }
+
     public interface ICompiler<TToken, TNode, TModel>
     {
         ILexicalAnalysis<TToken, TNode, TModel> Lexical();
         ISyntaxAnalysis<TToken, TNode, TModel> Sintaxis();
         ISemanticAnalysis<TToken, TNode, TModel> Semantics();
+
+        ICollection<Type> Dependencies { get; }
 
         bool Compile(string text, CompilerStage stage = CompilerStage.Started);
         bool CompileAll(string text);
