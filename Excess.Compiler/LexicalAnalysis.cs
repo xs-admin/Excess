@@ -121,11 +121,25 @@ namespace Excess.Compiler
         public IEnumerable<TToken> Body       { get; set; }
     }
 
+    public interface INormalizer<TToken, TNode, TModel>
+    {
+        ILexicalAnalysis<TToken, TNode, TModel> with(Func<TNode, IEnumerable<TNode>, Scope, TNode> statements = null,
+                                                     Func<TNode, IEnumerable<TNode>, Scope, TNode> members = null,
+                                                     Func<TNode, IEnumerable<TNode>, Scope, TNode> types = null);
+
+        ILexicalAnalysis<TToken, TNode, TModel> statements(Func<TNode, IEnumerable<TNode>, Scope, TNode> handler);
+        ILexicalAnalysis<TToken, TNode, TModel> members(Func<TNode, IEnumerable<TNode>, Scope, TNode> handler);
+        ILexicalAnalysis<TToken, TNode, TModel> types(Func<TNode, IEnumerable<TNode>, Scope, TNode> handler);
+    }
+
     public interface ILexicalAnalysis<TToken, TNode, TModel>
     {
         ILexicalMatch<TToken, TNode, TModel> match(); 
         ILexicalAnalysis<TToken, TNode, TModel> extension(string keyword, ExtensionKind kind, Func<IEnumerable<TToken>, Scope, LexicalExtension<TToken>, IEnumerable<TToken>> handler);
         ILexicalAnalysis<TToken, TNode, TModel> extension(string keyword, ExtensionKind kind, Func<TNode, Scope, LexicalExtension<TToken>, TNode> handler);
+
+        INormalizer<TToken, TNode, TModel> normalize();
+
         ILexicalTransform<TToken, TNode> transform();
     }
 }

@@ -160,14 +160,14 @@ namespace Excess.Web.Controllers
 
         public ActionResult debugDSL(string text)
         {
-            var runtime = Session["project"] as IDSLRuntime;
+            var runtime = Session["project"] as IExtensionRuntime;
             if (runtime == null)
                 return HttpNotFound(); //td: right error
 
             string result;
             try
             {
-                result = runtime.debugDSL(text);
+                result = runtime.debugExtension(text);
 
                 var notProvider = runtime as IRuntimeProject;
                 var nots = notProvider.notifications();

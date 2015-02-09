@@ -4,12 +4,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Excess.Compiler.XS
 {
+    using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
+    using ExcessCompiler = ICompiler<SyntaxToken, SyntaxNode, SemanticModel>;
+
     class Arrays
     {
-        static public void Apply(RoslynCompiler compiler)
+        static public void Apply(ExcessCompiler compiler)
         {
             compiler.Lexical()
                 .match()

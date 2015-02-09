@@ -8,13 +8,14 @@ using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
-using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
-
 namespace Excess.Compiler.XS
 {
+    using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
+    using ExcessCompiler = ICompiler<SyntaxToken, SyntaxNode, SemanticModel>;
+
     class Events
     {
-        static public void Apply(RoslynCompiler compiler)
+        static public void Apply(ExcessCompiler compiler)
         {
             var lexical = compiler.Lexical();
             var sintaxis = compiler.Sintaxis();

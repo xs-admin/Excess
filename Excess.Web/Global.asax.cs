@@ -1,6 +1,5 @@
 ﻿using System;
 using Castle.Facilities.Logging;
-using Excess.Core;
 using Castle.MicroKernel.Registration;
 using System.Web;
 using System.Web.Mvc;

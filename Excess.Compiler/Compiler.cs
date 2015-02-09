@@ -17,7 +17,15 @@ namespace Excess.Compiler
 
     public interface ICompilerInjector<TToken, TNode, TModel>
     {
-        void apply(ICompiler<TToken, TNode, TModel> document);
+        void apply(ICompiler<TToken, TNode, TModel> compiler);
+    }
+
+    public interface ICompilerEnvironment
+    {
+        ICompilerEnvironment dependency<T>(string module);
+        ICompilerEnvironment dependency<T>(IEnumerable<string> modules);
+        ICompilerEnvironment dependency(string module, string path = null);
+        ICompilerEnvironment dependency(IEnumerable<string> modules, string path = null);
     }
 
     public interface ICompiler<TToken, TNode, TModel>
@@ -25,8 +33,7 @@ namespace Excess.Compiler
         ILexicalAnalysis<TToken, TNode, TModel> Lexical();
         ISyntaxAnalysis<TToken, TNode, TModel> Sintaxis();
         ISemanticAnalysis<TToken, TNode, TModel> Semantics();
-
-        ICollection<Type> Dependencies { get; }
+        ICompilerEnvironment Environment();
 
         bool Compile(string text, CompilerStage stage = CompilerStage.Started);
         bool CompileAll(string text);

@@ -101,6 +101,7 @@
     <Compile Include="Roslyn\Compilation.cs" />
     <Compile Include="Roslyn\Compiler.cs" />
     <Compile Include="Roslyn\Document.cs" />
+    <Compile Include="Roslyn\Environment.cs" />
     <Compile Include="Roslyn\LexicalAnalysis.cs" />
     <Compile Include="Roslyn\SemanticAnalysis.cs" />
     <Compile Include="Roslyn\SyntaxAnalysis.cs" />

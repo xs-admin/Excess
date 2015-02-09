@@ -34,8 +34,8 @@ namespace Excess.RuntimeProject
         int fileId(string file);
     }
 
-    public interface IDSLRuntime
+    public interface IExtensionRuntime
     {
-        string debugDSL(string text);
+        string debugExtension(string text);
     }
 }

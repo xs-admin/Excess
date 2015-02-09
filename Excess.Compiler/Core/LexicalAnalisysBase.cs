@@ -462,6 +462,42 @@ namespace Excess.Compiler.Core
         }
     }
 
+    public class BaseNormalizer<TToken, TNode, TModel> :  INormalizer<TToken, TNode, TModel>
+    {
+        BaseLexicalAnalysis<TToken, TNode, TModel> _owner;
+        public BaseNormalizer(BaseLexicalAnalysis<TToken, TNode, TModel> owner)
+        {
+            _owner = owner;
+        }
+
+        public ILexicalAnalysis<TToken, TNode, TModel> with(
+            Func<TNode, IEnumerable<TNode>, Scope, TNode> statements = null,
+            Func<TNode, IEnumerable<TNode>, Scope, TNode> members    = null,
+            Func<TNode, IEnumerable<TNode>, Scope, TNode> types      = null)
+        {
+            _owner.normalize(statements, members, types);
+            return _owner;
+        }
+
+        public ILexicalAnalysis<TToken, TNode, TModel> statements(Func<TNode, IEnumerable<TNode>, Scope, TNode> handler)
+        {
+            _owner.normalize(statements: handler);
+            return _owner;
+        }
+
+        public ILexicalAnalysis<TToken, TNode, TModel> members(Func<TNode, IEnumerable<TNode>, Scope, TNode> handler)
+        {
+            _owner.normalize(members: handler);
+            return _owner;
+        }
+
+        public ILexicalAnalysis<TToken, TNode, TModel> types(Func<TNode, IEnumerable<TNode>, Scope, TNode> handler)
+        {
+            _owner.normalize(types: handler);
+            return _owner;
+        }
+    }
+
     public abstract class BaseLexicalAnalysis<TToken, TNode, TModel> :  ILexicalAnalysis<TToken, TNode, TModel>,
                                                                         IDocumentHandler<TToken, TNode, TModel>
     {
@@ -470,7 +506,17 @@ namespace Excess.Compiler.Core
         public void apply(IDocument<TToken, TNode, TModel> document)
         {
             document.change(LexicalPass);
+
+            if (_normalizeStatements != null || _normalizeMembers != null || _normalizeTypes != null)
+                document.change(normalize, "normalize");
         }
+
+        public INormalizer<TToken, TNode, TModel> normalize()
+        {
+            return new BaseNormalizer<TToken, TNode, TModel>(this);
+        }
+
+        protected abstract TNode normalize(TNode node, Scope scope);
 
         private IEnumerable<TToken> LexicalPass(IEnumerable<TToken> tokens, Scope scope)
         {
@@ -601,6 +647,23 @@ namespace Excess.Compiler.Core
         private ILexicalMatch<TToken, TNode, TModel> createMatch()
         {
             return new BaseLexicalMatch<TToken, TNode, TModel>(this);
+        }
+
+        protected Func<TNode, IEnumerable<TNode>, Scope, TNode> _normalizeStatements;
+        protected Func<TNode, IEnumerable<TNode>, Scope, TNode> _normalizeMembers;
+        protected Func<TNode, IEnumerable<TNode>, Scope, TNode> _normalizeTypes;
+        public void normalize(Func<TNode, IEnumerable<TNode>, Scope, TNode> statements = null, 
+                              Func<TNode, IEnumerable<TNode>, Scope, TNode> members = null,
+                              Func<TNode, IEnumerable<TNode>, Scope, TNode> types = null)
+        {
+            if (statements != null)
+                _normalizeStatements = statements; //overrides
+
+            if (members != null)
+                _normalizeMembers = members;
+
+            if (members != null)
+                _normalizeTypes = members;
         }
 
         public virtual ILexicalTransform<TToken, TNode> transform()

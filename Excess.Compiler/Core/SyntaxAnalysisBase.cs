@@ -134,28 +134,6 @@ namespace Excess.Compiler.Core
     public abstract class BaseSyntaxAnalysis<TToken, TNode, TModel> : ISyntaxAnalysis<TToken, TNode, TModel>,
                                                                       IDocumentHandler<TToken, TNode, TModel>
     {
-        private Func<IEnumerable<TNode>, TNode> _looseMembers;
-        private Func<IEnumerable<TNode>, TNode> _looseStatements;
-        private Func<IEnumerable<TNode>, TNode> _looseTypes;
-
-        public ISyntaxAnalysis<TToken, TNode, TModel> looseMembers(Func<IEnumerable<TNode>, TNode> handler)
-        {
-            _looseMembers = handler;
-            return this;
-        }
-
-        public ISyntaxAnalysis<TToken, TNode, TModel> looseStatements(Func<IEnumerable<TNode>, TNode> handler)
-        {
-            _looseStatements = handler;
-            return this;
-        }
-
-        public ISyntaxAnalysis<TToken, TNode, TModel> looseTypes(Func<IEnumerable<TNode>, TNode> handler)
-        {
-            _looseTypes = handler;
-            return this;
-        }
-
         protected List<SyntacticalExtension<TNode>> _extensions = new List<SyntacticalExtension<TNode>>();
 
         public ISyntaxAnalysis<TToken, TNode, TModel> extension(string keyword, ExtensionKind kind, Func<TNode, Scope, SyntacticalExtension<TNode>, TNode> handler)
@@ -221,8 +199,6 @@ namespace Excess.Compiler.Core
             if (_extensions.Any())
                 document.change(extensions, "syntactical-extensions");
 
-            document.change(normalize, "syntactical-normalize");
-
             foreach(var matcher in _matchers)
             {
                 var handler = matcher as IDocumentHandler<TToken, TNode, TModel>;
@@ -232,7 +208,6 @@ namespace Excess.Compiler.Core
             }
         }
 
-        protected abstract TNode normalize(TNode node, Scope scope);
         protected abstract TNode extensions(TNode node, Scope scope);
     }
 }

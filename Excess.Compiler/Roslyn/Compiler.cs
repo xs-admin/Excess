@@ -146,13 +146,18 @@ namespace Excess.Compiler.Roslyn
 
     public class RoslynCompiler : CompilerBase<SyntaxToken, SyntaxNode, SemanticModel>
     {
-        public RoslynCompiler(Scope scope = null) : 
+        public RoslynCompiler(ICompilerEnvironment environment, Scope scope = null) : 
             base(new RoslynLexicalAnalysis(), 
                  new RoslynSyntaxAnalysis(),
                  new RoslynSemanticAnalysis(),
+                 environment,
                  scope)
         {
             _scope.set<ICompilerService<SyntaxToken, SyntaxNode, SemanticModel>>(new CompilerService());
+        }
+
+        public RoslynCompiler() : this(new RoslynEnvironment())
+        {
         }
 
         protected override IDocument<SyntaxToken, SyntaxNode, SemanticModel> createDocument()
@@ -629,4 +634,5 @@ namespace Excess.Compiler.Roslyn
             return CSharp.ParseTypeName(rt.Name);
         }
     }
+
 }

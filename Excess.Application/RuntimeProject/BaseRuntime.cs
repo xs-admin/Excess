@@ -1,5 +1,4 @@
-﻿using Excess.Core;
-using Microsoft.CodeAnalysis;
+﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using System;
 using System.Collections.Generic;
@@ -9,19 +8,20 @@ using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
+using Compilation = Excess.Compiler.Roslyn.Compilation;
+using Excess.Compiler;
+using Excess.Compiler.XS;
+
 namespace Excess.RuntimeProject
 {
     internal abstract class BaseRuntime : IRuntimeProject
     {
-        public BaseRuntime(IDSLFactory factory)
-        {
-            _ctx = new ExcessContext(factory);
-        }
-
         public bool busy()
         {
             return _busy;
         }
+
+        protected Compilation _compilation = new Compilation();
 
         public void compile()
         {
@@ -50,13 +50,17 @@ namespace Excess.RuntimeProject
             _busy = true;
             try
             {
-                if (!doCompile())
-                    notifyErrors();
-                else
+                bool succeded = doCompile();
+                if (succeded)
                 {
-                    Assembly assembly = loadAssembly();
-                    doRun(assembly, out client);
+                    Assembly assembly = _compilation.build();
+                    succeded = assembly != null;
+                    if (succeded)
+                        doRun(assembly, out client);
                 }
+
+                if (!succeded)
+                    notifyErrors();
             }
             finally
             {
@@ -75,12 +79,7 @@ namespace Excess.RuntimeProject
 
         protected void notifyErrors()
         {
-            notifyErrors(GetErrors());
-        }
-
-        protected void notifyInternalErrors()
-        {
-            notifyErrors(_ctx.GetErrors());
+            notifyErrors(_compilation.errors());
         }
 
         public void add(string file, int fileId, string contents)
@@ -88,24 +87,25 @@ namespace Excess.RuntimeProject
             if (_files.ContainsKey(file))
                 throw new InvalidOperationException();
 
-            var rFile = new RuntimeFile
-            {
-                FileName = file,
-                FileId = fileId,
-                Contents = contents,
-            };
+            _files[file] = fileId;
+            _compilation.addDocument(file, contents, getInjector(file));
 
-            _files[file] = rFile;
-            _dirty.Add(rFile);
+            _dirty = true;
+        }
+
+        protected virtual ICompilerInjector<SyntaxToken, SyntaxNode, SemanticModel> getInjector(string file)
+        {
+            return XSModule.Create();
         }
 
         public void modify(string file, string contents)
         {
-            RuntimeFile rFile = _files[file];
-            rFile.Contents = contents;
+            if (!_files.ContainsKey(file))
+                throw new InvalidOperationException();
 
-            if (!_dirty.Contains(rFile))
-                _dirty.Add(rFile);
+            _compilation.updateDocument(file, contents);
+
+            _dirty = true;
         }
 
         public IEnumerable<Notification> notifications()
@@ -134,154 +134,46 @@ namespace Excess.RuntimeProject
 
         public string fileContents(string file)
         {
-            RuntimeFile rFile;
-            if (_files.TryGetValue(file, out rFile))
-                return rFile.Contents;
+            if (_files.ContainsKey(file))
+                return _compilation.documentText(file);
 
             return null;
         }
 
         public int fileId(string file)
         {
-            RuntimeFile rFile;
-            if (_files.TryGetValue(file, out rFile))
-                return rFile.FileId;
+            int result;
+            if (_files.TryGetValue(file, out result))
+                return result;
 
             return -1;
         }
 
-        protected class RuntimeFile
-        {
-            public string FileName { get; set; }
-            public int FileId { get; set; }
-            public SyntaxTree Tree { get; set; }
-            public string Contents { get; set; }
-        }
-
-        protected bool          _busy = false;
-        protected ExcessContext _ctx;
+        protected bool _busy  = false;
+        protected bool _dirty = false;
 
         protected virtual bool doCompile()
         {
-            updateCompilation();
-
-            if (!_dirty.Any())
+            if (!_dirty)
             {
                 notify(NotificationKind.System, "Compilation up to date");
                 return true;
             }
 
-            //Compile
-            foreach (var dirty in _dirty)
-            {
-                notify(NotificationKind.System, dirty.FileName + "...");
-
-                prepareContext(dirty.FileName);
-                var newTree = ExcessContext.Compile(_ctx, dirty.Contents);
-
-                if (dirty.Tree == null)
-                    _compilation = _compilation.AddSyntaxTrees(new[] { newTree });
-                else
-                    _compilation = _compilation.ReplaceSyntaxTree(dirty.Tree, newTree);
-
-                dirty.Tree = newTree;
-            }
-
-            Dictionary<SyntaxTree, SyntaxTree> track = new Dictionary<SyntaxTree, SyntaxTree>();
-            _compilation = ExcessContext.Link(_ctx, _compilation, track);
-
-            foreach (var file in _files)
-            {
-                SyntaxTree tree;
-                if (track.TryGetValue(file.Value.Tree, out tree))
-                    file.Value.Tree = tree;
-            }
-
-            _dirty.Clear();
-
-            return !GetErrors().Any();
-        }
-
-        private IEnumerable<Diagnostic> GetErrors()
-        {
-            return _ctx
-                .GetErrors()
-                .Union(_compilation
-                    .GetDiagnostics()
-                    .Where(d => d.Severity == DiagnosticSeverity.Error));
+            return _compilation.compile();
         }
 
         protected abstract void doRun(Assembly asm, out dynamic clientData);
         
-        //File Management
-        protected Dictionary<string, RuntimeFile> _files = new Dictionary<string, RuntimeFile>();
-        protected List<RuntimeFile>               _dirty = new List<RuntimeFile>();
-
-        //Compilation Management
-        protected Compilation _compilation;
-        protected abstract IEnumerable<MetadataReference> compilationReferences();
-        protected abstract IEnumerable<SyntaxTree> compilationFiles();
-        protected virtual void prepareContext(string fileName)
-        {
-        }
-
-        private void updateCompilation()
-        {
-            if (_compilation == null)
-            {
-                var defaultReferences = new[]  {
-                    MetadataReference.CreateFromAssembly(typeof(object).Assembly),
-                    MetadataReference.CreateFromAssembly(typeof(Enumerable).Assembly),
-                };
-
-                IEnumerable<MetadataReference> projReferences = compilationReferences();
-                if (projReferences == null)
-                    projReferences = defaultReferences;
-                else
-                    projReferences = projReferences.Union(defaultReferences);
-
-                var defaultFiles = new[] {
-                    consoleTree,
-                    randomTree
-                };
-
-                IEnumerable<SyntaxTree> projFiles = compilationFiles();
-                if (projFiles == null)
-                    projFiles = defaultFiles;
-                else
-                    projFiles = projFiles.Union(defaultFiles);
-
-                _compilation = CSharpCompilation.Create("runtime" + Guid.NewGuid().ToString().Replace("-", "") + ".dll",
-                    syntaxTrees: projFiles,
-                    references:  projReferences,
-                    options:     new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
-            }
-        }
-
-        //Notifications
-        private List<Notification> _notifications    = new List<Notification>();
-        private object             _notificationLock = new object();
+        protected Dictionary<string, int> _files            = new Dictionary<string, int>();
+        private List<Notification>        _notifications    = new List<Notification>();
+        private object                    _notificationLock = new object();
 
         protected void notify(NotificationKind kind, string message)
         {
             lock(_notificationLock)
             {
                 _notifications.Add(new Notification { Kind = kind, Message = message });
-            }
-        }
-
-        //Assembly management
-        private Assembly loadAssembly()
-        {
-            using (var stream = new MemoryStream())
-            {
-                var result = _compilation.Emit(stream);
-                if (!result.Success)
-                    return null;
-
-                var assembly = Assembly.Load(stream.GetBuffer());
-                setupConsole(assembly);
-                return assembly;
             }
         }
 

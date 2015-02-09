@@ -16,7 +16,6 @@ namespace Excess
         {
             container.Register(
                 Component.For<ITranslationService>().ImplementedBy<TranslationService>(),
-                Component.For<IDSLService>().ImplementedBy<DSLService>(),
                 Component.For<IProjectManager>().ImplementedBy<ProjectService>());
         }
     }

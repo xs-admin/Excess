@@ -11,6 +11,7 @@ using System.Reflection;
 
 using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 using System.IO;
+using System.Diagnostics;
 
 namespace Excess.Compiler.Roslyn
 {
@@ -42,7 +43,7 @@ namespace Excess.Compiler.Roslyn
                 Id = id,
                 Stage = CompilerStage.Started,
                 Document = new RoslynDocument(_scope, contents),
-                Compiler = new RoslynCompiler()
+                Compiler = new RoslynCompiler(_environment, _scope)
             };
 
             injector.apply(newDoc.Compiler);
@@ -60,6 +61,18 @@ namespace Excess.Compiler.Roslyn
 
             doc.Document = new RoslynDocument(_scope, contents);
             doc.Stage = CompilerStage.Started;
+        }
+
+        public string documentText(string id)
+        {
+            var file = _documents
+                .Where(document => document.Id == id)
+                .FirstOrDefault();
+
+            if (file != null)
+                return file.Document.Text;
+
+            return null;
         }
 
         public bool compile()
@@ -99,25 +112,35 @@ namespace Excess.Compiler.Roslyn
             if (_compilation == null)
                 _compilation = createCompilation();
 
-            bool hasChanges = false;
-            foreach (var change in changes)
+            while (changes.Any())
             {
-                _compilation = _compilation.ReplaceSyntaxTree(change.Key, change.Value);
-                hasChanges = true;
-            }
+                foreach (var change in changes)
+                {
+                    _compilation = _compilation.ReplaceSyntaxTree(change.Key, change.Value);
+                }
 
-            while (hasChanges)
-            {
-                hasChanges = false;
+                changes.Clear();
                 foreach (var doc in _documents)
                 {
                     var document = doc.Document;
-                    hasChanges |= !document.applyChanges(CompilerStage.Semantical);
+                    var tree = document.SyntaxRoot.SyntaxTree;
 
-                    if (document.hasErrors())
-                        return null;
+                    document.Model = _compilation.GetSemanticModel(tree);
+                    Debug.Assert(document.Model != null);
+
+                    if (!document.applyChanges(CompilerStage.Semantical))
+                    {
+                        Debug.Assert(tree != document.SyntaxRoot.SyntaxTree);
+                        changes[tree] = document.SyntaxRoot.SyntaxTree;
+                    }
                 }
             }
+
+            if (_compilation
+                    .GetDiagnostics()
+                    .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
+                    .Any())
+                return null;
 
             using (var stream = new MemoryStream())
             {
@@ -129,36 +152,29 @@ namespace Excess.Compiler.Roslyn
             }
         }
 
+        RoslynEnvironment _environment = null;
         private CSharpCompilation createCompilation()
         {
             var assemblyName = OutputFile;
             if (assemblyName == null)
                 assemblyName = Guid.NewGuid().ToString().Replace("-", "");
 
-            var references = defaultDependencies();
-            foreach (var doc in _documents)
-            {
-                var compiler = doc.Compiler;
-                foreach (Type dependency in compiler.Dependencies)
-                {
-                    if (!references.Contains(dependency))
-                        references.Add(dependency);
-                }
-            }
+            if (_environment == null)
+                _environment = createEnvironment();
 
             return CSharpCompilation.Create(assemblyName,
                 syntaxTrees: _trees.Values,
-                references: references.Select(reference => MetadataReference.CreateFromAssembly(reference.Assembly)),
+                references: _environment.GetReferences(),
                 options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
         }
 
-        private List<Type> defaultDependencies()
+        protected virtual RoslynEnvironment createEnvironment()
         {
-            return new List<Type>(new []
-            {
-                typeof(object),
-                typeof(Enumerable)
-            });
+            var result = new RoslynEnvironment();
+            result.dependency<object>(new[] { "System", "System.Collections", "System.Collections.Generic" });
+            result.dependency<IEnumerable<object>>(new[] { "System.Collections", "System.Collections.Generic" });
+
+            return result;
         }
 
         public IEnumerable<Diagnostic> errors()

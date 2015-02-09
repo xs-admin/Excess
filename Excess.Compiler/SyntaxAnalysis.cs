@@ -56,9 +56,6 @@ namespace Excess.Compiler
 
     public interface ISyntaxAnalysis<TToken, TNode, TModel>
     {
-        ISyntaxAnalysis<TToken, TNode, TModel> looseStatements(Func<IEnumerable<TNode>, TNode> handler);
-        ISyntaxAnalysis<TToken, TNode, TModel> looseMembers(Func<IEnumerable<TNode>, TNode> handler);
-        ISyntaxAnalysis<TToken, TNode, TModel> looseTypes(Func<IEnumerable<TNode>, TNode> handler);
         ISyntaxAnalysis<TToken, TNode, TModel> extension(string keyword, ExtensionKind kind, Func<TNode, Scope, SyntacticalExtension<TNode>, TNode> handler);
         ISyntaxAnalysis<TToken, TNode, TModel> extension(string keyword, ExtensionKind kind, Func<TNode, SyntacticalExtension<TNode>, TNode> handler);
 

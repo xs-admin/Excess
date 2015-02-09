@@ -1,5 +1,8 @@
 ﻿using Excess.Compiler.Core;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Text;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,6 +11,8 @@ using System.Threading.Tasks;
 
 namespace Excess.Compiler.Roslyn
 {
+    using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
+
     public class RoslynSyntaxTransform : BaseSyntaxTransform<SyntaxToken, SyntaxNode, SemanticModel>
     {
 
@@ -88,11 +93,6 @@ namespace Excess.Compiler.Roslyn
         {
             ExtensionRewriter rewriter = new ExtensionRewriter(_extensions, scope);
             return rewriter.Visit(node);
-        }
-
-        protected override SyntaxNode normalize(SyntaxNode node, Scope scope)
-        {
-            return node; //td: 
         }
 
     }

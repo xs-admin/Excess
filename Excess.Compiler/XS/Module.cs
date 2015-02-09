@@ -8,19 +8,29 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Diagnostics;
-using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
+using Excess.Compiler.Core;
 
 namespace Excess.Compiler.XS
 {
+    using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
+    using ExcessCompiler = ICompiler<SyntaxToken, SyntaxNode, SemanticModel>;
+    using Injector = ICompilerInjector<SyntaxToken, SyntaxNode, SemanticModel>;
+    using DelegateInjector = DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel>;
+
     public class XSModule
     {
-        static public void Apply(RoslynCompiler compiler)
+        public static void Apply(ExcessCompiler compiler)
         {
             Functions   .Apply(compiler);
             Members     .Apply(compiler);
             Events      .Apply(compiler);
             TypeDef     .Apply(compiler);
             Arrays      .Apply(compiler);  
-         }
+        }
+
+        public static Injector Create()
+        {
+            return new DelegateInjector(compiler => Apply(compiler));
+        }
     }
 }

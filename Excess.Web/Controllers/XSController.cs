@@ -1,5 +1,4 @@
-﻿using Excess.Core;
-using Excess.Web.Entities;
+﻿using Excess.Web.Entities;
 using Microsoft.CodeAnalysis;
 using System;
 using System.Collections.Generic;
@@ -12,10 +11,9 @@ namespace Excess.Web.Controllers
 {
     public class XSController : ExcessControllerBase
     {
-        public XSController(ITranslationService translator, IDSLService dsl)
+        public XSController(ITranslationService translator)
         {
             _translator = translator;
-            _dsl        = dsl;
         }
 
         public ActionResult GetSamples()
@@ -48,14 +46,14 @@ namespace Excess.Web.Controllers
 
         public ActionResult GetKeywords()
         {
-            IDSLFactory factory = _dsl.factory();
-
             StringBuilder result = new StringBuilder();
-            foreach (string kw in factory.supported())
-            {
-                result.Append(" ");
-                result.Append(kw);
-            }
+
+            //td: !!!
+            //foreach (string kw in factory.supported())
+            //{
+            //    result.Append(" ");
+            //    result.Append(kw);
+            //}
 
             return Content(result.ToString());
         }
@@ -68,6 +66,5 @@ namespace Excess.Web.Controllers
         
         private ExcessDbContext     _db = new ExcessDbContext();
         private ITranslationService _translator;
-        private IDSLService         _dsl;
     }
 }

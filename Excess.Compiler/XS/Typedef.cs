@@ -9,13 +9,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
-
 namespace Excess.Compiler.XS
 {
+    using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
+    using ExcessCompiler = ICompiler<SyntaxToken, SyntaxNode, SemanticModel>;
+
     class TypeDef
     {
-        static public void Apply(RoslynCompiler compiler)
+        static public void Apply(ExcessCompiler compiler)
         {
             var lexical   = compiler.Lexical();
             var semantics = compiler.Semantics();

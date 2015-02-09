@@ -1553,10 +1553,6 @@
       <Project>{feacfbcc-4bfe-4c14-b40f-3dc856a85fd4}</Project>
       <Name>Excess.Compiler</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Excess.Core\Excess.Core.csproj">
-      <Project>{17298ea0-af73-4f30-b6f1-2066100d7d74}</Project>
-      <Name>Excess.Core</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Views\Translation\" />
