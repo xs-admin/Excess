@@ -87,7 +87,26 @@ namespace Excess.Compiler.Core
         public void change(Func<TNode, Scope, TNode> transform, string kind)
         {
             if (kind != null)
-                _syntacticalPass[kind] = transform;
+            {
+                //known kinds
+                switch (kind)
+                {
+                    case "normalize":
+                    {
+                        _lexicalChanges.Add(new Change
+                        {
+                            Kind = kind,
+                            Transform = transform
+                        });
+                        break;
+                    }
+                    default:
+                    {
+                        _syntacticalPass[kind] = transform;
+                        break;
+                    }
+                }
+            }
             else
                 _syntactical.Add(transform);
         }
@@ -171,10 +190,7 @@ namespace Excess.Compiler.Core
             return true;
         }
 
-        public bool hasErrors()
-        {
-            throw new NotImplementedException();
-        }
+        public abstract bool hasErrors();
 
         protected TNode _root;
         private void applyLexical()
@@ -236,6 +252,14 @@ namespace Excess.Compiler.Core
 
             modifiedText = newText.ToString();
             var root = _compiler.Parse(modifiedText);
+
+            //apply any scheduled normalization
+            var normalizers = poll(_lexicalChanges, "normalize");
+            foreach (var normalizer in normalizers)
+            {
+                root = normalizer.Transform(root, new Scope(_scope));
+            }
+
             return _compiler.MarkTree(root);
         }
 

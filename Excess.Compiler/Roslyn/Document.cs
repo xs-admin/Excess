@@ -30,12 +30,21 @@ namespace Excess.Compiler.Roslyn
 
         public Diagnostic Error(Diagnostic error)
         {
-            throw new NotImplementedException();
+            return error;
         }
 
         protected override void notifyResultText(string resultText)
         {
             LexicalText = resultText;
+        }
+
+        public override bool hasErrors()
+        {
+            return _root != null && 
+                   _root
+                        .GetDiagnostics()
+                        .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
+                        .Any();
         }
 
         protected override SyntaxNode transform(SyntaxNode node, Dictionary<int, Func<SyntaxNode, Scope, SyntaxNode>> transformers)

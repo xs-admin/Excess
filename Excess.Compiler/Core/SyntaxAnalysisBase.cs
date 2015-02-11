@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace Excess.Compiler.Core
 {
     public abstract class BaseSyntacticalMatch<TToken, TNode, TModel> : ISyntacticalMatch<TToken, TNode, TModel>,
-                                                                        IDocumentHandler<TToken, TNode, TModel>
+                                                                        IDocumentInjector<TToken, TNode, TModel>
     {
         ISyntaxAnalysis<TToken, TNode, TModel> _syntax;
 
@@ -132,7 +132,7 @@ namespace Excess.Compiler.Core
     }
 
     public abstract class BaseSyntaxAnalysis<TToken, TNode, TModel> : ISyntaxAnalysis<TToken, TNode, TModel>,
-                                                                      IDocumentHandler<TToken, TNode, TModel>
+                                                                      IDocumentInjector<TToken, TNode, TModel>
     {
         protected List<SyntacticalExtension<TNode>> _extensions = new List<SyntacticalExtension<TNode>>();
 
@@ -201,7 +201,7 @@ namespace Excess.Compiler.Core
 
             foreach(var matcher in _matchers)
             {
-                var handler = matcher as IDocumentHandler<TToken, TNode, TModel>;
+                var handler = matcher as IDocumentInjector<TToken, TNode, TModel>;
                 Debug.Assert(handler != null);
 
                 handler.apply(document);

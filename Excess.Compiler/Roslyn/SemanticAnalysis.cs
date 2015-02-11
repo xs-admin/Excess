@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace Excess.Compiler.Roslyn
 {
     public class RoslynSemanticAnalysis : ISemanticAnalysis<SyntaxToken, SyntaxNode, SemanticModel>,
-                                          IDocumentHandler<SyntaxToken, SyntaxNode, SemanticModel>
+                                          IDocumentInjector<SyntaxToken, SyntaxNode, SemanticModel>
     {
         class ErrorHandler
         {

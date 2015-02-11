@@ -120,7 +120,6 @@
             <Using Namespace="System" />
             <Using Namespace="System.IO" />
             <Using Namespace="System.Net" />
-            <Using Namespace="Microsoft.Build.Framework" />
             <Using Namespace="Microsoft.Build.Utilities" />
             <Code Type="Fragment" Language="cs">
                 <![CDATA[

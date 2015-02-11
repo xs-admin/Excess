@@ -7,7 +7,8 @@ using System.Threading.Tasks;
 
 namespace Excess.Compiler.Core
 {
-    public abstract class CompilerBase<TToken, TNode, TModel> : ICompiler<TToken, TNode, TModel>
+    public abstract class CompilerBase<TToken, TNode, TModel> : ICompiler<TToken, TNode, TModel>,
+                                                                IDocumentInjector<TToken, TNode, TModel>
     {
         protected ILexicalAnalysis<TToken, TNode, TModel>  _lexical;
         protected ISyntaxAnalysis<TToken, TNode, TModel>   _sintaxis;
@@ -31,6 +32,8 @@ namespace Excess.Compiler.Core
             _scope = new Scope(scope); 
         }
 
+        public Scope Scope { get { return _scope; } }
+
         public ILexicalAnalysis<TToken, TNode, TModel> Lexical()
         {
             return _lexical;
@@ -50,6 +53,25 @@ namespace Excess.Compiler.Core
         public ICompilerEnvironment Environment()
         {
             return _environment;
+        }
+
+        public void apply(IDocument<TToken, TNode, TModel> document)
+        {
+            var iLexical = _lexical as IDocumentInjector<TToken, TNode, TModel>;
+            if (iLexical != null)
+                iLexical.apply(document);
+
+            var iSintaxis = _sintaxis as IDocumentInjector<TToken, TNode, TModel>;
+            if (iSintaxis != null)
+                iSintaxis.apply(document);
+
+            var iSemantics = _semantics as IDocumentInjector<TToken, TNode, TModel>;
+            if (iSemantics != null)
+                iSemantics.apply(document);
+
+            var iEnvironment = _environment as IDocumentInjector<TToken, TNode, TModel>;
+            if (iEnvironment != null)
+                iEnvironment.apply(document);
         }
 
         public bool Compile(string text, CompilerStage stage)

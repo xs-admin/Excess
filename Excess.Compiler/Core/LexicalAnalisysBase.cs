@@ -499,7 +499,7 @@ namespace Excess.Compiler.Core
     }
 
     public abstract class BaseLexicalAnalysis<TToken, TNode, TModel> :  ILexicalAnalysis<TToken, TNode, TModel>,
-                                                                        IDocumentHandler<TToken, TNode, TModel>
+                                                                        IDocumentInjector<TToken, TNode, TModel>
     {
         private List<ILexicalMatch<TToken, TNode, TModel>> _matchers = new List<ILexicalMatch<TToken, TNode, TModel>>();
 
@@ -662,8 +662,8 @@ namespace Excess.Compiler.Core
             if (members != null)
                 _normalizeMembers = members;
 
-            if (members != null)
-                _normalizeTypes = members;
+            if (types != null)
+                _normalizeTypes = types;
         }
 
         public virtual ILexicalTransform<TToken, TNode> transform()

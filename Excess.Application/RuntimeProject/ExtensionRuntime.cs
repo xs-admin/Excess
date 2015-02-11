@@ -12,6 +12,8 @@ using System.Threading;
 using Excess.Compiler;
 using Excess.Compiler.Core;
 
+using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
+
 namespace Excess.RuntimeProject
 {
     using Injector = ICompilerInjector<SyntaxToken, SyntaxNode, SemanticModel>;
@@ -36,9 +38,78 @@ namespace Excess.RuntimeProject
                     .dependency(string.Empty, path: Path.Combine(assemblyPath, "System.Threading.Tasks.dll"));
         });
 
+        private static Injector _extension = new DelegateInjector(compiler =>
+        {
+            compiler
+                .Lexical()
+                    .normalize()
+                        .statements(MoveToApply);
+        });
+
+        static private CompilationUnitSyntax ExtensionClass = CSharp.ParseCompilationUnit(@"
+            internal partial class Extension
+            {
+                public static Apply(ICompiler<SyntaxToken, SyntaxNode, SemanticModel> compiler)
+                {
+                    var lexical = compiler.Lexical();
+                    var sintaxis = compiler.Sintaxis();
+                    var semantics = compiler.Semantics();
+                    var environment = compiler.Environment();
+
+                }
+            }");
+
+        private static SyntaxNode MoveToApply(SyntaxNode root, IEnumerable<SyntaxNode> statements, Scope scope)
+        {
+            var applyCode = ExtensionClass
+                .DescendantNodes()
+                .OfType<BlockSyntax>()
+                .First();
+
+            var result = applyCode;
+            foreach (var st in statements)
+                result = result.AddStatements((StatementSyntax)st);
+
+            return ExtensionClass.ReplaceNode(applyCode, result);
+        }
+
+        private static Injector _transform = new DelegateInjector(compiler =>
+        {
+            compiler
+                .Lexical()
+                    .normalize()
+                        .members(MoveToClass);
+        });
+
+        static private CompilationUnitSyntax TransformClass = CSharp.ParseCompilationUnit(@"
+            internal partial class Extension
+            {
+            }");
+
+
+        private static SyntaxNode MoveToClass(SyntaxNode root, IEnumerable<SyntaxNode> members, Scope scope)
+        {
+            var @class = TransformClass
+                .DescendantNodes()
+                .OfType<ClassDeclarationSyntax>()
+                .First();
+
+            var result = @class;
+            foreach (var member in members)
+                result = result.AddMembers((MemberDeclarationSyntax)member);
+
+            return TransformClass.ReplaceNode(@class, @class.AddMembers());
+        }
+
         protected override ICompilerInjector<SyntaxToken, SyntaxNode, SemanticModel> getInjector(string file)
         {
             var xs = base.getInjector(file);
+            if (file == "extension")
+                return new CompositeInjector(new[] { _references, _extension, xs });
+
+            if (file == "transform")
+                return new CompositeInjector(new[] { _references, _transform, xs });
+
             return new CompositeInjector(new[] { _references, xs });
         }
 
@@ -67,7 +138,7 @@ namespace Excess.RuntimeProject
 
         public override string defaultFile()
         {
-            return "language";
+            return "extension";
         }
 
         Assembly _assembly;

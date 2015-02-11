@@ -37,15 +37,6 @@ namespace Excess.Web.Migrations
 
             reserveProjectFiles(context, projectFileSamples, 999);
 
-            int dslConfigs = 1;
-            foreach (var config in DSLProjects())
-            {
-                dslConfigs++;
-                context.DSLProjects.AddOrUpdate(config);
-            }
-
-            reserveDSLProjectFiles(context, dslConfigs, 99);
-
             foreach (var dslTest in DSLTests())
             {
                 context.DSLTests.AddOrUpdate(dslTest);
@@ -67,15 +58,6 @@ namespace Excess.Web.Migrations
             {
                 var reserved = new Project { ID = i, IsSample = true };
                 context.Projects.AddOrUpdate(reserved);
-            }
-        }
-
-        private void reserveDSLProjectFiles(ExcessDbContext context, int dslProjects, int reserveCount)
-        {
-            for (int i = dslProjects; i < reserveCount; i++)
-            {
-                var reserved = new DSLProject { ID = i };
-                context.DSLProjects.AddOrUpdate(reserved);
             }
         }
 
@@ -165,7 +147,7 @@ namespace Excess.Web.Migrations
                     Contents = SampleCode.LolCatsTrollcat,
                 },
 
-                //Pure
+                //contract
                 new ProjectFile 
                 {
                     ID           = 6,
@@ -179,8 +161,8 @@ namespace Excess.Web.Migrations
                 {
                     ID           = 7,
                     OwnerProject = 3,
-                    Name         = "parser",
-                    Contents     = SampleCode.PureParser,
+                    Name         = "extension",
+                    Contents     = Samples.ContractExtension,
                 },
 
                 new ProjectFile
@@ -188,7 +170,7 @@ namespace Excess.Web.Migrations
                     ID           = 8,
                     OwnerProject = 3,
                     Name         = "linker",
-                    Contents     = SampleCode.PureLinker,
+                    Contents     = Samples.ContractTransform,
                 },
 
                 //match
@@ -242,8 +224,8 @@ namespace Excess.Web.Migrations
                 new Project
                 {
                     ID = 3,
-                    ProjectType = "dsl",
-                    Name = "Pure Class DSL",
+                    ProjectType = "extension",
+                    Name = "Contract Extension",
                     IsSample = true,
                 },
 
@@ -255,28 +237,6 @@ namespace Excess.Web.Migrations
                     IsSample = true,
                 },
             };
-        }
-
-        private DSLProject[] DSLProjects()
-        {
-            return new DSLProject[]
-            {
-                new DSLProject
-                {
-                    ID           = 1,
-                    ProjectID    = 3,
-                    Name         = "pure",
-                    ExtendsTypes = true,
-                },
-                new DSLProject
-                {
-                    ID          = 2,
-                    ProjectID   = 4,
-                    Name        = "match",
-                    ExtendsCode = true,
-                },
-            };
-
         }
 
         static Guid PureTest1  = new Guid("E8FB63DB-D135-4FE9-893A-24A4162A1D0B");

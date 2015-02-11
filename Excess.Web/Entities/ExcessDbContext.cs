@@ -16,7 +16,6 @@ namespace Excess.Web.Entities
         public System.Data.Entity.DbSet<TranslationSample> Samples { get; set; }
         public System.Data.Entity.DbSet<Project> Projects { get; set; }
         public System.Data.Entity.DbSet<ProjectFile> ProjectFiles { get; set; }
-        public System.Data.Entity.DbSet<DSLProject> DSLProjects { get; set; }
         public System.Data.Entity.DbSet<DSLTest> DSLTests { get; set; }
     }
 }

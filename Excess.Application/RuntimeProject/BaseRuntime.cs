@@ -16,6 +16,11 @@ namespace Excess.RuntimeProject
 {
     internal abstract class BaseRuntime : IRuntimeProject
     {
+        public BaseRuntime()
+        {
+            _compilation.addSyntaxTree(consoleTree);
+        }
+
         public bool busy()
         {
             return _busy;
@@ -29,6 +34,7 @@ namespace Excess.RuntimeProject
                 throw new InvalidOperationException();
 
             _busy = true;
+
             try
             {
                 if (!doCompile())
@@ -56,7 +62,10 @@ namespace Excess.RuntimeProject
                     Assembly assembly = _compilation.build();
                     succeded = assembly != null;
                     if (succeded)
+                    {
+                        setupConsole(assembly);
                         doRun(assembly, out client);
+                    }
                 }
 
                 if (!succeded)
@@ -160,7 +169,11 @@ namespace Excess.RuntimeProject
                 return true;
             }
 
-            return _compilation.compile();
+            var result = _compilation.compile();
+            if (_dirty)
+                _dirty = false;
+
+            return result;
         }
 
         protected abstract void doRun(Assembly asm, out dynamic clientData);

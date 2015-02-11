@@ -35,7 +35,7 @@ namespace Excess.Web.Entities
             if (result != null)
             {
                 LoadProject(result);
-                config = _db.DSLProjects.SingleOrDefault(cfg => cfg.ProjectID == result.ID);
+                //config = _db.DSLProjects.SingleOrDefault(cfg => cfg.ProjectID == result.ID);
             }
 
             return result;
@@ -118,7 +118,6 @@ namespace Excess.Web.Entities
             };
 
             List<ProjectFile> files     = new List<ProjectFile>();
-            DSLProject        dslConfig = null;
             
             switch (projectType)
             {
@@ -128,52 +127,56 @@ namespace Excess.Web.Entities
                     break;
                 }
 
-                case "dsl":
+                case "extension":
                 {
-                    DSLConfiguration config = JsonConvert.DeserializeObject<DSLConfiguration>(projectData);
-
-                    //td: parser and linker types
-                    StringBuilder members = new StringBuilder();
-                    if (config.extendsNamespaces)
-                        members.AppendLine(ProjectTemplates.DSLParseNamespace);
-                    if (config.extendsTypes)
-                        members.AppendLine(ProjectTemplates.DSLParseType);
-                    if (config.extendsMembers)
-                        members.AppendLine(ProjectTemplates.DSLParseMember);
-                    if (config.extendsCode)
-                        members.AppendLine(ProjectTemplates.DSLParseCode);
-
-                    files.Add(new ProjectFile
-                    {
-                        Name     = "parser",
-                        Contents = string.Format(ProjectTemplates.DSLParser, members.ToString()) 
-                    });
-
-                    files.Add(new ProjectFile
-                    {
-                        Name     = "linker",
-                        Contents = ProjectTemplates.DSLLinker
-                    });
-
-                    files.Add(new ProjectFile
-                    {
-                        Name     = "plugin",
-                        isHidden = true,
-                        Contents = string.Format(ProjectTemplates.DSLPlugin, config.name)
-                    });
-
-                    dslConfig = new DSLProject
-                    {
-                        Name = config.name,
-                        ParserKind = config.parser,
-                        LinkerKind = config.linker,
-                        ExtendsNamespaces = config.extendsNamespaces,
-                        ExtendsTypes = config.extendsTypes,
-                        ExtendsMembers = config.extendsMembers,
-                        ExtendsCode = config.extendsCode,
-                    };
-                    break;
+                        break;
                 }
+                //case "dsl":
+                //{
+                //    DSLConfiguration config = JsonConvert.DeserializeObject<DSLConfiguration>(projectData);
+
+                //    //td: parser and linker types
+                //    StringBuilder members = new StringBuilder();
+                //    if (config.extendsNamespaces)
+                //        members.AppendLine(ProjectTemplates.DSLParseNamespace);
+                //    if (config.extendsTypes)
+                //        members.AppendLine(ProjectTemplates.DSLParseType);
+                //    if (config.extendsMembers)
+                //        members.AppendLine(ProjectTemplates.DSLParseMember);
+                //    if (config.extendsCode)
+                //        members.AppendLine(ProjectTemplates.DSLParseCode);
+
+                //    files.Add(new ProjectFile
+                //    {
+                //        Name     = "parser",
+                //        Contents = string.Format(ProjectTemplates.DSLParser, members.ToString()) 
+                //    });
+
+                //    files.Add(new ProjectFile
+                //    {
+                //        Name     = "linker",
+                //        Contents = ProjectTemplates.DSLLinker
+                //    });
+
+                //    files.Add(new ProjectFile
+                //    {
+                //        Name     = "plugin",
+                //        isHidden = true,
+                //        Contents = string.Format(ProjectTemplates.DSLPlugin, config.name)
+                //    });
+
+                //    dslConfig = new DSLProject
+                //    {
+                //        Name = config.name,
+                //        ParserKind = config.parser,
+                //        LinkerKind = config.linker,
+                //        ExtendsNamespaces = config.extendsNamespaces,
+                //        ExtendsTypes = config.extendsTypes,
+                //        ExtendsMembers = config.extendsMembers,
+                //        ExtendsCode = config.extendsCode,
+                //    };
+                //    break;
+                //}
 
                 default: throw new InvalidOperationException("Invalid project type: " + projectType);
             }
@@ -187,11 +190,11 @@ namespace Excess.Web.Entities
                 _db.ProjectFiles.Add(file);
             }
 
-            if (dslConfig != null)
-            {
-                dslConfig.ProjectID = project.ID;
-                _db.DSLProjects.Add(dslConfig);
-            }
+            //if (dslConfig != null)
+            //{
+            //    dslConfig.ProjectID = project.ID;
+            //    _db.DSLProjects.Add(dslConfig);
+            //}
 
             _db.SaveChanges();
             return project;

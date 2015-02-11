@@ -171,7 +171,7 @@ namespace Excess.Compiler.Roslyn
 
         private void applyLexical(RoslynDocument document)
         {
-            var handler = _lexical as IDocumentHandler<SyntaxToken, SyntaxNode, SemanticModel>;
+            var handler = _lexical as IDocumentInjector<SyntaxToken, SyntaxNode, SemanticModel>;
             Debug.Assert(handler != null);
 
             handler.apply(document);
@@ -181,7 +181,7 @@ namespace Excess.Compiler.Roslyn
         public ExpressionSyntax CompileExpression(string expr)
         {
             var   document = new RoslynDocument(_scope, expr);
-            var   handler  = _lexical as IDocumentHandler<SyntaxToken, SyntaxNode, SemanticModel>;
+            var   handler  = _lexical as IDocumentInjector<SyntaxToken, SyntaxNode, SemanticModel>;
             _scope.set<IDocument<SyntaxToken, SyntaxNode, SemanticModel>>(document);
 
             handler.apply(document);
@@ -193,7 +193,7 @@ namespace Excess.Compiler.Roslyn
         public SyntaxNode ApplyLexicalPass(string text, out string newText)
         {
             var document = new RoslynDocument(_scope, text);
-            var handler = _lexical as IDocumentHandler<SyntaxToken, SyntaxNode, SemanticModel>;
+            var handler = _lexical as IDocumentInjector<SyntaxToken, SyntaxNode, SemanticModel>;
             _scope.set<IDocument<SyntaxToken, SyntaxNode, SemanticModel>>(document);
 
             handler.apply(document);
@@ -213,8 +213,8 @@ namespace Excess.Compiler.Roslyn
         public SyntaxTree ApplySyntacticalPass(string text, out string result)
         {
             var document = new RoslynDocument(_scope, text); //we actually dont touch our own state during these calls
-            var lHandler = _lexical as IDocumentHandler<SyntaxToken, SyntaxNode, SemanticModel>;
-            var sHandler = _sintaxis as IDocumentHandler<SyntaxToken, SyntaxNode, SemanticModel>;
+            var lHandler = _lexical as IDocumentInjector<SyntaxToken, SyntaxNode, SemanticModel>;
+            var sHandler = _sintaxis as IDocumentInjector<SyntaxToken, SyntaxNode, SemanticModel>;
 
             lHandler.apply(document);
             sHandler.apply(document);
@@ -234,9 +234,9 @@ namespace Excess.Compiler.Roslyn
         public SyntaxTree ApplySemanticalPass(string text, out string result)
         {
             var document  = new RoslynDocument(_scope, text); 
-            var lHandler  = _lexical as IDocumentHandler<SyntaxToken, SyntaxNode, SemanticModel>;
-            var sHandler  = _sintaxis as IDocumentHandler<SyntaxToken, SyntaxNode, SemanticModel>;
-            var ssHandler = _semantics as IDocumentHandler<SyntaxToken, SyntaxNode, SemanticModel>;
+            var lHandler  = _lexical as IDocumentInjector<SyntaxToken, SyntaxNode, SemanticModel>;
+            var sHandler  = _sintaxis as IDocumentInjector<SyntaxToken, SyntaxNode, SemanticModel>;
+            var ssHandler = _semantics as IDocumentInjector<SyntaxToken, SyntaxNode, SemanticModel>;
 
             lHandler.apply(document);
             sHandler.apply(document);

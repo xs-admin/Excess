@@ -29,6 +29,7 @@ namespace Excess.Compiler.Roslyn
         }
 
         List<CompilationDocument> _documents = new List<CompilationDocument>();
+
         Scope _scope = new Scope(null);
 
         public void addDocument(string id, string contents, ICompilerInjector<SyntaxToken, SyntaxNode, SemanticModel> injector)
@@ -38,15 +39,20 @@ namespace Excess.Compiler.Roslyn
                 .Any())
                 throw new InvalidOperationException();
 
+            var compiler = new RoslynCompiler(_environment, _scope);
             var newDoc = new CompilationDocument
             {
                 Id = id,
                 Stage = CompilerStage.Started,
-                Document = new RoslynDocument(_scope, contents),
-                Compiler = new RoslynCompiler(_environment, _scope)
+                Document = new RoslynDocument(compiler.Scope, contents),
+                Compiler = compiler
             };
 
             injector.apply(newDoc.Compiler);
+
+            var documentInjector = newDoc.Compiler as IDocumentInjector<SyntaxToken, SyntaxNode, SemanticModel>;
+            documentInjector.apply(newDoc.Document);
+
             _documents.Add(newDoc);
         }
 
@@ -59,8 +65,19 @@ namespace Excess.Compiler.Roslyn
             if (doc == null)
                 throw new InvalidOperationException();
 
-            doc.Document = new RoslynDocument(_scope, contents);
+            doc.Document = new RoslynDocument(doc.Compiler.Scope, contents);
+
+            var documentInjector = doc.Compiler as IDocumentInjector<SyntaxToken, SyntaxNode, SemanticModel>;
+            documentInjector.apply(doc.Document);
+
             doc.Stage = CompilerStage.Started;
+        }
+
+        List<SyntaxTree> _additionalTrees = new List<SyntaxTree>();
+        public void addSyntaxTree(SyntaxTree tree)
+        {
+            Debug.Assert(_compilation == null);
+            _additionalTrees.Add(tree);
         }
 
         public string documentText(string id)
@@ -77,21 +94,37 @@ namespace Excess.Compiler.Roslyn
 
         public bool compile()
         {
-            return doCompile(null);
+            bool changed;
+            return doCompile(out changed);
         }
 
         Dictionary<string, SyntaxTree> _trees = new Dictionary<string, SyntaxTree>();
-        private bool doCompile(Dictionary<SyntaxTree, SyntaxTree> changes)
+        private bool doCompile(out bool changed)
         {
+            changed = false;
             foreach (var doc in _documents)
             {
                 var document = doc.Document;
                 if (document.Stage <= CompilerStage.Syntactical)
                 {
+                    changed = true;
+
                     var oldRoot = document.SyntaxRoot;
                     document.applyChanges(CompilerStage.Syntactical);
-                    if (document.SyntaxRoot != oldRoot && changes != null)
-                        changes[oldRoot.SyntaxTree] = document.SyntaxRoot.SyntaxTree;
+                    var newRoot = document.SyntaxRoot;
+
+                    Debug.Assert(newRoot != null);
+                    var newTree = newRoot.SyntaxTree;
+
+                    if (_compilation != null)
+                    {
+                        if (oldRoot == null)
+                            _compilation = _compilation.AddSyntaxTrees(newTree);
+                        else
+                            _compilation = _compilation.ReplaceSyntaxTree(oldRoot.SyntaxTree, newTree);
+                    }
+
+                    _trees[doc.Id] = newTree;
                 }
 
                 if (document.hasErrors())
@@ -105,21 +138,16 @@ namespace Excess.Compiler.Roslyn
 
         public Assembly build()
         {
-            Dictionary<SyntaxTree, SyntaxTree> changes = new Dictionary<SyntaxTree, SyntaxTree>();
-            if (!doCompile(changes))
+            bool needsProcessing;
+            if (!doCompile(out needsProcessing))
                 return null;
 
             if (_compilation == null)
                 _compilation = createCompilation();
 
-            while (changes.Any())
+            while (needsProcessing)
             {
-                foreach (var change in changes)
-                {
-                    _compilation = _compilation.ReplaceSyntaxTree(change.Key, change.Value);
-                }
-
-                changes.Clear();
+                needsProcessing = false;
                 foreach (var doc in _documents)
                 {
                     var document = doc.Document;
@@ -128,10 +156,18 @@ namespace Excess.Compiler.Roslyn
                     document.Model = _compilation.GetSemanticModel(tree);
                     Debug.Assert(document.Model != null);
 
+                    var oldRoot = document.SyntaxRoot;
                     if (!document.applyChanges(CompilerStage.Semantical))
+                        needsProcessing = true;
+
+                    var newRoot = document.SyntaxRoot;
+
+                    Debug.Assert(oldRoot != null && newRoot != null);
+                    var newTree = newRoot.SyntaxTree;
+                    if (oldRoot != newRoot)
                     {
-                        Debug.Assert(tree != document.SyntaxRoot.SyntaxTree);
-                        changes[tree] = document.SyntaxRoot.SyntaxTree;
+                        _compilation   = _compilation.ReplaceSyntaxTree(oldRoot.SyntaxTree, newTree);
+                        _trees[doc.Id] = newTree;
                     }
                 }
             }
@@ -163,7 +199,8 @@ namespace Excess.Compiler.Roslyn
                 _environment = createEnvironment();
 
             return CSharpCompilation.Create(assemblyName,
-                syntaxTrees: _trees.Values,
+                syntaxTrees: _trees.Values
+                    .Union(_additionalTrees),
                 references: _environment.GetReferences(),
                 options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
         }

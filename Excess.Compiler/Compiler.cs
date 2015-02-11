@@ -35,6 +35,8 @@ namespace Excess.Compiler
         ISemanticAnalysis<TToken, TNode, TModel> Semantics();
         ICompilerEnvironment Environment();
 
+        Scope Scope { get; }
+
         bool Compile(string text, CompilerStage stage = CompilerStage.Started);
         bool CompileAll(string text);
         bool Advance(CompilerStage stage);

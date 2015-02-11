@@ -32,7 +32,7 @@ namespace Excess.RuntimeProject
             compiler
                 .Lexical()
                     .normalize()
-                        .with(statements: MoveToMain, types: MoveToApplication);
+                        .with(statements: MoveToMain, members: MoveToApplication);
         });
 
         private static SyntaxNode MoveToMain(SyntaxNode root, IEnumerable<SyntaxNode> statements, Scope scope)
@@ -44,13 +44,15 @@ namespace Excess.RuntimeProject
             return (root as CompilationUnitSyntax).AddMembers(mainMethod);
         }
 
-        private static SyntaxNode MoveToApplication(SyntaxNode root, IEnumerable<SyntaxNode> statements, Scope scope)
+        private static SyntaxNode MoveToApplication(SyntaxNode root, IEnumerable<SyntaxNode> members, Scope scope)
         {
-            var mainMethod = CSharp.MethodDeclaration(CSharp.ParseTypeName("void"), "main")
-                                .WithBody(CSharp.Block()
-                                    .WithStatements(CSharp.List(statements)));
+            var appClass = CSharp.ClassDeclaration("application")
+                .WithMembers(CSharp.List(members));
 
-            return (root as CompilationUnitSyntax).AddMembers(mainMethod);
+            return CSharp.CompilationUnit()
+                .WithMembers(CSharp.List( new[] {
+                        (MemberDeclarationSyntax)appClass
+                }));
         }
 
         protected override ICompilerInjector<SyntaxToken, SyntaxNode, SemanticModel> getInjector(string file)
@@ -61,24 +63,6 @@ namespace Excess.RuntimeProject
 
             return xs;
         }
-
-        //td: move to normalize
-        //private static IEnumerable<SyntaxNode> CompleteTree(ExcessContext.CompleteInfo info)
-        //{
-        //    ExcessContext.CompleteInfo newInfo = info.Clone();
-        //    newInfo.DefaultClass = "application";
-
-        //    if (info.Statements != null && info.Statements.Any())
-        //    {
-        //        var mainMethod = SyntaxFactory.MethodDeclaration(SyntaxFactory.ParseTypeName("void"), "main")
-        //                            .WithBody(SyntaxFactory.Block()
-        //                                .WithStatements(SyntaxFactory.List(info.Statements)));
-
-        //        newInfo.Members = newInfo.Members.Union(new[] { mainMethod });
-        //    }
-
-        //    return info.Context.TriggerDefaultComplete(newInfo);
-        //}
 
         protected override void doRun(Assembly asm, out dynamic clientData)
         {

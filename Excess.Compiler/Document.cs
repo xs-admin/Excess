@@ -26,7 +26,7 @@ namespace Excess.Compiler
         Scope Scope { get; }
     }
 
-    public interface IDocumentHandler<TToken, TNode, TModel>
+    public interface IDocumentInjector<TToken, TNode, TModel>
     {
         void apply(IDocument<TToken, TNode, TModel> document);
     }
