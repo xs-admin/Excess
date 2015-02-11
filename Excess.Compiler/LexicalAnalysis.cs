@@ -88,7 +88,7 @@ namespace Excess.Compiler
         ILexicalAnalysis<TToken, TNode, TModel> then(Func<IEnumerable<TToken>, ILexicalMatchResult<TToken, TNode>, Scope, IEnumerable<TToken>> handler);
         ILexicalAnalysis<TToken, TNode, TModel> then(ILexicalTransform<TToken, TNode> transform);
 
-        ILexicalMatchResult<TToken, TNode> match(IEnumerable<TToken> tokens, Scope scope);
+        ILexicalMatchResult<TToken, TNode> match(IEnumerable<TToken> tokens, Scope scope, bool isDocumentStart);
     }
 
     public interface ILexicalTransform<TToken, TNode>

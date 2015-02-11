@@ -127,7 +127,6 @@
     if (extension.Kind == ExtensionKind.Code)
     {
         var block = extension.Body as BlockSyntax;
-        Debug.Assert(block != null);
 
         List&lt;StatementSyntax&gt; checks = new List&lt;StatementSyntax&gt;();
         foreach (var st in block.Statements)

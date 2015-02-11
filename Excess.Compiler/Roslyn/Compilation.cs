@@ -17,6 +17,10 @@ namespace Excess.Compiler.Roslyn
 {
     public class Compilation
     {
+        public Compilation()
+        {
+            _environment = createEnvironment();
+        }
 
         public string OutputFile { get; set; }
 
@@ -35,7 +39,7 @@ namespace Excess.Compiler.Roslyn
         public void addDocument(string id, string contents, ICompilerInjector<SyntaxToken, SyntaxNode, SemanticModel> injector)
         {
             if (_documents
-                .Select(doc => doc.Id == id)
+                .Where(doc => doc.Id == id)
                 .Any())
                 throw new InvalidOperationException();
 
@@ -64,6 +68,9 @@ namespace Excess.Compiler.Roslyn
 
             if (doc == null)
                 throw new InvalidOperationException();
+
+            if (_compilation != null && doc.Document.SyntaxRoot != null)
+                _compilation = _compilation.RemoveSyntaxTrees(doc.Document.SyntaxRoot.SyntaxTree);
 
             doc.Document = new RoslynDocument(doc.Compiler.Scope, contents);
 
@@ -195,9 +202,6 @@ namespace Excess.Compiler.Roslyn
             if (assemblyName == null)
                 assemblyName = Guid.NewGuid().ToString().Replace("-", "");
 
-            if (_environment == null)
-                _environment = createEnvironment();
-
             return CSharpCompilation.Create(assemblyName,
                 syntaxTrees: _trees.Values
                     .Union(_additionalTrees),
@@ -216,7 +220,14 @@ namespace Excess.Compiler.Roslyn
 
         public IEnumerable<Diagnostic> errors()
         {
-            var diagnostics = _compilation.GetDiagnostics();
+            var diagnostics = null as IEnumerable<Diagnostic>;
+            if (_compilation == null)
+                _compilation = createCompilation();
+
+            diagnostics = _compilation
+                .GetDiagnostics()
+                .Where(d => d.Severity == DiagnosticSeverity.Error);
+
             var byFile = new Dictionary<string, List<Diagnostic>>();
             foreach (var diagnostic in diagnostics)
             {

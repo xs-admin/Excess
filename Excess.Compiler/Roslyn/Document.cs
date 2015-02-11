@@ -1,5 +1,6 @@
 ﻿using Excess.Compiler.Core;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 using System;
 using System.Collections.Generic;
@@ -7,6 +8,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
+using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace Excess.Compiler.Roslyn
 {
@@ -103,6 +106,17 @@ namespace Excess.Compiler.Roslyn
 
                 return newNode;
             });
+        }
+
+        protected override SyntaxNode addModules(SyntaxNode root, IEnumerable<string> modules)
+        {
+            var compilationUnit = (CompilationUnitSyntax)root;
+            return compilationUnit
+                .WithUsings(CSharp.List(
+                    compilationUnit.Usings.Union(
+                    modules
+                        .Select(module => CSharp.UsingDirective(
+                            CSharp.ParseName(module))))));
         }
 
         protected override SyntaxNode syntacticalTransform(SyntaxNode node, Scope scope, IEnumerable<Func<SyntaxNode, Scope, SyntaxNode>> transformers)

@@ -49,11 +49,13 @@ namespace Excess.Compiler.Core
 
             IEnumerable<TToken> _tokens;
             ILexicalTransform<TToken, TNode> _transform;
+            bool _isDocumentStart;
 
-            public MatchResultBuilder(IEnumerable<TToken> tokens, ILexicalTransform<TToken, TNode> transform)
+            public MatchResultBuilder(IEnumerable<TToken> tokens, ILexicalTransform<TToken, TNode> transform, bool isDocumentStart)
             {
                 _tokens = tokens;
                 _transform = transform;
+                _isDocumentStart = isDocumentStart;
             }
 
             public TToken Peek()
@@ -83,7 +85,7 @@ namespace Excess.Compiler.Core
 
             public bool isDocumentStart()
             {
-                return _current == 0;
+                return _isDocumentStart && _current == 0;
             }
 
             public bool Any()
@@ -105,9 +107,9 @@ namespace Excess.Compiler.Core
             }
         }
 
-        public ILexicalMatchResult<TToken, TNode> match(IEnumerable<TToken> tokens, Scope scope)
+        public ILexicalMatchResult<TToken, TNode> match(IEnumerable<TToken> tokens, Scope scope, bool isDocumentStart)
         {
-            var builder = new MatchResultBuilder(tokens, _transform);
+            var builder = new MatchResultBuilder(tokens, _transform, isDocumentStart);
             var inner = new Scope(scope);
             foreach (var matcher in _matchers)
             {
@@ -377,7 +379,7 @@ namespace Excess.Compiler.Core
 
         public ILexicalMatch<TToken, TNode, TModel> any(Func<TToken, bool> handler, string named = null, bool matchDocumentStart = false)
         {
-            _matchers.Add(MatchOne(handler, named, matchDocumentStart));
+            _matchers.Add(MatchOne(handler, named, matchDocumentStart: matchDocumentStart));
             return this;
         }
 
@@ -542,7 +544,7 @@ namespace Excess.Compiler.Core
                 ILexicalMatchResult<TToken, TNode> result = null;
                 foreach (var matcher in _matchers)
                 {
-                    result = matcher.match(remaining, scope);
+                    result = matcher.match(remaining, scope, currentToken == 0);
                     if (result != null)
                         break;
                 }

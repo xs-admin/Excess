@@ -370,8 +370,15 @@ namespace Excess.Compiler.Core
             {
                 _root = applyNodeChanges(_root, CompilerStage.Syntactical);
             } while (_syntacticalChanges.Any());
+
+            //add modules before going into semantics
+            ICompilerEnvironment environment = _scope.find<ICompilerEnvironment>();
+            Debug.Assert(environment != null);
+
+            _root = addModules(_root, environment.modules());
         }
 
+        protected abstract TNode addModules(TNode root, IEnumerable<string> modules);
         protected abstract TNode syntacticalTransform(TNode node, Scope scope, IEnumerable<Func<TNode, Scope, TNode>> transformers);
 
         protected TNode pass(string kind, TNode node, Scope scope)
@@ -385,13 +392,14 @@ namespace Excess.Compiler.Core
 
         private bool applySemantical()
         {
+            var oldRoot = _root;
             foreach (var semantical in _semantical)
             {
                 _root = semantical(_root, Model, _scope);
             }
 
             _root = applyNodeChanges(_root, CompilerStage.Semantical);
-            return !_semanticalChanges.Any(); 
+            return oldRoot.Equals(_root); 
         }
     }
 }

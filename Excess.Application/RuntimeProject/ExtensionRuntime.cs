@@ -19,6 +19,7 @@ namespace Excess.RuntimeProject
     using Injector = ICompilerInjector<SyntaxToken, SyntaxNode, SemanticModel>;
     using DelegateInjector = DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel>;
     using CompositeInjector = CompositeInjector<SyntaxToken, SyntaxNode, SemanticModel>;
+    using Excess.Compiler.Roslyn;
 
     class ExtensionRuntime : BaseRuntime, IExtensionRuntime
     {
@@ -28,8 +29,12 @@ namespace Excess.RuntimeProject
 
             compiler
                 .Environment()
-                    .dependency<Injector>("Excess.Compiler.Roslyn")
-                    .dependency("System.Linq")
+                    .dependency<Injector>(new [] {
+                        "Excess.Compiler",
+                        "Excess.Compiler.Core",
+                        "Excess.Compiler.Roslyn"
+                    })
+                    .dependency<System.Linq.Expressions.Expression>("System.Linq")
                     .dependency<SyntaxNode>("Microsoft.CodeAnalysis")
                     .dependency<CSharpSyntaxNode>(new[] {
                         "Microsoft.CodeAnalysis.CSharp",
@@ -49,7 +54,7 @@ namespace Excess.RuntimeProject
         static private CompilationUnitSyntax ExtensionClass = CSharp.ParseCompilationUnit(@"
             internal partial class Extension
             {
-                public static Apply(ICompiler<SyntaxToken, SyntaxNode, SemanticModel> compiler)
+                public static void Apply(ICompiler<SyntaxToken, SyntaxNode, SemanticModel> compiler)
                 {
                     var lexical = compiler.Lexical();
                     var sintaxis = compiler.Sintaxis();
@@ -82,6 +87,7 @@ namespace Excess.RuntimeProject
         });
 
         static private CompilationUnitSyntax TransformClass = CSharp.ParseCompilationUnit(@"
+            using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
             internal partial class Extension
             {
             }");
@@ -98,7 +104,7 @@ namespace Excess.RuntimeProject
             foreach (var member in members)
                 result = result.AddMembers((MemberDeclarationSyntax)member);
 
-            return TransformClass.ReplaceNode(@class, @class.AddMembers());
+            return TransformClass.ReplaceNode(@class, result);
         }
 
         protected override ICompilerInjector<SyntaxToken, SyntaxNode, SemanticModel> getInjector(string file)
@@ -115,25 +121,18 @@ namespace Excess.RuntimeProject
 
         public string debugExtension(string text)
         {
-            //DllFactory factory = new DllFactory();
+            Type type = _assembly.GetType("ExtensionPlugin");
+            Injector result = (Injector)type.InvokeMember("Create", BindingFlags.Public | BindingFlags.InvokeMethod | BindingFlags.Static, null, null, null);
+            if (result == null)
+                throw new InvalidOperationException("Corrupted extension");
 
-            //string error;
-            //factory.AddReference(_assembly, out error);
-            //if (error != null)
-            //    return error;
+            RoslynCompiler compiler = new RoslynCompiler();
+            result.apply(compiler);
 
-            //SyntaxTree tree = ExcessContext.Compile(text, factory, out _ctx);
-            //if (_ctx.NeedsLinking())
-            //{
-            //    Compilation compilation = CSharpCompilation.Create("debugDSL", syntaxTrees: new[] { tree });
+            string rText;
+            var tree = compiler.ApplySemanticalPass(text, out rText);
 
-            //    compilation = ExcessContext.Link(_ctx, compilation);
-            //    tree = compilation.SyntaxTrees.First();
-            //}
-
-            //notifyInternalErrors();
-            //return tree.GetRoot().NormalizeWhitespace().ToString();
-            throw new NotImplementedException(); //td:
+            return tree.GetRoot().NormalizeWhitespace().ToString();
         }
 
         public override string defaultFile()

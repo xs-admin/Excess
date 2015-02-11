@@ -154,6 +154,7 @@ namespace Excess.Compiler.Roslyn
                  scope)
         {
             _scope.set<ICompilerService<SyntaxToken, SyntaxNode, SemanticModel>>(new CompilerService());
+            _scope.set<ICompilerEnvironment>(environment);
         }
 
         public RoslynCompiler() : this(new RoslynEnvironment())

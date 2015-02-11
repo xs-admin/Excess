@@ -69,6 +69,11 @@ namespace Excess.Compiler.Roslyn
             return this;
         }
 
+        public IEnumerable<string> modules()
+        {
+            return _modules;
+        }
+
         internal IEnumerable<MetadataReference> GetReferences()
         {
             return _references;

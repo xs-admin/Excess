@@ -76,7 +76,6 @@ namespace Excess.Web.Resources {
         ///    if (extension.Kind == ExtensionKind.Code)
         ///    {
         ///        var block = extension.Body as BlockSyntax;
-        ///        Debug.Assert(block != null);
         ///
         ///        List&lt;StatementSyntax&gt; checks = new List&lt;StatementSyntax&gt;();
         ///        foreach (var st in block.Statements)
@@ -84,7 +83,7 @@ namespace Excess.Web.Resources {
         ///            var stExpression = st as ExpressionStatementSyntax;
         ///            if (stExpression == null)
         ///            {
-        ///  [rest of string was truncated]&quot;;.
+        ///                //td: error, contracts  [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string ContractTransform {
             get {

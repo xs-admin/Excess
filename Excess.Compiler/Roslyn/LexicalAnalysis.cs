@@ -86,8 +86,11 @@ namespace Excess.Compiler.Roslyn
                 {
                     //case: code variable?
                     FieldDeclarationSyntax field = (FieldDeclarationSyntax)child;
-                    //td: !!! variable initialization
-                    continue;
+                    if (!field.Modifiers.Any())
+                    {
+                        //td: !!! variable initialization
+                        continue;
+                    }
                 }
 
                 if (child is MethodDeclarationSyntax)

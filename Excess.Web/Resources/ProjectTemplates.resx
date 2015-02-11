@@ -173,25 +173,14 @@
     }
 </value>
   </data>
-  <data name="DSLPlugin" xml:space="preserve">
-    <value>using System;
-using Excess.Core;
-
-public class DSLPlugin
-{{
-    private static string DSLName = "{0}";
-
-    public static IDSLFactory Create()
-    {{
-        Parser.DSLName = DSLName;
-        Linker.DSLName = DSLName;
-
-        var parser = new Parser();
-        var linker = new Linker();
-
-        parser.Linker = linker;
-        return new ManagedDSLFactory(DSLName, parser, linker);
-    }}
-}}</value>
+  <data name="ExtensionPlugin" xml:space="preserve">
+    <value>using Excess.Compiler.Core;
+public class ExtensionPlugin
+{
+    public static ICompilerInjector&lt;SyntaxToken, SyntaxNode, SemanticModel&gt; Create()
+    {
+        return new DelegateInjector&lt;SyntaxToken, SyntaxNode, SemanticModel&gt;(compiler =&gt; Extension.Apply(compiler));
+    }
+}</value>
   </data>
 </root>

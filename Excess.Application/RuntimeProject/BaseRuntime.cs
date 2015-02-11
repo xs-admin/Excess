@@ -19,6 +19,7 @@ namespace Excess.RuntimeProject
         public BaseRuntime()
         {
             _compilation.addSyntaxTree(consoleTree);
+            _compilation.addSyntaxTree(randomTree);
         }
 
         public bool busy()

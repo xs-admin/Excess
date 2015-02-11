@@ -13,8 +13,8 @@ namespace Excess.Services
         {
             switch (projectType)
             {
-                case "console": return new ConsoleRuntime();
-                case "dsl":     return new ExtensionRuntime();
+                case "console":   return new ConsoleRuntime();
+                case "extension": return new ExtensionRuntime();
             }
 
             throw new InvalidOperationException("Invalid project type " + projectType);

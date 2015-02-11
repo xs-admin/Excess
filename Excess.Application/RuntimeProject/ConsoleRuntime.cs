@@ -37,22 +37,41 @@ namespace Excess.RuntimeProject
 
         private static SyntaxNode MoveToMain(SyntaxNode root, IEnumerable<SyntaxNode> statements, Scope scope)
         {
-            var mainMethod = CSharp.MethodDeclaration(CSharp.ParseTypeName("void"), "main")
-                                .WithBody(CSharp.Block()
-                                    .WithStatements(CSharp.List(statements)));
+            var appClass = root
+                .DescendantNodes()
+                .OfType<ClassDeclarationSyntax>()
+                .Where(@class => @class.Identifier.ToString() == "application")
+                .FirstOrDefault();
 
-            return (root as CompilationUnitSyntax).AddMembers(mainMethod);
+            if (appClass == null)
+                appClass = CSharp.ClassDeclaration("application");
+
+            return CSharp.CompilationUnit()
+                .WithMembers(CSharp.List(new MemberDeclarationSyntax[] {
+                        appClass.AddMembers(
+                            CSharp.MethodDeclaration(CSharp.ParseTypeName("int"), "main")
+                                .WithModifiers(CSharp.TokenList(CSharp.Token(SyntaxKind.PrivateKeyword)))
+                                .WithBody(CSharp.Block()
+                                    .WithStatements(CSharp.List(statements
+                                        .Union(new [] {  CSharp.ParseStatement("return 0;")})))))
+                                }));
         }
 
         private static SyntaxNode MoveToApplication(SyntaxNode root, IEnumerable<SyntaxNode> members, Scope scope)
         {
-            var appClass = CSharp.ClassDeclaration("application")
-                .WithMembers(CSharp.List(members));
+            var appClass = root
+                .DescendantNodes()
+                .OfType<ClassDeclarationSyntax>()
+                .Where(@class => @class.Identifier.ToString() == "application")
+                .FirstOrDefault();
+
+            if (appClass == null)
+                appClass = CSharp.ClassDeclaration("application");
 
             return CSharp.CompilationUnit()
                 .WithMembers(CSharp.List( new[] {
-                        (MemberDeclarationSyntax)appClass
-                }));
+                    (MemberDeclarationSyntax)appClass
+                        .WithMembers(CSharp.List(members))}));
         }
 
         protected override ICompilerInjector<SyntaxToken, SyntaxNode, SemanticModel> getInjector(string file)

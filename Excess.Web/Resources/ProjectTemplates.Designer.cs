@@ -159,29 +159,18 @@ namespace Excess.Web.Resources {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to using System;
-        ///using Excess.Core;
-        ///
-        ///public class DSLPlugin
-        ///{{
-        ///    private static string DSLName = &quot;{0}&quot;;
-        ///
-        ///    public static IDSLFactory Create()
-        ///    {{
-        ///        Parser.DSLName = DSLName;
-        ///        Linker.DSLName = DSLName;
-        ///
-        ///        var parser = new Parser();
-        ///        var linker = new Linker();
-        ///
-        ///        parser.Linker = linker;
-        ///        return new ManagedDSLFactory(DSLName, parser, linker);
-        ///    }}
-        ///}}.
+        ///   Looks up a localized string similar to using Excess.Compiler.Core;
+        ///public class ExtensionPlugin
+        ///{
+        ///    public static ICompilerInjector&lt;SyntaxToken, SyntaxNode, SemanticModel&gt; Create()
+        ///    {
+        ///        return new DelegateInjector&lt;SyntaxToken, SyntaxNode, SemanticModel&gt;(compiler =&gt; Extension.Apply(compiler));
+        ///    }
+        ///}.
         /// </summary>
-        internal static string DSLPlugin {
+        internal static string ExtensionPlugin {
             get {
-                return ResourceManager.GetString("DSLPlugin", resourceCulture);
+                return ResourceManager.GetString("ExtensionPlugin", resourceCulture);
             }
         }
     }
