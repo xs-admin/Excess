@@ -101,6 +101,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ProjectTree.cs" />
     <Compile Include="RuntimeProject\BaseRuntime.cs" />
     <Compile Include="RuntimeProject\ConsoleRuntime.cs" />
     <Compile Include="RuntimeProject\ExtensionRuntime.cs" />

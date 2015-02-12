@@ -159,6 +159,11 @@ namespace Excess.RuntimeProject
             return -1;
         }
 
+        public virtual IEnumerable<TreeNodeAction> fileActions(string file)
+        {
+            return new TreeNodeAction[] { };
+        }
+
         protected bool _busy  = false;
         protected bool _dirty = false;
 

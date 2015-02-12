@@ -118,7 +118,10 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   <data name="ContractExtension" xml:space="preserve">
-    <value>sintaxis
+    <value>environment.
+    keyword("contract");
+
+sintaxis
     .extension("contract", ExtensionKind.Code, ProcessContract);</value>
   </data>
   <data name="ContractTransform" xml:space="preserve">

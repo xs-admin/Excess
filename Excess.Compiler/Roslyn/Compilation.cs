@@ -23,6 +23,7 @@ namespace Excess.Compiler.Roslyn
         }
 
         public string OutputFile { get; set; }
+        public ICompilerEnvironment Environment { get { return _environment; } }
 
         private class CompilationDocument
         {

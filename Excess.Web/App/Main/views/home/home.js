@@ -10,7 +10,7 @@
             $scope.targetCode = "//result c# here after compiling";
 
             //loading
-            $rootScope.$broadcast('loading-requests', 3 );
+            $rootScope.$broadcast('loading-requests', 2);
 
             //translation samples
             $scope.gotSamples = false;
@@ -58,15 +58,15 @@
                 $state.go('project', { projectId: projectId });
             };
 
-            //editor keywords
-            $scope.editorKeywords = null;
-            xsCompiler.keywords()
-                .then(function (value) {
-                    $scope.editorKeywords = value.data;
-                })
-                .finally(function () {
-                    $rootScope.$broadcast('request-loaded');
-                });
+            //editor keywords, static until needed
+            $scope.editorKeywords = " contract match asynch synch";
+            //xsCompiler.keywords()
+            //    .then(function (value) {
+            //        $scope.editorKeywords = value.data;
+            //    })
+            //    .finally(function () {
+            //        $rootScope.$broadcast('request-loaded');
+            //    });
 
             //translate
             $scope.translateSource = function () {

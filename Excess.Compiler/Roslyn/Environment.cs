@@ -69,9 +69,21 @@ namespace Excess.Compiler.Roslyn
             return this;
         }
 
+        List<string> _keywords = new List<string>();
+        public ICompilerEnvironment keyword(string word)
+        {
+            _keywords.Add(word);
+            return this;
+        }
+
         public IEnumerable<string> modules()
         {
             return _modules;
+        }
+
+        public IEnumerable<string> keywords()
+        {
+            return _keywords;
         }
 
         internal IEnumerable<MetadataReference> GetReferences()

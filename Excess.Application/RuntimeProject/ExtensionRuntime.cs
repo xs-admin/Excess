@@ -20,6 +20,7 @@ namespace Excess.RuntimeProject
     using DelegateInjector = DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel>;
     using CompositeInjector = CompositeInjector<SyntaxToken, SyntaxNode, SemanticModel>;
     using Excess.Compiler.Roslyn;
+    using System.Diagnostics;
 
     class ExtensionRuntime : BaseRuntime, IExtensionRuntime
     {
@@ -121,16 +122,10 @@ namespace Excess.RuntimeProject
 
         public string debugExtension(string text)
         {
-            Type type = _assembly.GetType("ExtensionPlugin");
-            Injector result = (Injector)type.InvokeMember("Create", BindingFlags.Public | BindingFlags.InvokeMethod | BindingFlags.Static, null, null, null);
-            if (result == null)
-                throw new InvalidOperationException("Corrupted extension");
-
-            RoslynCompiler compiler = new RoslynCompiler();
-            result.apply(compiler);
+            Debug.Assert(_compiler != null);
 
             string rText;
-            var tree = compiler.ApplySemanticalPass(text, out rText);
+            var tree = _compiler.ApplySemanticalPass(text, out rText);
 
             return tree.GetRoot().NormalizeWhitespace().ToString();
         }
@@ -142,17 +137,50 @@ namespace Excess.RuntimeProject
 
         Assembly _assembly;
 
+        private string keywordString(IEnumerable<string> keywords)
+        {
+            StringBuilder result = new StringBuilder();
+            foreach (var k in keywords)
+            {
+                result.Append(" ");
+                result.Append(k);
+            }
+
+            return result.Length > 0? result.ToString() : " ";
+        }
+
+        RoslynCompiler _compiler;
         protected override void doRun(Assembly asm, out dynamic client)
         {
-            _assembly = asm;
+            if (_assembly != asm)
+            {
+                _assembly = asm;
+
+                Type type = _assembly.GetType("ExtensionPlugin");
+                Injector result = (Injector)type.InvokeMember("Create", BindingFlags.Public | BindingFlags.InvokeMethod | BindingFlags.Static, null, null, null);
+                if (result == null)
+                    throw new InvalidOperationException("Corrupted extension");
+
+                _compiler = new RoslynCompiler();
+                result.apply(_compiler);
+            }
+
             client = new {
-                debuggerDlg  = "/App/Main/dialogs/dslDebugger.html",
+                debuggerDlg = "/App/Main/dialogs/dslDebugger.html",
                 debuggerCtrl = "dslDebuggerCtrl",
                 debuggerData = new
                 {
-                    keywords = " ",//td: + _dslName
+                    keywords = keywordString(_compiler.Environment().keywords())
                 }
             };
+        }
+
+        public override IEnumerable<TreeNodeAction> fileActions(string file)
+        {
+            if (file == "extension")
+                return new[] { new TreeNodeAction { id = "add-extension-item", icon = "fa-plus-circle" } };
+
+            return base.fileActions(file);
         }
     }
 }

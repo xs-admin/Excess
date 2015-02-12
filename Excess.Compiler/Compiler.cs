@@ -27,7 +27,10 @@ namespace Excess.Compiler
         ICompilerEnvironment dependency(string module, string path = null);
         ICompilerEnvironment dependency(IEnumerable<string> modules, string path = null);
 
+        ICompilerEnvironment keyword(string word);
+
         IEnumerable<string> modules();
+        IEnumerable<string> keywords();
     }
 
     public interface ICompiler<TToken, TNode, TModel>

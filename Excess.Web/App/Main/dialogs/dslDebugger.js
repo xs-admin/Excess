@@ -1,7 +1,7 @@
 ﻿angular.module('app')
 
 .controller("dslDebuggerCtrl",
-['$scope', '$modalInstance', 'xsProject', 'data', function ($scope, $modalInstance, xsProject, data) {
+['$scope', '$timeout', '$modalInstance', 'xsProject', 'data', function ($scope, $timeout, $modalInstance, xsProject, data) {
 
     $scope.sourceCode = '//your test code here';
     $scope.targetCode = '//results here after compiling';

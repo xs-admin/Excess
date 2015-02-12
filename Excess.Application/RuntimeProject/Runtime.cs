@@ -32,6 +32,7 @@ namespace Excess.RuntimeProject
         string defaultFile();
         string fileContents(string file);
         int fileId(string file);
+        IEnumerable<TreeNodeAction> fileActions(string file);
     }
 
     public interface IExtensionRuntime

@@ -1,37 +1,50 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using Excess.Compiler.Roslyn;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Excess.Compiler;
+using Excess.Compiler.Core;
+using Excess.Compiler.XS;
+using Excess.Compiler.Extensions;
 
 namespace Excess
 {
+    using Injector = ICompilerInjector<SyntaxToken, SyntaxNode, SemanticModel>;
+    using CompositeInjector = CompositeInjector<SyntaxToken, SyntaxNode, SemanticModel>;
+    using DelegateInjector = DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel>;
+
     public class TranslationService : ITranslationService
     {
         public string translate(string text)
         {
-            //ExcessContext ctx;
-            //SyntaxTree tree = ExcessContext.Compile(text, _dsl.factory(), out ctx);
+            if (_compiler == null)
+                initCompiler();
 
-            //if (ctx.NeedsLinking())
-            //{
-            //    Compilation compilation = CSharpCompilation.Create("translation",
-            //                syntaxTrees: new[] { tree },
-            //                references: new[]  {
-            //                    MetadataReference.CreateFromAssembly(typeof(object).Assembly),
-            //                    MetadataReference.CreateFromAssembly(typeof(Enumerable).Assembly),
-            //                    MetadataReference.CreateFromAssembly(typeof(Dictionary<int, int>).Assembly),
-            //                },
-            //                options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+            string rText;
+            var tree = _compiler.ApplySemanticalPass(text, out rText);
+            return tree.GetRoot().NormalizeWhitespace().ToString();
+        }
 
-            //    compilation = ExcessContext.Link(ctx, compilation);
-            //    tree = compilation.SyntaxTrees.First();
-            //}
+        RoslynCompiler _compiler;
+        private void initCompiler()
+        {
+            _compiler = new RoslynCompiler();
+            Injector injector = new CompositeInjector(new[] { XSModule.Create(), demoExtensions() });
+            injector.apply(_compiler);
+        }
 
-            //return tree.GetRoot().NormalizeWhitespace().ToString();
-            throw new NotImplementedException();
+        private Injector demoExtensions()
+        {
+            return new DelegateInjector(compiler =>
+            {
+                Asynch.Apply(compiler);
+                Match.Apply(compiler);
+                Contract.Apply(compiler);
+            });
         }
     }
 }

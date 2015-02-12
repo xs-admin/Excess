@@ -8,13 +8,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
-
 namespace Excess.Compiler.Extensions
 {
+    using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
+    using ExcessCompiler = ICompiler<SyntaxToken, SyntaxNode, SemanticModel>;
+
     public class Contract
     {
-        public static void Apply(RoslynCompiler compiler)
+        public static void Apply(ExcessCompiler compiler)
         {
             var sintaxis = compiler.Sintaxis();
 

@@ -49,7 +49,7 @@ namespace Excess.Web.Controllers
             return Json(new
             {
                 defaultFile = runtime.defaultFile(),
-                tree        = new[] { projectTree(project) }
+                tree        = new[] { projectTree(project, runtime) }
             }, JsonRequestBehavior.AllowGet);
         }
 
@@ -255,24 +255,7 @@ namespace Excess.Web.Controllers
             return Json(result, JsonRequestBehavior.AllowGet);
         }
 
-        //Project tree
-        private class TreeNodeAction
-        {
-            public string id { get; set; }
-            public string icon { get; set; }
-        }
-
-        private class TreeNode
-        {
-            public string label { get; set; }
-            public string icon { get; set; }
-            public string action { get; set; }
-            public dynamic data { get; set; }
-            public IEnumerable<TreeNodeAction> actions { get; set; }
-            public IEnumerable<TreeNode> children { get; set; }
-        }
-
-        private TreeNode projectTree(Project project)
+        private TreeNode projectTree(Project project, IRuntimeProject runtime)
         {
             TreeNode result = new TreeNode
             {
@@ -288,15 +271,15 @@ namespace Excess.Web.Controllers
                     {
                         return new TreeNode
                         {
-                            label   = projectFile.Name,
-                            icon    = "fa-code",
-                            action  = "select-file",
-                            data    = projectFile.Name,
+                            label = projectFile.Name,
+                            icon = "fa-code",
+                            action = "select-file",
+                            data = projectFile.Name,
                             actions = new[]
                             {
                                 new TreeNodeAction { id = "remove-file", icon = "fa-times-circle-o"       },
                                 new TreeNodeAction { id = "open-tab",    icon = "fa-arrow-circle-o-right" },
-                            }
+                            }.Union(runtime.fileActions(projectFile.Name))
                         };
                     })
             };

@@ -85,12 +85,15 @@
 
             function createCodeMirror(keywords)
             {
-                ctrl.registerMime(keywords);
+                if (keywords != null)
+                    ctrl.registerMime(keywords);
 
                 var options = {};
                 //td: parse options
 
                 options = angular.extend({}, options, config);
+                if (keywords == null)
+                    options.mode = "text/x-csharp";
 
                 var textArea = element.find('textarea')[0];
                 var codeEditor = CodeMirror.fromTextArea(textArea, options);
@@ -143,7 +146,7 @@
                 });
             }
             else
-                createCodeMirror("");
+                createCodeMirror(null);
 
         }
     };
