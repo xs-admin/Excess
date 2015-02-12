@@ -64,7 +64,7 @@ namespace Excess.Web.Resources {
         ///   Looks up a localized string similar to environment.
         ///    keyword(&quot;contract&quot;);
         ///
-        ///sintaxis
+        ///syntax
         ///    .extension(&quot;contract&quot;, ExtensionKind.Code, ProcessContract);.
         /// </summary>
         internal static string ContractExtension {

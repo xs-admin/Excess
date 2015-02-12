@@ -16,10 +16,10 @@ namespace Excess.Compiler.Extensions
     {
         public static void Apply(ExcessCompiler compiler)
         {
-            var sintaxis = compiler.Sintaxis();
+            var syntax = compiler.Syntax();
 
             //code extension
-            sintaxis
+            syntax
                 .extension("asynch", ExtensionKind.Code, ProcessAsynch)
                 .extension("synch", ExtensionKind.Code, ProcessSynch);
         }

@@ -36,7 +36,7 @@ namespace Excess.Compiler
     public interface ICompiler<TToken, TNode, TModel>
     {
         ILexicalAnalysis<TToken, TNode, TModel> Lexical();
-        ISyntaxAnalysis<TToken, TNode, TModel> Sintaxis();
+        ISyntaxAnalysis<TToken, TNode, TModel> Syntax();
         ISemanticAnalysis<TToken, TNode, TModel> Semantics();
         ICompilerEnvironment Environment();
 

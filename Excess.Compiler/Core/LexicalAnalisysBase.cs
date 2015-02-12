@@ -722,7 +722,7 @@ namespace Excess.Compiler.Core
                     default: throw new InvalidOperationException();
                 }
 
-                //schedule the processing of these extensions for a time we actally have sintaxis
+                //schedule the processing of these extensions for a time we actally have syntax
                 var document = scope.GetDocument<TToken, TNode, TModel>();
                 return document.change(tokens, TransformLexicalExtension(extension, handler), kind: "lexical-extension");
             };

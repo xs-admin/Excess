@@ -11,7 +11,7 @@ namespace Excess.Compiler.Core
                                                                 IDocumentInjector<TToken, TNode, TModel>
     {
         protected ILexicalAnalysis<TToken, TNode, TModel>  _lexical;
-        protected ISyntaxAnalysis<TToken, TNode, TModel>   _sintaxis;
+        protected ISyntaxAnalysis<TToken, TNode, TModel>   _syntax;
         protected ISemanticAnalysis<TToken, TNode, TModel> _semantics;
         protected ICompilerEnvironment                     _environment;
         protected CompilerStage                            _stage  = CompilerStage.Started;
@@ -19,13 +19,13 @@ namespace Excess.Compiler.Core
         protected Scope                                    _scope;
 
         public CompilerBase(ILexicalAnalysis<TToken, TNode, TModel> lexical, 
-                            ISyntaxAnalysis<TToken, TNode, TModel> sintaxis, 
+                            ISyntaxAnalysis<TToken, TNode, TModel> syntax, 
                             ISemanticAnalysis<TToken, TNode, TModel> semantics,
                             ICompilerEnvironment environment,
                             Scope scope)
         {
             _lexical  = lexical;
-            _sintaxis = sintaxis;
+            _syntax = syntax;
             _semantics = semantics;
             _environment = environment;
 
@@ -39,9 +39,9 @@ namespace Excess.Compiler.Core
             return _lexical;
         }
 
-        public ISyntaxAnalysis<TToken, TNode, TModel> Sintaxis()
+        public ISyntaxAnalysis<TToken, TNode, TModel> Syntax()
         {
-            return _sintaxis;
+            return _syntax;
         }
 
         public ISemanticAnalysis<TToken, TNode, TModel> Semantics()
@@ -61,9 +61,9 @@ namespace Excess.Compiler.Core
             if (iLexical != null)
                 iLexical.apply(document);
 
-            var iSintaxis = _sintaxis as IDocumentInjector<TToken, TNode, TModel>;
-            if (iSintaxis != null)
-                iSintaxis.apply(document);
+            var iSyntax = _syntax as IDocumentInjector<TToken, TNode, TModel>;
+            if (iSyntax != null)
+                iSyntax.apply(document);
 
             var iSemantics = _semantics as IDocumentInjector<TToken, TNode, TModel>;
             if (iSemantics != null)

@@ -58,7 +58,7 @@ namespace Excess.RuntimeProject
                 public static void Apply(ICompiler<SyntaxToken, SyntaxNode, SemanticModel> compiler)
                 {
                     var lexical = compiler.Lexical();
-                    var sintaxis = compiler.Sintaxis();
+                    var syntax = compiler.Syntax();
                     var semantics = compiler.Semantics();
                     var environment = compiler.Environment();
 

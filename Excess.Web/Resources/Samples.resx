@@ -121,7 +121,7 @@
     <value>environment.
     keyword("contract");
 
-sintaxis
+syntax
     .extension("contract", ExtensionKind.Code, ProcessContract);</value>
   </data>
   <data name="ContractTransform" xml:space="preserve">

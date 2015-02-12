@@ -18,7 +18,7 @@ namespace Excess.Compiler.XS
         static public void Apply(ExcessCompiler compiler)
         {
             var lexical = compiler.Lexical();
-            var sintaxis = compiler.Sintaxis();
+            var syntax = compiler.Syntax();
 
             lexical
                 .match()
@@ -27,7 +27,7 @@ namespace Excess.Compiler.XS
                     .enclosed('(', ')', contents: "args")
                     .then(LexicalEventDeclaration);
 
-            sintaxis
+            syntax
                 .match<MethodDeclarationSyntax>(method => method.ReturnType.ToString() == "on")
                     .then(EventHandler);
         }

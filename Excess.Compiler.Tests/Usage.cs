@@ -120,10 +120,10 @@ namespace Excess.Compiler.Tests
         public void SyntacticalMatching()
         {
             RoslynCompiler compiler = new RoslynCompiler();
-            var sintaxis = compiler.Sintaxis();
+            var syntax = compiler.Syntax();
 
             //simple match
-            sintaxis
+            syntax
                 .match<ClassDeclarationSyntax>(c => !c.Members.OfType<ConstructorDeclarationSyntax>().Any())
                     .then(addConstructor);
 
@@ -136,11 +136,11 @@ namespace Excess.Compiler.Tests
                 .Count() == 2); //must have added a constructor to "foo"
 
             //scope match & transform
-            sintaxis
+            syntax
                 .match<ClassDeclarationSyntax>(c => c.Identifier.ToString() == "foo")
                     .descendants<MethodDeclarationSyntax>(named: "methods")
                     .descendants<PropertyDeclarationSyntax>(prop => prop.Identifier.ToString().StartsWith("my"), named: "myProps")
-                .then(sintaxis.transform()
+                .then(syntax.transform()
                     .replace("methods", method => ((MethodDeclarationSyntax)method)
                         .WithIdentifier(CSharp.ParseToken("my" + ((MethodDeclarationSyntax)method).Identifier.ToString())))
                     .remove("myProps"));
@@ -153,7 +153,7 @@ namespace Excess.Compiler.Tests
                 .GetRoot()
                 .DescendantNodes()
                 .OfType<ConstructorDeclarationSyntax>()
-                .Count() == 1); //must have added a constructor to "foo", since the sintaxis is the same
+                .Count() == 1); //must have added a constructor to "foo", since the syntax is the same
         }
 
         private static SyntaxNode addConstructor(SyntaxNode node)
@@ -170,12 +170,12 @@ namespace Excess.Compiler.Tests
         public void SyntacticalExtensions()
         {
             RoslynCompiler compiler = new RoslynCompiler();
-            var sintaxis = compiler.Sintaxis();
+            var syntax = compiler.Syntax();
 
             SyntaxTree tree;
 
             //code extension
-            sintaxis
+            syntax
                 .extension("codeExtension", ExtensionKind.Code, codeExtension);
 
             tree = compiler.ApplySyntacticalPass("class foo { void bar() {codeExtension() {bar();}} }");
@@ -206,7 +206,7 @@ namespace Excess.Compiler.Tests
             Assert.AreEqual(assignmentStatement.ToString(), "ce = bar(7);");
 
             //member extension
-            sintaxis
+            syntax
                 .extension("memberExtension", ExtensionKind.Member, memberExtension);
 
             tree = compiler.ApplySyntacticalPass("class foo { memberExtension(param: \"foobar\") {int x = 3;} }");
@@ -221,7 +221,7 @@ namespace Excess.Compiler.Tests
             Assert.AreEqual(method.Body.Statements.Count, 3);
 
             //type extension
-            sintaxis
+            syntax
                 .extension("typeExtension", ExtensionKind.Type, typeExtension);
 
             tree = compiler.ApplySyntacticalPass("public typeExtension foo(param: \"foobar\") { bar(); }");

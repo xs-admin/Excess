@@ -215,7 +215,7 @@ namespace Excess.Compiler.Roslyn
         {
             var document = new RoslynDocument(_scope, text); //we actually dont touch our own state during these calls
             var lHandler = _lexical as IDocumentInjector<SyntaxToken, SyntaxNode, SemanticModel>;
-            var sHandler = _sintaxis as IDocumentInjector<SyntaxToken, SyntaxNode, SemanticModel>;
+            var sHandler = _syntax as IDocumentInjector<SyntaxToken, SyntaxNode, SemanticModel>;
 
             lHandler.apply(document);
             sHandler.apply(document);
@@ -236,7 +236,7 @@ namespace Excess.Compiler.Roslyn
         {
             var document  = new RoslynDocument(_scope, text); 
             var lHandler  = _lexical as IDocumentInjector<SyntaxToken, SyntaxNode, SemanticModel>;
-            var sHandler  = _sintaxis as IDocumentInjector<SyntaxToken, SyntaxNode, SemanticModel>;
+            var sHandler  = _syntax as IDocumentInjector<SyntaxToken, SyntaxNode, SemanticModel>;
             var ssHandler = _semantics as IDocumentInjector<SyntaxToken, SyntaxNode, SemanticModel>;
 
             lHandler.apply(document);

@@ -17,9 +17,9 @@ namespace Excess.Compiler.Extensions
     {
         public static void Apply(ExcessCompiler compiler)
         {
-            var sintaxis = compiler.Sintaxis();
+            var syntax = compiler.Syntax();
 
-            sintaxis
+            syntax
                 .extension("contract", ExtensionKind.Code, ProcessContract);
         }
 

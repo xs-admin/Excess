@@ -19,7 +19,7 @@ namespace Excess.Compiler.XS
         static public void Apply(ExcessCompiler compiler)
         {
             var lexical = compiler.Lexical();
-            var sintaxis = compiler.Sintaxis();
+            var syntax = compiler.Syntax();
 
             lexical
                 //methods 
@@ -46,7 +46,7 @@ namespace Excess.Compiler.XS
                         .remove("keyword")
                         .then(Property, referenceToken: "id"));
 
-            sintaxis
+            syntax
                 //constructor
                 .match<MethodDeclarationSyntax>(method => method.ReturnType.IsMissing && method.Identifier.ToString() == "constructor")
                     .then(Constructor);
