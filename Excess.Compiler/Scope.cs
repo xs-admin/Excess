@@ -89,7 +89,6 @@ namespace Excess.Compiler
             return result;
         }
 
-
         //DynamicObject
         Dictionary<string, object> _values = new Dictionary<string, object>();
 

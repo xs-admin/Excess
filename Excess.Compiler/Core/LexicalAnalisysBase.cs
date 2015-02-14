@@ -8,10 +8,10 @@ using System.Threading.Tasks;
 
 namespace Excess.Compiler.Core
 {
-    public class BaseLexicalMatchResult<TToken, TNode> : ILexicalMatchResult<TToken, TNode>
+    public class BaseLexicalMatchResult<TToken, TNode, TModel> : ILexicalMatchResult<TToken, TNode, TModel>
     {
         IEnumerable<LexicalMatchItem> _items;
-        public BaseLexicalMatchResult(IEnumerable<LexicalMatchItem> items, ILexicalTransform<TToken, TNode> transform)
+        public BaseLexicalMatchResult(IEnumerable<LexicalMatchItem> items, ILexicalTransform<TToken, TNode, TModel> transform)
         {
             _items = items;
             Transform = transform;
@@ -23,7 +23,7 @@ namespace Excess.Compiler.Core
 
         public int Consumed { get; private set; }
         public IEnumerable<LexicalMatchItem> Items { get { return _items; } }
-        public ILexicalTransform<TToken, TNode> Transform { get; set; }
+        public ILexicalTransform<TToken, TNode, TModel> Transform { get; set; }
 
         public IEnumerable<TToken> GetTokens(IEnumerable<TToken> tokens, TokenSpan span)
         {
@@ -36,7 +36,7 @@ namespace Excess.Compiler.Core
     public class BaseLexicalMatch<TToken, TNode, TModel> : ILexicalMatch<TToken, TNode, TModel>
     {
         ILexicalAnalysis<TToken, TNode, TModel> _lexical;
-        ILexicalTransform<TToken, TNode> _transform;
+        ILexicalTransform<TToken, TNode, TModel> _transform;
         List<Func<MatchResultBuilder, Scope, bool>> _matchers = new List<Func<MatchResultBuilder, Scope, bool>>();
 
         public BaseLexicalMatch(ILexicalAnalysis<TToken, TNode, TModel> lexical)
@@ -48,10 +48,10 @@ namespace Excess.Compiler.Core
         {
 
             IEnumerable<TToken> _tokens;
-            ILexicalTransform<TToken, TNode> _transform;
+            ILexicalTransform<TToken, TNode, TModel> _transform;
             bool _isDocumentStart;
 
-            public MatchResultBuilder(IEnumerable<TToken> tokens, ILexicalTransform<TToken, TNode> transform, bool isDocumentStart)
+            public MatchResultBuilder(IEnumerable<TToken> tokens, ILexicalTransform<TToken, TNode, TModel> transform, bool isDocumentStart)
             {
                 _tokens = tokens;
                 _transform = transform;
@@ -101,13 +101,13 @@ namespace Excess.Compiler.Core
                 return result;
             }
 
-            internal ILexicalMatchResult<TToken, TNode> GetResult()
+            internal ILexicalMatchResult<TToken, TNode, TModel> GetResult()
             {
-                return new BaseLexicalMatchResult<TToken, TNode>(_items, _transform);
+                return new BaseLexicalMatchResult<TToken, TNode, TModel>(_items, _transform);
             }
         }
 
-        public ILexicalMatchResult<TToken, TNode> match(IEnumerable<TToken> tokens, Scope scope, bool isDocumentStart)
+        public ILexicalMatchResult<TToken, TNode, TModel> match(IEnumerable<TToken> tokens, Scope scope, bool isDocumentStart)
         {
             var builder = new MatchResultBuilder(tokens, _transform, isDocumentStart);
             var inner = new Scope(scope);
@@ -433,10 +433,24 @@ namespace Excess.Compiler.Core
 
         public ILexicalAnalysis<TToken, TNode, TModel> then(Func<TNode, Scope, TNode> handler)
         {
-            return then(new LexicalFunctorTransform<TToken, TNode>(ScheduleThen(handler)));
+            return then(new LexicalFunctorTransform<TToken, TNode, TModel>(ScheduleSyntactical(handler)));
         }
 
-        private Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>> ScheduleThen(Func<TNode, Scope, TNode> handler)
+        private Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>> ScheduleSyntactical(Func<TNode, Scope, TNode> handler)
+        {
+            return (tokens, scope) =>
+            {
+                var document = scope.GetDocument<TToken, TNode, TModel>();
+                return document.change(tokens, handler);
+            };
+        }
+
+        public ILexicalAnalysis<TToken, TNode, TModel> then(Func<TNode, TNode, TModel, Scope, TNode> handler)
+        {
+            return then(new LexicalFunctorTransform<TToken, TNode, TModel>(ScheduleSemantical(handler)));
+        }
+
+        private Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>> ScheduleSemantical(Func<TNode, TNode, TModel, Scope, TNode> handler)
         {
             return (tokens, scope) =>
             {
@@ -447,19 +461,19 @@ namespace Excess.Compiler.Core
 
         public ILexicalAnalysis<TToken, TNode, TModel> then(Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>> handler)
         {
-            _transform = new LexicalFunctorTransform<TToken, TNode>(handler);
+            _transform = new LexicalFunctorTransform<TToken, TNode, TModel>(handler);
             return _lexical;
         }
 
-        public ILexicalAnalysis<TToken, TNode, TModel> then(ILexicalTransform<TToken, TNode> transform)
+        public ILexicalAnalysis<TToken, TNode, TModel> then(ILexicalTransform<TToken, TNode, TModel> transform)
         {
             _transform = transform;
             return _lexical;
         }
 
-        public ILexicalAnalysis<TToken, TNode, TModel> then(Func<IEnumerable<TToken>, ILexicalMatchResult<TToken, TNode>, Scope, IEnumerable<TToken>> handler)
+        public ILexicalAnalysis<TToken, TNode, TModel> then(Func<IEnumerable<TToken>, ILexicalMatchResult<TToken, TNode, TModel>, Scope, IEnumerable<TToken>> handler)
         {
-            _transform = new LexicalFunctorTransform<TToken, TNode>(handler);
+            _transform = new LexicalFunctorTransform<TToken, TNode, TModel>(handler);
             return _lexical;
         }
     }
@@ -529,7 +543,7 @@ namespace Excess.Compiler.Core
         private class MatchInfo
         {
             public TokenSpan Span { get; set; }
-            public ILexicalMatchResult<TToken, TNode> Match { get; set; }
+            public ILexicalMatchResult<TToken, TNode, TModel> Match { get; set; }
         }
 
         private IEnumerable<TToken> TransformSpan(TToken[] tokens, TokenSpan span, Scope scope)
@@ -541,7 +555,7 @@ namespace Excess.Compiler.Core
             {
                 var remaining = Range(tokens, span.Start + currentToken, span.Length - currentToken);
 
-                ILexicalMatchResult<TToken, TNode> result = null;
+                ILexicalMatchResult<TToken, TNode, TModel> result = null;
                 foreach (var matcher in _matchers)
                 {
                     result = matcher.match(remaining, scope, currentToken == 0);
@@ -623,7 +637,7 @@ namespace Excess.Compiler.Core
                 resultItems.Add(newItem);
             }
 
-            builder.Match = new BaseLexicalMatchResult<TToken, TNode>(resultItems, builder.Match.Transform);
+            builder.Match = new BaseLexicalMatchResult<TToken, TNode, TModel>(resultItems, builder.Match.Transform);
             consumed = builder.Span.Length;
             return resultTokens;
         }
@@ -668,7 +682,7 @@ namespace Excess.Compiler.Core
                 _normalizeTypes = types;
         }
 
-        public virtual ILexicalTransform<TToken, TNode> transform()
+        public virtual ILexicalTransform<TToken, TNode, TModel> transform()
         {
             return new LexicalTransform<TToken, TNode, TModel>();
         }

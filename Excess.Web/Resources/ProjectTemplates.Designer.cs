@@ -159,6 +159,15 @@ namespace Excess.Web.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to //use lexical, syntax, semantics or environment.
+        /// </summary>
+        internal static string Extension {
+            get {
+                return ResourceManager.GetString("Extension", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to using Excess.Compiler.Core;
         ///public class ExtensionPlugin
         ///{
@@ -171,6 +180,15 @@ namespace Excess.Web.Resources {
         internal static string ExtensionPlugin {
             get {
                 return ResourceManager.GetString("ExtensionPlugin", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to //your transformations here.
+        /// </summary>
+        internal static string Transform {
+            get {
+                return ResourceManager.GetString("Transform", resourceCulture);
             }
         }
     }

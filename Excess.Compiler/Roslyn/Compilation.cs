@@ -49,7 +49,7 @@ namespace Excess.Compiler.Roslyn
             {
                 Id = id,
                 Stage = CompilerStage.Started,
-                Document = new RoslynDocument(compiler.Scope, contents),
+                Document = new RoslynDocument(compiler.Scope, contents, id),
                 Compiler = compiler
             };
 
@@ -73,7 +73,7 @@ namespace Excess.Compiler.Roslyn
             if (_compilation != null && doc.Document.SyntaxRoot != null)
                 _compilation = _compilation.RemoveSyntaxTrees(doc.Document.SyntaxRoot.SyntaxTree);
 
-            doc.Document = new RoslynDocument(doc.Compiler.Scope, contents);
+            doc.Document = new RoslynDocument(doc.Compiler.Scope, contents, id);
 
             var documentInjector = doc.Compiler as IDocumentInjector<SyntaxToken, SyntaxNode, SemanticModel>;
             documentInjector.apply(doc.Document);
@@ -254,12 +254,23 @@ namespace Excess.Compiler.Roslyn
             {
                 var document = doc.Document;
 
+                var errors = document.GetErrors();
+
+                //native errors
                 List<Diagnostic> fileDiagnostics;
                 if (byFile.TryGetValue(doc.Id, out fileDiagnostics))
                 {
-                    foreach (var error in fileDiagnostics)
+                    if (errors == null)
+                        errors = fileDiagnostics;
+                    else
+                        errors = errors.Union(fileDiagnostics);
+                }
+
+                if (errors != null)
+                {
+                    foreach (var error in errors)
                     {
-                        var docError = document.Error(error);
+                        var docError = document.ExcessError(error, doc.Id);
                         if (docError != null)
                             yield return docError;
                     }

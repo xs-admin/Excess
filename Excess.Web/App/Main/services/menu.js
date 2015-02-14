@@ -24,10 +24,9 @@
                 return;
             }
 
-            dialogs.create('/App/Main/dialogs/newProject.html', 'newProjectCtrl', null, { size: "md" })
+            dialogs.create('/App/Main/dialogs/createProject.html', 'createProjectCtrl', null, { size: "md" })
                 .result.then(function (projectId) {
-                    dialogs.confirm("Project Created",
-                                  "Would you like to edit this project?", { size: "sm" })
+                    dialogs.confirm("Project Created", "Would you like to edit this project?", { size: "sm" })
                         .result.then(function () {
                             $state.go('project', { projectId: projectId });
                         })
@@ -73,7 +72,8 @@
                     result = [
                         { icon: 'fa-sitemap',         action: $rootScope.selectProject },
                         { icon: 'fa-plus-square',     action: $rootScope.newProject    },
-                        { icon: 'fa-question-circle', action: $rootScope.homeHelp      },
+                        { icon: 'fa-info-circle',     url: '#/about' },
+                        { icon: 'fa-question-circle', action: $rootScope.homeHelp },
                     ];
                     break;
                 }
@@ -85,6 +85,14 @@
                         { icon: 'fa-sitemap',         action: $rootScope.selectProject },
                         { icon: 'fa-plus-square',     action: $rootScope.newProject },
                         { icon: 'fa-question-circle', action: $rootScope.projectHelp },
+                    ];
+                    break;
+                }
+
+                case 'about':
+                {
+                    result = [
+                        { icon: 'fa-home', url: '#/' },
                     ];
                     break;
                 }

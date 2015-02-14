@@ -15,6 +15,7 @@ namespace Excess.Compiler
 
         ISyntaxAnalysis<TToken, TNode, TModel> then(Func<TNode, TNode> handler);
         ISyntaxAnalysis<TToken, TNode, TModel> then(Func<TNode, Scope, TNode> handler);
+        ISyntaxAnalysis<TToken, TNode, TModel> then(Func<TNode, TNode, TModel, Scope, TNode> handler);
         ISyntaxAnalysis<TToken, TNode, TModel> then(ISyntaxTransform<TNode> transform);
     }
 

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Excess.Compiler.Core
 {
-    public class LexicalTransform<TToken, TNode, TModel> : ILexicalTransform<TToken, TNode>
+    public class LexicalTransform<TToken, TNode, TModel> : ILexicalTransform<TToken, TNode, TModel>
     {
         private IEnumerable<TToken> TokensFromString(string tokenString, Scope scope)
         {
@@ -29,7 +29,7 @@ namespace Excess.Compiler.Core
 
         List<Transformer> _transformers = new List<Transformer>();
 
-        public ILexicalTransform<TToken, TNode> insert(string tokenString, string before = null, string after = null)
+        public ILexicalTransform<TToken, TNode, TModel> insert(string tokenString, string before = null, string after = null)
         {
 
             if (before != null)
@@ -54,7 +54,7 @@ namespace Excess.Compiler.Core
             });
         }
 
-        public ILexicalTransform<TToken, TNode> replace(string named, string tokenString)
+        public ILexicalTransform<TToken, TNode, TModel> replace(string named, string tokenString)
         {
             if (named != null)
                 AddTransformer(named, (tokens, scope) => TokensFromString(tokenString, scope), -1);
@@ -64,7 +64,7 @@ namespace Excess.Compiler.Core
             return this;
         }
 
-        public ILexicalTransform<TToken, TNode> remove(string named)
+        public ILexicalTransform<TToken, TNode, TModel> remove(string named)
         {
             if (named != null)
             {
@@ -76,23 +76,33 @@ namespace Excess.Compiler.Core
             return this;
         }
 
-        public ILexicalTransform<TToken, TNode> then(Func<TNode, TNode> handler, string referenceToken = null)
+        public ILexicalTransform<TToken, TNode, TModel> then(Func<TNode, TNode> handler, string referenceToken = null)
         {
             return then((node, scope) => handler(node), referenceToken);
         }
 
-        string                    _refToken;
+        string _refToken;
         Func<TNode, Scope, TNode> _syntactical;
-        public ILexicalTransform<TToken, TNode> then(Func<TNode, Scope, TNode> handler, string referenceToken = null)
+        Func<TNode, TNode, TModel, Scope, TNode> _semantical;
+        public ILexicalTransform<TToken, TNode, TModel> then(Func<TNode, Scope, TNode> handler, string referenceToken = null)
         {
-            Debug.Assert(_syntactical == null);
+            Debug.Assert(_syntactical == null && _semantical == null);
             _refToken = referenceToken;
             _syntactical = handler;
 
             return this;
         }
 
-        public IEnumerable<TToken> transform(IEnumerable<TToken> tokens, ILexicalMatchResult<TToken, TNode> match, Scope scope)
+        public ILexicalTransform<TToken, TNode, TModel> then(Func<TNode, TNode, TModel, Scope, TNode> handler, string referenceToken = null)
+        {
+            Debug.Assert(_syntactical == null && _semantical == null);
+            _refToken = referenceToken;
+            _semantical = handler;
+
+            return this;
+        }
+
+        public IEnumerable<TToken> transform(IEnumerable<TToken> tokens, ILexicalMatchResult<TToken, TNode, TModel> match, Scope scope)
         {
             var sorted    = _transformers.OrderBy(t => t.Priority);
             var compiler  = scope.GetService<TToken, TNode, TModel>();
@@ -119,7 +129,14 @@ namespace Excess.Compiler.Core
                         if (id < 0)
                         {
                             var document = scope.GetDocument<TToken, TNode, TModel>();
-                            marked = document.change(token, _syntactical);
+                            if (_syntactical != null)
+                                marked = document.change(token, _syntactical);
+                            else
+                            {
+                                Debug.Assert(_semantical != null);
+                                marked = document.change(token, _semantical);
+                            }
+
                             id = compiler.GetExcessId(marked);
                         }
                         else
@@ -134,21 +151,21 @@ namespace Excess.Compiler.Core
         }
     }
 
-    public class LexicalFunctorTransform<TToken, TNode> : ILexicalTransform<TToken, TNode>
+    public class LexicalFunctorTransform<TToken, TNode, TModel> : ILexicalTransform<TToken, TNode, TModel>
     {
-        Func<IEnumerable<TToken>, ILexicalMatchResult<TToken, TNode>, Scope, IEnumerable<TToken>> _functor;
+        Func<IEnumerable<TToken>, ILexicalMatchResult<TToken, TNode, TModel>, Scope, IEnumerable<TToken>> _functor;
 
         public LexicalFunctorTransform(Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>> functor)
         {
             _functor = WithScope(functor);
         }
 
-        public LexicalFunctorTransform(Func<IEnumerable<TToken>, ILexicalMatchResult<TToken, TNode>, Scope, IEnumerable<TToken>> functor)
+        public LexicalFunctorTransform(Func<IEnumerable<TToken>, ILexicalMatchResult<TToken, TNode, TModel>, Scope, IEnumerable<TToken>> functor)
         {
             _functor = functor;
         }
 
-        private static Func<IEnumerable<TToken>, ILexicalMatchResult<TToken, TNode>, Scope, IEnumerable<TToken>> WithScope(Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>> functor)
+        private static Func<IEnumerable<TToken>, ILexicalMatchResult<TToken, TNode, TModel>, Scope, IEnumerable<TToken>> WithScope(Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>> functor)
         {
             return (tokens, match, scope) =>
             {
@@ -169,37 +186,42 @@ namespace Excess.Compiler.Core
             };
         }
 
-        public ILexicalTransform<TToken, TNode> insert(string tokens, string before = null, string after = null)
+        public ILexicalTransform<TToken, TNode, TModel> insert(string tokens, string before = null, string after = null)
         {
             throw new InvalidOperationException();
         }
 
-        public ILexicalTransform<TToken, TNode> replace(string named, string tokens)
+        public ILexicalTransform<TToken, TNode, TModel> replace(string named, string tokens)
         {
             throw new InvalidOperationException();
         }
 
-        public ILexicalTransform<TToken, TNode> remove(string named)
+        public ILexicalTransform<TToken, TNode, TModel> remove(string named)
         {
             throw new InvalidOperationException();
         }
 
-        public ILexicalTransform<TToken, TNode> then(Func<TNode, TNode> handler, string token)
+        public ILexicalTransform<TToken, TNode, TModel> then(Func<TNode, TNode> handler, string token)
         {
             throw new InvalidOperationException();
         }
 
-        public ILexicalTransform<TToken, TNode> then(Func<TNode, Scope , TNode> handler, string token)
+        public ILexicalTransform<TToken, TNode, TModel> then(Func<TNode, Scope , TNode> handler, string token)
         {
             throw new InvalidOperationException();
         }
 
-        public ILexicalTransform<TToken, TNode> then(ISyntaxTransform<TNode> transform, string token)
+        public ILexicalTransform<TToken, TNode, TModel> then(Func<TNode, TNode, TModel, Scope, TNode> handler, string token)
         {
             throw new InvalidOperationException();
         }
 
-        public IEnumerable<TToken> transform(IEnumerable<TToken> tokens, ILexicalMatchResult<TToken, TNode> match, Scope scope)
+        public ILexicalTransform<TToken, TNode, TModel> then(ISyntaxTransform<TNode> transform, string token)
+        {
+            throw new InvalidOperationException();
+        }
+
+        public IEnumerable<TToken> transform(IEnumerable<TToken> tokens, ILexicalMatchResult<TToken, TNode, TModel> match, Scope scope)
         {
             return _functor(tokens, match, scope);
         }

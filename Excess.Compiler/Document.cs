@@ -11,6 +11,8 @@ namespace Excess.Compiler
         void change(Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>> transform, string kind = null);
         TToken change(TToken token, Func<TNode, Scope, TNode> transform, string kind = null);
         IEnumerable<TToken> change(IEnumerable<TToken> tokens, Func<TNode, Scope, TNode> transform, string kind = null);
+        TToken change(TToken token, Func<TNode, TNode, TModel, Scope, TNode> transform, string kind = null);
+        IEnumerable<TToken> change(IEnumerable<TToken> tokens, Func<TNode, TNode, TModel, Scope, TNode> transform, string kind = null);
         void change(Func<TNode, Scope, TNode> transform, string kind = null);
         TNode change(TNode node, Func<TNode, Scope, TNode> transform, string kind = null);
         void change(Func<TNode, TModel, Scope, TNode> transform, string kind = null);
@@ -21,7 +23,7 @@ namespace Excess.Compiler
         bool hasErrors();
 
         string Text { get; set; }
-
+        TNode SyntaxRoot { get; }
         TModel Model { get; set; }
         Scope Scope { get; }
     }

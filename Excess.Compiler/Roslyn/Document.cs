@@ -13,36 +13,86 @@ using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace Excess.Compiler.Roslyn
 {
-    class RoslynDocument : BaseDocument<SyntaxToken, SyntaxNode, SemanticModel>
+    public class RoslynDocument : BaseDocument<SyntaxToken, SyntaxNode, SemanticModel>
     {
         public RoslynDocument(Scope scope) : base(scope)
         {
             _scope.set<IDocument<SyntaxToken, SyntaxNode, SemanticModel>>(this);
         }
 
-        public RoslynDocument(Scope scope, string text) : base(scope)
+        string _documentID;
+        public RoslynDocument(Scope scope, string text, string id = null) : base(scope)
         {
             Text = text;
             _scope.set<IDocument<SyntaxToken, SyntaxNode, SemanticModel>>(this);
+
+            _documentID = id;
         }
 
         public string LexicalText { get; internal set; }
-        public SyntaxNode SyntaxRoot { get { return _root; } }
 
         public CompilerStage Stage { get; internal set; }
 
-        public Diagnostic Error(Diagnostic error)
+        public Diagnostic ExcessError(Diagnostic error, string file)
         {
-            return error;
+            var location = error.Location;
+            Debug.Assert(location != null);
+
+            var tree = location.SourceTree;
+            if (tree == null)
+                return error;
+
+
+            var errorNode = tree.GetRoot().FindNode(location.SourceSpan);
+            if (errorNode == null)
+                return error;
+
+            string nodeID = RoslynCompiler.NodeMark(errorNode);
+            if (nodeID == null)
+                return error;
+
+            var originalNode = RoslynCompiler.FindNode(_original, nodeID);
+            if (originalNode == null)
+                return error;
+
+            location    = originalNode.SyntaxTree.GetLocation(originalNode.Span);
+            var message = error.GetMessage();
+            var descriptor = new DiagnosticDescriptor(error.Id, message, message, error.Category, DiagnosticSeverity.Error, error.IsEnabledByDefault);
+
+            return Diagnostic.Create(descriptor, location);
         }
 
-        protected override void notifyResultText(string resultText)
+        List<Diagnostic> _errors = new List<Diagnostic>();
+        public void AddError(string id, string message, SyntaxNode node)
         {
-            LexicalText = resultText;
+            var location = Location.Create(_root.SyntaxTree, node.Span); //td: translate
+            var descriptor = new DiagnosticDescriptor(id, message, message, "Excess", DiagnosticSeverity.Error, true);
+
+            var error = Diagnostic.Create(descriptor, location);
+            _errors.Add(error);
+        }
+
+        public IEnumerable<Diagnostic> GetErrors()
+        {
+            return _errors;
+        }
+
+        protected override SyntaxNode notifyOriginal(SyntaxNode root, string newText)
+        {
+            LexicalText = newText;
+
+            if (_documentID == null)
+                return root;
+
+            var newTree = root.SyntaxTree.WithFilePath(_documentID);
+            return newTree.GetRoot();
         }
 
         public override bool hasErrors()
         {
+            if (_errors.Any())
+                return true;
+
             return _root != null && 
                    _root
                         .GetDiagnostics()
@@ -123,6 +173,11 @@ namespace Excess.Compiler.Roslyn
         {
             SyntaxRewriter rewriter = new SyntaxRewriter(transformers, scope);
             return rewriter.Visit(node);
+        }
+
+        protected override SyntaxNode getRoot()
+        {
+            return _root;
         }
     }
 }

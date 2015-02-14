@@ -24,8 +24,11 @@ namespace Excess.Compiler.Core
 
         protected string _text;
         public string Text { get { return _text; } set { update(value); } }
+        public TNode SyntaxRoot { get { return getRoot(); } }
         public TModel Model { get; set; }
         public Scope Scope { get { return _scope; } }
+
+        protected abstract TNode getRoot();
 
         protected void update(string text)
         {
@@ -76,6 +79,35 @@ namespace Excess.Compiler.Core
                 ID = id,
                 Kind = kind,
                 Transform = transform
+            });
+
+            return result;
+        }
+
+        public TToken change(TToken token, Func<TNode, TNode, TModel, Scope, TNode> transform, string kind = null)
+        {
+            int tokenId;
+            TToken result = _compiler.MarkToken(token, out tokenId);
+
+            _lexicalChanges.Add(new Change
+            {
+                ID = tokenId,
+                Kind = kind,
+                SemanticalTransform = transform
+            });
+
+            return result;
+        }
+
+        public IEnumerable<TToken> change(IEnumerable<TToken> tokens, Func<TNode, TNode, TModel, Scope, TNode> transform, string kind = null)
+        {
+            int id;
+            var result = _compiler.MarkTokens(tokens, out id);
+            _lexicalChanges.Add(new Change
+            {
+                ID = id,
+                Kind = kind,
+                SemanticalTransform = transform
             });
 
             return result;
@@ -193,6 +225,8 @@ namespace Excess.Compiler.Core
         public abstract bool hasErrors();
 
         protected TNode _root;
+        protected TNode _original;
+
         private void applyLexical()
         {
             Debug.Assert(_root == null);
@@ -207,17 +241,18 @@ namespace Excess.Compiler.Core
             Dictionary<string, SourceSpan> annotations = new Dictionary<string, SourceSpan>();
             _root = calculateNewText(tokens, annotations, out resultText);
 
-            //maybe someone needs to know? 
-            notifyResultText(resultText);
-
             //update from token to node
             processAnnotations(annotations);
 
             //allow extensions writers to perform one last rewrite before the syntactical 
             _root = applyNodeChanges(_root, "lexical-extension", CompilerStage.Lexical);
 
-            //move any pending changes to the syntactical pass
-            _syntacticalChanges.AddRange(_lexicalChanges);
+            //move any pending changes to the appropriate pass
+            _syntacticalChanges.AddRange(_lexicalChanges
+                .Where(change => change.Transform != null));
+
+            _semanticalChanges.AddRange(_lexicalChanges
+                .Where(change => change.SemanticalTransform != null));
         }
 
         private TNode calculateNewText(IEnumerable<TToken> tokens, Dictionary<string, SourceSpan> annotations, out string modifiedText)
@@ -250,8 +285,16 @@ namespace Excess.Compiler.Core
                 newText.Append(toInsert);
             }
 
+            //parse
             modifiedText = newText.ToString();
             var root = _compiler.Parse(modifiedText);
+
+            //assign ids to the nodes found
+            root = _compiler.MarkTree(root);
+
+            //allow for preprocessing of the original 
+            root = notifyOriginal(root, modifiedText);
+            _original = root;
 
             //apply any scheduled normalization
             var normalizers = poll(_lexicalChanges, "normalize");
@@ -260,7 +303,7 @@ namespace Excess.Compiler.Core
                 root = normalizer.Transform(root, new Scope(_scope));
             }
 
-            return _compiler.MarkTree(root);
+            return root;
         }
 
         private void processAnnotations(Dictionary<string, SourceSpan> annotations)
@@ -283,8 +326,9 @@ namespace Excess.Compiler.Core
             }
         }
 
-        protected virtual void notifyResultText(string resultText)
+        protected virtual TNode notifyOriginal(TNode root, string newText)
         {
+            return root;
         }
 
         private TNode applyNodeChanges(TNode root, CompilerStage stage)
@@ -323,8 +367,13 @@ namespace Excess.Compiler.Core
                 var transformers = new Dictionary<int, Func<TNode, TNode, TModel, Scope, TNode>>();
                 foreach (var change in changes)
                 {
-                    Debug.Assert(change.SemanticalTransform != null);
-                    transformers[change.ID] = change.SemanticalTransform;
+                    if (change.SemanticalTransform != null)
+                        transformers[change.ID] = change.SemanticalTransform;
+                    else
+                    {
+                        Debug.Assert(change.Transform != null);
+                        transformers[change.ID] = (oldNode, newNode, model, scope) => change.Transform(oldNode, scope);
+                    }
                 }
 
                 return transform(node, transformers);

@@ -21,11 +21,19 @@ namespace Excess.RuntimeProject
         public string Message { get; set; }
     }
 
+    public class Error
+    {
+        public string File { get; set; }
+        public int Line { get; set; }
+        public int Character { get; set; }
+        public string Message { get; set; }
+    }
+
     public interface IRuntimeProject
     {
         bool busy();
-        void compile();
-        void run(out dynamic client);
+        IEnumerable<Error> compile();
+        IEnumerable<Error> run(out dynamic client);
         void add(string file, int id, string contents);
         void modify(string file, string contents);
         IEnumerable<Notification> notifications();

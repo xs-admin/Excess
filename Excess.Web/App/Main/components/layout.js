@@ -39,7 +39,6 @@
 
             var options = {
                 enableCursorHotkey: false,
-                //applyDefaultStyles: true,
                 showOverflowOnHover: false,
             };
 

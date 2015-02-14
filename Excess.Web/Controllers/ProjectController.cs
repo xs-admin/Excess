@@ -106,14 +106,28 @@ namespace Excess.Web.Controllers
             return Content("ok");
         }
 
+        private class CompilationResult
+        {
+            public CompilationResult(IEnumerable<Error> errors, dynamic clientData = null)
+            {
+                Succeded = errors == null || !errors.Any();
+                Errors = errors;
+                ClientData = clientData;
+            }
+
+            public bool Succeded { get; set; }
+            public IEnumerable<Error> Errors { get; set; }
+            public dynamic ClientData { get; set; }
+        }
+
         public ActionResult Compile()
         {
             var project = Session["project"] as IRuntimeProject;
             if (project == null)
                 return HttpNotFound(); //td: right error
 
-            project.compile();
-            return Content("ok");
+            var result = new CompilationResult(project.compile());
+            return Json(result, JsonRequestBehavior.AllowGet);
         }
 
         public ActionResult Execute()
@@ -123,8 +137,9 @@ namespace Excess.Web.Controllers
                 return HttpNotFound(); //td: right error
 
             dynamic clientData;
-            project.run(out clientData);
-            return Json(clientData, JsonRequestBehavior.AllowGet);
+            var errors = project.run(out clientData);
+            var result = new CompilationResult(errors, clientData);
+            return Json(result, JsonRequestBehavior.AllowGet);
         }
 
         public ActionResult Notifications()

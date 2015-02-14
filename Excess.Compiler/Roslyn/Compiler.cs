@@ -179,6 +179,11 @@ namespace Excess.Compiler.Roslyn
         }
 
         //out of interface methods, used for testing
+        public RoslynDocument CreateDocument(string text)
+        {
+            return new RoslynDocument(_scope, text);
+        }
+
         public ExpressionSyntax CompileExpression(string expr)
         {
             var   document = new RoslynDocument(_scope, expr);
@@ -234,7 +239,12 @@ namespace Excess.Compiler.Roslyn
 
         public SyntaxTree ApplySemanticalPass(string text, out string result)
         {
-            var document  = new RoslynDocument(_scope, text); 
+            var document = new RoslynDocument(_scope, text);
+            return ApplySemanticalPass(document, out result);
+        }
+
+        public SyntaxTree ApplySemanticalPass(RoslynDocument document, out string result)
+        {
             var lHandler  = _lexical as IDocumentInjector<SyntaxToken, SyntaxNode, SemanticModel>;
             var sHandler  = _syntax as IDocumentInjector<SyntaxToken, SyntaxNode, SemanticModel>;
             var ssHandler = _semantics as IDocumentInjector<SyntaxToken, SyntaxNode, SemanticModel>;
@@ -358,6 +368,7 @@ namespace Excess.Compiler.Roslyn
         {
             return node
                 .WithoutAnnotations(NodeIdAnnotation)
+                .WithoutAnnotations(NodeIdAnnotation + id)
                 .WithAdditionalAnnotations(
                     new SyntaxAnnotation(NodeIdAnnotation + id),
                     new SyntaxAnnotation(NodeIdAnnotation, id));
@@ -470,11 +481,11 @@ namespace Excess.Compiler.Roslyn
 
         static public Func<SyntaxNode, Scope, SyntaxNode> RemoveMember(SyntaxNode member)
         {
-            string membertId = NodeMark(member);
+            string memberId = NodeMark(member);
             return (node, scope) =>
             {
                 var clazz = (ClassDeclarationSyntax)node;
-                return clazz.RemoveNode(FindNode(clazz.Members, membertId), SyntaxRemoveOptions.KeepTrailingTrivia);
+                return clazz.RemoveNode(FindNode(clazz.Members, memberId), SyntaxRemoveOptions.KeepTrailingTrivia);
             };
         }
 
@@ -487,6 +498,13 @@ namespace Excess.Compiler.Roslyn
             }
 
             return null;
+        }
+
+        static public SyntaxNode FindNode(SyntaxNode root, string id)
+        {
+            return root
+                .GetAnnotatedNodes(NodeIdAnnotation + id)
+                .FirstOrDefault();
         }
 
         static public StatementSyntax NextStatement(BlockSyntax code, StatementSyntax statement)

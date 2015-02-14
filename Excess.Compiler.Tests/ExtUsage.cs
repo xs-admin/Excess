@@ -153,7 +153,7 @@ namespace Excess.Compiler.Tests
             SyntaxTree tree = null;
             string text = null;
 
-            //event handler usage
+            //usage
             var Usage = @"
                 class foo
                 {
@@ -172,6 +172,32 @@ namespace Excess.Compiler.Tests
                 .DescendantNodes()
                 .OfType<IfStatementSyntax>()
                 .Count() == 2); //must have added an if for each contract condition
+
+            //errors
+            var Errors = @"
+                class foo
+                {
+                    void bar(int x, object y)
+                    {
+                        contract()
+                        {
+                            x > 3;
+                            return 4; //contract01 - only expressions
+                        }
+
+                        var noContract = contract() //contract01 - not as expression
+                        {
+                            x > 3;
+                            return 4; 
+                        }
+                    }
+                }";
+
+            var doc = compiler.CreateDocument(Errors);
+            compiler.ApplySemanticalPass(doc, out text);
+            Assert.IsTrue(doc
+                .GetErrors()
+                .Count() == 2); //must produce 2 errors
         }
     }
 }

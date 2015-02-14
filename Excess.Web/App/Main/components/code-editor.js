@@ -79,6 +79,7 @@
             resized:  '@',
             source:   '@',
             changed:  '&',
+            control:  '=',
         },
         templateUrl: '/App/Main/components/code-editor.html',
         link: function (scope, element, attrs, ctrl) {
@@ -132,6 +133,22 @@
                     scope.$watch('resized', function (value) {
                         codeEditor.setSize(element.width(), element.height());
                     });
+                }
+
+                if (scope.control) {
+                    scope.control.selection = function () {
+                        return codeEditor.getSelection();
+                    }
+
+                    scope.control.append = function (text) {
+                        codeEditor.replaceRange(text, { line: Infinity });
+                        codeEditor.execCommand("goDocEnd");
+                    }
+
+                    scope.control.gotoLine = function (line, ch) {
+                        codeEditor.focus();
+                        codeEditor.setCursor(line, ch);
+                    }
                 }
             }
 

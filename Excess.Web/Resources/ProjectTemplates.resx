@@ -183,4 +183,10 @@ public class ExtensionPlugin
     }
 }</value>
   </data>
+  <data name="Extension" xml:space="preserve">
+    <value>//use lexical, syntax, semantics or environment</value>
+  </data>
+  <data name="Transform" xml:space="preserve">
+    <value>//your transformations here</value>
+  </data>
 </root>

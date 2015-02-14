@@ -105,8 +105,8 @@ namespace Excess.Web.Migrations
         {
             return new ProjectFile[]
             {
-            //Hello world
-            new ProjectFile
+                //Hello world
+                new ProjectFile
                 {
                     ID = 1,
                     OwnerProject = 1,
@@ -114,8 +114,8 @@ namespace Excess.Web.Migrations
                     Contents = SampleCode.HelloWorld,
                 },
 
-            //Lolcats
-            new ProjectFile
+                //Lolcats
+                new ProjectFile
                 {
                     ID = 2,
                     OwnerProject = 2,
@@ -147,8 +147,8 @@ namespace Excess.Web.Migrations
                     Contents = SampleCode.LolCatsTrollcat,
                 },
 
-            //contract
-            new ProjectFile
+                //contract
+                new ProjectFile
                 {
                     ID           = 6,
                     OwnerProject = 3,

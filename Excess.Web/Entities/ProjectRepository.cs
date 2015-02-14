@@ -117,7 +117,7 @@ namespace Excess.Web.Entities
                 UserID      = userId
             };
 
-            List<ProjectFile> files     = new List<ProjectFile>();
+            List<ProjectFile> files = new List<ProjectFile>();
             
             switch (projectType)
             {
@@ -129,7 +129,25 @@ namespace Excess.Web.Entities
 
                 case "extension":
                 {
-                        break;
+                    files.Add(new ProjectFile
+                    {
+                        Name = "plugin",
+                        isHidden = true,
+                        Contents = ProjectTemplates.ExtensionPlugin
+                    });
+
+                    files.Add(new ProjectFile
+                    {
+                        Name = "extension",
+                        Contents = ProjectTemplates.Extension,
+                    });
+
+                    files.Add(new ProjectFile
+                    {
+                        Name = "transform",
+                        Contents = ProjectTemplates.Transform,
+                    });
+                    break;
                 }
                 //case "dsl":
                 //{

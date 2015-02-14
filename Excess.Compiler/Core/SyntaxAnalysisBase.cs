@@ -93,7 +93,8 @@ namespace Excess.Compiler.Core
             return this;
         }
 
-        Func<TNode, Scope, TNode> _then;
+        Func<TNode, Scope, TNode> _syntactical;
+        Func<TNode, TNode, TModel, Scope, TNode> _semantical;
         public ISyntaxAnalysis<TToken, TNode, TModel> then(Func<TNode, TNode> handler)
         {
             return then((node, scope) => handler(node));
@@ -106,8 +107,15 @@ namespace Excess.Compiler.Core
 
         public ISyntaxAnalysis<TToken, TNode, TModel> then(Func<TNode, Scope, TNode> handler)
         {
-            Debug.Assert(_then == null);
-            _then = handler;
+            Debug.Assert(_syntactical == null && _semantical == null);
+            _syntactical = handler;
+            return _syntax;
+        }
+
+        public ISyntaxAnalysis<TToken, TNode, TModel> then(Func<TNode, TNode, TModel, Scope, TNode> handler)
+        {
+            Debug.Assert(_syntactical == null && _semantical == null);
+            _semantical = handler;
             return _syntax;
         }
 
@@ -118,7 +126,7 @@ namespace Excess.Compiler.Core
 
         private TNode transform(TNode node, Scope scope)
         {
-            if (_then == null)
+            if (_syntactical == null)
                 return node;
 
             foreach (var matcher in _matchers)
@@ -127,7 +135,12 @@ namespace Excess.Compiler.Core
                     return node;
             }
 
-            return _then(node, scope);
+            if (_syntactical != null)
+                return _syntactical(node, scope);
+
+            Debug.Assert(_semantical != null);
+            var document = scope.GetDocument<TToken, TNode, TModel>();
+            return document.change(node, _semantical);
         }
     }
 

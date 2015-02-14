@@ -29,67 +29,84 @@ namespace Excess.RuntimeProject
 
         protected Compilation _compilation = new Compilation();
 
-        public void compile()
+        public IEnumerable<Error> compile()
         {
             if (_busy)
                 throw new InvalidOperationException();
 
             _busy = true;
-
+            IEnumerable<Error> errors = null;
             try
             {
-                if (!doCompile())
-                    notifyErrors();
+                errors = doCompile();
             }
-            finally
+            catch(Exception e)
             {
-                notify(NotificationKind.Finished, "Finished Compiling");
-                _busy = false;
+                errors = new[] { new Error {
+                    File = "compiler",
+                    Line = -1,
+                    Message = e.Message,
+                }};
             }
+
+            _busy = false;
+            return errors;
         }
 
-        public void run(out dynamic client)
+        public IEnumerable<Error> run(out dynamic client)
         {
             client = null;
             if (_busy)
                 throw new InvalidOperationException();
 
             _busy = true;
+            IEnumerable<Error> errors = null;
             try
             {
-                bool succeded = doCompile();
-                if (succeded)
+                errors = doCompile();
+                if (errors == null)
                 {
                     Assembly assembly = _compilation.build();
-                    succeded = assembly != null;
-                    if (succeded)
+                    if (assembly != null)
                     {
                         setupConsole(assembly);
                         doRun(assembly, out client);
                     }
+                    else
+                        errors = gatherErrors(_compilation.errors());
                 }
-
-                if (!succeded)
-                    notifyErrors();
             }
-            finally
+            catch (Exception e)
             {
-                notify(NotificationKind.Finished, "Finished Executing");
-                _busy = false;
+                errors = new[] { new Error {
+                    File = "compiler",
+                    Line = -1,
+                    Message = e.Message,
+                }};
             }
+
+            _busy = false;
+            return errors;
         }
 
-        protected void notifyErrors(IEnumerable<Diagnostic> errors)
+        private IEnumerable<Error> gatherErrors(IEnumerable<Diagnostic> diagnostics)
         {
-            foreach (var diag in errors)
-            {
-                notify(NotificationKind.Error, diag.ToString());
-            }
-        }
+            if (diagnostics == null)
+                return null;
 
-        protected void notifyErrors()
-        {
-            notifyErrors(_compilation.errors());
+            return diagnostics
+                .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
+                .Select(diagnostic =>
+                {
+                    var mapped = diagnostic.Location.GetLineSpan();
+                    return new Error
+                    {
+                        File = mapped.Path,
+                        Line = mapped.StartLinePosition.Line,
+                        Character = mapped.StartLinePosition.Character,
+                        Message = diagnostic.GetMessage()
+                    };
+                });
         }
 
         public void add(string file, int fileId, string contents)
@@ -167,19 +184,22 @@ namespace Excess.RuntimeProject
         protected bool _busy  = false;
         protected bool _dirty = false;
 
-        protected virtual bool doCompile()
+        protected virtual IEnumerable<Error> doCompile()
         {
             if (!_dirty)
             {
                 notify(NotificationKind.System, "Compilation up to date");
-                return true;
+                return null;
             }
 
             var result = _compilation.compile();
             if (_dirty)
                 _dirty = false;
 
-            return result;
+            if (result)
+                return null;
+
+            return gatherErrors(_compilation.errors());
         }
 
         protected abstract void doRun(Assembly asm, out dynamic clientData);

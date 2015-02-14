@@ -34,11 +34,11 @@ namespace Excess.Compiler
         public bool Literal { get; set; }
     }
 
-    public interface ILexicalMatchResult<TToken, TNode>
+    public interface ILexicalMatchResult<TToken, TNode, TModel>
     {
         int Consumed { get; }
         IEnumerable<LexicalMatchItem> Items { get; }
-        ILexicalTransform<TToken, TNode> Transform { get; set; }
+        ILexicalTransform<TToken, TNode, TModel> Transform { get; set; }
         IEnumerable<TToken> GetTokens(IEnumerable<TToken> tokens, TokenSpan span);
     }
 
@@ -83,24 +83,26 @@ namespace Excess.Compiler
         ILexicalMatch<TToken, TNode, TModel> until(string token, string named = null);
         ILexicalMatch<TToken, TNode, TModel> until(Func<TToken, bool> matcher, string named = null);
 
-        ILexicalAnalysis<TToken, TNode, TModel> then(Func<TNode, Scope, TNode> handler);
         ILexicalAnalysis<TToken, TNode, TModel> then(Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>> handler);
-        ILexicalAnalysis<TToken, TNode, TModel> then(Func<IEnumerable<TToken>, ILexicalMatchResult<TToken, TNode>, Scope, IEnumerable<TToken>> handler);
-        ILexicalAnalysis<TToken, TNode, TModel> then(ILexicalTransform<TToken, TNode> transform);
+        ILexicalAnalysis<TToken, TNode, TModel> then(Func<IEnumerable<TToken>, ILexicalMatchResult<TToken, TNode, TModel>, Scope, IEnumerable<TToken>> handler);
+        ILexicalAnalysis<TToken, TNode, TModel> then(Func<TNode, Scope, TNode> handler);
+        ILexicalAnalysis<TToken, TNode, TModel> then(Func<TNode, TNode, TModel, Scope, TNode> handler);
+        ILexicalAnalysis<TToken, TNode, TModel> then(ILexicalTransform<TToken, TNode, TModel> transform);
 
-        ILexicalMatchResult<TToken, TNode> match(IEnumerable<TToken> tokens, Scope scope, bool isDocumentStart);
+        ILexicalMatchResult<TToken, TNode, TModel> match(IEnumerable<TToken> tokens, Scope scope, bool isDocumentStart);
     }
 
-    public interface ILexicalTransform<TToken, TNode>
+    public interface ILexicalTransform<TToken, TNode, TModel>
     {
-        ILexicalTransform<TToken, TNode> insert(string tokens, string before = null, string after = null);
-        ILexicalTransform<TToken, TNode> replace(string named, string tokens);
-        ILexicalTransform<TToken, TNode> remove(string named);
+        ILexicalTransform<TToken, TNode, TModel> insert(string tokens, string before = null, string after = null);
+        ILexicalTransform<TToken, TNode, TModel> replace(string named, string tokens);
+        ILexicalTransform<TToken, TNode, TModel> remove(string named);
 
-        ILexicalTransform<TToken, TNode> then(Func<TNode, TNode> handler, string referenceToken = null);
-        ILexicalTransform<TToken, TNode> then(Func<TNode, Scope, TNode> handler, string referenceToken = null);
+        ILexicalTransform<TToken, TNode, TModel> then(Func<TNode, TNode> handler, string referenceToken = null);
+        ILexicalTransform<TToken, TNode, TModel> then(Func<TNode, Scope, TNode> handler, string referenceToken = null);
+        ILexicalTransform<TToken, TNode, TModel> then(Func<TNode, TNode, TModel, Scope, TNode> handler, string referenceToken = null);
 
-        IEnumerable<TToken> transform(IEnumerable<TToken> tokens, ILexicalMatchResult<TToken, TNode> match, Scope scope);
+        IEnumerable<TToken> transform(IEnumerable<TToken> tokens, ILexicalMatchResult<TToken, TNode, TModel> match, Scope scope);
     }
 
     public enum ExtensionKind
@@ -140,6 +142,6 @@ namespace Excess.Compiler
 
         INormalizer<TToken, TNode, TModel> normalize();
 
-        ILexicalTransform<TToken, TNode> transform();
+        ILexicalTransform<TToken, TNode, TModel> transform();
     }
 }

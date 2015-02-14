@@ -275,9 +275,13 @@
     <Content Include="App\Main\components\tree.css" />
     <Content Include="App\Main\components\tree.html" />
     <Content Include="App\Main\components\tree.js" />
+    <Content Include="App\Main\dialogs\createProject.html" />
+    <Content Include="App\Main\dialogs\createProject.js" />
     <Content Include="App\Main\dialogs\dslDebugger.css" />
     <Content Include="App\Main\dialogs\dslDebugger.js" />
     <Content Include="App\Main\dialogs\dslDebugger.html" />
+    <Content Include="App\Main\dialogs\extensionItem.html" />
+    <Content Include="App\Main\dialogs\extensionItem.js" />
     <Content Include="App\Main\dialogs\helpDialog.css" />
     <Content Include="App\Main\dialogs\helpDialog.html" />
     <Content Include="App\Main\dialogs\helpDialog.js" />
@@ -1570,6 +1574,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="App\Main\views\info\" />
     <Folder Include="Views\Translation\" />
   </ItemGroup>
   <PropertyGroup>

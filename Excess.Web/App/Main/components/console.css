@@ -24,4 +24,11 @@
 .xs-console-text {
     padding: 0px 5px 0px 5px;
     margin: 0;
-} 
+}
+
+.xs-console-error {
+    padding: 0px 5px 0px 5px;
+    margin: 0;
+    color: red;
+    cursor: pointer;
+}

@@ -36,7 +36,7 @@ namespace Excess.Compiler.Extensions
                     var stExpression = st as ExpressionStatementSyntax;
                     if (stExpression == null)
                     {
-                        //td: error, contracts only support boolean expression
+                        scope.AddError("contract01", "contracts only support boolean expressions", st);
                         continue;
                     }
 
@@ -55,7 +55,7 @@ namespace Excess.Compiler.Extensions
                 return CSharp.Block(checks);
             }
 
-            //td: error, contract cannot return a value
+            scope.AddError("contract02", "contract cannot return a value", node);
             return node;
         }
 

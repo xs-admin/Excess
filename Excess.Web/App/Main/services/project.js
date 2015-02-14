@@ -104,4 +104,45 @@
             contents: contents
         });
     }
+
+    this.extensionItem = function (name, kind) {
+        switch (kind)
+        {
+            case "lexical-transform":
+                return '\nprivate static IEnumerable<SyntaxToken> ' + name + '(IEnumerable<SyntaxToken> input, ILexicalMatchResult<SyntaxToken, SyntaxNode> match, Scope scope)'
+                     + '\n{'
+                     + '\n}\n';
+
+            case "lexical-extension":
+                return '\nprivate static IEnumerable<SyntaxToken> ' + name + '(IEnumerable<SyntaxToken> input, Scope scope, LexicalExtension<SyntaxToken> extension)'
+                     + '\n{'
+                     + '\n}\n';
+
+            case "extended-lexical-extension":
+                return '\nprivate static SyntaxNode ' + name + '(SyntaxNode input, Scope scope, LexicalExtension<SyntaxToken> extension)'
+                     + '\n{'
+                     + '\n}\n';
+
+            case "syntax-transform":
+                return '\nprivate static SyntaxNode ' + name + '(SyntaxNode input, Scope scope)'
+                     + '\n{'
+                     + '\n}\n';
+
+            case "syntax-extension":
+                return '\nprivate static SyntaxNode ' + name + '(SyntaxNode input, Scope scope, SyntacticalExtension<SyntaxNode> extension)'
+                     + '\n{'
+                     + '\n}\n';
+
+            case "semantical-transform":
+                return '\nprivate static SyntaxNode ' + name + '(SyntaxNode input, SemanticModel model, Scope scope)'
+                     + '\n{'
+                     + '\n}\n';
+
+            case "semantical-error-handler":
+                return '\nprivate static void ' + name + '(SyntaxNode input, SemanticModel model, Scope scope)'
+                     + '\n{'
+                     + '\n}\n';
+
+        }
+    }
 }]);

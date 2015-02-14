@@ -1,8 +1,8 @@
 ﻿(function () {
     var controllerId = 'app.views.project';
     angular.module('app').controller(controllerId, [
-        '$scope', '$rootScope', '$window', '$stateParams', 'dialogs', 'hotkeys', 'xsProject',
-        function ($scope, $rootScope, $window, $stateParams, dialogs, hotkeys, xsProject) {
+        '$scope', '$rootScope', '$window', '$stateParams', '$timeout', 'dialogs', 'hotkeys', 'xsProject',
+        function ($scope, $rootScope, $window, $stateParams, $timeout, dialogs, hotkeys, xsProject) {
             var vm = this;
             
             //project tree
@@ -37,12 +37,14 @@
                     defaultTab(file, contents);
             }
 
-            function loadFile(file, inNewTab)
+            function loadFile(file, inNewTab, callback)
             {
                 var cached = _fileCache[file];
                 if (cached)
                 {
                     fileLoaded(file, cached.contents, inNewTab);
+                    if (callback)
+                        callback(file);
                     return;
                 }
 
@@ -59,6 +61,8 @@
                         };
 
                         fileLoaded(file, result.data, inNewTab)
+                        if (callback)
+                            callback(file);
                     })
                     .finally(function () {
                         $scope.fileBusy = false;
@@ -66,7 +70,7 @@
             }
 
             //actions
-            function selectFile(file, inNewTab)
+            function selectFile(file, inNewTab, callback)
             {
                 var found = false;
                 angular.forEach($scope.editors, function (value, key) {
@@ -74,12 +78,16 @@
                     {
                         found = true;
                         value.active = true;
+
                         return;
                     }
                 });
 
                 if (!found)
-                    loadFile(file, inNewTab);
+                    loadFile(file, inNewTab, callback);
+                else if (callback)
+                    callback(file);
+
             }
 
             $scope.projectAction = function (action, data)
@@ -123,9 +131,29 @@
                         });
                         break;
                     }
+                    case "add-extension-item":
+                    {
+                        var selectedText = $scope.editorControl.selection();
+                        var dlg = dialogs.create('/App/Main/dialogs/extensionItem.html',
+                                                 'extensionItemCtrl',
+                                                 selectedText,
+                                                 { size: "md" });
+
+                        dlg.result.then(function (transform) {
+                            selectFile("transform", true, function () {
+                                $timeout(function () {
+                                    $scope.editorControl.append(transform);
+                                });
+                            })
+                        });
+                        break;
+                    }
                 }
             }
             
+            //editor
+            $scope.editorControl = {};
+
             //layout
             $scope.layoutControl = {};
 
@@ -144,6 +172,19 @@
             }
 
             //compiler interface
+            function notifyErrors(errors)
+            {
+                angular.forEach(errors, function (value, key) {
+                    $scope.console.add("ERROR: " + value.Message, "xs-console-error", function () {
+                        selectFile(value.File, true, function () {
+                            $timeout(function () {
+                                $scope.editorControl.gotoLine(value.Line, value.Character);
+                            }, 100);
+                        });
+                    });
+                });
+            }
+
             $scope.compileProject = function () {
                 if ($scope.compilerBusy)
                     return;
@@ -151,7 +192,16 @@
                 $scope.compilerBusy = true;
                 startConsole("Compiling...");
                 
+                $scope.saveFiles();
                 xsProject.compile(consoleNotification)
+                    .then(function (result)
+                    {
+                        var compilation = result.data;
+                        if (compilation.Succeded)
+                            $scope.console.add("Compiled Successfully");
+                        else
+                            notifyErrors(compilation.Errors);
+                    })
                     .finally(function () {
                         $scope.compilerBusy = false;
                     });
@@ -164,17 +214,25 @@
                 $scope.compilerBusy = true;
                 startConsole("Executing...");
 
+                $scope.saveFiles();
                 xsProject.execute(consoleNotification)
                     .then(function (result) {
-                        var debuggerDlg  = result.data.debuggerDlg;
-                        var debuggerCtrl = result.data.debuggerCtrl;
-                        if (debuggerDlg && debuggerCtrl)
+                        var compilation = result.data;
+                        if (compilation.Succeded)
                         {
-                            var dlg = dialogs.create(debuggerDlg,
-                                                     debuggerCtrl,
-                                                     result.data.debuggerData,
-                                                     { size: "1200px" });
+                            $scope.console.add("Built Successfully");
+
+                            var debuggerDlg = compilation.ClientData.debuggerDlg;
+                            var debuggerCtrl = compilation.ClientData.debuggerCtrl;
+                            if (debuggerDlg && debuggerCtrl) {
+                                var dlg = dialogs.create(debuggerDlg,
+                                                         debuggerCtrl,
+                                                         compilation.ClientData.debuggerData,
+                                                         { size: "1200px" });
+                            }
                         }
+                        else
+                            notifyErrors(result.Errors);
                     })
                     .finally(function () {
                         $scope.compilerBusy = false;
