@@ -52,7 +52,20 @@ namespace Excess.RuntimeProject
                         .statements(MoveToApply);
         });
 
-        static private CompilationUnitSyntax ExtensionClass = CSharp.ParseCompilationUnit(@"
+        //static private CompilationUnitSyntax ExtensionClass = CSharp.ParseCompilationUnit(@"
+        //    internal partial class Extension
+        //    {
+        //        public static void Apply(ICompiler<SyntaxToken, SyntaxNode, SemanticModel> compiler)
+        //        {
+        //            var lexical = compiler.Lexical();
+        //            var syntax = compiler.Syntax();
+        //            var semantics = compiler.Semantics();
+        //            var environment = compiler.Environment();
+
+        //        }
+        //    }");
+
+        static private Template ExtensionClass = Template.Parse<BlockSyntax>(@"
             internal partial class Extension
             {
                 public static void Apply(ICompiler<SyntaxToken, SyntaxNode, SemanticModel> compiler)
@@ -67,16 +80,13 @@ namespace Excess.RuntimeProject
 
         private static SyntaxNode MoveToApply(SyntaxNode root, IEnumerable<SyntaxNode> statements, Scope scope)
         {
-            var applyCode = ExtensionClass
-                .DescendantNodes()
-                .OfType<BlockSyntax>()
-                .First();
+            var applyCode = ExtensionClass.Value<BlockSyntax>();
 
             var result = applyCode;
             foreach (var st in statements)
                 result = result.AddStatements((StatementSyntax)st);
 
-            return ExtensionClass.ReplaceNode(applyCode, result);
+            return ExtensionClass.Get(result);
         }
 
         private static Injector _transform = new DelegateInjector(compiler =>
@@ -87,7 +97,7 @@ namespace Excess.RuntimeProject
                         .members(MoveToClass);
         });
 
-        static private CompilationUnitSyntax TransformClass = CSharp.ParseCompilationUnit(@"
+        static private Template TransformClass = Template.Parse<ClassDeclarationSyntax>(@"
             using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
             internal partial class Extension
             {
@@ -96,16 +106,12 @@ namespace Excess.RuntimeProject
 
         private static SyntaxNode MoveToClass(SyntaxNode root, IEnumerable<SyntaxNode> members, Scope scope)
         {
-            var @class = TransformClass
-                .DescendantNodes()
-                .OfType<ClassDeclarationSyntax>()
-                .First();
+            var result = TransformClass
+                .Value<ClassDeclarationSyntax>()
+                .WithMembers(CSharp.List(members
+                    .Select(member => (MemberDeclarationSyntax)member)));
 
-            var result = @class;
-            foreach (var member in members)
-                result = result.AddMembers((MemberDeclarationSyntax)member);
-
-            return TransformClass.ReplaceNode(@class, result);
+            return TransformClass.Get(result);
         }
 
         protected override ICompilerInjector<SyntaxToken, SyntaxNode, SemanticModel> getInjector(string file)

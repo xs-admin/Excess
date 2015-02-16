@@ -32,7 +32,7 @@ namespace Excess.Compiler.Extensions
                     .ReplaceNodes(AsynchTemplate
                         .DescendantNodes()
                         .OfType<BlockSyntax>(), 
-                     (oldNode, newNode) => extension.Body);
+                        (oldNode, newNode) => extension.Body);
 
                 var document = scope.GetDocument<SyntaxToken, SyntaxNode, SemanticModel>();
                 document.change(node.Parent, RoslynCompiler.AddStatement(ContextVariable, before: node));
@@ -40,7 +40,7 @@ namespace Excess.Compiler.Extensions
                 return result;
             }
 
-            //td: error, asynch cannot return a value
+            scope.AddError("asynch01", "asynch does not return a value", node);
             return node;
         }
 
@@ -53,10 +53,10 @@ namespace Excess.Compiler.Extensions
                     .ReplaceNodes(SynchTemplate
                         .DescendantNodes()
                         .OfType<BlockSyntax>(),
-                     (oldNode, newNode) => extension.Body);
+                        (oldNode, newNode) => extension.Body);
             }
 
-            //td: error, synch cannot return a value
+            scope.AddError("synch01", "synch does not return a value", node);
             return node;
         }
 

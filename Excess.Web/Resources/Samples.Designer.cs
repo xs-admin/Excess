@@ -61,6 +61,79 @@ namespace Excess.Web.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to class Arrays 
+        ///{
+        ///    void main()
+        ///    {
+        ///        var arr = [10, 15, 30];
+        ///        
+        ///        foreach(int val in arr)
+        ///            console.write(val);
+        ///    }
+        ///}.
+        /// </summary>
+        internal static string Arrays {
+            get {
+                return ResourceManager.GetString("Arrays", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to environment
+        ///    .keyword(&quot;asynch&quot;)
+        ///    .keyword(&quot;synch&quot;);
+        ///
+        ///syntax
+        ///    .extension(&quot;asynch&quot;, ExtensionKind.Code, ProcessAsynch)
+        ///    .extension(&quot;synch&quot;, ExtensionKind.Code, ProcessSynch);.
+        /// </summary>
+        internal static string AsynchExtension {
+            get {
+                return ResourceManager.GetString("AsynchExtension", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to private static SyntaxNode ProcessAsynch(SyntaxNode node, Scope scope, SyntacticalExtension&lt;SyntaxNode&gt; extension)
+        ///{
+        ///    if (extension.Kind == ExtensionKind.Code)
+        ///    {
+        ///        var result = AsynchTemplate
+        ///            .ReplaceNodes(AsynchTemplate
+        ///                .DescendantNodes()
+        ///                .OfType&lt;BlockSyntax&gt;(), 
+        ///                (oldNode, newNode) =&gt; extension.Body);
+        ///
+        ///        var document = scope.GetDocument&lt;SyntaxToken, SyntaxNode, SemanticModel&gt;();
+        ///        document.change(node.Parent, Ros [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string AsynchTransform {
+            get {
+                return ResourceManager.GetString("AsynchTransform", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to void main()
+        ///{
+        ///    asynch()
+        ///    {
+        ///        var x = expensive();
+        ///          	
+        ///        synch()
+        ///        {
+        ///            notify(x);
+        ///        }
+        ///    }
+        ///}.
+        /// </summary>
+        internal static string AsynchUsage {
+            get {
+                return ResourceManager.GetString("AsynchUsage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to environment.
         ///    keyword(&quot;contract&quot;);
         ///
@@ -86,11 +159,345 @@ namespace Excess.Web.Resources {
         ///            var stExpression = st as ExpressionStatementSyntax;
         ///            if (stExpression == null)
         ///            {
-        ///                //td: error, contracts  [rest of string was truncated]&quot;;.
+        ///                scope.AddError(&quot;contrac [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string ContractTransform {
             get {
                 return ResourceManager.GetString("ContractTransform", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to void main(int x, int y)
+        ///{
+        ///    contract()
+        ///    {
+        ///        x &gt; 10;
+        ///        x &lt; 20;
+        ///        x &gt;= y;
+        ///    }
+        ///}.
+        /// </summary>
+        internal static string ContractUsage {
+            get {
+                return ResourceManager.GetString("ContractUsage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to namespace Events 
+        ///{
+        ///    class Base
+        ///    {
+        ///        //c# way
+        ///        public delegate void FinishedHandler(int x, int y);
+        ///        public event FinishedHandler Finished;
+        ///    }
+        ///  
+        ///    class Derived : Base
+        ///    {
+        ///        public event closed(int x, int y);
+        ///
+        ///        on closed(x, y)
+        ///        {
+        ///            console.write(x);
+        ///        }
+        ///
+        ///        on Finished()
+        ///        {
+        ///            console.write(y);
+        ///        }
+        ///    }
+        ///}.
+        /// </summary>
+        internal static string Events {
+            get {
+                return ResourceManager.GetString("Events", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to class Extensions
+        ///{
+        ///    void main()
+        ///    {
+        ///        asynch()
+        ///        {
+        ///            var x = expensive();
+        ///          	
+        ///            synch()
+        ///            {
+        ///              	notify(x);
+        ///            }
+        ///        }
+        ///    }
+        ///}.
+        /// </summary>
+        internal static string Extensions {
+            get {
+                return ResourceManager.GetString("Extensions", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to class Functions 
+        ///{
+        ///    void main()
+        ///    {
+        ///        //as javascript-style argument
+        ///        foo(function(value) {
+        ///            console.write(value);
+        ///            return value + 5;
+        ///        });
+        ///    }
+        ///  
+        ///    //as a method, with type inference
+        ///    function foo(function&lt;int, int&gt; callback) //as a type
+        ///    {
+        ///        int result = callback(73);
+        ///        return result;
+        ///    }
+        ///
+        ///    string function bar()
+        ///    {
+        ///        return &quot;bar&quot;;
+        ///    }
+        ///}.
+        /// </summary>
+        internal static string Functions {
+            get {
+                return ResourceManager.GetString("Functions", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to void main()
+        ///{
+        ///    console.write(&quot;Hello World&quot;);
+        ///}.
+        /// </summary>
+        internal static string HelloWorld {
+            get {
+                return ResourceManager.GetString("HelloWorld", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to public class Lolcat
+        ///{
+        ///    constructor(string name)
+        ///    {
+        ///        Name = name;
+        ///        initSpeekers();
+        ///    }
+        ///
+        ///    string property Name;
+        ///
+        ///    method Say(Mood mood)
+        ///    { 
+        ///        Speek speek = speekers[mood](mood);
+        ///        console.write(Name + &quot;: &quot; + speek.Say);
+        ///        return speek.Mood;
+        ///    }
+        ///
+        ///    typedef Func&lt;Mood, Speek&gt; 		  Speeker; 
+        ///    typedef Dictionary&lt;Mood, Speeker&gt; Speekers; 
+        ///        
+        ///    protected Speekers speekers = new Speekers();
+        ///
+        ///    protected virtual void initSpeekers()        /// [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string LolCats {
+            get {
+                return ResourceManager.GetString("LolCats", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to var cats = [
+        ///    new Lolcat(&quot;Kitty&quot;), 
+        ///    new Lolcat(&quot;Furry Kitty&quot;), 
+        ///    new Trollcat(&quot;Ball of Fur&quot;)
+        ///];
+        ///
+        ///var mood = Mood.Nize;
+        ///
+        ///for(int i = 0; i &lt; 30; i++)
+        ///{
+        ///    int cat = random.Int(3);
+        ///    mood = cats[cat].Say(mood);
+        ///}
+        ///
+        ///console.write(&quot;Powered by speaklolcat.com&quot;);.
+        /// </summary>
+        internal static string LolCatsApplication {
+            get {
+                return ResourceManager.GetString("LolCatsApplication", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to public enum Mood
+        ///{
+        ///    Nize,
+        ///    Hungry,
+        ///    Skerd,
+        ///}
+        ///
+        ///public class Speek
+        ///{
+        ///    public string Say  { get; set; }
+        ///    public Mood   Mood { get; set; }
+        ///}
+        ///
+        ///public class Speeks
+        ///{
+        ///    static method AnySpeek(Mood mood)
+        ///    {
+        ///        Speek[] choices;
+        ///        switch (mood)
+        ///        {
+        ///            case Mood.Nize: choices = NizeTalk; break;
+        ///            case Mood.Skerd: choices = SkerdTalk; break;
+        ///            default: choices = HungryTalk; break;
+        ///        }
+        ///        
+        ///        return choices[random. [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string LolCatsSpeek {
+            get {
+                return ResourceManager.GetString("LolCatsSpeek", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to public class Trollcat : Lolcat
+        ///{
+        ///    public Trollcat(string name)
+        ///        : base(name)
+        ///    {
+        ///    }
+        ///
+        ///    protected override void initSpeekers()
+        ///    {
+        ///        base.initSpeekers();
+        ///
+        ///        speekers[Mood.Nize] = function(mood)
+        ///        {
+        ///            return new Speek { Say = &quot;BAD KITTEH!&quot;, Mood = Mood.Skerd };
+        ///        };
+        ///
+        ///        speekers[Mood.Hungry] = hungry;
+        ///    }
+        ///
+        ///    function hungry(Mood m)
+        ///    {
+        ///        return new Speek { Say = &quot;NO CHEEZBURGER!&quot;, Mood = Mood.Skerd };
+        ///    }
+        ///}.
+        /// </summary>
+        internal static string LolCatsTrollcat {
+            get {
+                return ResourceManager.GetString("LolCatsTrollcat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to environment
+        ///    .keyword(&quot;match&quot;);
+        ///
+        ///lexical
+        ///    .match()
+        ///        .token(&quot;match&quot;, named: &quot;keyword&quot;)
+        ///        .enclosed(&apos;(&apos;, &apos;)&apos;)
+        ///        .token(&apos;{&apos;)
+        ///        .then(lexical.transform()
+        ///            .replace(&quot;keyword&quot;, &quot;switch&quot;)
+        ///            .then(ProcessMatch, referenceToken: &quot;keyword&quot;));.
+        /// </summary>
+        internal static string MatchExtension {
+            get {
+                return ResourceManager.GetString("MatchExtension", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to private static SyntaxNode ProcessMatch(SyntaxNode node, Scope scope)
+        ///{
+        ///    var switchExpr = node as SwitchStatementSyntax;
+        ///    if (switchExpr == null)
+        ///    {
+        ///        scope.AddError(&quot;match01&quot;, &quot;malformed match&quot;, node);
+        ///        return node;
+        ///    }
+        ///
+        ///    //store items to simplify
+        ///    var cases = new List&lt;ExpressionSyntax&gt;();
+        ///    var statements = new List&lt;StatementSyntax&gt;();
+        ///    var defaultStatement = null as StatementSyntax;
+        ///
+        ///    foreach (var section in switchExpr.Sections)
+        ///    {
+        ///        bool isDe [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string MatchTransform {
+            get {
+                return ResourceManager.GetString("MatchTransform", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to void main()
+        ///{
+        ///    int y = 20;
+        ///    match (x)
+        ///    {
+        ///        case 0:
+        ///        {
+        ///            y = 20;
+        ///            return null;
+        ///        }
+        ///        case &gt; 10: 
+        ///        	return 30;
+        ///        case y &gt; 10: 
+        ///        	return 40;
+        ///        default: 
+        ///        	return x;
+        ///    }
+        ///}.
+        /// </summary>
+        internal static string MatchUsage {
+            get {
+                return ResourceManager.GetString("MatchUsage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to class Misc 
+        ///{
+        ///    typedef IEnumerable&lt;int&gt; 	 Data;
+        ///    typedef function&lt;int, int&gt;   Calculation;
+        ///    typedef Dictionary&lt;int, int&gt; Results;
+        ///
+        ///    void main()
+        ///    {
+        ///        var data = [2, 3, 5, 7, 11];
+        ///        var calc = function(int value)
+        ///        {
+        ///            return value*5;
+        ///        };
+        ///        
+        ///        Results results = new Results();
+        ///        calculate(data, calc, results);
+        ///    }
+        ///
+        ///    private void calculate(Data data, Calculation fn, Results results)
+        ///    {
+        ///        foreach(var d in data)        /// [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string Misc {
+            get {
+                return ResourceManager.GetString("Misc", resourceCulture);
             }
         }
     }

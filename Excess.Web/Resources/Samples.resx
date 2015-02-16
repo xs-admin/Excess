@@ -117,6 +117,91 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
+  <data name="Arrays" xml:space="preserve">
+    <value>class Arrays 
+{
+    void main()
+    {
+        var arr = [10, 15, 30];
+        
+        foreach(int val in arr)
+            console.write(val);
+    }
+}</value>
+  </data>
+  <data name="AsynchExtension" xml:space="preserve">
+    <value>environment
+    .keyword("asynch")
+    .keyword("synch");
+
+syntax
+    .extension("asynch", ExtensionKind.Code, ProcessAsynch)
+    .extension("synch", ExtensionKind.Code, ProcessSynch);</value>
+  </data>
+  <data name="AsynchTransform" xml:space="preserve">
+    <value>private static SyntaxNode ProcessAsynch(SyntaxNode node, Scope scope, SyntacticalExtension&lt;SyntaxNode&gt; extension)
+{
+    if (extension.Kind == ExtensionKind.Code)
+    {
+        var result = AsynchTemplate
+            .ReplaceNodes(AsynchTemplate
+                .DescendantNodes()
+                .OfType&lt;BlockSyntax&gt;(), 
+                (oldNode, newNode) =&gt; extension.Body);
+
+        var document = scope.GetDocument&lt;SyntaxToken, SyntaxNode, SemanticModel&gt;();
+        document.change(node.Parent, RoslynCompiler.AddStatement(ContextVariable, before: node));
+
+        return result;
+    }
+
+    scope.AddError("asynch01", "asynch does not return a value", node);
+    return node;
+}
+
+private static SyntaxNode ProcessSynch(SyntaxNode node, Scope scope, SyntacticalExtension&lt;SyntaxNode&gt; extension)
+{
+    if (extension.Kind == ExtensionKind.Code)
+    {
+        return SynchTemplate
+            .ReplaceNodes(SynchTemplate
+                .DescendantNodes()
+                .OfType&lt;BlockSyntax&gt;(),
+                (oldNode, newNode) =&gt; extension.Body);
+    }
+
+    scope.AddError("synch01", "synch does not return a value", node);
+    return node;
+}
+
+static private StatementSyntax ContextVariable = CSharp.ParseStatement(@"
+    SynchronizationContext __ASynchCtx = SynchronizationContext.Current; ");
+
+static private StatementSyntax AsynchTemplate = CSharp.ParseStatement(@"
+    Task.Factory.StartNew(() =&gt;
+    {
+    });");
+
+static private StatementSyntax SynchTemplate = CSharp.ParseStatement(@"
+    __ASynchCtx.Post(() =&gt; 
+    { 
+    });");
+</value>
+  </data>
+  <data name="AsynchUsage" xml:space="preserve">
+    <value>void main()
+{
+    asynch()
+    {
+        var x = expensive();
+          	
+        synch()
+        {
+            notify(x);
+        }
+    }
+}</value>
+  </data>
   <data name="ContractExtension" xml:space="preserve">
     <value>environment.
     keyword("contract");
@@ -137,7 +222,7 @@ syntax
             var stExpression = st as ExpressionStatementSyntax;
             if (stExpression == null)
             {
-                //td: error, contracts only support boolean expression
+                scope.AddError("contract01", "contracts only support boolean expressions", st);
                 continue;
             }
 
@@ -156,12 +241,401 @@ syntax
         return CSharp.Block(checks);
     }
 
-    //td: error, contract cannot return a value
+    scope.AddError("contract02", "contract cannot return a value", node);
     return node;
 }
 
 static private StatementSyntax ContractCheck = CSharp.ParseStatement(@"
     if (!(__condition)) 
         throw new InvalidOperationException(""Breach of contract!!"");");</value>
+  </data>
+  <data name="ContractUsage" xml:space="preserve">
+    <value>void main(int x, int y)
+{
+    contract()
+    {
+        x &gt; 10;
+        x &lt; 20;
+        x &gt;= y;
+    }
+}</value>
+  </data>
+  <data name="Events" xml:space="preserve">
+    <value>namespace Events 
+{
+    class Base
+    {
+        //c# way
+        public delegate void FinishedHandler(int x, int y);
+        public event FinishedHandler Finished;
+    }
+  
+    class Derived : Base
+    {
+        public event closed(int x, int y);
+
+        on closed(x, y)
+        {
+            console.write(x);
+        }
+
+        on Finished()
+        {
+            console.write(y);
+        }
+    }
+}</value>
+  </data>
+  <data name="Extensions" xml:space="preserve">
+    <value>class Extensions
+{
+    void main()
+    {
+        asynch()
+        {
+            var x = expensive();
+          	
+            synch()
+            {
+              	notify(x);
+            }
+        }
+    }
+}</value>
+  </data>
+  <data name="Functions" xml:space="preserve">
+    <value>class Functions 
+{
+    void main()
+    {
+        //as javascript-style argument
+        foo(function(value) {
+            console.write(value);
+            return value + 5;
+        });
+    }
+  
+    //as a method, with type inference
+    function foo(function&lt;int, int&gt; callback) //as a type
+    {
+        int result = callback(73);
+        return result;
+    }
+
+    string function bar()
+    {
+        return "bar";
+    }
+}</value>
+  </data>
+  <data name="HelloWorld" xml:space="preserve">
+    <value>void main()
+{
+    console.write("Hello World");
+}</value>
+  </data>
+  <data name="LolCats" xml:space="preserve">
+    <value>public class Lolcat
+{
+    constructor(string name)
+    {
+        Name = name;
+        initSpeekers();
+    }
+
+    string property Name;
+
+    method Say(Mood mood)
+    { 
+        Speek speek = speekers[mood](mood);
+        console.write(Name + ": " + speek.Say);
+        return speek.Mood;
+    }
+
+    typedef Func&lt;Mood, Speek&gt; 		  Speeker; 
+    typedef Dictionary&lt;Mood, Speeker&gt; Speekers; 
+        
+    protected Speekers speekers = new Speekers();
+
+    protected virtual void initSpeekers()
+    {
+        Speeker defaultSpeek = function(mood)
+        {
+            return Speeks.AnySpeek(mood);  
+        };
+
+        speekers[Mood.Nize]   = Speeks.AnySpeek;
+        speekers[Mood.Skerd]  = defaultSpeek;
+        speekers[Mood.Hungry] = defaultSpeek;
+    }
+}</value>
+  </data>
+  <data name="LolCatsApplication" xml:space="preserve">
+    <value>var cats = [
+    new Lolcat("Kitty"), 
+    new Lolcat("Furry Kitty"), 
+    new Trollcat("Ball of Fur")
+];
+
+var mood = Mood.Nize;
+
+for(int i = 0; i &lt; 30; i++)
+{
+    int cat = random.Int(3);
+    mood = cats[cat].Say(mood);
+}
+
+console.write("Powered by speaklolcat.com");</value>
+  </data>
+  <data name="LolCatsSpeek" xml:space="preserve">
+    <value>public enum Mood
+{
+    Nize,
+    Hungry,
+    Skerd,
+}
+
+public class Speek
+{
+    public string Say  { get; set; }
+    public Mood   Mood { get; set; }
+}
+
+public class Speeks
+{
+    static method AnySpeek(Mood mood)
+    {
+        Speek[] choices;
+        switch (mood)
+        {
+            case Mood.Nize: choices = NizeTalk; break;
+            case Mood.Skerd: choices = SkerdTalk; break;
+            default: choices = HungryTalk; break;
+        }
+        
+        return choices[random.Int(choices.Length)];
+    }
+        
+    static Speek[] NizeTalk = [
+        new Speek {Say = "HAI",               Mood = Mood.Nize},
+        new Speek {Say = "KTHXBYE",           Mood = Mood.Skerd},
+        new Speek {Say = "I HAS CHEEZBURGER", Mood = Mood.Hungry},
+    ];
+
+    static Speek[] HungryTalk = [
+        new Speek {Say = "I WANTS CHEEZBURGER",      Mood = Mood.Hungry},
+        new Speek {Say = "PLZ",                      Mood = Mood.Skerd},
+        new Speek {Say = "I CAN HAS CHEEZBURGER...", Mood = Mood.Nize},
+    ];
+
+    static Speek[] SkerdTalk = [
+        new Speek {Say = "IM GUD KITTEH",           Mood = Mood.Nize},
+        new Speek {Say = "PLZ",                     Mood = Mood.Skerd},
+        new Speek {Say = "I WANTS NO CHEEZBURGER",  Mood = Mood.Nize},
+        new Speek {Say = "I HAS FAILD",             Mood = Mood.Hungry},
+    ];
+}</value>
+  </data>
+  <data name="LolCatsTrollcat" xml:space="preserve">
+    <value>public class Trollcat : Lolcat
+{
+    public Trollcat(string name)
+        : base(name)
+    {
+    }
+
+    protected override void initSpeekers()
+    {
+        base.initSpeekers();
+
+        speekers[Mood.Nize] = function(mood)
+        {
+            return new Speek { Say = "BAD KITTEH!", Mood = Mood.Skerd };
+        };
+
+        speekers[Mood.Hungry] = hungry;
+    }
+
+    function hungry(Mood m)
+    {
+        return new Speek { Say = "NO CHEEZBURGER!", Mood = Mood.Skerd };
+    }
+}</value>
+  </data>
+  <data name="MatchExtension" xml:space="preserve">
+    <value>environment
+    .keyword("match");
+
+lexical
+    .match()
+        .token("match", named: "keyword")
+        .enclosed('(', ')')
+        .token('{')
+        .then(lexical.transform()
+            .replace("keyword", "switch")
+            .then(ProcessMatch, referenceToken: "keyword"));</value>
+  </data>
+  <data name="MatchTransform" xml:space="preserve">
+    <value>private static SyntaxNode ProcessMatch(SyntaxNode node, Scope scope)
+{
+    var switchExpr = node as SwitchStatementSyntax;
+    if (switchExpr == null)
+    {
+        scope.AddError("match01", "malformed match", node);
+        return node;
+    }
+
+    //store items to simplify
+    var cases = new List&lt;ExpressionSyntax&gt;();
+    var statements = new List&lt;StatementSyntax&gt;();
+    var defaultStatement = null as StatementSyntax;
+
+    foreach (var section in switchExpr.Sections)
+    {
+        bool isDefault;
+        var expr = caseExpression(section.Labels, switchExpr.Expression, out isDefault);
+
+        StatementSyntax statement = caseStatement(section.Statements);
+        if (isDefault &amp;&amp; section.Labels.Count == 1)
+        {
+            defaultStatement = statement;
+        }
+        else
+        {
+            cases.Add(expr);
+            statements.Add(statement);
+
+            if (isDefault)
+                defaultStatement = statement;
+        }
+    }
+
+    //convert cases to ifs
+    var last = cases.Count - 1;
+    IfStatementSyntax result = CSharp.IfStatement(cases[last], statements[last]);
+
+    if (defaultStatement != null)
+        result = result.WithElse(CSharp.ElseClause(defaultStatement));
+
+
+    for (int i = last - 1; i &gt;= 0; i--)
+    {
+        result = CSharp.IfStatement(cases[i], statements[i])
+            .WithElse(CSharp.ElseClause(result));
+    }
+
+    return result;
+}
+
+private static StatementSyntax caseStatement(SyntaxList&lt;StatementSyntax&gt; statements)
+{
+    if (statements.Count == 1)
+        return statements.First();
+
+    return CSharp.Block(statements);
+}
+
+private static ExpressionSyntax caseExpression(SyntaxList&lt;SwitchLabelSyntax&gt; labels, ExpressionSyntax control, out bool isDefault)
+{
+    isDefault = false;
+    List&lt;ExpressionSyntax&gt; cases = new List&lt;ExpressionSyntax&gt;();
+    foreach (var label in labels)
+    {
+        bool thisDefault;
+        var expr = caseExpression(label, control, out thisDefault);
+        isDefault |= thisDefault;
+
+        if (!thisDefault)
+            cases.Add(expr);
+    }
+
+    switch (cases.Count)
+    {
+        case 0: return null;
+        case 1: return cases[0];
+        default: return CreateOrExpression(cases);
+    }
+}
+
+private static ExpressionSyntax CreateOrExpression(List&lt;ExpressionSyntax&gt; cases)
+{
+    var result = CSharp.BinaryExpression(SyntaxKind.LogicalOrExpression, cases[0], cases[1]);
+    for(int i = 2; i &lt; cases.Count; i++)
+        result = CSharp.BinaryExpression(SyntaxKind.LogicalOrExpression, result, cases[i]);
+
+    return result;
+}
+
+private static ExpressionSyntax caseExpression(SwitchLabelSyntax label, ExpressionSyntax control, out bool isDefault)
+{
+    isDefault = label.Keyword.CSharpKind() == SyntaxKind.DefaultKeyword;
+
+    var caseLabel = label as CaseSwitchLabelSyntax;
+    if (caseLabel != null)
+    {
+        var result = caseLabel.Value;
+        if (result is BinaryExpressionSyntax)
+        {
+            var expr = result as BinaryExpressionSyntax;
+            if (expr.Left.IsMissing)
+                return CSharp.BinaryExpression(expr.CSharpKind(), control, expr.Right);
+
+            return expr;
+        }
+
+        return CSharp.BinaryExpression(SyntaxKind.EqualsExpression, control, result);
+    }
+
+    return null;
+}</value>
+  </data>
+  <data name="MatchUsage" xml:space="preserve">
+    <value>void main()
+{
+    int y = 20;
+    match (x)
+    {
+        case 0:
+        {
+            y = 20;
+            return null;
+        }
+        case &gt; 10: 
+        	return 30;
+        case y &gt; 10: 
+        	return 40;
+        default: 
+        	return x;
+    }
+}</value>
+  </data>
+  <data name="Misc" xml:space="preserve">
+    <value>class Misc 
+{
+    typedef IEnumerable&lt;int&gt; 	 Data;
+    typedef function&lt;int, int&gt;   Calculation;
+    typedef Dictionary&lt;int, int&gt; Results;
+
+    void main()
+    {
+        var data = [2, 3, 5, 7, 11];
+        var calc = function(int value)
+        {
+            return value*5;
+        };
+        
+        Results results = new Results();
+        calculate(data, calc, results);
+    }
+
+    private void calculate(Data data, Calculation fn, Results results)
+    {
+        foreach(var d in data)
+        {
+            var result = fn(d);
+            results[d] = result;
+        }
+    }
+}</value>
   </data>
 </root>

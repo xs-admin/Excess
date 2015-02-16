@@ -40,7 +40,7 @@
                         var icon = "fa-circle-o";
                         if (value.ProjectType == 'console') 
                             icon = 'fa-terminal';
-                        else if (value.ProjectType == 'dsl') 
+                        else if (value.ProjectType == 'extension') 
                             icon = 'fa-signal';
 
                         value.Icon = icon;

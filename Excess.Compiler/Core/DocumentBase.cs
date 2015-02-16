@@ -202,6 +202,7 @@ namespace Excess.Compiler.Core
             return applyChanges(CompilerStage.Finished);
         }
 
+        int _semanticalTries = 0; 
         public bool applyChanges(CompilerStage stage)
         {
             if (stage < _stage)
@@ -214,12 +215,15 @@ namespace Excess.Compiler.Core
                 applyLexical();
 
             if (oldStage < CompilerStage.Syntactical && stage >= CompilerStage.Syntactical)
+            {
                 applySyntactical();
+                _semanticalTries = 0;
+            }
 
             if (oldStage <= CompilerStage.Semantical && stage >= CompilerStage.Semantical)
                 return applySemantical();
 
-            return true;
+            return true; //finished
         }
 
         public abstract bool hasErrors();
@@ -336,6 +340,47 @@ namespace Excess.Compiler.Core
             return applyNodeChanges(root, null, stage);
         }
 
+        private void addTransformer(Dictionary<int, Func<TNode, TNode, TModel, Scope, TNode>> transformers, Change change)
+        {
+            var transform = change.SemanticalTransform;
+            if (transform == null)
+            {
+                Debug.Assert(change.Transform != null);
+                transform = (oldNode, newNode, model, scope) => change.Transform(oldNode, scope);
+            }
+
+            Func<TNode, TNode, TModel, Scope, TNode> existing;
+            if (transformers.TryGetValue(change.ID, out existing))
+            {
+                var newTransform = transform;
+                transform = (oldNode, newNode, model, scope) =>
+                {
+                    var result = existing(oldNode, newNode, model, scope);
+                    return newTransform(oldNode, result, model, scope);
+                };
+            }
+
+            transformers[change.ID] = transform;
+        }
+
+        private void addTransformer(Dictionary<int, Func<TNode, Scope, TNode>> transformers, Change change)
+        {
+            var transform = change.Transform;
+
+            Func<TNode, Scope, TNode> existing;
+            if (transformers.TryGetValue(change.ID, out existing))
+            {
+                var newTransform = transform;
+                transform = (node, scope) =>
+                {
+                    var result = existing(node, scope);
+                    return newTransform(result, scope);
+                };
+            }
+
+            transformers[change.ID] = transform;
+        }
+
         private TNode applyNodeChanges(TNode node, string kind, CompilerStage stage)
         {
             List<Change> changeList = null;
@@ -367,13 +412,14 @@ namespace Excess.Compiler.Core
                 var transformers = new Dictionary<int, Func<TNode, TNode, TModel, Scope, TNode>>();
                 foreach (var change in changes)
                 {
-                    if (change.SemanticalTransform != null)
-                        transformers[change.ID] = change.SemanticalTransform;
-                    else
-                    {
-                        Debug.Assert(change.Transform != null);
-                        transformers[change.ID] = (oldNode, newNode, model, scope) => change.Transform(oldNode, scope);
-                    }
+                    addTransformer(transformers, change);
+                    //if (change.SemanticalTransform != null)
+                    //    transformers[change.ID] = change.SemanticalTransform; duplicates IDS
+                    //else
+                    //{
+                    //    Debug.Assert(change.Transform != null);
+                    //    transformers[change.ID] = (oldNode, newNode, model, scope) => change.Transform(oldNode, scope);
+                    //}
                 }
 
                 return transform(node, transformers);
@@ -384,7 +430,9 @@ namespace Excess.Compiler.Core
                 foreach (var change in changes)
                 {
                     if (change.Transform != null)
-                        transformers[change.ID] = change.Transform;
+                        addTransformer(transformers, change);
+
+                    //transformers[change.ID] = change.Transform;
                 }
 
                 return transform(node, transformers);
@@ -441,6 +489,9 @@ namespace Excess.Compiler.Core
 
         private bool applySemantical()
         {
+            if (_semanticalTries > 5)
+                return true; //shortcut
+
             var oldRoot = _root;
             foreach (var semantical in _semantical)
             {

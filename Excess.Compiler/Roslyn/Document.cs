@@ -56,16 +56,13 @@ namespace Excess.Compiler.Roslyn
                 return error;
 
             location    = originalNode.SyntaxTree.GetLocation(originalNode.Span);
-            var message = error.GetMessage();
-            var descriptor = new DiagnosticDescriptor(error.Id, message, message, error.Category, DiagnosticSeverity.Error, error.IsEnabledByDefault);
-
-            return Diagnostic.Create(descriptor, location);
+            return Diagnostic.Create(error.Descriptor, location, errorNode);
         }
 
         List<Diagnostic> _errors = new List<Diagnostic>();
         public void AddError(string id, string message, SyntaxNode node)
         {
-            var location = Location.Create(_root.SyntaxTree, node.Span); //td: translate
+            var location = Location.Create(_root.SyntaxTree, node.Span); 
             var descriptor = new DiagnosticDescriptor(id, message, message, "Excess", DiagnosticSeverity.Error, true);
 
             var error = Diagnostic.Create(descriptor, location);
@@ -110,7 +107,6 @@ namespace Excess.Compiler.Roslyn
                     .First();
 
                 Debug.Assert(tNode != null); //td: cases
-
                 nodes[tNode] = transformer.Value;
             }
 

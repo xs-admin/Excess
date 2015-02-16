@@ -152,7 +152,9 @@
             }
             
             //editor
-            $scope.editorControl = {};
+            $scope.editorControl  = {};
+            $scope.editorKeywords = " ";
+
 
             //layout
             $scope.layoutControl = {};
@@ -232,7 +234,7 @@
                             }
                         }
                         else
-                            notifyErrors(result.Errors);
+                            notifyErrors(compilation.Errors);
                     })
                     .finally(function () {
                         $scope.compilerBusy = false;

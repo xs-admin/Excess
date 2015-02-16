@@ -485,7 +485,8 @@ namespace Excess.Compiler.Roslyn
             return (node, scope) =>
             {
                 var clazz = (ClassDeclarationSyntax)node;
-                return clazz.RemoveNode(FindNode(clazz.Members, memberId), SyntaxRemoveOptions.KeepTrailingTrivia);
+                clazz = clazz.RemoveNode(FindNode(clazz.Members, memberId), SyntaxRemoveOptions.KeepTrailingTrivia);
+                return clazz;
             };
         }
 
@@ -573,7 +574,15 @@ namespace Excess.Compiler.Roslyn
 
         public static Func<SyntaxNode, Scope, SyntaxNode> ReplaceNode(SyntaxNode newNode)
         {
-            return (node, scope) => newNode;
+            return (node, scope) => RoslynCompiler.ReplaceExcessId(newNode, node);
+        }
+
+        public static SyntaxNode ReplaceExcessId(SyntaxNode node, SyntaxNode before)
+        {
+            string oldId = NodeMark(before);
+            Debug.Assert(oldId != null);
+
+            return MarkNode(node, oldId); 
         }
 
         public static SyntaxNode UpdateExcessId(SyntaxNode node, SyntaxNode before)
@@ -651,6 +660,26 @@ namespace Excess.Compiler.Roslyn
                 return @dynamic;
 
             return CSharp.ParseTypeName(rt.Name);
+        }
+
+        //td: !!! refactor the marking
+        public static SyntaxNode UnMark(SyntaxNode node)
+        {
+            return node.ReplaceNodes(node.DescendantNodesAndSelf(), (oldNode, newNode) =>
+            {
+                var id = RoslynCompiler.NodeMark(oldNode);
+                return newNode
+                    .WithoutAnnotations(RoslynCompiler.NodeIdAnnotation)
+                    .WithoutAnnotations(RoslynCompiler.NodeIdAnnotation + id);
+            });
+        }
+
+        public static SyntaxNode Mark(SyntaxNode node)
+        {
+            return node.ReplaceNodes(node.DescendantNodesAndSelf(), (oldNode, newNode) =>
+            {
+                return MarkNode(newNode, uniqueId());
+            });
         }
     }
 

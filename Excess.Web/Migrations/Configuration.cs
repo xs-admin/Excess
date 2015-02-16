@@ -69,35 +69,35 @@ namespace Excess.Web.Migrations
                 {
                     ID = 1,
                     Name = "Functions",
-                    Contents = SampleCode.Functions,
+                    Contents = Samples.Functions,
                 },
 
                 new TranslationSample
                 {
                     ID = 2,
                     Name = "Events",
-                    Contents = SampleCode.Events,
+                    Contents = Samples.Events,
                 },
 
                 new TranslationSample
                 {
                     ID = 3,
                     Name = "Arrays",
-                    Contents = SampleCode.Arrays,
+                    Contents = Samples.Arrays,
                 },
 
                 new TranslationSample
                 {
                     ID = 4,
                     Name = "Misc",
-                    Contents = SampleCode.Misc,
+                    Contents = Samples.Misc,
                 },
 
                 new TranslationSample
                 {
                     ID = 5,
-                    Name = "DSL (Asynch/Synch)",
-                    Contents = SampleCode.DSLAsynch,
+                    Name = "Extension (asynch/synch)",
+                    Contents = Samples.Extensions,
                 },
             };
         }
@@ -111,7 +111,7 @@ namespace Excess.Web.Migrations
                     ID = 1,
                     OwnerProject = 1,
                     Name = "application",
-                    Contents = SampleCode.HelloWorld,
+                    Contents = Samples.HelloWorld,
                 },
 
                 //Lolcats
@@ -120,7 +120,7 @@ namespace Excess.Web.Migrations
                     ID = 2,
                     OwnerProject = 2,
                     Name = "application",
-                    Contents = SampleCode.LolCatsApplication,
+                    Contents = Samples.LolCatsApplication,
                 },
 
                 new ProjectFile
@@ -128,7 +128,7 @@ namespace Excess.Web.Migrations
                     ID = 3,
                     OwnerProject = 2,
                     Name = "lolcat",
-                    Contents = SampleCode.LolCats,
+                    Contents = Samples.LolCats,
                 },
 
                 new ProjectFile
@@ -136,7 +136,7 @@ namespace Excess.Web.Migrations
                     ID = 4,
                     OwnerProject = 2,
                     Name = "speek",
-                    Contents = SampleCode.LolCatsSpeek,
+                    Contents = Samples.LolCatsSpeek,
                 },
 
                 new ProjectFile
@@ -144,7 +144,7 @@ namespace Excess.Web.Migrations
                     ID = 5,
                     OwnerProject = 2,
                     Name = "trollcat",
-                    Contents = SampleCode.LolCatsTrollcat,
+                    Contents = Samples.LolCatsTrollcat,
                 },
 
                 //contract
@@ -187,16 +187,42 @@ namespace Excess.Web.Migrations
                 {
                     ID           = 10,
                     OwnerProject = 4,
-                    Name         = "parser",
-                    Contents     = SampleProjectStrings.MatchParser,
+                    Name         = "extension",
+                    Contents     = Samples.MatchExtension,
                 },
 
                 new ProjectFile
                 {
                     ID           = 11,
                     OwnerProject = 4,
-                    Name         = "linker",
-                    Contents     = SampleProjectStrings.MatchLinker,
+                    Name         = "transform",
+                    Contents     = Samples.MatchTransform,
+                },
+
+                //asynch
+                new ProjectFile
+                {
+                    ID           = 12,
+                    OwnerProject = 5,
+                    Name         = "plugin",
+                    isHidden     = true,
+                    Contents     = ProjectTemplates.ExtensionPlugin
+                },
+
+                new ProjectFile
+                {
+                    ID           = 13,
+                    OwnerProject = 5,
+                    Name         = "extension",
+                    Contents     = Samples.AsynchExtension,
+                },
+
+                new ProjectFile
+                {
+                    ID           = 14,
+                    OwnerProject = 5,
+                    Name         = "transform",
+                    Contents     = Samples.AsynchTransform,
                 },
             };
         }
@@ -232,16 +258,24 @@ namespace Excess.Web.Migrations
                 new Project
                 {
                     ID = 4,
-                    ProjectType = "dsl",
-                    Name = "Match DSL",
+                    ProjectType = "extension",
+                    Name = "Match Extension",
+                    IsSample = true,
+                },
+
+                new Project
+                {
+                    ID = 5,
+                    ProjectType = "extension",
+                    Name = "Asynch Extension",
                     IsSample = true,
                 },
             };
         }
 
-        static Guid PureTest1  = new Guid("E8FB63DB-D135-4FE9-893A-24A4162A1D0B");
-        static Guid PureTest2  = new Guid("6C3371F4-59AD-4D74-91BA-50C5A9424632");
-        static Guid MatchTest1 = new Guid("834A3BDB-40A4-4025-8588-FB341C22A2E6");
+        static Guid ContractUsage  = new Guid("E8FB63DB-D135-4FE9-893A-24A4162A1D0B");
+        static Guid MatchUsage  = new Guid("6C3371F4-59AD-4D74-91BA-50C5A9424632");
+        static Guid AsynchUsage = new Guid("834A3BDB-40A4-4025-8588-FB341C22A2E6");
 
         private DSLTest[] DSLTests()
         {
@@ -249,25 +283,25 @@ namespace Excess.Web.Migrations
             {
                 new DSLTest
                 {
-                    ID          = PureTest1,
+                    ID          = ContractUsage,
                     ProjectID   = 3,
-                    Caption     = "Testing impurity",
-                    Contents    = SampleProjectStrings.PureTest1,
+                    Caption     = "Usage",
+                    Contents    = Samples.ContractUsage,
                 },
 
                 new DSLTest
                 {
-                    ID          = PureTest2,
-                    ProjectID   = 3,
-                    Caption     = "Testing static classes",
-                    Contents    = SampleProjectStrings.PureTest2,
+                    ID          = MatchUsage,
+                    ProjectID   = 4,
+                    Caption     = "Usage",
+                    Contents    = Samples.MatchUsage,
                 },
                 new DSLTest
                 {
-                    ID          = MatchTest1,
-                    ProjectID   = 4,
+                    ID          = AsynchUsage,
+                    ProjectID   = 5,
                     Caption     = "Usage",
-                    Contents    = SampleProjectStrings.MatchTest1,
+                    Contents    = Samples.AsynchUsage,
                 },
             };
         }

@@ -74,6 +74,7 @@ namespace Excess.Compiler.XS
 
             if (field == null)
             {
+                scope.AddError("xs01", "malformed typedef", node);
                 //td: error, malformed typedef
                 return node;
             }
@@ -81,7 +82,7 @@ namespace Excess.Compiler.XS
 
             if (field.Declaration.Variables.Count != 1)
             {
-                //td: error, malformed typedef
+                scope.AddError("xs01", "malformed typedef", node);
                 return node;
             }
 
@@ -91,7 +92,7 @@ namespace Excess.Compiler.XS
 
             Debug.Assert(variable.Initializer == null || variable.Initializer.IsMissing);
 
-            var type       = field.Declaration.Type;
+            var type = RoslynCompiler.UnMark(field.Declaration.Type);
             var identifier = variable.Identifier;
 
             var parentScope = scope.CreateScope<SyntaxToken, SyntaxNode, SemanticModel>(field.Parent);
@@ -119,9 +120,11 @@ namespace Excess.Compiler.XS
                 var typeScope = scope.GetScope<SyntaxToken, SyntaxNode, SemanticModel>(type);
                 if (typeScope != null)
                 {
-                    TypeSyntax realType = typeScope.get<TypeSyntax>("__tdef" + node.ToString());
+                    SyntaxNode realType = typeScope.get<SyntaxNode>("__tdef" + node.ToString());
                     if (realType != null)
                     {
+                        realType = RoslynCompiler.Mark(realType); //make sure not to duplicate nodes
+
                         var document = scope.GetDocument<SyntaxToken, SyntaxNode, SemanticModel>();
                         document.change(node, RoslynCompiler.ReplaceNode(realType));
                     }

@@ -44,7 +44,11 @@
                             + '<i class="fa fa-terminal"></i> Console projects are simple textual apps for testing purposes'
                 },              
                 { caption: 'How cool is this?', visible: false, image: '', helpText: 'Very?' },
-                { caption: 'How much documentation is there?', visible: false, image: '', helpText: 'Not much, working on it' },
+                {
+                    caption: 'How about documentation?', visible: false, image: '',
+                    helpText: 'Yes, at <a href="http://github.com/xs-admin/Excess/wiki" target="_blank">github</a>, lots of samples.'
+                            + ' Worse case, you can <a href="https://github.com/xs-admin/Excess/fork" target="_blank">fork</a> it and look at the code.'
+                },
             ];
 
             dialogs.create('/App/Main/dialogs/helpDialog.html', 'helpDialogCtrl', homeHelpTopics, { size: "md" });

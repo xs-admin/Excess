@@ -35,7 +35,7 @@ namespace Excess.Compiler.Extensions
             var switchExpr = node as SwitchStatementSyntax;
             if (switchExpr == null)
             {
-                //td: error: malformed match
+                scope.AddError("match01", "malformed match", node);
                 return node;
             }
 
