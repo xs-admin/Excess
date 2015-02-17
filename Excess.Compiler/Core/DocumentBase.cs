@@ -295,10 +295,10 @@ namespace Excess.Compiler.Core
 
             //assign ids to the nodes found
             root = _compiler.MarkTree(root);
+            _original = root;
 
             //allow for preprocessing of the original 
-            root = notifyOriginal(root, modifiedText);
-            _original = root;
+            notifyOriginal(modifiedText);
 
             //apply any scheduled normalization
             var normalizers = poll(_lexicalChanges, "normalize");
@@ -307,6 +307,9 @@ namespace Excess.Compiler.Core
                 root = normalizer.Transform(root, new Scope(_scope));
             }
 
+            //allow for preprocessing
+            _original = updateRoot(_original);
+            root = updateRoot(root);
             return root;
         }
 
@@ -330,7 +333,11 @@ namespace Excess.Compiler.Core
             }
         }
 
-        protected virtual TNode notifyOriginal(TNode root, string newText)
+        protected virtual void notifyOriginal(string newText)
+        {
+        }
+
+        protected virtual TNode updateRoot(TNode root)
         {
             return root;
         }

@@ -170,6 +170,11 @@ namespace Excess.Compiler.Roslyn
             return result;
         }
 
+        public static ExpressionSyntax Constant(object value)
+        {
+            return SyntaxFactory.ParseExpression(value.ToString());
+        }
+
         private void applyLexical(RoslynDocument document)
         {
             var handler = _lexical as IDocumentInjector<SyntaxToken, SyntaxNode, SemanticModel>;
@@ -680,6 +685,15 @@ namespace Excess.Compiler.Roslyn
             {
                 return MarkNode(newNode, uniqueId());
             });
+        }
+
+        public static bool IsVisible(MethodDeclarationSyntax method)
+        {
+            return method
+                .Modifiers
+                .Where(modifier => modifier.CSharpKind() == SyntaxKind.PublicKeyword
+                                || modifier.CSharpKind() == SyntaxKind.InternalKeyword)
+                .Any();
         }
     }
 

@@ -5,20 +5,22 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Excess.Compiler.Roslyn;
 
 namespace Excess.Compiler.Roslyn
 {
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
+    using Roslyn = RoslynCompiler;
 
     public class Template
     {
-        public static Template FromExpression(string text)
+        public static Template ParseExpression(string text)
         {
             var expr = CSharp.ParseExpression(text);
             return new Template(expr, GetValues(expr));
         }
 
-        public static Template FromExpression<T>(string text, Func<T, bool> comparer = null) where T : SyntaxNode
+        public static Template ParseExpression<T>(string text, Func<T, bool> comparer = null) where T : SyntaxNode
         {
             var expr = CSharp.ParseExpression(text);
             return new Template(expr, expr
@@ -27,13 +29,13 @@ namespace Excess.Compiler.Roslyn
                 .Where(node => comparer == null ? true : comparer(node)));
         }
 
-        public static Template FromStatement(string text)
+        public static Template ParseStatement(string text)
         {
             var statement = CSharp.ParseStatement(text);
             return new Template(statement, GetValues(statement));
         }
 
-        public static Template FromStatement<T>(string text, Func<T, bool> comparer = null) where T : SyntaxNode
+        public static Template ParseStatement<T>(string text, Func<T, bool> comparer = null) where T : SyntaxNode
         {
             var statement = CSharp.ParseStatement(text);
             return new Template(statement, statement
@@ -42,13 +44,13 @@ namespace Excess.Compiler.Roslyn
                 .Where(node => comparer == null ? true : comparer(node)));
         }
 
-        public static Template FromStatements(string text)
+        public static Template ParseStatements(string text)
         {
             var statements = CSharp.ParseStatement("{" + text + "}");
             return new Template(statements, GetValues(statements));
         }
 
-        public static Template FromStatements<T>(string text, Func<T, bool> comparer = null) where T : SyntaxNode
+        public static Template ParseStatements<T>(string text, Func<T, bool> comparer = null) where T : SyntaxNode
         {
             var statements = CSharp.ParseStatement("{" + text + "}");
             return new Template(statements, statements
@@ -121,9 +123,37 @@ namespace Excess.Compiler.Roslyn
             return instantiate(values);
         }
 
+        public SyntaxNode Get(params object[] values)
+        {
+            return instantiate(parseValues(values));
+        }
+
+        private SyntaxNode[] parseValues(object[] values)
+        {
+            SyntaxNode[] result = new SyntaxNode[values.Length];
+            int current = 0;
+            foreach (var obj in values)
+            {
+                SyntaxNode node;
+                if (obj is SyntaxNode)
+                    node = obj as SyntaxNode;
+                else
+                    node = Roslyn.Constant(obj);
+
+                result[current++] = node;
+            }
+
+            return result;
+        }
+
         public T Get<T>(params SyntaxNode[] values) where T : SyntaxNode
         {
             return (T)instantiate(values);
+        }
+
+        public T Get<T>(params object[] values) where T : SyntaxNode
+        {
+            return (T)instantiate(parseValues(values));
         }
 
         public T Value<T>() where T : SyntaxNode

@@ -82,6 +82,39 @@ namespace Excess.Compiler.Roslyn
         }
 
         List<SyntaxTree> _additionalTrees = new List<SyntaxTree>();
+
+        public FileLinePositionSpan OriginalPosition(Location location)
+        {
+            var tree = location.SourceTree;
+            if (tree == null)
+                return default(FileLinePositionSpan);
+
+            var document = documentByTree(tree);
+            if (document == null)
+                return default(FileLinePositionSpan);
+
+            return document.OriginalPosition(location);
+        }
+
+        private RoslynDocument documentByTree(SyntaxTree tree)
+        {
+            string id = null;
+            foreach (var cTree in _trees)
+            {
+                if (cTree.Value == tree)
+                {
+                    id = cTree.Key;
+                    break;
+                }
+            }
+
+            if (id == null)
+                return null;
+
+            var doc = _documents.Find(document => document.Id == id);
+            return doc != null? doc.Document : null;
+        }
+
         public void addSyntaxTree(SyntaxTree tree)
         {
             Debug.Assert(_compilation == null);
@@ -270,9 +303,7 @@ namespace Excess.Compiler.Roslyn
                 {
                     foreach (var error in errors)
                     {
-                        var docError = document.ExcessError(error, doc.Id);
-                        if (docError != null)
-                            yield return docError;
+                        yield return error;
                     }
                 }
             }

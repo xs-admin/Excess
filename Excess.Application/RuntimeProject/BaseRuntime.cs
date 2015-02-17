@@ -98,7 +98,7 @@ namespace Excess.RuntimeProject
                 .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
                 .Select(diagnostic =>
                 {
-                    var mapped = diagnostic.Location.GetLineSpan();
+                    var mapped = _compilation.OriginalPosition(diagnostic.Location);
                     return new Error
                     {
                         File = mapped.Path,

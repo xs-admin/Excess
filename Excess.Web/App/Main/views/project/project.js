@@ -155,7 +155,6 @@
             $scope.editorControl  = {};
             $scope.editorKeywords = " ";
 
-
             //layout
             $scope.layoutControl = {};
 

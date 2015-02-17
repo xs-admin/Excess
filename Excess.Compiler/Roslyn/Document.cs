@@ -33,30 +33,26 @@ namespace Excess.Compiler.Roslyn
 
         public CompilerStage Stage { get; internal set; }
 
-        public Diagnostic ExcessError(Diagnostic error, string file)
+        public FileLinePositionSpan OriginalPosition(Location location)
         {
-            var location = error.Location;
-            Debug.Assert(location != null);
-
             var tree = location.SourceTree;
             if (tree == null)
-                return error;
-
+                return default(FileLinePositionSpan);
 
             var errorNode = tree.GetRoot().FindNode(location.SourceSpan);
             if (errorNode == null)
-                return error;
+                return default(FileLinePositionSpan);
 
             string nodeID = RoslynCompiler.NodeMark(errorNode);
             if (nodeID == null)
-                return error;
+                return default(FileLinePositionSpan);
 
             var originalNode = RoslynCompiler.FindNode(_original, nodeID);
             if (originalNode == null)
-                return error;
+                return default(FileLinePositionSpan);
 
-            location    = originalNode.SyntaxTree.GetLocation(originalNode.Span);
-            return Diagnostic.Create(error.Descriptor, location, errorNode);
+            location = originalNode.SyntaxTree.GetLocation(originalNode.Span);
+            return location.GetMappedLineSpan();
         }
 
         List<Diagnostic> _errors = new List<Diagnostic>();
@@ -74,13 +70,13 @@ namespace Excess.Compiler.Roslyn
             return _errors;
         }
 
-        protected override SyntaxNode notifyOriginal(SyntaxNode root, string newText)
+        protected override void notifyOriginal(string newText)
         {
             LexicalText = newText;
+        }
 
-            if (_documentID == null)
-                return root;
-
+        protected override SyntaxNode updateRoot(SyntaxNode root)
+        {
             var newTree = root.SyntaxTree.WithFilePath(_documentID);
             return newTree.GetRoot();
         }
