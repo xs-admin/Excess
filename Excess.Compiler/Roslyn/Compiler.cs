@@ -157,7 +157,11 @@ namespace Excess.Compiler.Roslyn
             _scope.set<ICompilerEnvironment>(environment);
         }
 
-        public RoslynCompiler() : this(new RoslynEnvironment())
+        public RoslynCompiler(Scope scope) : this(new RoslynEnvironment(scope), scope)
+        {
+        }
+
+        public RoslynCompiler() : this(new Scope(null))
         {
         }
 
@@ -240,6 +244,12 @@ namespace Excess.Compiler.Roslyn
         {
             string useless;
             return ApplySyntacticalPass(text, out useless);
+        }
+
+        public SyntaxTree ApplySemanticalPass(string text)
+        {
+            string useless;
+            return ApplySemanticalPass(text, out useless);
         }
 
         public SyntaxTree ApplySemanticalPass(string text, out string result)
@@ -359,6 +369,7 @@ namespace Excess.Compiler.Roslyn
         //modifiers
         public static SyntaxTokenList @public  = CSharp.TokenList(CSharp.Token(SyntaxKind.PublicKeyword));
         public static SyntaxTokenList @private = CSharp.TokenList(CSharp.Token(SyntaxKind.PrivateKeyword));
+        public static SyntaxToken     @out     = CSharp.Token(SyntaxKind.OutKeyword);
 
         //node marking
         static private int _seed = 0;

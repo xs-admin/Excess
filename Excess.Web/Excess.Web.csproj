@@ -277,6 +277,7 @@
     <Content Include="Content\images\blogspot.png" />
     <Content Include="Content\images\dsl-debugger.png" />
     <Content Include="Content\images\facebook.png" />
+    <Content Include="Content\images\github.png" />
     <Content Include="Content\images\gplus.png" />
     <Content Include="Content\images\home-options.png" />
     <Content Include="Content\images\home-usage.png" />

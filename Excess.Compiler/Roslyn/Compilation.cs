@@ -245,7 +245,7 @@ namespace Excess.Compiler.Roslyn
 
         protected virtual RoslynEnvironment createEnvironment()
         {
-            var result = new RoslynEnvironment();
+            var result = new RoslynEnvironment(_scope);
             result.dependency<object>(new[] { "System", "System.Collections", "System.Collections.Generic" });
             result.dependency<IEnumerable<object>>(new[] { "System.Collections", "System.Collections.Generic" });
 

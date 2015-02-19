@@ -29,6 +29,8 @@ namespace Excess.Compiler
 
         ICompilerEnvironment keyword(string word);
 
+        ICompilerEnvironment global<T>()  where T : class, new();
+
         IEnumerable<string> modules();
         IEnumerable<string> keywords();
     }

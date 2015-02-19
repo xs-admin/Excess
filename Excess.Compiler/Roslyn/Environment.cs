@@ -10,6 +10,12 @@ namespace Excess.Compiler.Roslyn
 {
     public class RoslynEnvironment : ICompilerEnvironment
     {
+        private Scope _root;
+        public RoslynEnvironment(Scope root)
+        {
+            _root = root;
+        }
+
 
         private List<MetadataReference> _references = new List<MetadataReference>();
         private List<string> _modules = new List<string>();
@@ -73,6 +79,12 @@ namespace Excess.Compiler.Roslyn
         public ICompilerEnvironment keyword(string word)
         {
             _keywords.Add(word);
+            return this;
+        }
+
+        public ICompilerEnvironment global<T>() where T : class, new()
+        {
+            _root.set<T>( new T() );
             return this;
         }
 
