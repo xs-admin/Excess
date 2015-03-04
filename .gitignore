@@ -181,3 +181,6 @@ UpgradeLog*.htm
 
 # Microsoft Fakes
 FakesAssemblies/
+
+# App Data Folder
+App_Data/

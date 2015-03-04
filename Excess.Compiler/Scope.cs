@@ -90,6 +90,11 @@ namespace Excess.Compiler
         }
 
         //DynamicObject
+        public dynamic context()
+        {
+            return this;
+        }
+
         Dictionary<string, object> _values = new Dictionary<string, object>();
 
         public override bool TryGetMember(GetMemberBinder binder, out object result)

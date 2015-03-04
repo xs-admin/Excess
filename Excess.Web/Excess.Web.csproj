@@ -263,6 +263,9 @@
     <Content Include="App\Main\views\about\about.js" />
     <Content Include="App\Main\views\project\project.css" />
     <Content Include="App\Main\views\project\project.js" />
+    <Content Include="App_Data\antlr-4.5-complete.exe" />
+    <Content Include="App_Data\ICSharpCode.SharpZipLib.dll" />
+    <Content Include="App_Data\IKVM.AWT.WinForms.dll" />
     <Content Include="Content\bootstrap-cosmo.min.css" />
     <Content Include="Content\bootstrap-theme.css" />
     <Content Include="Content\bootstrap-theme.min.css" />

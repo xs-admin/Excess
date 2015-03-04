@@ -109,14 +109,25 @@ namespace Excess.RuntimeProject
                 });
         }
 
+        private class ExtensionFile
+        {
+            public int Id { get; set; }
+            public string Contents { get; set; }
+        }
+
+        private Dictionary<string, ExtensionFile> _extensionFiles = new Dictionary<string, ExtensionFile>();
         public void add(string file, int fileId, string contents)
         {
             if (_files.ContainsKey(file))
                 throw new InvalidOperationException();
 
-            _files[file] = fileId;
-            _compilation.addDocument(file, contents, getInjector(file));
+            var ext = Path.GetExtension(file);
+            if (string.IsNullOrEmpty(ext))
+                _compilation.addDocument(file, contents, getInjector(file));
+            else
+                _extensionFiles[file] = new ExtensionFile { Id = fileId, Contents = contents };
 
+            _files[file] = fileId;
             _dirty = true;
         }
 
@@ -130,7 +141,10 @@ namespace Excess.RuntimeProject
             if (!_files.ContainsKey(file))
                 throw new InvalidOperationException();
 
-            _compilation.updateDocument(file, contents);
+            if (_compilation.hasDocument(file))
+                _compilation.updateDocument(file, contents);
+            else
+                _extensionFiles[file].Contents = contents; //td: move to compilation
 
             _dirty = true;
         }
@@ -161,10 +175,19 @@ namespace Excess.RuntimeProject
 
         public string fileContents(string file)
         {
+            var result = null as string;
             if (_files.ContainsKey(file))
-                return _compilation.documentText(file);
+            {
+                result = _compilation.documentText(file);
+                if (result == null)
+                {
+                    ExtensionFile ext;
+                    if (_extensionFiles.TryGetValue(file, out ext))
+                        return ext.Contents;
+                }
+            }
 
-            return null;
+            return result;
         }
 
         public int fileId(string file)
@@ -184,6 +207,8 @@ namespace Excess.RuntimeProject
         protected bool _busy  = false;
         protected bool _dirty = false;
 
+        protected static Dictionary<string, IFileExtension> _fileExtensions = new Dictionary<string, IFileExtension>();
+
         protected virtual IEnumerable<Error> doCompile()
         {
             if (!_dirty)
@@ -191,6 +216,23 @@ namespace Excess.RuntimeProject
                 notify(NotificationKind.System, "Compilation up to date");
                 return null;
             }
+
+            //process extensioned files
+            foreach (var file in _files)
+            {
+                var filename = file.Key;
+                var ext = Path.GetExtension(filename);
+                if (string.IsNullOrEmpty(ext))
+                    continue;
+
+                var info = _extensionFiles[filename];
+                var handler = null as IFileExtension;
+                if (_fileExtensions.TryGetValue(ext, out handler))
+                {
+                    handler.process(filename, info.Id, info.Contents, _compilation);
+                }
+            }
+
 
             var result = _compilation.compile();
             if (_dirty)
@@ -200,6 +242,11 @@ namespace Excess.RuntimeProject
                 return null;
 
             return gatherErrors(_compilation.errors());
+        }
+
+        public void setFilePath(dynamic path)
+        {
+            _compilation.setPath(path);
         }
 
         protected abstract void doRun(Assembly asm, out dynamic clientData);

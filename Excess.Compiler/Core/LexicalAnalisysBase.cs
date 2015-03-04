@@ -766,5 +766,10 @@ namespace Excess.Compiler.Core
             _matchers.Add(result);
             return this;
         }
+
+        public IGrammarAnalysis<TGrammar, TNode, GNode> grammar<TGrammar, GNode>(string keyword, ExtensionKind kind) where TGrammar : IGrammar<TToken, TNode, GNode>, new()
+        {
+            return new BaseGrammarAnalysis<TToken, TNode, TModel, GNode, TGrammar>(this, keyword, kind);
+        }
     }
 }

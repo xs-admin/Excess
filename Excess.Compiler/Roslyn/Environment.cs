@@ -28,6 +28,12 @@ namespace Excess.Compiler.Roslyn
                     new[] { module });
         }
 
+        dynamic _path;
+        public void setPath(dynamic path)
+        {
+            _path = path;
+        }
+
         private void addModules(IEnumerable<string> modules)
         {
             foreach (var module in modules)
@@ -96,6 +102,11 @@ namespace Excess.Compiler.Roslyn
         public IEnumerable<string> keywords()
         {
             return _keywords;
+        }
+
+        public dynamic path()
+        {
+            return _path;
         }
 
         internal IEnumerable<MetadataReference> GetReferences()

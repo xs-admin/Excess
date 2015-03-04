@@ -368,8 +368,15 @@ namespace Excess.Compiler.Roslyn
 
         //modifiers
         public static SyntaxTokenList @public  = CSharp.TokenList(CSharp.Token(SyntaxKind.PublicKeyword));
+
         public static SyntaxTokenList @private = CSharp.TokenList(CSharp.Token(SyntaxKind.PrivateKeyword));
+        public static SyntaxTokenList @static  = CSharp.TokenList(CSharp.Token(SyntaxKind.StaticKeyword));
         public static SyntaxToken     @out     = CSharp.Token(SyntaxKind.OutKeyword);
+
+        //constants
+        public static ExpressionSyntax @null = CSharp.ParseExpression("null");
+        public static ExpressionSyntax @true = CSharp.ParseExpression("true");
+        public static ExpressionSyntax @false = CSharp.ParseExpression("false");
 
         //node marking
         static private int _seed = 0;
@@ -522,6 +529,24 @@ namespace Excess.Compiler.Roslyn
             return root
                 .GetAnnotatedNodes(NodeIdAnnotation + id)
                 .FirstOrDefault();
+        }
+
+        static public SyntaxNode FindNode(SyntaxNode root, SyntaxNode tracked)
+        {
+            string id = NodeMark(tracked);
+            if (id == null)
+                return null;
+
+            return FindNode(root, id);
+        }
+
+        static public SyntaxNode FindNode<T>(SyntaxList<T> nodes, SyntaxNode tracked) where T : SyntaxNode
+        {
+            string id = NodeMark(tracked);
+            if (id == null)
+                return null;
+
+            return FindNode<T>(nodes, id);
         }
 
         static public StatementSyntax NextStatement(BlockSyntax code, StatementSyntax statement)
@@ -706,6 +731,12 @@ namespace Excess.Compiler.Roslyn
                                 || modifier.CSharpKind() == SyntaxKind.InternalKeyword)
                 .Any();
         }
+
+        public static ExpressionSyntax Quoted(string value)
+        {
+            return CSharp.ParseExpression('"' + value + '"');
+        }
+
     }
 
 }

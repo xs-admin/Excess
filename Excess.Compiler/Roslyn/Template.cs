@@ -9,6 +9,7 @@ using Excess.Compiler.Roslyn;
 
 namespace Excess.Compiler.Roslyn
 {
+    using Microsoft.CodeAnalysis.CSharp;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
     using Roslyn = RoslynCompiler;
 
@@ -108,7 +109,7 @@ namespace Excess.Compiler.Roslyn
 
             if (hasNodes && hasTokens)
                 result = result.ReplaceNodes(nodes
-                    .Union(tokens.Select(token => token.Parent)), (oldNode, newNode) => getMixedNode(oldNode, values));
+                    .Union(tokens.Select(token => token.Parent)), (oldNode, newNode) => getMixedNode(oldNode, newNode, values));
             else if (hasNodes)
                 result = result.ReplaceNodes(nodes, (oldNode, newNode) => getNode(oldNode, values));
             else if (hasTokens)
@@ -117,23 +118,25 @@ namespace Excess.Compiler.Roslyn
             return result;
         }
 
-        private SyntaxNode getMixedNode(SyntaxNode node, object[] values)
+        private SyntaxNode getMixedNode(SyntaxNode oldNode, SyntaxNode newNode, object[] values)
         {
             int idx;
-            if (_values.TryGetValue(node, out idx))
-                return getNode(node, values);
+            if (_values.TryGetValue(oldNode, out idx))
+                return getNode(oldNode, values);
 
-            foreach (var token in node.DescendantTokens())
+            var newTokens = newNode.DescendantTokens().GetEnumerator();
+            foreach (var token in oldNode.DescendantTokens())
             {
+                newTokens.MoveNext();
                 if (_values.TryGetValue(token, out idx))
                 {
                     var newToken = getToken(token, values);
-                    return node.ReplaceToken(token, newToken);
+                    return newNode.ReplaceToken(newTokens.Current, newToken);
                 }
                 var value = values[idx];
             }
 
-            return node;
+            return newNode;
         }
 
         private SyntaxNode getNode(SyntaxNode node, object[] values)
@@ -146,6 +149,14 @@ namespace Excess.Compiler.Roslyn
             if (value is SyntaxToken)
                 return ((SyntaxToken)value).Parent;
 
+            if (value is bool)
+            {
+                if ((bool)value)
+                    return Roslyn.@true;
+                else
+                    return Roslyn.@false;
+            }
+
             return CSharp.ParseExpression(value.ToString());
         }
 
@@ -153,11 +164,23 @@ namespace Excess.Compiler.Roslyn
         {
             int idx = _values[token];
             var value = values[idx];
+
+            if (value == null)
+                return token;
+
             if (value is SyntaxToken)
                 return (SyntaxToken)value;
 
             if (value is SyntaxNode)
                 return (value as SyntaxNode).DescendantTokens().Single();
+
+            if (value is bool)
+            {
+                if ((bool)value)
+                    return CSharp.Token(SyntaxKind.TrueKeyword);
+                else
+                    return CSharp.Token(SyntaxKind.FalseKeyword);
+            }
 
             return CSharp.ParseToken(value.ToString());
         }

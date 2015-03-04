@@ -1,8 +1,10 @@
-﻿using Excess.RuntimeProject;
+﻿using Excess.Compiler;
+using Excess.RuntimeProject;
 using Excess.Web.Entities;
 using Microsoft.AspNet.Identity;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Web;
@@ -35,7 +37,10 @@ namespace Excess.Web.Controllers
                     return HttpNotFound(); //td: right error
             }
 
-            IRuntimeProject runtime = _manager.createRuntime(project.ProjectType, project.Name, config);
+            var path = new Scope(null) as dynamic;
+            path.ToolPath = Path.Combine(Server.MapPath("~/App_Data"), "Tools");
+
+            IRuntimeProject runtime = _manager.createRuntime(project.ProjectType, project.Name, config, path);
             foreach (var file in project.ProjectFiles)
                 runtime.add(file.Name, file.ID, file.Contents);
 

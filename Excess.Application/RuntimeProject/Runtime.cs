@@ -41,6 +41,7 @@ namespace Excess.RuntimeProject
         string fileContents(string file);
         int fileId(string file);
         IEnumerable<TreeNodeAction> fileActions(string file);
+        void setFilePath(dynamic path);
     }
 
     public interface IExtensionRuntime

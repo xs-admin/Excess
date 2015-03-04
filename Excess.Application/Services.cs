@@ -19,6 +19,6 @@ namespace Excess
 
     public interface IProjectManager
     {
-        IRuntimeProject createRuntime(string projectType, string projectName, dynamic config);
+        IRuntimeProject createRuntime(string projectType, string projectName, dynamic config, dynamic path);
     }
 }

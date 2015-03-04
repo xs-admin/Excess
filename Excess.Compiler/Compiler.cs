@@ -33,6 +33,7 @@ namespace Excess.Compiler
 
         IEnumerable<string> modules();
         IEnumerable<string> keywords();
+        dynamic path();
     }
 
     public interface ICompiler<TToken, TNode, TModel>

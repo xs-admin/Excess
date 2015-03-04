@@ -24,6 +24,11 @@ namespace Excess.RuntimeProject
 
     class ExtensionRuntime : BaseRuntime, IExtensionRuntime
     {
+        static ExtensionRuntime()
+        {
+            _fileExtensions[".g4"] = new AntlrGrammarHandler();
+        }
+
         private static Injector _references = new DelegateInjector(compiler =>
         {
             var assemblyPath = Path.GetDirectoryName(typeof(object).Assembly.Location);
@@ -65,7 +70,7 @@ namespace Excess.RuntimeProject
         //        }
         //    }");
 
-        static private Template ExtensionClass = Template.Parse<BlockSyntax>(@"
+        static private Template ExtensionClass = Template.Parse(@"
             internal partial class Extension
             {
                 public static void Apply(ICompiler<SyntaxToken, SyntaxNode, SemanticModel> compiler)
@@ -97,7 +102,7 @@ namespace Excess.RuntimeProject
                         .members(MoveToClass);
         });
 
-        static private Template TransformClass = Template.Parse<ClassDeclarationSyntax>(@"
+        static private Template TransformClass = Template.Parse(@"
             using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
             internal partial class Extension
             {

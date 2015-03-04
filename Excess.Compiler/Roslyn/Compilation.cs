@@ -23,6 +23,12 @@ namespace Excess.Compiler.Roslyn
         }
 
         public string OutputFile { get; set; }
+
+        public void setPath(dynamic path)
+        {
+            _environment.setPath(path);
+        }
+
         public ICompilerEnvironment Environment { get { return _environment; } }
 
         private class CompilationDocument
@@ -37,6 +43,12 @@ namespace Excess.Compiler.Roslyn
 
         Scope _scope = new Scope(null);
 
+        public bool hasDocument(string id)
+        {
+            return _documents
+                .Where(doc => doc.Id == id)
+                .Any();
+        }
         public void addDocument(string id, string contents, ICompilerInjector<SyntaxToken, SyntaxNode, SemanticModel> injector)
         {
             if (_documents

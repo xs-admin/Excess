@@ -9,15 +9,20 @@ namespace Excess.Services
 {
     public class ProjectService : IProjectManager
     {
-        public IRuntimeProject createRuntime(string projectType, string projectName, dynamic config)
+        public IRuntimeProject createRuntime(string projectType, string projectName, dynamic config, dynamic path)
         {
+            var result = null as IRuntimeProject;
             switch (projectType)
             {
-                case "console":   return new ConsoleRuntime();
-                case "extension": return new ExtensionRuntime();
+                case "console": result = new ConsoleRuntime(); break;
+                case "extension": result = new ExtensionRuntime(); break;
             }
 
-            throw new InvalidOperationException("Invalid project type " + projectType);
+            if (result == null)
+                throw new InvalidOperationException("Invalid project type " + projectType);
+
+            result.setFilePath(path);
+            return result;
         }
     }
 }
