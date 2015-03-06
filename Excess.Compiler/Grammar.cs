@@ -13,6 +13,6 @@ namespace Excess.Compiler
 
     public interface IGrammarAnalysis<TGrammar, TNode, GNode>
     {
-        IGrammarAnalysis<TGrammar, TNode, GNode> transform<T>(Func<T, TNode, Func<GNode, TNode, Scope, TNode>, Scope, TNode> handler) where T : GNode;
+        IGrammarAnalysis<TGrammar, TNode, GNode> transform<T>(Func<T, Func<GNode, Scope, TNode>, Scope, TNode> handler) where T : GNode;
     }
 }

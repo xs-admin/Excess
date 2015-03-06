@@ -60,6 +60,11 @@ namespace Excess.Compiler
             return result;
         }
 
+        public Scope parent()
+        {
+            return _parent;
+        }
+
         public Scope GetScope<TToken, TNode, TModel>(TNode node)
         {
             var service = GetService<TToken, TNode, TModel>();

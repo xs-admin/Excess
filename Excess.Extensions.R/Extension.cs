@@ -1,6 +1,8 @@
 ﻿using Antlr4.Runtime;
 using Excess.Compiler;
+using Excess.Compiler.Roslyn;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Generic;
@@ -11,7 +13,7 @@ using System.Threading.Tasks;
 
 namespace Excess.Extensions.R
 {
-    using Microsoft.CodeAnalysis.CSharp;
+    using Antlr4.Runtime.Tree;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
     public static class RScope
@@ -19,7 +21,7 @@ namespace Excess.Extensions.R
         public static void InitR(this Scope scope)
         {
             scope.set("rPreStatements", new List<StatementSyntax>());
-            scope.set("rPostStatements", new List<StatementSyntax>());
+            scope.set("rVariables", new List<string>());
         }
 
         public static List<StatementSyntax> PreStatements(this Scope scope)
@@ -29,36 +31,48 @@ namespace Excess.Extensions.R
             return result;
         }
 
-        public static List<StatementSyntax> PostStatements(this Scope scope)
+        public static bool hasVariable(this Scope scope, string varName)
         {
-            var result = scope.find<List<StatementSyntax>>("rPostStatements");
-            Debug.Assert(result != null);
-            return result;
+            var result = scope.find<List<string>>("rVariables");
+            if (result != null && result.Contains(varName)) 
+                return true;
+
+            var parent = scope.parent();
+            return parent == null ? false : parent.hasVariable(varName);
+        }
+
+        public static void addVariable(this Scope scope, string varName)
+        {
+            var result = scope.find<List<string>>("rVariables");
+            Debug.Assert(result != null && !result.Contains(varName));
+            result.Add(varName);
         }
     }
 
     public class Extension
     {
-        public void Apply(ICompiler<SyntaxToken, SyntaxNode, SemanticModel> compiler)
+        public static void Apply(ICompiler<SyntaxToken, SyntaxNode, SemanticModel> compiler)
         {
             compiler.Lexical()
                 .grammar<RGrammar, ParserRuleContext>("R", ExtensionKind.Code)
                     .transform<RParser.ProgContext>(Program)
-                    .transform<RParser.AssignmentContext>(Assignment)
+                    .transform<RParser.Expr_or_assignContext>(EitherOr)
+                    .transform<RParser.ExpressionStatementContext>(ExpressionStatement)
+                    .transform<RParser.AssignmentContext>(AssignmentStatement)
                     .transform<RParser.RightAssignmentContext>(RightAssignment)
-                    .transform<RParser.SignContext>(Sign)
-                    .transform<RParser.MultiplicationContext>(Multiplication)
-                    .transform<RParser.AdditionContext>(Addition)
-                    .transform<RParser.ComparisonContext>(Comparison)
-                    .transform<RParser.NegationContext>(Negation)
-                    .transform<RParser.LogicalAndContext>(LogicalAnd)
-                    .transform<RParser.LogicalOrContext>(LogicalOr)
+                    .transform<RParser.SignContext>(UnaryOperator)
+                    .transform<RParser.NegationContext>(UnaryOperator)
+                    .transform<RParser.MultiplicationContext>(BinaryOperator)
+                    .transform<RParser.AdditionContext>(BinaryOperator)
+                    .transform<RParser.ComparisonContext>(BinaryOperator)
+                    .transform<RParser.LogicalAndContext>(BinaryOperator)
+                    .transform<RParser.LogicalOrContext>(BinaryOperator)
                     .transform<RParser.FunctionContext>(Function)
                     .transform<RParser.FunctionCallContext>(FunctionCall)
                     .transform<RParser.CompoundContext>(Compound)
                     .transform<RParser.IfStatementContext>(IfStatement)
                     .transform<RParser.IfElseStatementContext>(IfElseStatement)
-                    .transform<RParser.ForElseStatementContext>(ForElseStatement)
+                    .transform<RParser.ForEachStatementContext>(ForEachStatement)
                     .transform<RParser.WhileStatementContext>(WhileStatement)
                     .transform<RParser.RepeatStatementContext>(RepeatStatement)
                     .transform<RParser.BreakStatementContext>(BreakStatement)
@@ -74,251 +88,530 @@ namespace Excess.Extensions.R
                     .transform<RParser.InfLiteralContext>(InfLiteral)
                     .transform<RParser.NanLiteralContext>(NanLiteral)
                     .transform<RParser.TrueLiteralContext>(TrueLiteral)
-                    .transform<RParser.FalseLiteralContext>(FalseLiteral);
+                    .transform<RParser.FalseLiteralContext>(FalseLiteral)
+                    .transform<RParser.SublistContext>(ArgumentList)
+                    .transform<RParser.IndexContext>(Index)
+                    .transform<RParser.SequenceContext>(LinearSequence)
+                    ;
         }
 
-        private SyntaxNode FalseLiteral(RParser.FalseLiteralContext @false, SyntaxNode parent, Func<ParserRuleContext, SyntaxNode, Scope, SyntaxNode> transform, Scope scope)
+        static Template binaryOperatorCall = Template.ParseExpression("__0(__1, __2)");
+        private static SyntaxNode BinaryOperator(RParser.ExprContext expr, Func<ParserRuleContext, Scope, SyntaxNode> transform, Scope scope)
+        {
+            var left = transform(expr.GetRuleContext<RParser.ExprContext>(0), scope) as ExpressionSyntax;
+            var right = transform(expr.GetRuleContext<RParser.ExprContext>(1), scope) as ExpressionSyntax;
+            Debug.Assert(left != null && right != null);
+
+            Debug.Assert(expr.children.Count == 3);
+            var op = expr.children[1].GetText();
+
+            return binaryOperatorCall.Get(_binaryOperators[op], left, right);
+        }
+
+        static Template unaryOperatorCall = Template.ParseExpression("__0(__1)");
+        private static SyntaxNode UnaryOperator(RParser.ExprContext expr, Func<ParserRuleContext, Scope, SyntaxNode> transform, Scope scope)
+        {
+            Debug.Assert(expr.children.Count == 2);
+            var op = expr.children[0].GetText();
+
+            var value = transform(expr.GetRuleContext<RParser.ExprContext>(0), scope) as ExpressionSyntax;
+            if (isConstant(value))
+                return CSharp.ParseExpression(op + value.ToString());
+
+            Debug.Assert(value != null);
+
+            return unaryOperatorCall.Get(_unaryOperators[op], value);
+        }
+
+        private static bool isConstant(ExpressionSyntax value)
+        {
+            switch ((SyntaxKind)value.RawKind)
+            {
+                case SyntaxKind.NumericLiteralExpression:
+                case SyntaxKind.TrueLiteralExpression:
+                case SyntaxKind.FalseLiteralExpression:
+                    return true;
+            }
+
+            return false;
+        }
+
+        static Dictionary<string, ExpressionSyntax> _binaryOperators = new Dictionary<string, ExpressionSyntax>();
+        static Dictionary<string, ExpressionSyntax> _unaryOperators = new Dictionary<string, ExpressionSyntax>();
+        
+        static Extension()
+        {
+            _binaryOperators["+"] = CSharp.ParseExpression("RR.add");
+            _binaryOperators["-"] = CSharp.ParseExpression("RR.sub");
+            _binaryOperators["*"] = CSharp.ParseExpression("RR.mul");
+            _binaryOperators["/"] = CSharp.ParseExpression("RR.div");
+            _binaryOperators[">"] = CSharp.ParseExpression("RR.gt");
+            _binaryOperators[">="] = CSharp.ParseExpression("RR.ge");
+            _binaryOperators["<"] = CSharp.ParseExpression("RR.lt");
+            _binaryOperators["<="] = CSharp.ParseExpression("RR.le");
+            _binaryOperators["=="] = CSharp.ParseExpression("RR.eq");
+            _binaryOperators["!="] = CSharp.ParseExpression("RR.neq");
+            _binaryOperators["&&"] = CSharp.ParseExpression("RR.and");
+            _binaryOperators["&"] = CSharp.ParseExpression("RR.bnd");
+            _binaryOperators["||"] = CSharp.ParseExpression("RR.or");
+            _binaryOperators["|"] = CSharp.ParseExpression("RR.bor");
+
+            _unaryOperators["+"] = CSharp.ParseExpression("RR.ps");
+            _unaryOperators["-"] = CSharp.ParseExpression("RR.ns");
+            _unaryOperators["!"] = CSharp.ParseExpression("RR.neg");
+        }
+
+        static Template linearSequenceCall = Template.ParseExpression("RR.lseq(__0, __1)");
+        private static SyntaxNode LinearSequence(RParser.SequenceContext sequence, Func<ParserRuleContext, Scope, SyntaxNode> transform, Scope scope)
+        {
+            var exprs = sequence.expr();
+            Debug.Assert(exprs.Count == 2);
+
+
+            var left = transform(exprs[0], scope) as ExpressionSyntax;
+            var right = transform(exprs[1], scope) as ExpressionSyntax;
+
+            return linearSequenceCall.Get(left, right);
+        }
+
+        static Template indexCall = Template.ParseExpression("RR.index(__0, __1)");
+        static Template indexLogical = Template.ParseExpression("(__iv) => __0");
+        static ExpressionSyntax __iv = CSharp.ParseExpression("__iv");
+        private static SyntaxNode Index(RParser.IndexContext index, Func<ParserRuleContext, Scope, SyntaxNode> transform, Scope scope)
+        {
+            var indexExprs = index.sublist().sub();
+            if (indexExprs.Count != 1)
+            {
+                //td: error
+                return null;
+            }
+
+            var expr = transform(index.expr(), scope) as ExpressionSyntax;
+            var args = transform(index.sublist(), scope) as ArgumentListSyntax;
+            Debug.Assert(expr != null && args != null);
+
+            var indexExpr = args.Arguments[0].Expression;
+            Debug.Assert(expr != null);
+
+            if (isBoolean(CSharp.ParseExpression(indexExprs[0].GetText())))
+            {
+                indexExpr = indexExpr.
+                    ReplaceNodes(indexExpr
+                        .DescendantNodes()
+                        .OfType<IdentifierNameSyntax>()
+                        .Where(e => e.IsEquivalentTo(expr)),
+                        (o, n) => __iv);
+
+                indexExpr = indexLogical.Get<ExpressionSyntax>(indexExpr);
+            }
+
+            return indexCall.Get(expr, indexExpr);
+        }
+
+        private static bool isBoolean(ExpressionSyntax expr)
+        {
+            var result = false;
+            if (expr is BinaryExpressionSyntax)
+            {
+                var opKind = (SyntaxKind)(expr as BinaryExpressionSyntax).OperatorToken.RawKind;
+                switch (opKind)
+                {
+                    case SyntaxKind.LessThanToken:
+                    case SyntaxKind.LessThanEqualsToken:
+                    case SyntaxKind.GreaterThanToken:
+                    case SyntaxKind.GreaterThanEqualsToken:
+                    case SyntaxKind.EqualsEqualsToken:
+                    case SyntaxKind.ExclamationEqualsToken:
+                        result = true;
+                        break;
+                }
+            }
+            else if (expr is PrefixUnaryExpressionSyntax)
+            {
+                var opKind = (SyntaxKind)(expr as PrefixUnaryExpressionSyntax).OperatorToken.RawKind;
+                switch (opKind)
+                {
+                    case SyntaxKind.ExclamationToken:
+                        result = true;
+                        break;
+                }
+            }
+
+            return result;
+        }
+
+        private static SyntaxNode ArgumentList(RParser.SublistContext args, Func<ParserRuleContext, Scope, SyntaxNode> transform, Scope scope)
+        {
+            var nodes = new List<ArgumentSyntax>();
+            foreach (var arg in args.sub())
+            {
+                var argName = null as string;
+                var value = null as ExpressionSyntax;
+                if (arg is RParser.SubExpressionContext)
+                    value = (ExpressionSyntax)transform((arg as RParser.SubExpressionContext).expr(), scope);
+                else if (arg is RParser.SubAssignmentContext)
+                {
+                    var paramName = (arg as RParser.SubAssignmentContext);
+                    argName = paramName.ID().ToString();
+                    value = (ExpressionSyntax)transform(paramName.expr(), scope);
+                }
+                else if (arg is RParser.SubStringAssignmentContext)
+                {
+                    var paramName = (arg as RParser.SubStringAssignmentContext);
+                    argName = paramName.STRING().ToString();
+                    value = (ExpressionSyntax)transform(paramName.expr(), scope);
+                }
+                else if (arg is RParser.SubIncompleteNullContext || arg is RParser.SubNullAssignmentContext)
+                {
+                    throw new NotImplementedException();
+                }
+                else if (arg is RParser.SubEllipsisContext)
+                {
+                    throw new NotImplementedException();
+                }
+                else if (arg is RParser.SubIncompleteAssignmentContext || arg is RParser.SubIncompleteStringContext || arg is RParser.SubIncompleteStringContext)
+                {
+                    throw new NotImplementedException();
+                }
+                else if (arg is RParser.SubEmptyContext)
+                {
+                    continue;
+                }
+                else
+                    Debug.Assert(false);
+
+                Debug.Assert(value != null);
+                var result = CSharp.Argument(value);
+                if (argName != null)
+                    result = result
+                        .WithNameColon(CSharp
+                            .NameColon(argName));
+
+                nodes.Add(result);
+            }
+
+            return CSharp
+                .ArgumentList()
+                .WithArguments(CSharp
+                    .SeparatedList(nodes));
+        }
+
+        private static SyntaxNode FalseLiteral(RParser.FalseLiteralContext @false, Func<ParserRuleContext, Scope, SyntaxNode> transform, Scope scope)
         {
             return CSharp.ParseExpression("false");
         }
 
-        private SyntaxNode TrueLiteral(RParser.TrueLiteralContext @true, SyntaxNode parent, Func<ParserRuleContext, SyntaxNode, Scope, SyntaxNode> transform, Scope scope)
+        private static SyntaxNode TrueLiteral(RParser.TrueLiteralContext @true, Func<ParserRuleContext, Scope, SyntaxNode> transform, Scope scope)
         {
             return CSharp.ParseExpression("true");
         }
 
-        private SyntaxNode NanLiteral(RParser.NanLiteralContext nan, SyntaxNode parent, Func<ParserRuleContext, SyntaxNode, Scope, SyntaxNode> transform, Scope scope)
+        static ExpressionSyntax Nan = CSharp.ParseExpression("Double.NaN");
+        private static SyntaxNode NanLiteral(RParser.NanLiteralContext ctx, Func<ParserRuleContext, Scope, SyntaxNode> transform, Scope scope)
         {
-            throw new NotImplementedException();
+            return Nan;
         }
 
-        private SyntaxNode InfLiteral(RParser.InfLiteralContext inf, SyntaxNode parent, Func<ParserRuleContext, SyntaxNode, Scope, SyntaxNode> transform, Scope scope)
+        static ExpressionSyntax Inf = CSharp.ParseExpression("Double.PositiveInfinity");
+        private static SyntaxNode InfLiteral(RParser.InfLiteralContext inf, Func<ParserRuleContext, Scope, SyntaxNode> transform, Scope scope)
         {
-            throw new NotImplementedException();
+            return Inf;
         }
 
-        private SyntaxNode NA(RParser.NAContext na, SyntaxNode parent, Func<ParserRuleContext, SyntaxNode, Scope, SyntaxNode> transform, Scope scope)
+        private static SyntaxNode NA(RParser.NAContext na, Func<ParserRuleContext, Scope, SyntaxNode> transform, Scope scope)
         {
             return CSharp.ParseExpression("null"); //td: use cases
         }
 
-        private SyntaxNode NullLiteral(RParser.NullLiteralContext @null, SyntaxNode parent, Func<ParserRuleContext, SyntaxNode, Scope, SyntaxNode> transform, Scope scope)
+        private static SyntaxNode NullLiteral(RParser.NullLiteralContext @null, Func<ParserRuleContext, Scope, SyntaxNode> transform, Scope scope)
         {
             return CSharp.ParseExpression("null");
         }
 
-        private SyntaxNode ComplexLiteral(RParser.ComplexLiteralContext complex, SyntaxNode parent, Func<ParserRuleContext, SyntaxNode, Scope, SyntaxNode> transform, Scope scope)
+        private static SyntaxNode ComplexLiteral(RParser.ComplexLiteralContext complex, Func<ParserRuleContext, Scope, SyntaxNode> transform, Scope scope)
         {
-            throw new NotImplementedException();
+            throw new NotImplementedException(); //td: find a complex library
         }
 
-        private SyntaxNode FloatLiteral(RParser.FloatLiteralContext @float, SyntaxNode parent, Func<ParserRuleContext, SyntaxNode, Scope, SyntaxNode> transform, Scope scope)
+        private static SyntaxNode FloatLiteral(RParser.FloatLiteralContext @float, Func<ParserRuleContext, Scope, SyntaxNode> transform, Scope scope)
         {
             return CSharp.ParseExpression(@float.FLOAT().ToString());
         }
 
-        private SyntaxNode IntLiteral(RParser.IntLiteralContext @int, SyntaxNode parent, Func<ParserRuleContext, SyntaxNode, Scope, SyntaxNode> transform, Scope scope)
+        private static SyntaxNode IntLiteral(RParser.IntLiteralContext @int, Func<ParserRuleContext, Scope, SyntaxNode> transform, Scope scope)
         {
             return CSharp.ParseExpression(@int.INT().ToString());
         }
 
-        private SyntaxNode HexLiteral(RParser.HexLiteralContext hex, SyntaxNode parent, Func<ParserRuleContext, SyntaxNode, Scope, SyntaxNode> transform, Scope scope)
+        private static SyntaxNode HexLiteral(RParser.HexLiteralContext hex, Func<ParserRuleContext, Scope, SyntaxNode> transform, Scope scope)
         {
             return CSharp.ParseExpression(hex.HEX().ToString());
         }
 
-        private SyntaxNode StringLiteral(RParser.StringLiteralContext str, SyntaxNode parent, Func<ParserRuleContext, SyntaxNode, Scope, SyntaxNode> transform, Scope scope)
+        private static SyntaxNode StringLiteral(RParser.StringLiteralContext str, Func<ParserRuleContext, Scope, SyntaxNode> transform, Scope scope)
         {
             return CSharp.ParseExpression(str.STRING().ToString());
         }
 
-        private SyntaxNode Identifier(RParser.IdentifierContext identifier, SyntaxNode parent, Func<ParserRuleContext, SyntaxNode, Scope, SyntaxNode> transform, Scope scope)
+        private static SyntaxNode Identifier(RParser.IdentifierContext identifier, Func<ParserRuleContext, Scope, SyntaxNode> transform, Scope scope)
         {
-            return CSharp.ParseExpression(identifier.ID().ToString());
+            var str = identifier
+                .ID()
+                .ToString()
+                .Replace('.', '_');
+
+            return CSharp.ParseExpression(str);
         }
 
-        private SyntaxNode Parenthesized(RParser.ParenthesizedContext parenth, SyntaxNode parent, Func<ParserRuleContext, SyntaxNode, Scope, SyntaxNode> transform, Scope scope)
+        private static SyntaxNode Parenthesized(RParser.ParenthesizedContext parenth, Func<ParserRuleContext, Scope, SyntaxNode> transform, Scope scope)
         {
-            throw new NotImplementedException();
+            var expr = transform(parenth.expr(), scope) as ExpressionSyntax;
+            Debug.Assert(expr != null);
+
+            return CSharp.ParenthesizedExpression(expr);
         }
 
-        private SyntaxNode BreakStatement(RParser.BreakStatementContext breakStatement, SyntaxNode parent, Func<ParserRuleContext, SyntaxNode, Scope, SyntaxNode> transform, Scope scope)
+        private static SyntaxNode BreakStatement(RParser.BreakStatementContext breakStatement, Func<ParserRuleContext, Scope, SyntaxNode> transform, Scope scope)
         {
             return CSharp.BreakStatement();
         }
 
-        private SyntaxNode RepeatStatement(RParser.RepeatStatementContext repeatStatement, SyntaxNode parent, Func<ParserRuleContext, SyntaxNode, Scope, SyntaxNode> transform, Scope scope)
+        static WhileStatementSyntax repeat = (WhileStatementSyntax)CSharp.ParseStatement("while(true) {}");
+        private static SyntaxNode RepeatStatement(RParser.RepeatStatementContext repeatStatement, Func<ParserRuleContext, Scope, SyntaxNode> transform, Scope scope)
         {
-            throw new NotImplementedException();
-        }
-
-        private SyntaxNode WhileStatement(RParser.WhileStatementContext whileStatement, SyntaxNode parent, Func<ParserRuleContext, SyntaxNode, Scope, SyntaxNode> transform, Scope scope)
-        {
-            throw new NotImplementedException();
-        }
-
-        private SyntaxNode ForElseStatement(RParser.ForElseStatementContext forStatement, SyntaxNode parent, Func<ParserRuleContext, SyntaxNode, Scope, SyntaxNode> transform, Scope scope)
-        {
-            throw new NotImplementedException();
-        }
-
-        private SyntaxNode IfElseStatement(RParser.IfElseStatementContext ifStatement, SyntaxNode parent, Func<ParserRuleContext, SyntaxNode, Scope, SyntaxNode> transform, Scope scope)
-        {
-            throw new NotImplementedException();
-        }
-
-        private SyntaxNode IfStatement(RParser.IfStatementContext ifStatement, SyntaxNode parent, Func<ParserRuleContext, SyntaxNode, Scope, SyntaxNode> transform, Scope scope)
-        {
-            throw new NotImplementedException();
-        }
-
-        private SyntaxNode Compound(RParser.CompoundContext compound, SyntaxNode parent, Func<ParserRuleContext, SyntaxNode, Scope, SyntaxNode> transform, Scope scope)
-        {
-            throw new NotImplementedException();
-        }
-
-        private SyntaxNode FunctionCall(RParser.FunctionCallContext call, SyntaxNode parent, Func<ParserRuleContext, SyntaxNode, Scope, SyntaxNode> transform, Scope scope)
-        {
-            var exprNode = transform(call.expr(), parent, scope) as ExpressionSyntax;
-            var args = transform(call.sublist(), parent, scope) as ArgumentListSyntax;
-
-            if (exprNode is IdentifierNameSyntax)
-                return createInvocation(exprNode.ToString(), args);
-
-            return CSharp.InvocationExpression(exprNode, args);
-        }
-
-        private SyntaxNode createInvocation(string call, ArgumentListSyntax args)
-        {
-            switch (call)
-            {
-                case "c": return Concatenation(args);
-
-            }
-            throw new NotImplementedException();
-        }
-
-        private SyntaxNode Concatenation(ArgumentListSyntax args)
-        {
-            throw new NotImplementedException();
-        }
-
-        private SyntaxNode Function(RParser.FunctionContext func, SyntaxNode parent, Func<ParserRuleContext, SyntaxNode, Scope, SyntaxNode> transform, Scope scope)
-        {
-            throw new NotImplementedException();
-        }
-
-        private SyntaxNode Sign(RParser.SignContext sign, SyntaxNode parent, Func<ParserRuleContext, SyntaxNode, Scope, SyntaxNode> transform, Scope scope)
-        {
-            return unaryOperator(tokenKind(sign.GetToken(0, 0).ToString()), sign.expr(), transform, scope);
-        }
-
-        private SyntaxNode Negation(RParser.NegationContext neg, SyntaxNode parent, Func<ParserRuleContext, SyntaxNode, Scope, SyntaxNode> transform, Scope scope)
-        {
-            return unaryOperator(SyntaxKind.ExclamationToken, neg.expr(), transform, scope);
-        }
-
-        private SyntaxNode Multiplication(RParser.MultiplicationContext mult, SyntaxNode parent, Func<ParserRuleContext, SyntaxNode, Scope, SyntaxNode> transform, Scope scope)
-        {
-            return binaryOperator(tokenKind(mult.GetToken(0, 0).ToString()), mult.expr(0), mult.expr(1), transform, scope);
-        }
-
-        private SyntaxNode Addition(RParser.AdditionContext add, SyntaxNode parent, Func<ParserRuleContext, SyntaxNode, Scope, SyntaxNode> transform, Scope scope)
-        {
-            return binaryOperator(tokenKind(add.GetToken(0, 0).ToString()), add.expr(0), add.expr(1), transform, scope);
-        }
-
-        private SyntaxNode Comparison(RParser.ComparisonContext comp, SyntaxNode parent, Func<ParserRuleContext, SyntaxNode, Scope, SyntaxNode> transform, Scope scope)
-        {
-            return binaryOperator(tokenKind(comp.GetToken(0, 0).ToString()), comp.expr(0), comp.expr(1), transform, scope);
-        }
-
-        private SyntaxNode LogicalAnd(RParser.LogicalAndContext and, SyntaxNode parent, Func<ParserRuleContext, SyntaxNode, Scope, SyntaxNode> transform, Scope scope)
-        {
-            return binaryOperator(tokenKind(and.GetToken(0, 0).ToString()), and.expr(0), and.expr(1), transform, scope);
-        }
-
-        private SyntaxNode LogicalOr(RParser.LogicalOrContext or, SyntaxNode parent, Func<ParserRuleContext, SyntaxNode, Scope, SyntaxNode> transform, Scope scope)
-        {
-            return binaryOperator(tokenKind(or.GetToken(0, 0).ToString()), or.expr(0), or.expr(1), transform, scope);
-        }
-        
-        private SyntaxKind tokenKind(string v)
-        {
-            throw new NotImplementedException();
-        }
-
-        static ExpressionSyntax placeholder = CSharp.ParseExpression("_");
-        private SyntaxNode binaryOperator(SyntaxKind kind, RParser.ExprContext left, RParser.ExprContext right, Func<ParserRuleContext, SyntaxNode, Scope, SyntaxNode> transform, Scope scope)
-        {
-            var parent = CSharp.BinaryExpression(kind, placeholder, placeholder);
-            var leftNode = transform(left, parent, scope) as ExpressionSyntax;
-            var rightNode = transform(right, parent, scope) as ExpressionSyntax;
-
-            return parent
-                .WithLeft(leftNode)
-                .WithRight(rightNode);
-        }
-
-        private SyntaxNode unaryOperator(SyntaxKind kind, RParser.ExprContext value, Func<ParserRuleContext, SyntaxNode, Scope, SyntaxNode> transform, Scope scope)
-        {
-            var parent = CSharp.PrefixUnaryExpression(kind, placeholder);
-            var valueNode = transform(value, parent, scope) as ExpressionSyntax;
-
-            return parent
-                .WithOperand(valueNode);
-        }
-
-        private SyntaxNode Assignment(RParser.AssignmentContext assignment, SyntaxNode parent, Func<ParserRuleContext, SyntaxNode, Scope, SyntaxNode> transform, Scope scope)
-        {
-            var left = transform(assignment.expr(), null, scope) as ExpressionSyntax;
-            Debug.Assert(left != null);
-            var rightNode = null as SyntaxNode;
-            var result = null as SyntaxNode;
-
-            if (parent == null)
-            {
-                result = createAssigment(left, out rightNode);
-                parent = result;
-            }
-            else
-            {
-                var pre = scope.PreStatements();
-                var post = scope.PostStatements();
+            if (!topLevel(repeatStatement))
                 throw new NotImplementedException();
+
+            BlockSyntax body = parseBlock(repeatStatement.expr(), transform, scope);
+            return repeat
+                .WithStatement(body);
+        }
+
+        private static BlockSyntax parseBlock(RParser.ExprContext expr, Func<ParserRuleContext, Scope, SyntaxNode> transform, Scope scope)
+        {
+            var node = transform(expr, scope);
+            if (expr is RParser.CompoundContext)
+                return (BlockSyntax)node;
+
+            if (node is ExpressionSyntax)
+                node = CSharp.ExpressionStatement(node as ExpressionSyntax);
+
+            return CSharp
+                .Block()
+                .WithStatements(CSharp.List(new StatementSyntax[] {
+                    (StatementSyntax)node}));
+        }
+
+        static Template @while = Template.ParseStatement("while(__0) {}");
+        private static SyntaxNode WhileStatement(RParser.WhileStatementContext whileStatement, Func<ParserRuleContext, Scope, SyntaxNode> transform, Scope scope)
+        {
+            if (!topLevel(whileStatement))
+                throw new NotImplementedException();
+
+            var exprs = whileStatement.expr();
+            var cond = (ExpressionSyntax)transform(exprs[0], scope);
+            var body = parseBlock(exprs[1], transform, scope);
+
+            return @while.Get<WhileStatementSyntax>(cond)
+                .WithStatement(body);
+        }
+
+        private static bool topLevel(RuleContext ctx)
+        {
+            return ctx.Parent is RParser.ProgContext 
+                || ctx.Parent is RParser.CompoundContext
+                || ctx.Parent is RParser.ExpressionStatementContext
+                ;
+        }
+
+        static Template @foreach = Template.ParseStatement("foreach(var _0 in __1) {}");
+        private static SyntaxNode ForEachStatement(RParser.ForEachStatementContext forStatement, Func<ParserRuleContext, Scope, SyntaxNode> transform, Scope scope)
+        {
+            if (!topLevel(forStatement))
+                throw new NotImplementedException();
+
+            var exprs = forStatement.expr();
+            var array = (ExpressionSyntax)transform(exprs[0], scope);
+            var body = parseBlock(exprs[1], transform, scope);
+
+            return @foreach.Get<ForEachStatementSyntax>(forStatement.ID().ToString(), array)
+                .WithStatement(body);
+        }
+
+        static Template @ifelse = Template.ParseStatement("if(__0) {} else {}");
+        private static SyntaxNode IfElseStatement(RParser.IfElseStatementContext ifStatement, Func<ParserRuleContext, Scope, SyntaxNode> transform, Scope scope)
+        {
+            if (!topLevel(ifStatement))
+                throw new NotImplementedException();
+
+            var exprs = ifStatement.expr();
+            var cond = (ExpressionSyntax)transform(exprs[0], scope);
+            var @if = parseBlock(exprs[1], transform, scope);
+            var @else = parseBlock(exprs[2], transform, scope);
+
+            return @ifelse.Get<IfStatementSyntax>(cond)
+                .WithStatement(@if)
+                .WithElse(CSharp.ElseClause(
+                    @else));
+        }
+
+        static Template @if = Template.ParseStatement("if(__0) {}");
+        private static SyntaxNode IfStatement(RParser.IfStatementContext ifStatement, Func<ParserRuleContext, Scope, SyntaxNode> transform, Scope scope)
+        {
+            if (!topLevel(ifStatement))
+                throw new NotImplementedException();
+
+            var exprs = ifStatement.expr();
+            var cond = (ExpressionSyntax)transform(exprs[0], scope);
+            var code = parseBlock(exprs[1], transform, scope);
+
+            return @if.Get<IfStatementSyntax>(cond)
+                .WithStatement(code);
+        }
+
+        private static SyntaxNode Compound(RParser.CompoundContext compound, Func<ParserRuleContext, Scope, SyntaxNode> transform, Scope scope)
+        {
+            //create a new context for the block
+            var inner = new Scope(scope);
+            inner.InitR();
+
+            var pre = inner.PreStatements();
+            var statements = new List<StatementSyntax>();
+            var exprlist = compound.exprlist();
+            if (exprlist is RParser.ExpressionListContext)
+            {
+                var list = exprlist as RParser.ExpressionListContext;
+                foreach (var expr in list.expr_or_assign())
+                {
+                    pre.Clear();
+                    var statement = transform(expr, inner) as StatementSyntax;
+                    Debug.Assert(statement != null);
+
+
+                    statements.AddRange(pre);
+                    statements.Add(statement);
+                }
             }
 
-            var right = transform(assignment.expr_or_assign(), parent, scope) as StatementSyntax;
-            return result;
+            return CSharp.Block(statements);
         }
 
-        private SyntaxNode RightAssignment(RParser.RightAssignmentContext assignment, SyntaxNode parent, Func<ParserRuleContext, SyntaxNode, Scope, SyntaxNode> transform, Scope scope)
+        private static SyntaxNode FunctionCall(RParser.FunctionCallContext call, Func<ParserRuleContext, Scope, SyntaxNode> transform, Scope scope)
+        {
+            var expr = transform(call.expr(), scope) as ExpressionSyntax;
+            var args = transform(call.sublist(), scope) as ArgumentListSyntax;
+
+            Debug.Assert(expr != null && args != null);
+            if (expr is IdentifierNameSyntax)
+                return createInvocation(expr.ToString(), args);
+
+            throw new NotImplementedException();
+        }
+
+        private static SyntaxNode createInvocation(string call, ArgumentListSyntax args)
+        {
+            //td: use cases
+            //switch (call)
+            //{
+            //    case "c":
+            //        call = "RR.c";
+            //        break;
+            //}
+
+            return CSharp.InvocationExpression(CSharp.ParseExpression("RR." + call), args);
+        }
+
+        private static SyntaxNode Function(RParser.FunctionContext func, Func<ParserRuleContext, Scope, SyntaxNode> transform, Scope scope)
         {
             throw new NotImplementedException();
         }
 
-        private SyntaxNode createAssigment(ExpressionSyntax left, out SyntaxNode rightNode)
+        private static SyntaxNode ExpressionStatement(RParser.ExpressionStatementContext exprStatement, Func<ParserRuleContext, Scope, SyntaxNode> transform, Scope scope)
         {
+            var expr = transform(exprStatement.expr(), scope);
+            Debug.Assert(expr != null);
+
+            if (expr is ExpressionSyntax)
+                return CSharp.ExpressionStatement(expr as ExpressionSyntax);
+
+            return (StatementSyntax)expr;
+        }
+
+        private static SyntaxNode AssignmentStatement(RParser.AssignmentContext assignment, Func<ParserRuleContext, Scope, SyntaxNode> transform, Scope scope)
+        {
+            var left = transform(assignment.expr(), scope) as ExpressionSyntax;
+            var right = transform(assignment.expr_or_assign(), scope) as ExpressionStatementSyntax;
+
+            Debug.Assert(left != null && right != null);
+            return assigmentStatement(left, right.Expression, scope);
+        }
+
+        static Template preVariable = Template.ParseStatement("object _0 = null;");
+        static Template preAssignment = Template.ParseExpression("(_0 = __1)");
+        private static SyntaxNode RightAssignment(RParser.RightAssignmentContext assignment, Func<ParserRuleContext, Scope, SyntaxNode> transform, Scope scope)
+        {
+            var left = transform(assignment.expr()[1], scope) as ExpressionSyntax;
+            var right = transform(assignment.expr()[0], scope) as ExpressionSyntax;
+            Debug.Assert(left != null && right != null);
+
+            if (topLevel(assignment))
+                return assigmentStatement(left, right, scope);
+
+            Debug.Assert(left is IdentifierNameSyntax);
+            var leftValue = left.ToString();
+            if (!scope.hasVariable(leftValue))
+            {
+                scope.PreStatements().Add(preVariable.Get<StatementSyntax>(left));
+                scope.addVariable(leftValue);
+            }
+
+            return preAssignment.Get(left, right);
+        }
+
+        static Template assignment = Template.ParseStatement("__0 = __1;");
+        static Template declaration = Template.ParseStatement("var _0 = __1;");
+        private static StatementSyntax assigmentStatement(ExpressionSyntax left, ExpressionSyntax right, Scope scope)
+        {
+            if (left is IdentifierNameSyntax)
+            {
+                var varName = left.ToString();
+                if (scope.hasVariable(varName))
+                    return assignment.Get<StatementSyntax>(left, right);
+                else
+                {
+                    scope.addVariable(varName);
+                    return declaration.Get<StatementSyntax>(varName, right);
+                }
+            }
+
             throw new NotImplementedException();
         }
 
-        private SyntaxNode Program(RParser.ProgContext prog, SyntaxNode parent, Func<ParserRuleContext, SyntaxNode, Scope, SyntaxNode> transform, Scope scope)
+        private static SyntaxNode EitherOr(RParser.Expr_or_assignContext either, Func<ParserRuleContext, Scope, SyntaxNode> transform, Scope scope)
+        {
+            if (either is RParser.AssignmentContext)
+                return AssignmentStatement(either as RParser.AssignmentContext, transform, scope);
+
+            Debug.Assert(either is RParser.ExpressionStatementContext);
+            return ExpressionStatement(either as RParser.ExpressionStatementContext, transform, scope);
+        }
+
+        private static SyntaxNode Program(RParser.ProgContext prog, Func<ParserRuleContext, Scope, SyntaxNode> transform, Scope scope)
         {
             var statements = new List<StatementSyntax>();
+            var inner = new Scope(scope);
+            inner.InitR();
+            var pre = inner.PreStatements();
+
             foreach (var expr in prog.expr_or_assign())
             {
-                var inner = new Scope(scope);
-                inner.InitR();
+                pre.Clear();
 
-                var statement = transform(expr, null, inner) as StatementSyntax;
+                var statement = transform(expr, inner) as StatementSyntax;
                 Debug.Assert(statement != null);
-
-                var pre  = inner.PreStatements();
-                var post = inner.PostStatements();
 
                 statements.AddRange(pre);
                 statements.Add(statement);
-                statements.AddRange(post);
             }
 
             return CSharp.Block(statements);
