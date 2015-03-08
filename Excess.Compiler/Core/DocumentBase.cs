@@ -245,9 +245,6 @@ namespace Excess.Compiler.Core
             Dictionary<string, SourceSpan> annotations = new Dictionary<string, SourceSpan>();
             _root = calculateNewText(tokens, annotations, out resultText);
 
-            //update from token to node
-            processAnnotations(annotations);
-
             //allow extensions writers to perform one last rewrite before the syntactical 
             _root = applyNodeChanges(_root, "lexical-extension", CompilerStage.Lexical);
 
@@ -297,6 +294,8 @@ namespace Excess.Compiler.Core
             root = _compiler.MarkTree(root);
             _original = root;
 
+            processAnnotations(root, annotations);
+
             //allow for preprocessing of the original 
             notifyOriginal(modifiedText);
 
@@ -313,11 +312,11 @@ namespace Excess.Compiler.Core
             return root;
         }
 
-        private void processAnnotations(Dictionary<string, SourceSpan> annotations)
+        private void processAnnotations(TNode root, Dictionary<string, SourceSpan> annotations)
         {
             foreach (var annotation in annotations)
             {
-                TNode aNode = _compiler.Find(_root, annotation.Value);
+                TNode aNode = _compiler.Find(root, annotation.Value);
                 Debug.Assert(aNode != null);
 
                 //change the id of the change from token to node

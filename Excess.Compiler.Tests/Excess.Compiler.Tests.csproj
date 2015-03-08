@@ -74,6 +74,7 @@
     <Reference Include="Microsoft.CodeAnalysis.Workspaces.Desktop">
       <HintPath>..\packages\Microsoft.CodeAnalysis.Workspaces.Common.1.0.0.0-beta2\lib\net45\Microsoft.CodeAnalysis.Workspaces.Desktop.dll</HintPath>
     </Reference>
+    <Reference Include="Microsoft.CSharp" />
     <Reference Include="System" />
     <Reference Include="System.Collections.Immutable, Version=1.1.32.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <Private>True</Private>
@@ -96,7 +97,9 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="RuntimeHelper.cs" />
     <Compile Include="ExtUsage.cs" />
+    <Compile Include="RRuntime.cs" />
     <Compile Include="XSUsage.cs" />
     <Compile Include="Usage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -36,7 +36,7 @@ expr:   expr '[[' sublist ']' ']'									#ListAccess
     |   'function' '(' formlist? ')' expr							#Function
     |   '{' NL? exprlist '}'										#Compound
     |   'if' '(' expr ')' NL? expr									#IfStatement
-    |   'if' '(' expr ')' NL? expr NL? 'else' NL? expr					#IfElseStatement
+    |   'if' '(' expr ')' NL? expr NL? 'else' NL? expr				#IfElseStatement
     |   'for' '(' ID 'in' expr ')' NL? expr							#ForEachStatement
     |   'while' '(' expr ')' NL? expr								#WhileStatement
     |   'repeat' (NL)* expr											#RepeatStatement

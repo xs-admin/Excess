@@ -53,6 +53,9 @@ namespace Excess.Extensions.R
     {
         public static void Apply(ICompiler<SyntaxToken, SyntaxNode, SemanticModel> compiler)
         {
+            compiler.Environment()
+                .dependency<IVector>("Excess.Extensions.R");
+
             compiler.Lexical()
                 .grammar<RGrammar, ParserRuleContext>("R", ExtensionKind.Code)
                     .transform<RParser.ProgContext>(Program)
@@ -175,8 +178,6 @@ namespace Excess.Extensions.R
         }
 
         static Template indexCall = Template.ParseExpression("RR.index(__0, __1)");
-        static Template indexLogical = Template.ParseExpression("(__iv) => __0");
-        static ExpressionSyntax __iv = CSharp.ParseExpression("__iv");
         private static SyntaxNode Index(RParser.IndexContext index, Func<ParserRuleContext, Scope, SyntaxNode> transform, Scope scope)
         {
             var indexExprs = index.sublist().sub();
@@ -191,53 +192,9 @@ namespace Excess.Extensions.R
             Debug.Assert(expr != null && args != null);
 
             var indexExpr = args.Arguments[0].Expression;
-            Debug.Assert(expr != null);
-
-            if (isBoolean(CSharp.ParseExpression(indexExprs[0].GetText())))
-            {
-                indexExpr = indexExpr.
-                    ReplaceNodes(indexExpr
-                        .DescendantNodes()
-                        .OfType<IdentifierNameSyntax>()
-                        .Where(e => e.IsEquivalentTo(expr)),
-                        (o, n) => __iv);
-
-                indexExpr = indexLogical.Get<ExpressionSyntax>(indexExpr);
-            }
+            Debug.Assert(indexExpr != null);
 
             return indexCall.Get(expr, indexExpr);
-        }
-
-        private static bool isBoolean(ExpressionSyntax expr)
-        {
-            var result = false;
-            if (expr is BinaryExpressionSyntax)
-            {
-                var opKind = (SyntaxKind)(expr as BinaryExpressionSyntax).OperatorToken.RawKind;
-                switch (opKind)
-                {
-                    case SyntaxKind.LessThanToken:
-                    case SyntaxKind.LessThanEqualsToken:
-                    case SyntaxKind.GreaterThanToken:
-                    case SyntaxKind.GreaterThanEqualsToken:
-                    case SyntaxKind.EqualsEqualsToken:
-                    case SyntaxKind.ExclamationEqualsToken:
-                        result = true;
-                        break;
-                }
-            }
-            else if (expr is PrefixUnaryExpressionSyntax)
-            {
-                var opKind = (SyntaxKind)(expr as PrefixUnaryExpressionSyntax).OperatorToken.RawKind;
-                switch (opKind)
-                {
-                    case SyntaxKind.ExclamationToken:
-                        result = true;
-                        break;
-                }
-            }
-
-            return result;
         }
 
         private static SyntaxNode ArgumentList(RParser.SublistContext args, Func<ParserRuleContext, Scope, SyntaxNode> transform, Scope scope)
