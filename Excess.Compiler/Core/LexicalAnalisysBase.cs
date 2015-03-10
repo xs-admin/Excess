@@ -767,7 +767,7 @@ namespace Excess.Compiler.Core
             return this;
         }
 
-        public IGrammarAnalysis<TGrammar, TNode, GNode> grammar<TGrammar, GNode>(string keyword, ExtensionKind kind) where TGrammar : IGrammar<TToken, TNode, GNode>, new()
+        public IGrammarAnalysis<TGrammar, GNode, TToken, TNode> grammar<TGrammar, GNode>(string keyword, ExtensionKind kind) where TGrammar : IGrammar<TToken, TNode, GNode>, new()
         {
             return new BaseGrammarAnalysis<TToken, TNode, TModel, GNode, TGrammar>(this, keyword, kind);
         }

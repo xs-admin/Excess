@@ -65,6 +65,15 @@ namespace Excess.Compiler.Roslyn
             _errors.Add(error);
         }
 
+        public void AddError(string id, string message, int offset, int length)
+        {
+            var location = Location.Create(_root.SyntaxTree, new TextSpan(offset, length));
+            var descriptor = new DiagnosticDescriptor(id, message, message, "Excess", DiagnosticSeverity.Error, true);
+
+            var error = Diagnostic.Create(descriptor, location);
+            _errors.Add(error);
+        }
+
         public IEnumerable<Diagnostic> GetErrors()
         {
             return _errors;

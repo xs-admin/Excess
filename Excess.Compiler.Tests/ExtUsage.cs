@@ -5,8 +5,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Linq;
 using Microsoft.CodeAnalysis.CSharp;
-
-using Excess.Extensions;
+using Excess.Entensions.XS;
 
 namespace Excess.Compiler.Tests
 {
@@ -14,10 +13,10 @@ namespace Excess.Compiler.Tests
     public class ExtUsage
     {
         [TestMethod]
-        public void Match()
+        public void MatchExtension()
         {
             RoslynCompiler compiler = new RoslynCompiler();
-            Extensions.Match.Apply(compiler);
+            Match.Apply(compiler);
 
             SyntaxTree tree = null;
             string text = null;
@@ -85,16 +84,16 @@ namespace Excess.Compiler.Tests
         }
 
         [TestMethod]
-        public void Asynch()
+        public void AsynchUsage()
         {
             RoslynCompiler compiler = new RoslynCompiler();
-            Extensions.Asynch.Apply(compiler);
+            Asynch.Apply(compiler);
 
             SyntaxTree tree = null;
             string text = null;
 
             //event handler usage
-            var Asynch = @"
+            var AsynchText = @"
                 class foo
                 {
                     void bar()
@@ -106,7 +105,7 @@ namespace Excess.Compiler.Tests
                     }
                 }";
 
-            tree = compiler.ApplySemanticalPass(Asynch, out text);
+            tree = compiler.ApplySemanticalPass(AsynchText, out text);
             Assert.IsTrue(tree.GetRoot()
                 .DescendantNodes()
                 .OfType<ParenthesizedLambdaExpressionSyntax>()
@@ -150,7 +149,7 @@ namespace Excess.Compiler.Tests
         public void Contract()
         {
             RoslynCompiler compiler = new RoslynCompiler();
-            Extensions.Contract.Apply(compiler);
+            Excess.Entensions.XS.Contract.Apply(compiler);
 
             SyntaxTree tree = null;
             string text = null;
@@ -331,7 +330,7 @@ namespace Excess.Compiler.Tests
                         w : 
                         [
                             {a : 100, b : 200, c: [expr, expr + 1, expr + 2]},
-                            {a : 150, b : 250, c: [expr, expr - 1, expr - 2]},
+                            {a : 150, b : 250, c: [expr, expr - 1, expr - 2]}
                         ]
                     }
                 }";

@@ -8,14 +8,13 @@ using System.Text;
 using System.Threading.Tasks;
 using Excess.Compiler;
 using Excess.Compiler.Core;
-using Excess.Compiler.XS;
-using Excess.Compiler.Extensions;
 
 namespace Excess
 {
     using Injector = ICompilerInjector<SyntaxToken, SyntaxNode, SemanticModel>;
     using CompositeInjector = CompositeInjector<SyntaxToken, SyntaxNode, SemanticModel>;
     using DelegateInjector = DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel>;
+    using Excess.Entensions.XS;
 
     public class TranslationService : ITranslationService
     {

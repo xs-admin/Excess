@@ -70,5 +70,6 @@ namespace Excess.Compiler
         IEnumerable<TToken> MarkTokens(IEnumerable<TToken> tokens, out int xsId);
         IEnumerable<TNode> Find(TNode node, IEnumerable<string> xsIds);
         TNode Find(TNode node, SourceSpan value);
+        int GetOffset(TToken token);
     }
 }

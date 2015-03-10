@@ -13,7 +13,7 @@ namespace Excess.Extensions.R
 {
     public class RGrammar : IGrammar<SyntaxToken, SyntaxNode, ParserRuleContext>
     {
-        public ParserRuleContext parse(IEnumerable<SyntaxToken> tokens, Scope scope)
+        public ParserRuleContext parse(IEnumerable<SyntaxToken> tokens, Scope scope, int offset)
         {
             var text = RoslynCompiler.TokensToString(tokens);
             AntlrInputStream stream = new AntlrInputStream(text);

@@ -20,5 +20,11 @@ namespace Excess.Compiler.Roslyn
             var doc = scope.GetDocument();
             doc.AddError(id, message, location);
         }
+
+        public static void AddError(this Scope scope, string id, string message, int offset, int length)
+        {
+            var doc = scope.GetDocument();
+            doc.AddError(id, message, offset, length);
+        }
     }
 }

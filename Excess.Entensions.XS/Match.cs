@@ -1,4 +1,5 @@
-﻿using Excess.Compiler.Roslyn;
+﻿using Excess.Compiler;
+using Excess.Compiler.Roslyn;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -9,7 +10,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Excess.Compiler.Extensions
+namespace Excess.Entensions.XS
 {
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
     using ExcessCompiler = ICompiler<SyntaxToken, SyntaxNode, SemanticModel>;

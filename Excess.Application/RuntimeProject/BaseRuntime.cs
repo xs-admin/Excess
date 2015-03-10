@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 using Compilation = Excess.Compiler.Roslyn.Compilation;
 using Excess.Compiler;
-using Excess.Compiler.XS;
+using Excess.Entensions.XS;
 
 namespace Excess.RuntimeProject
 {

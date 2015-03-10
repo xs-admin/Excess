@@ -142,6 +142,11 @@ namespace Excess.Compiler.Roslyn
         {
             return node.GetAnnotatedNodes(RoslynCompiler.NodeIdAnnotation + xsId).FirstOrDefault();
         }
+
+        public int GetOffset(SyntaxToken token)
+        {
+            return token.SpanStart;
+        }
     }
 
     public class RoslynCompiler : CompilerBase<SyntaxToken, SyntaxNode, SemanticModel>
@@ -737,6 +742,34 @@ namespace Excess.Compiler.Roslyn
             return CSharp.ParseExpression('"' + value + '"');
         }
 
+        public static SyntaxNode ReplaceAssignment(SyntaxNode node, SyntaxNode newNode, out bool isAssignment)
+        {
+            isAssignment = false;
+            if (node is LocalDeclarationStatementSyntax)
+            {
+                isAssignment = true;
+
+                var decl = node as LocalDeclarationStatementSyntax;
+                return decl
+                    .WithDeclaration(decl.Declaration
+                    .WithVariables(CSharp.SeparatedList(new[] {
+                            decl.Declaration.Variables[0]
+                            .WithInitializer(decl.Declaration.Variables[0].Initializer
+                            .WithValue((ExpressionSyntax)newNode))})));
+            }
+
+            if (node is BinaryExpressionSyntax)
+            {
+                var expr = node as BinaryExpressionSyntax;
+                if (expr.CSharpKind() == SyntaxKind.SimpleAssignmentExpression)
+                {
+                    isAssignment = true;
+                    return expr.WithRight((ExpressionSyntax)newNode);
+                }
+            }
+
+            return newNode;
+        }
     }
 
 }

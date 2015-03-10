@@ -16,24 +16,31 @@ using Newtonsoft.Json.Linq;
 namespace Excess.Entensions.XS
 {
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
+    using ExcessCompiler = ICompiler<SyntaxToken, SyntaxNode, SemanticModel>;
     using Roslyn = RoslynCompiler;
 
     internal class JsonGrammar : IGrammar<SyntaxToken, SyntaxNode, ParserRuleContext>
     {
-        public ParserRuleContext parse(IEnumerable<SyntaxToken> tokens, Scope scope)
+        public ParserRuleContext parse(IEnumerable<SyntaxToken> tokens, Scope scope, int offset)
         {
             var text = RoslynCompiler.TokensToString(tokens);
             AntlrInputStream stream = new AntlrInputStream(text);
             ITokenSource lexer = new JSONLexer(stream);
             ITokenStream tokenStream = new CommonTokenStream(lexer);
             JSONParser parser = new JSONParser(tokenStream);
-            return parser.json();
+
+            parser.AddErrorListener(new AntlrErrors<IToken>(scope, offset));
+            var result = parser.json();
+            //if (parser.NumberOfSyntaxErrors > 0)
+            //    return null;
+
+            return result;
         }
     }
 
     public class Json
     {
-        public static void Apply(ICompiler<SyntaxToken, SyntaxNode, SemanticModel> compiler)
+        public static void Apply(ExcessCompiler compiler)
         {
             compiler.Environment()
                 .dependency<JObject>("Newtonsoft.Json.Linq");

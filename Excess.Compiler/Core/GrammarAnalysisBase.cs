@@ -25,9 +25,13 @@ namespace Excess.Compiler.Core
         {
             var allTokens = extension.Body.ToArray();
             var withoutBraces = Range(allTokens, 1, allTokens.Length - 1);
+            if (!withoutBraces.Any())
+                return node; 
 
-            var g = _grammar.parse(withoutBraces, scope);
-            if (g.Equals(default(GNode)))
+            var compiler = scope.GetService<TToken, TNode, TModel>();
+            var g        = _grammar.parse(withoutBraces, scope, compiler.GetOffset(withoutBraces.First()));
+
+            if (g == null || g.Equals(default(GNode)))
                 return node; //errors added to the scope already
 
             var result = doTransform(g, scope);

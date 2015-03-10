@@ -94,12 +94,21 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Arrays.cs" />
+    <Compile Include="Asynch.cs" />
+    <Compile Include="Contract.cs" />
+    <Compile Include="Events.cs" />
+    <Compile Include="Functions.cs" />
     <Compile Include="Grammar\JSONBaseListener.cs" />
     <Compile Include="Grammar\JSONLexer.cs" />
     <Compile Include="Grammar\JSONListener.cs" />
     <Compile Include="Grammar\JSONParser.cs" />
     <Compile Include="Json.cs" />
+    <Compile Include="Match.cs" />
+    <Compile Include="Members.cs" />
+    <Compile Include="Module.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TypeDef.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Grammar\expressions.g4" />

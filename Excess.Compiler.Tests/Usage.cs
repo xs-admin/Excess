@@ -7,7 +7,6 @@ using System.Linq;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Collections.Generic;
 using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
-using Excess.Compiler.XS;
 
 namespace Excess.Compiler.Tests
 {

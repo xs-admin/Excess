@@ -121,6 +121,7 @@ namespace Excess.Compiler
         public TToken              Identifier { get; set; }
         public IEnumerable<TToken> Arguments  { get; set; }
         public IEnumerable<TToken> Body       { get; set; }
+        public int                 BodyStart  { get; set; }
     }
 
     public interface INormalizer<TToken, TNode, TModel>
@@ -139,7 +140,7 @@ namespace Excess.Compiler
         ILexicalMatch<TToken, TNode, TModel> match(); 
         ILexicalAnalysis<TToken, TNode, TModel> extension(string keyword, ExtensionKind kind, Func<IEnumerable<TToken>, Scope, LexicalExtension<TToken>, IEnumerable<TToken>> handler);
         ILexicalAnalysis<TToken, TNode, TModel> extension(string keyword, ExtensionKind kind, Func<TNode, Scope, LexicalExtension<TToken>, TNode> handler);
-        IGrammarAnalysis<TGrammar, TNode, GNode> grammar<TGrammar, GNode>(string keyword, ExtensionKind kind) where TGrammar : IGrammar<TToken, TNode, GNode>, new();
+        IGrammarAnalysis<TGrammar, GNode, TToken, TNode> grammar<TGrammar, GNode>(string keyword, ExtensionKind kind) where TGrammar : IGrammar<TToken, TNode, GNode>, new();
 
         INormalizer<TToken, TNode, TModel> normalize();
 

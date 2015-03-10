@@ -4,11 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
-using Excess.Compiler.XS;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Excess.Compiler.Roslyn;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis;
+using Excess.Entensions.XS;
 
 namespace Excess.Compiler.Tests
 {
@@ -16,10 +16,10 @@ namespace Excess.Compiler.Tests
     public class XSUsage
     {
         [TestMethod]
-        public void Functions()
+        public void FunctionUsage()
         {
             RoslynCompiler compiler = new RoslynCompiler();
-            XS.Functions.Apply(compiler);
+            Functions.Apply(compiler);
             //XSModule.Apply(compiler);
 
             //as lambda

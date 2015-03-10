@@ -101,6 +101,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Compiler.cs" />
+    <Compile Include="Roslyn\AntlrErrors.cs" />
     <Compile Include="Core\CompilerBase.cs" />
     <Compile Include="Core\DocumentBase.cs" />
     <Compile Include="Core\GrammarAnalysisBase.cs" />
@@ -109,9 +110,6 @@
     <Compile Include="Core\SyntaxAnalysisBase.cs" />
     <Compile Include="Core\SyntaxTransformBase.cs" />
     <Compile Include="Document.cs" />
-    <Compile Include="Extensions\Asynch.cs" />
-    <Compile Include="Extensions\Contract.cs" />
-    <Compile Include="Extensions\Match.cs" />
     <Compile Include="Grammar.cs" />
     <Compile Include="LexicalAnalysis.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -130,17 +128,13 @@
     <Compile Include="Scope.cs" />
     <Compile Include="SemanticAnalysis.cs" />
     <Compile Include="SyntaxAnalysis.cs" />
-    <Compile Include="XS\Arrays.cs" />
-    <Compile Include="XS\Events.cs" />
-    <Compile Include="XS\Functions.cs" />
-    <Compile Include="XS\Members.cs" />
-    <Compile Include="XS\Module.cs" />
-    <Compile Include="XS\TypeDef.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="XS\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

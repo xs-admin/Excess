@@ -8,7 +8,7 @@ namespace Excess.Compiler
 {
     public interface IGrammar<TToken, TNode, GNode>
     {
-        GNode parse(IEnumerable<TToken> tokens, Scope scope);
+        GNode parse(IEnumerable<TToken> tokens, Scope scope, int offset);
     }
 
     public interface IGrammarAnalysis<TGrammar, GNode, TToken, TNode>
