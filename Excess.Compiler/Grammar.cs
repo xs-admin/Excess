@@ -11,8 +11,11 @@ namespace Excess.Compiler
         GNode parse(IEnumerable<TToken> tokens, Scope scope);
     }
 
-    public interface IGrammarAnalysis<TGrammar, TNode, GNode>
+    public interface IGrammarAnalysis<TGrammar, GNode, TToken, TNode>
     {
-        IGrammarAnalysis<TGrammar, TNode, GNode> transform<T>(Func<T, Func<GNode, Scope, TNode>, Scope, TNode> handler) where T : GNode;
+        IGrammarAnalysis<TGrammar, GNode, TToken, TNode> transform<T>(Func<T, Func<GNode, Scope, TNode>, Scope, TNode> handler) where T : GNode;
+
+        //
+        void then(Func<TNode, TNode, Scope, LexicalExtension<TToken>, TNode> handler);
     }
 }

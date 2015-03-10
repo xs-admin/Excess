@@ -215,6 +215,7 @@ namespace Excess.Compiler.Roslyn
 
                     var newRoot = document.SyntaxRoot;
 
+
                     Debug.Assert(oldRoot != null && newRoot != null);
                     var newTree = newRoot.SyntaxTree;
                     if (oldRoot != newRoot)

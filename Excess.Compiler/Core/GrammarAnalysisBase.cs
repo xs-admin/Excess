@@ -6,13 +6,19 @@ using System.Threading.Tasks;
 
 namespace Excess.Compiler.Core
 {
-    public class BaseGrammarAnalysis<TToken, TNode, TModel, GNode, TGrammar> : IGrammarAnalysis<TGrammar, TNode, GNode> where TGrammar : IGrammar<TToken, TNode, GNode>, new()
+    public class BaseGrammarAnalysis<TToken, TNode, TModel, GNode, TGrammar> : IGrammarAnalysis<TGrammar, GNode, TToken, TNode> where TGrammar : IGrammar<TToken, TNode, GNode>, new()
     {
         TGrammar _grammar;
         public BaseGrammarAnalysis(ILexicalAnalysis<TToken, TNode, TModel> lexical, string keyword, ExtensionKind kind)
         {
             lexical.extension(keyword, kind, ParseExtension);
             _grammar = new TGrammar();
+        }
+
+        Func<TNode, TNode, Scope, LexicalExtension<TToken>, TNode> _then;
+        public void then(Func<TNode, TNode, Scope, LexicalExtension<TToken>, TNode> handler)
+        {
+            _then = handler;
         }
 
         private TNode ParseExtension(TNode node, Scope scope, LexicalExtension<TToken> extension)
@@ -24,7 +30,11 @@ namespace Excess.Compiler.Core
             if (g.Equals(default(GNode)))
                 return node; //errors added to the scope already
 
-            return doTransform(g, scope);
+            var result = doTransform(g, scope);
+            if (_then != null)
+                result = _then(node, result, scope, extension);
+
+            return result;
         }
 
         private IEnumerable<TToken> Range(TToken[] tokens, int from, int to)
@@ -34,7 +44,7 @@ namespace Excess.Compiler.Core
         }
 
         Dictionary<Type, Func<GNode, Func<GNode, Scope, TNode>, Scope, TNode>> _transformers = new Dictionary<Type, Func<GNode, Func<GNode, Scope, TNode>, Scope, TNode>>();
-        public IGrammarAnalysis<TGrammar, TNode, GNode> transform<T>(Func<T, Func<GNode, Scope, TNode>, Scope, TNode> handler) where T : GNode
+        public IGrammarAnalysis<TGrammar, GNode, TToken, TNode> transform<T>(Func<T, Func<GNode, Scope, TNode>, Scope, TNode> handler) where T : GNode
         {
             var type = typeof(T);
             if (_transformers.ContainsKey(type))

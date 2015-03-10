@@ -308,5 +308,39 @@ namespace Excess.Compiler.Tests
                 .Where(ss => !(ss is ExpressionStatementSyntax || ss is LocalDeclarationStatementSyntax || ss is BlockSyntax))
                 .Count() == 7); //3 if, 2 whiles, a foreach, a break
         }
+
+        [TestMethod]
+        public void JsonUsage()
+        {
+            RoslynCompiler compiler = new RoslynCompiler();
+            Entensions.XS.Json.Apply(compiler);
+
+            SyntaxTree tree = null;
+            string text = null;
+
+            //usage
+            var Usage = @"
+                void main()
+                {
+                    var expr = 20;
+                    var foo = json()
+                    {
+                        x : 3,
+                        y : [3, 4, 5],
+                        z : {a : 10, b : 20},
+                        w : 
+                        [
+                            {a : 100, b : 200, c: [expr, expr + 1, expr + 2]},
+                            {a : 150, b : 250, c: [expr, expr - 1, expr - 2]},
+                        ]
+                    }
+                }";
+
+            tree = compiler.ApplySemanticalPass(Usage, out text);
+            Assert.IsTrue(tree.GetRoot()
+                .DescendantNodes()
+                .OfType<VariableDeclarationSyntax>()
+                .Count() == 6); //must have created 5 variables (x, y, z, a, b)
+        }
     }
 }

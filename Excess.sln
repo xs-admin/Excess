@@ -22,6 +22,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Excess.Compiler.Tests", "Ex
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Excess.Extensions.R", "Excess.Extensions.R\Excess.Extensions.R.csproj", "{5A14C7BA-9E0B-471D-B9D4-FE08073A9F00}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Excess.Entensions.XS", "Excess.Entensions.XS\Excess.Entensions.XS.csproj", "{A9FC6A37-7E7C-4098-9908-CB2E927B9274}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -52,6 +54,10 @@ Global
 		{5A14C7BA-9E0B-471D-B9D4-FE08073A9F00}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5A14C7BA-9E0B-471D-B9D4-FE08073A9F00}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5A14C7BA-9E0B-471D-B9D4-FE08073A9F00}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A9FC6A37-7E7C-4098-9908-CB2E927B9274}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A9FC6A37-7E7C-4098-9908-CB2E927B9274}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A9FC6A37-7E7C-4098-9908-CB2E927B9274}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A9FC6A37-7E7C-4098-9908-CB2E927B9274}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
