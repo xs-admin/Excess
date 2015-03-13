@@ -15,11 +15,18 @@ using System.Diagnostics;
 
 namespace Excess.Compiler.Roslyn
 {
+    public interface ICompilationTool
+    {
+        bool doNotCache { get; }
+        bool compile(string file, string contents, Scope scope, Dictionary<string, string> result);
+    }
+
     public class Compilation
     {
-        public Compilation()
+        public Compilation(IPersistentStorage storage)
         {
-            _environment = createEnvironment();
+            _environment = createEnvironment(storage);
+            _scope.set<ICompilerEnvironment>(_environment);
         }
 
         public string OutputFile { get; set; }
@@ -31,12 +38,24 @@ namespace Excess.Compiler.Roslyn
 
         public ICompilerEnvironment Environment { get { return _environment; } }
 
+        Dictionary<string, ICompilationTool> _tools = new Dictionary<string, ICompilationTool>();
+        public void registerTool(string ext, ICompilationTool tool)
+        {
+            if (_tools.ContainsKey(ext))
+                throw new InvalidOperationException("Duplicate tool");
+
+            _tools[ext] = tool;
+        }
+
         private class CompilationDocument
         {
             public string Id { get; set; }
             public CompilerStage Stage { get; set; }
             public RoslynDocument Document { get; set; }
             public RoslynCompiler Compiler { get; set; }
+            public ICompilationTool Tool { get; set; }
+            public int Hash { get; set; }
+            public string Contents { get; set; }
         }
 
         List<CompilationDocument> _documents = new List<CompilationDocument>();
@@ -56,19 +75,47 @@ namespace Excess.Compiler.Roslyn
                 .Any())
                 throw new InvalidOperationException();
 
-            var compiler = new RoslynCompiler(_environment, _scope);
+            var ext = Path.GetExtension(id);
+            var compiler = null as RoslynCompiler;
+            var tool = null as ICompilationTool;
+            var hash = 0;
+            if (string.IsNullOrEmpty(ext))
+            {
+                compiler = new RoslynCompiler(_environment, _scope);
+                injector.apply(compiler);
+            }
+            else if (ext == ".cs")
+            {
+                addCSharpFile(id, contents);
+            }
+            else
+            {
+                if (_tools.TryGetValue(ext, out tool))
+                {
+                    var storage = _environment.storage();
+                    hash = storage == null ? hash : storage.cachedId(id);
+                }
+            }
+
             var newDoc = new CompilationDocument
             {
                 Id = id,
                 Stage = CompilerStage.Started,
-                Document = new RoslynDocument(compiler.Scope, contents, id),
-                Compiler = compiler
+                Compiler = compiler,
+                Tool = tool,
+                Hash = hash
             };
 
-            injector.apply(newDoc.Compiler);
+            if (compiler != null)
+            {
+                newDoc.Stage = CompilerStage.Started;
+                newDoc.Document = new RoslynDocument(compiler.Scope, contents, id);
 
-            var documentInjector = newDoc.Compiler as IDocumentInjector<SyntaxToken, SyntaxNode, SemanticModel>;
-            documentInjector.apply(newDoc.Document);
+                var documentInjector = newDoc.Compiler as IDocumentInjector<SyntaxToken, SyntaxNode, SemanticModel>;
+                documentInjector.apply(newDoc.Document);
+            }
+            else
+                newDoc.Contents = contents;
 
             _documents.Add(newDoc);
         }
@@ -82,18 +129,23 @@ namespace Excess.Compiler.Roslyn
             if (doc == null)
                 throw new InvalidOperationException();
 
-            if (_compilation != null && doc.Document.SyntaxRoot != null)
-                _compilation = _compilation.RemoveSyntaxTrees(doc.Document.SyntaxRoot.SyntaxTree);
+            if (doc.Document != null)
+            {
+                if (_compilation != null && doc.Document.SyntaxRoot != null)
+                    _compilation = _compilation.RemoveSyntaxTrees(doc.Document.SyntaxRoot.SyntaxTree);
 
-            doc.Document = new RoslynDocument(doc.Compiler.Scope, contents, id);
+                doc.Document = new RoslynDocument(doc.Compiler.Scope, contents, id);
 
-            var documentInjector = doc.Compiler as IDocumentInjector<SyntaxToken, SyntaxNode, SemanticModel>;
-            documentInjector.apply(doc.Document);
+                var documentInjector = doc.Compiler as IDocumentInjector<SyntaxToken, SyntaxNode, SemanticModel>;
+                documentInjector.apply(doc.Document);
 
-            doc.Stage = CompilerStage.Started;
+                doc.Stage = CompilerStage.Started;
+            }
+            else
+                doc.Contents = contents;
         }
 
-        List<SyntaxTree> _additionalTrees = new List<SyntaxTree>();
+        Dictionary<string, SyntaxTree> _csharpFiles = new Dictionary<string, SyntaxTree>();
 
         public FileLinePositionSpan OriginalPosition(Location location)
         {
@@ -127,10 +179,45 @@ namespace Excess.Compiler.Roslyn
             return doc != null? doc.Document : null;
         }
 
-        public void addSyntaxTree(SyntaxTree tree)
+        public string getFileByExtension(string ext)
         {
-            Debug.Assert(_compilation == null);
-            _additionalTrees.Add(tree);
+            var file = _documents
+                .Where(document => Path.GetExtension(document.Id) == ext)
+                .FirstOrDefault();
+
+            if (file == null)
+                return null;
+
+            return file.Id;
+        }
+
+        public SyntaxTree getCSharpFile(string fileName)
+        {
+            SyntaxTree result;
+            if (_csharpFiles.TryGetValue(fileName, out result))
+                return result;
+
+            return null;
+        }
+
+        public void addCSharpFile(string file, SyntaxTree tree)
+        {
+            bool existing = _csharpFiles.ContainsKey(file);
+            if (_compilation != null)
+            {
+                if (existing)
+                    _compilation = _compilation.ReplaceSyntaxTree(_csharpFiles[file], tree);
+                else
+                    _compilation.AddSyntaxTrees(tree);
+            }
+
+            _csharpFiles.Add(file, tree);
+        }
+
+        public void addCSharpFile(string file, string contents)
+        {
+            var tree = CSharp.ParseSyntaxTree(contents);
+            addCSharpFile(file, tree);
         }
 
         public string documentText(string id)
@@ -140,7 +227,12 @@ namespace Excess.Compiler.Roslyn
                 .FirstOrDefault();
 
             if (file != null)
-                return file.Document.Text;
+            {
+                if (file.Document != null)
+                    return file.Document.Text;
+
+                return file.Contents;
+            }
 
             return null;
         }
@@ -157,6 +249,29 @@ namespace Excess.Compiler.Roslyn
             changed = false;
             foreach (var doc in _documents)
             {
+                var tool = doc.Tool;
+                if (tool == null)
+                    continue;
+
+                int hash = 0;
+                if (!tool.doNotCache)
+                    hash = doc.Contents.GetHashCode();
+
+                if (hash == 0 || hash != doc.Hash)
+                {
+                    var result = new Dictionary<string, string>();
+                    tool.compile(doc.Id, doc.Contents, _scope, result);
+
+                    doc.Hash = hash;
+                    toolResults(result, doc.Id, hash);
+                }
+            }
+
+            foreach (var doc in _documents)
+            {
+                if (doc.Compiler == null)
+                    continue;
+
                 var document = doc.Document;
                 if (document.Stage <= CompilerStage.Syntactical)
                 {
@@ -187,6 +302,26 @@ namespace Excess.Compiler.Roslyn
             return true;
         }
 
+        private void toolResults(Dictionary<string, string> result, string fileName, int hash) 
+        {
+            var storage = _environment.storage();
+            if (storage != null)
+                storage.cachedId(fileName, hash);
+
+            foreach (var file in result)
+            {
+                if (hasDocument(file.Key))
+                    updateDocument(file.Key, file.Value);
+                else
+                {
+                    if (storage != null)
+                        storage.addFile(file.Key, file.Value, true);
+
+                    addCSharpFile(file.Key, file.Value);
+                }
+            }
+        }
+
         CSharpCompilation _compilation;
 
         public Assembly build()
@@ -204,6 +339,9 @@ namespace Excess.Compiler.Roslyn
                 foreach (var doc in _documents)
                 {
                     var document = doc.Document;
+                    if (document == null)
+                        continue;
+
                     var tree = document.SyntaxRoot.SyntaxTree;
 
                     document.Model = _compilation.GetSemanticModel(tree);
@@ -251,14 +389,14 @@ namespace Excess.Compiler.Roslyn
 
             return CSharpCompilation.Create(assemblyName,
                 syntaxTrees: _trees.Values
-                    .Union(_additionalTrees),
+                    .Union(_csharpFiles.Values),
                 references: _environment.GetReferences(),
                 options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
         }
 
-        protected virtual RoslynEnvironment createEnvironment()
+        protected virtual RoslynEnvironment createEnvironment(IPersistentStorage storage)
         {
-            var result = new RoslynEnvironment(_scope);
+            var result = new RoslynEnvironment(_scope, storage);
             result.dependency<object>(new[] { "System", "System.Collections", "System.Collections.Generic" });
             result.dependency<IEnumerable<object>>(new[] { "System.Collections", "System.Collections.Generic" });
 
@@ -299,6 +437,8 @@ namespace Excess.Compiler.Roslyn
             foreach (var doc in _documents)
             {
                 var document = doc.Document;
+                if (document == null)
+                    continue;
 
                 var errors = document.GetErrors();
 

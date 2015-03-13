@@ -17,5 +17,6 @@ namespace Excess.Web.Entities
         public System.Data.Entity.DbSet<Project> Projects { get; set; }
         public System.Data.Entity.DbSet<ProjectFile> ProjectFiles { get; set; }
         public System.Data.Entity.DbSet<DSLTest> DSLTests { get; set; }
+        public System.Data.Entity.DbSet<FileHash> FileCache { get; set; }
     }
 }

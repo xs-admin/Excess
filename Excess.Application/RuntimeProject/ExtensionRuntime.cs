@@ -21,12 +21,16 @@ namespace Excess.RuntimeProject
     using CompositeInjector = CompositeInjector<SyntaxToken, SyntaxNode, SemanticModel>;
     using Excess.Compiler.Roslyn;
     using System.Diagnostics;
+    using Antlr4.Runtime;
+    using System.CodeDom;
 
     class ExtensionRuntime : BaseRuntime, IExtensionRuntime
     {
+        public ExtensionRuntime(IPersistentStorage storage) : base(storage) { }
+
         static ExtensionRuntime()
         {
-            _fileExtensions[".g4"] = new AntlrGrammarHandler();
+            _tools[".g4"] = new AntlrTool();
         }
 
         private static Injector _references = new DelegateInjector(compiler =>
@@ -46,7 +50,9 @@ namespace Excess.RuntimeProject
                         "Microsoft.CodeAnalysis.CSharp",
                         "Microsoft.CodeAnalysis.CSharp.Syntax"})
                     .dependency(string.Empty, path: Path.Combine(assemblyPath, "System.Runtime.dll"))
-                    .dependency(string.Empty, path: Path.Combine(assemblyPath, "System.Threading.Tasks.dll"));
+                    .dependency(string.Empty, path: Path.Combine(assemblyPath, "System.Threading.Tasks.dll"))
+                    .dependency<ParserRuleContext>("Antlr4.Runtime")
+                    .dependency<CodeCompileUnit>("System.CodeDom");
         });
 
         private static Injector _extension = new DelegateInjector(compiler =>
@@ -57,20 +63,7 @@ namespace Excess.RuntimeProject
                         .statements(MoveToApply);
         });
 
-        //static private CompilationUnitSyntax ExtensionClass = CSharp.ParseCompilationUnit(@"
-        //    internal partial class Extension
-        //    {
-        //        public static void Apply(ICompiler<SyntaxToken, SyntaxNode, SemanticModel> compiler)
-        //        {
-        //            var lexical = compiler.Lexical();
-        //            var syntax = compiler.Syntax();
-        //            var semantics = compiler.Semantics();
-        //            var environment = compiler.Environment();
-
-        //        }
-        //    }");
-
-        static private Template ExtensionClass = Template.Parse(@"
+        static private CompilationUnitSyntax ExtensionClass = CSharp.ParseCompilationUnit(@"
             internal partial class Extension
             {
                 public static void Apply(ICompiler<SyntaxToken, SyntaxNode, SemanticModel> compiler)
@@ -85,13 +78,16 @@ namespace Excess.RuntimeProject
 
         private static SyntaxNode MoveToApply(SyntaxNode root, IEnumerable<SyntaxNode> statements, Scope scope)
         {
-            var applyCode = ExtensionClass.Value<BlockSyntax>();
-
-            var result = applyCode;
-            foreach (var st in statements)
-                result = result.AddStatements((StatementSyntax)st);
-
-            return ExtensionClass.Get(result);
+            return ExtensionClass
+                .ReplaceNodes(ExtensionClass
+                    .DescendantNodes()
+                    .OfType<BlockSyntax>(),
+                (on, nn) =>
+                {
+                    return nn.AddStatements(statements
+                        .OfType<StatementSyntax>()
+                        .ToArray());
+                });
         }
 
         private static Injector _transform = new DelegateInjector(compiler =>
@@ -102,7 +98,7 @@ namespace Excess.RuntimeProject
                         .members(MoveToClass);
         });
 
-        static private Template TransformClass = Template.Parse(@"
+        static private CompilationUnitSyntax TransformClass = CSharp.ParseCompilationUnit(@"
             using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
             internal partial class Extension
             {
@@ -111,12 +107,13 @@ namespace Excess.RuntimeProject
 
         private static SyntaxNode MoveToClass(SyntaxNode root, IEnumerable<SyntaxNode> members, Scope scope)
         {
-            var result = TransformClass
-                .Value<ClassDeclarationSyntax>()
-                .WithMembers(CSharp.List(members
-                    .Select(member => (MemberDeclarationSyntax)member)));
-
-            return TransformClass.Get(result);
+            return TransformClass.
+                ReplaceNodes(TransformClass
+                    .DescendantNodes()
+                    .OfType<ClassDeclarationSyntax>(),
+                    (on, nn) => nn.WithMembers(CSharp
+                        .List(members
+                        .Select(member => (MemberDeclarationSyntax)member))));
         }
 
         protected override ICompilerInjector<SyntaxToken, SyntaxNode, SemanticModel> getInjector(string file)
@@ -139,6 +136,140 @@ namespace Excess.RuntimeProject
             var tree = _compiler.ApplySemanticalPass(text, out rText);
 
             return tree.GetRoot().NormalizeWhitespace().ToString();
+        }
+
+        static string[] _expressionTypes = {
+            "ExpressionContext",
+            "AssignmentExpressionContext",
+            "UnaryExpressionContext",
+            "LogicalAndExpressionContext",
+            "AdditiveExpressionContext",
+            "ConditionalExpressionContext",
+            "LogicalOrExpressionContext",
+            "InclusiveOrExpressionContext",
+            "ExclusiveOrExpressionContext",
+            "AndExpressionContext",
+            "EqualityExpressionContext",
+            "ConstantContext",
+            "CastExpressionContext",
+            "RelationalExpressionContext",
+            "ShiftExpressionContext",
+            "MultiplicativeExpressionContext",
+            "MemberAccessContext",
+            "ParenthesizedContext",
+            "MemberPointerAccessContext",
+            "SimpleExpressionContext",
+            "IndexContext",
+            "CallContext",
+            "PostfixIncrementContext",
+            "PostfixDecrementContext",
+            "IdentifierContext",
+            "StringLiteralContext",
+            "ArgumentExpressionListContext", 
+            "UnaryOperatorContext", 
+            "AssignmentOperatorContext",
+            "ConstantExpressionContext",
+        };
+
+        static string NodeTransformFunction = @"
+private static SyntaxNode {0}({1} value, Func<ParserRuleContext, Scope, SyntaxNode> compile, Scope scope)
+{{
+    throw new NotImplementedException();
+}}
+";
+
+        static string TransformFunction = @"
+private static SyntaxNode Transform(SyntaxNode oldNode, SyntaxNode newNode, Scope scope, LexicalExtension<SyntaxToken> extension)
+{
+    return newNode;
+}
+";
+
+        static string LexicalHeader = @"
+lexical
+    .grammar<{0}Grammar, ParserRuleContext>(""{0}"", ExtensionKind.Code)
+";
+
+        public bool generateGrammar(out string extension, out string transform)
+        {
+            extension = null;
+            transform = null;
+
+            var grammar = _compilation.getFileByExtension(".g4");
+            if (grammar == null)
+                return false;
+
+            var grammarName = Path.GetFileNameWithoutExtension(grammar);
+            var listenerName = grammarName + "BaseListener.cs";
+            var listener = _compilation.getCSharpFile(listenerName);
+
+            if (listener == null)
+                return false;
+
+            var methods = listener
+                .GetRoot()
+                .DescendantNodes()
+                .OfType<MethodDeclarationSyntax>()
+                .Where(method => method
+                    .ParameterList
+                    .Parameters
+                    .Count == 1);
+
+            var types = methods
+                .Select(method => method
+                    .ParameterList
+                    .Parameters[0]
+                    .Type
+                    .ToString())
+                .GroupBy(x => x)
+                .Select(y => y.First()); 
+
+            var parserName = grammarName + "Parser";
+
+            StringBuilder extensionText = new StringBuilder();
+            StringBuilder transformText = new StringBuilder();
+
+            extensionText.AppendFormat(LexicalHeader, grammarName);
+
+            //track default extenions
+            StringBuilder expressionExtensionText = new StringBuilder();
+            StringBuilder expressionTransformText = new StringBuilder();
+
+            int expressionCount = 0;
+            foreach (var type in types)
+            {
+                if (!type.Contains(parserName))
+                    continue;
+
+                var ext = extensionText;
+                var xform = transformText;
+                var context = type.Split('.')[1];
+                if (_expressionTypes.Contains(context))
+                {
+                    ext = expressionExtensionText;
+                    xform = expressionTransformText;
+
+                    expressionCount++;
+                }
+
+                ext.AppendFormat("\t\t.transform<{0}>({1})\n", type, context);
+                xform.AppendFormat(NodeTransformFunction, context, type);
+            }
+
+            if (expressionCount == _expressionTypes.Length)
+                extensionText.AppendFormat("\t\t.transform<{0}.ExpressionContext>(AntlrExpression.Parse)\n", parserName);
+            else
+            {
+                extensionText.Append(expressionExtensionText);
+                transformText.Append(expressionTransformText);
+            }
+
+            extensionText.Append("\t\t.then(Transform);");
+            transformText.Append(TransformFunction);
+
+            extension = extensionText.ToString();
+            transform = transformText.ToString();
+            return true;
         }
 
         public override string defaultFile()
@@ -190,6 +321,9 @@ namespace Excess.RuntimeProject
         {
             if (file == "extension")
                 return new[] { new TreeNodeAction { id = "add-extension-item", icon = "fa-plus-circle" } };
+
+            if (Path.GetExtension(file) == ".g4")
+                return new[] { new TreeNodeAction { id = "generate-grammar", icon = "fa-flash" } };
 
             return base.fileActions(file);
         }

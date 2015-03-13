@@ -11,15 +11,24 @@ using System.Threading.Tasks;
 using Compilation = Excess.Compiler.Roslyn.Compilation;
 using Excess.Compiler;
 using Excess.Entensions.XS;
+using Excess.Compiler.Roslyn;
 
 namespace Excess.RuntimeProject
 {
     internal abstract class BaseRuntime : IRuntimeProject
     {
-        public BaseRuntime()
+        protected static Dictionary<string, ICompilationTool> _tools = new Dictionary<string, ICompilationTool>();
+        public BaseRuntime(IPersistentStorage storage)
         {
-            _compilation.addSyntaxTree(consoleTree);
-            _compilation.addSyntaxTree(randomTree);
+            _compilation = new Compilation(storage);
+
+            foreach (var tool in _tools)
+            {
+                _compilation.registerTool(tool.Key, tool.Value);
+            }
+
+            _compilation.addCSharpFile("console", consoleTree);
+            _compilation.addCSharpFile("random", randomTree);
         }
 
         public bool busy()
@@ -27,7 +36,7 @@ namespace Excess.RuntimeProject
             return _busy;
         }
 
-        protected Compilation _compilation = new Compilation();
+        protected Compilation _compilation;
 
         public IEnumerable<Error> compile()
         {
@@ -109,23 +118,12 @@ namespace Excess.RuntimeProject
                 });
         }
 
-        private class ExtensionFile
-        {
-            public int Id { get; set; }
-            public string Contents { get; set; }
-        }
-
-        private Dictionary<string, ExtensionFile> _extensionFiles = new Dictionary<string, ExtensionFile>();
         public void add(string file, int fileId, string contents)
         {
             if (_files.ContainsKey(file))
-                throw new InvalidOperationException();
+                throw new InvalidOperationException("duplicate file");
 
-            var ext = Path.GetExtension(file);
-            if (string.IsNullOrEmpty(ext))
-                _compilation.addDocument(file, contents, getInjector(file));
-            else
-                _extensionFiles[file] = new ExtensionFile { Id = fileId, Contents = contents };
+            _compilation.addDocument(file, contents, getInjector(file));
 
             _files[file] = fileId;
             _dirty = true;
@@ -133,7 +131,7 @@ namespace Excess.RuntimeProject
 
         protected virtual ICompilerInjector<SyntaxToken, SyntaxNode, SemanticModel> getInjector(string file)
         {
-            return XSModule.Create();
+            return XSLang.Create();
         }
 
         public void modify(string file, string contents)
@@ -141,11 +139,7 @@ namespace Excess.RuntimeProject
             if (!_files.ContainsKey(file))
                 throw new InvalidOperationException();
 
-            if (_compilation.hasDocument(file))
-                _compilation.updateDocument(file, contents);
-            else
-                _extensionFiles[file].Contents = contents; //td: move to compilation
-
+            _compilation.updateDocument(file, contents);
             _dirty = true;
         }
 
@@ -175,19 +169,10 @@ namespace Excess.RuntimeProject
 
         public string fileContents(string file)
         {
-            var result = null as string;
             if (_files.ContainsKey(file))
-            {
-                result = _compilation.documentText(file);
-                if (result == null)
-                {
-                    ExtensionFile ext;
-                    if (_extensionFiles.TryGetValue(file, out ext))
-                        return ext.Contents;
-                }
-            }
+                return _compilation.documentText(file);
 
-            return result;
+            return null;
         }
 
         public int fileId(string file)
@@ -207,8 +192,6 @@ namespace Excess.RuntimeProject
         protected bool _busy  = false;
         protected bool _dirty = false;
 
-        protected static Dictionary<string, IFileExtension> _fileExtensions = new Dictionary<string, IFileExtension>();
-
         protected virtual IEnumerable<Error> doCompile()
         {
             if (!_dirty)
@@ -216,23 +199,6 @@ namespace Excess.RuntimeProject
                 notify(NotificationKind.System, "Compilation up to date");
                 return null;
             }
-
-            //process extensioned files
-            foreach (var file in _files)
-            {
-                var filename = file.Key;
-                var ext = Path.GetExtension(filename);
-                if (string.IsNullOrEmpty(ext))
-                    continue;
-
-                var info = _extensionFiles[filename];
-                var handler = null as IFileExtension;
-                if (_fileExtensions.TryGetValue(ext, out handler))
-                {
-                    handler.process(filename, info.Id, info.Contents, _compilation);
-                }
-            }
-
 
             var result = _compilation.compile();
             if (_dirty)

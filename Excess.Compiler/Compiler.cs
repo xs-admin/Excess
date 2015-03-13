@@ -20,6 +20,13 @@ namespace Excess.Compiler
         void apply(ICompiler<TToken, TNode, TModel> compiler);
     }
 
+    public interface IPersistentStorage
+    {
+        int addFile(string name, string contents, bool hidden);
+        int cachedId(string name);
+        void cachedId(string name, int id);
+    }
+
     public interface ICompilerEnvironment
     {
         ICompilerEnvironment dependency<T>(string module);
@@ -34,6 +41,7 @@ namespace Excess.Compiler
         IEnumerable<string> modules();
         IEnumerable<string> keywords();
         dynamic path();
+        IPersistentStorage storage();
     }
 
     public interface ICompiler<TToken, TNode, TModel>

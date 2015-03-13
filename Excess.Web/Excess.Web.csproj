@@ -1388,6 +1388,7 @@
     <Compile Include="Controllers\XSController.cs" />
     <Compile Include="Entities\DSLTest.cs" />
     <Compile Include="Entities\ExcessDbContext.cs" />
+    <Compile Include="Entities\FileHash.cs" />
     <Compile Include="Entities\Project.cs" />
     <Compile Include="Entities\ProjectRepository.cs" />
     <Compile Include="Entities\TranslationSample.cs" />
@@ -1423,6 +1424,10 @@
     <Compile Include="Migrations\201502101734056_Extension Project.cs" />
     <Compile Include="Migrations\201502101734056_Extension Project.Designer.cs">
       <DependentUpon>201502101734056_Extension Project.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201503110510197_filehash.cs" />
+    <Compile Include="Migrations\201503110510197_filehash.Designer.cs">
+      <DependentUpon>201503110510197_filehash.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\AccountViewModels.cs" />
@@ -1497,6 +1502,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201502101734056_Extension Project.resx">
       <DependentUpon>201502101734056_Extension Project.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201503110510197_filehash.resx">
+      <DependentUpon>201503110510197_filehash.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Resources\ProjectTemplates.resx">
       <Generator>ResXFileCodeGenerator</Generator>

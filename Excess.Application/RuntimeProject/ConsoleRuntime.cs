@@ -22,6 +22,8 @@ namespace Excess.RuntimeProject
 
     class ConsoleRuntime : BaseRuntime
     {
+        public ConsoleRuntime(IPersistentStorage storage) : base(storage) { }
+
         public override string defaultFile()
         {
             return "application";

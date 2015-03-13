@@ -11,9 +11,10 @@ namespace Excess.Compiler.Roslyn
     public class RoslynEnvironment : ICompilerEnvironment
     {
         private Scope _root;
-        public RoslynEnvironment(Scope root)
+        public RoslynEnvironment(Scope root, IPersistentStorage storage)
         {
             _root = root;
+            _storage = storage;
         }
 
 
@@ -112,6 +113,12 @@ namespace Excess.Compiler.Roslyn
         internal IEnumerable<MetadataReference> GetReferences()
         {
             return _references;
+        }
+
+        IPersistentStorage _storage;
+        public IPersistentStorage storage()
+        {
+            return _storage;
         }
     }
 }

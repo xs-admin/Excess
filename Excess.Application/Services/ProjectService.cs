@@ -1,4 +1,5 @@
-﻿using Excess.RuntimeProject;
+﻿using Excess.Compiler;
+using Excess.RuntimeProject;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,13 +10,13 @@ namespace Excess.Services
 {
     public class ProjectService : IProjectManager
     {
-        public IRuntimeProject createRuntime(string projectType, string projectName, dynamic config, dynamic path)
+        public IRuntimeProject createRuntime(string projectType, string projectName, dynamic config, dynamic path, IPersistentStorage storage)
         {
             var result = null as IRuntimeProject;
             switch (projectType)
             {
-                case "console": result = new ConsoleRuntime(); break;
-                case "extension": result = new ExtensionRuntime(); break;
+                case "console": result = new ConsoleRuntime(storage); break;
+                case "extension": result = new ExtensionRuntime(storage); break;
             }
 
             if (result == null)

@@ -5,7 +5,6 @@ grammar expressions;
 
 expression
     :   assignmentExpression
-//    |   expression ',' assignmentExpression
     ;
 
 primaryExpression

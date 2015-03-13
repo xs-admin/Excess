@@ -47,5 +47,6 @@ namespace Excess.RuntimeProject
     public interface IExtensionRuntime
     {
         string debugExtension(string text);
+        bool generateGrammar(out string extension, out string transform);
     }
 }

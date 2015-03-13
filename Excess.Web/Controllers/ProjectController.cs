@@ -19,6 +19,41 @@ namespace Excess.Web.Controllers
             _manager = manager;
         }
 
+        class ProjectStorage : IPersistentStorage
+        {
+            Project _project;
+            public ProjectStorage(Project project)
+            {
+                _project = project;
+            }
+
+            public int addFile(string name, string contents, bool hidden)
+            {
+                ProjectRepository repo = new ProjectRepository();
+                return repo.AddFile(_project, name, contents, hidden);
+            }
+
+            public int cachedId(string name)
+            {
+                var file = _project.Find(name);
+                if (file == null)
+                    return 0;
+
+                ProjectRepository repo = new ProjectRepository();
+                return repo.fileCache(file.ID);
+            }
+
+            public void cachedId(string name, int id)
+            {
+                var file = _project.Find(name);
+                if (file == null)
+                    throw new InvalidOperationException();
+
+                ProjectRepository repo = new ProjectRepository();
+                repo.fileCache(file.ID, id);
+            }
+        }
+
         public ActionResult LoadProject(int projectId)
         {
             ProjectRepository repo = new ProjectRepository();
@@ -40,7 +75,7 @@ namespace Excess.Web.Controllers
             var path = new Scope(null) as dynamic;
             path.ToolPath = Path.Combine(Server.MapPath("~/App_Data"), "Tools");
 
-            IRuntimeProject runtime = _manager.createRuntime(project.ProjectType, project.Name, config, path);
+            IRuntimeProject runtime = _manager.createRuntime(project.ProjectType, project.Name, config, path, new ProjectStorage(project));
             foreach (var file in project.ProjectFiles)
                 runtime.add(file.Name, file.ID, file.Contents);
 
@@ -61,7 +96,7 @@ namespace Excess.Web.Controllers
         public ActionResult LoadFile(string file)
         {
             var project = Session["project"] as IRuntimeProject;
-            if (project == null)
+            if (project == null || file == null)
                 return HttpNotFound(); //td: right error
 
             string contents = project.fileContents(file);
@@ -273,6 +308,22 @@ namespace Excess.Web.Controllers
             _db.SaveChanges();
 
             return Json(result, JsonRequestBehavior.AllowGet);
+        }
+
+        public ActionResult GenerateGrammar()
+        {
+            var runtime = Session["project"] as IExtensionRuntime;
+            if (runtime == null)
+                return HttpNotFound(); //td: right error
+
+            string extension, transform;
+            if (!runtime.generateGrammar(out extension, out transform))
+                return HttpNotFound(); //td: right error
+
+            return Json(new {
+                extension = extension,
+                transform = transform,
+            }, JsonRequestBehavior.AllowGet);
         }
 
         private TreeNode projectTree(Project project, IRuntimeProject runtime)

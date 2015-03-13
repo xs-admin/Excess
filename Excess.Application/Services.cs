@@ -1,4 +1,5 @@
-﻿using Excess.RuntimeProject;
+﻿using Excess.Compiler;
+using Excess.RuntimeProject;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,6 +20,6 @@ namespace Excess
 
     public interface IProjectManager
     {
-        IRuntimeProject createRuntime(string projectType, string projectName, dynamic config, dynamic path);
+        IRuntimeProject createRuntime(string projectType, string projectName, dynamic config, dynamic path, IPersistentStorage storage);
     }
 }

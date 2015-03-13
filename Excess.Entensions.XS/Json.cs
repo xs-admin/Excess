@@ -31,8 +31,8 @@ namespace Excess.Entensions.XS
 
             parser.AddErrorListener(new AntlrErrors<IToken>(scope, offset));
             var result = parser.json();
-            //if (parser.NumberOfSyntaxErrors > 0)
-            //    return null;
+            if (parser.NumberOfSyntaxErrors > 0)
+                return null;
 
             return result;
         }

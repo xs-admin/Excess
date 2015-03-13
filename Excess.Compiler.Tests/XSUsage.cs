@@ -77,7 +77,7 @@ namespace Excess.Compiler.Tests
         public void Members()
         {
             RoslynCompiler compiler = new RoslynCompiler();
-            XSModule.Apply(compiler);
+            XSLang.Apply(compiler);
 
             SyntaxTree tree = null;
             string text = null;
@@ -133,7 +133,7 @@ namespace Excess.Compiler.Tests
         public void Events()
         {
             RoslynCompiler compiler = new RoslynCompiler();
-            XSModule.Apply(compiler);
+            XSLang.Apply(compiler);
 
             SyntaxTree tree = null;
             string text = null;
@@ -194,7 +194,7 @@ namespace Excess.Compiler.Tests
         public void TypeDef()
         {
             RoslynCompiler compiler = new RoslynCompiler();
-            XSModule.Apply(compiler);
+            XSLang.Apply(compiler);
 
             SyntaxTree tree = null;
             string text = null;
@@ -237,7 +237,7 @@ namespace Excess.Compiler.Tests
         public void Arrays()
         {
             RoslynCompiler compiler = new RoslynCompiler();
-            XSModule.Apply(compiler);
+            XSLang.Apply(compiler);
 
             ExpressionSyntax exprArray = compiler.CompileExpression("x = [[1, 2, 3], [4, 5, 6]]");
             Assert.IsTrue(exprArray.DescendantNodes()

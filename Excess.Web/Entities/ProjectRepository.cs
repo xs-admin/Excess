@@ -41,6 +41,37 @@ namespace Excess.Web.Entities
             return result;
         }
 
+        public int fileCache(int fileID)
+        {
+            var file = _db
+                .FileCache
+                .Where(f => f.FileID == fileID)
+                .FirstOrDefault();
+
+            if (file == null)
+                return 0;
+
+            return file.Hash;
+        }
+
+        public void fileCache(int fileID, int hash)
+        {
+            var file = _db
+                .FileCache
+                .Where(f => f.FileID == fileID)
+                .FirstOrDefault();
+
+            if (file == null)
+            {
+                file = new FileHash { FileID = fileID, Hash = hash };
+                _db.FileCache.Add(file);
+            }
+            else
+                file.Hash = hash;
+
+            _db.SaveChanges();
+        }
+
         public void LoadProject(Project project)
         {
             var files = from   projectFile in _db.ProjectFiles
@@ -50,17 +81,21 @@ namespace Excess.Web.Entities
             project.ProjectFiles = new List<ProjectFile>(files); 
         }
 
-        public void AddFile(Project project, string name, string contents)
+        public int AddFile(Project project, string name, string contents, bool hidden)
         {
             var file = new ProjectFile
             {
                 Name = name,
                 Contents = contents,
-                OwnerProject = project.ID
+                OwnerProject = project.ID,
+                isHidden = hidden
             };
 
             _db.ProjectFiles.Add(file);
             project.ProjectFiles.Add(file);
+
+            _db.SaveChanges();
+            return file.ID;
         }
 
         public void SaveProject(Project project)

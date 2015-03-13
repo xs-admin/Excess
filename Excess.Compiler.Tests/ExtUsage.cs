@@ -336,10 +336,21 @@ namespace Excess.Compiler.Tests
                 }";
 
             tree = compiler.ApplySemanticalPass(Usage, out text);
+
+            var anonymous = tree.GetRoot()
+                .DescendantNodes()
+                .OfType<AnonymousObjectCreationExpressionSyntax>()
+                .First();
+
+            Assert.IsNotNull(anonymous); //must have created an anonymous object 
+            Assert.IsTrue(anonymous
+                .Initializers
+                .Count == 4); //4 members
+
             Assert.IsTrue(tree.GetRoot()
                 .DescendantNodes()
-                .OfType<VariableDeclarationSyntax>()
-                .Count() == 6); //must have created 5 variables (x, y, z, a, b)
+                .OfType<ImplicitArrayCreationExpressionSyntax>()
+                .Count() == 4); //4 arrays
         }
     }
 }

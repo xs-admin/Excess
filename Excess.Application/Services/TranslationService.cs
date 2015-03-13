@@ -32,7 +32,7 @@ namespace Excess
         private void initCompiler()
         {
             _compiler = new RoslynCompiler();
-            Injector injector = new CompositeInjector(new[] { XSModule.Create(), demoExtensions() });
+            Injector injector = new CompositeInjector(new[] { XSLang.Create(), demoExtensions() });
             injector.apply(_compiler);
         }
 

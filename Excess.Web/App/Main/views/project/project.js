@@ -148,6 +148,17 @@
                         });
                         break;
                     }
+                    case "generate-grammar":
+                    {
+                        dialogs.confirm("Generate Grammar", "This will add code to your files and should be used only once per grammar", { size: "sm" })
+                            .result.then(function () {
+                                xsProject.generateGrammar()
+                                    .then(function (result) {
+                                        $scope.appendSources(result.data);
+                                    });
+                            })
+                        break;
+                    }
                 }
             }
             
@@ -344,6 +355,23 @@
                 _fileCache[_currentTab.name].changed  = true;
                 _fileCache[_currentTab.name].contents = sourceEditor.content();
             }
+
+            $scope.appendSources = function (files) {
+                angular.forEach(files, function (contents, file) {
+                    var cache = _fileCache[file];
+                    if (cache) {
+                        cache.contents += contents;
+                        cache.changed = true;
+
+                        if (_currentTab.name == file)
+                            $scope.sourceCode = cache.contents;
+                    }
+                    else loadFile(file, false, function () {
+                        cache.contents += contents;
+                        cache.changed = true;
+                    })
+                });
+            };
 
             $scope.saveFiles = function()
             {

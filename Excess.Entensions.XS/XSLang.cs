@@ -18,7 +18,7 @@ namespace Excess.Entensions.XS
     using Injector = ICompilerInjector<SyntaxToken, SyntaxNode, SemanticModel>;
     using DelegateInjector = DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel>;
 
-    public class XSModule
+    public class XSLang
     {
         public static void Apply(ExcessCompiler compiler)
         {

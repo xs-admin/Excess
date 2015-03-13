@@ -162,7 +162,7 @@ namespace Excess.Compiler.Roslyn
             _scope.set<ICompilerEnvironment>(environment);
         }
 
-        public RoslynCompiler(Scope scope) : this(new RoslynEnvironment(scope), scope)
+        public RoslynCompiler(Scope scope) : this(new RoslynEnvironment(scope, null), scope)
         {
         }
 
