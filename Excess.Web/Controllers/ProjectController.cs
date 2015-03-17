@@ -4,6 +4,7 @@ using Excess.Web.Entities;
 using Microsoft.AspNet.Identity;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -43,14 +44,19 @@ namespace Excess.Web.Controllers
                 return repo.fileCache(file.ID);
             }
 
-            public void cachedId(string name, int id)
+            public void cachedId(string name, int hash)
             {
-                var file = _project.Find(name);
-                if (file == null)
-                    throw new InvalidOperationException();
-
                 ProjectRepository repo = new ProjectRepository();
-                repo.fileCache(file.ID, id);
+
+                var file = _project.Find(name);
+                var fileID = -1;
+                if (file == null)
+                    fileID = repo.GetFileId(name, _project.ID);
+                else
+                    fileID = file.ID;
+
+                Debug.Assert(fileID >= 0);
+                repo.fileCache(fileID, hash);
             }
         }
 
@@ -134,8 +140,11 @@ namespace Excess.Web.Controllers
             if (project == null)
                 return HttpNotFound(); //td: right error
 
-            var contents = string.Format("class {0} \n{{\n}}", className);
-            var fileId   = -1;
+            var contents = " ";
+            if (string.IsNullOrEmpty(Path.GetExtension(className)))
+                contents = string.Format("class {0} \n{{\n}}", className);
+
+            var fileId = -1;
             if (Session["projectId"] != null)
             {
                 ProjectRepository repo = new ProjectRepository();
@@ -143,7 +152,24 @@ namespace Excess.Web.Controllers
             }
 
             project.add(className, fileId, contents);
-            return Content("ok");
+
+            var node = new TreeNode
+            {
+                label = className,
+                icon = "fa-code",
+                action = "select-file",
+                data = className,
+                actions = new[]
+                            {
+                                new TreeNodeAction { id = "remove-file", icon = "fa-times-circle-o"       },
+                                new TreeNodeAction { id = "open-tab",    icon = "fa-arrow-circle-o-right" },
+                            }.Union(project.fileActions(className))
+            };
+
+            return Json(new
+            {
+                node
+            }, JsonRequestBehavior.AllowGet);
         }
 
         private class CompilationResult

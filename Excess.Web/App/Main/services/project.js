@@ -52,7 +52,8 @@
                     var finished = false;
 
                     angular.forEach(result.data, function (value, key) {
-                        notify(value);
+                        if (notify)
+                            notify(value);
 
                         if (value.Kind == 4) {
                             finished = true;
@@ -60,7 +61,7 @@
                     });
 
                     if (!finished)
-                        $timeout(getNotifications, 100);
+                        $timeout(tick, 100);
                 })
         }
 
@@ -144,5 +145,9 @@
                      + '\n}\n';
 
         }
+    }
+
+    this.generateGrammar = function () {
+        return $http.get('/Project/GenerateGrammar');
     }
 }]);

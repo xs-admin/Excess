@@ -113,20 +113,9 @@
 
                         dlg.result.then(function (name) {
                             xsProject.createClass(name)
-                                .then(function () {
+                                .then(function (result) {
                                     var projectRoot = $scope.projectTree[0];
-                                    projectRoot.children.push(
-                                    {
-                                        label   : name,
-                                        icon    : "fa-code",
-                                        action  : "select-file",
-                                        data    : name,
-                                        actions : 
-                                        [
-                                          { id : "remove-file", icon : "fa-times-circle-o"       },
-                                          { id : "open-tab",    icon : "fa-arrow-circle-o-right" },
-                                        ]
-                                    });
+                                    projectRoot.children.push(result.data.node);
                                 });
                         });
                         break;
@@ -155,6 +144,9 @@
                                 xsProject.generateGrammar()
                                     .then(function (result) {
                                         $scope.appendSources(result.data);
+                                    }, function ()
+                                    {
+                                        dialogs.error("Error", "Could not generate grammar, make sure you have compiled the project at least once", { size: "sm" });
                                     });
                             })
                         break;
@@ -367,8 +359,12 @@
                             $scope.sourceCode = cache.contents;
                     }
                     else loadFile(file, false, function () {
+                        cache = _fileCache[file];
                         cache.contents += contents;
                         cache.changed = true;
+
+                        if (_currentTab.name == file)
+                            $scope.sourceCode = cache.contents;
                     })
                 });
             };

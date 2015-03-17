@@ -51,6 +51,9 @@ namespace Excess.Compiler.Roslyn
                 }
             }
 
+            if (_normalizeThen != null)
+                node = _normalizeThen(node, scope);
+
             return node;
         }
 

@@ -17,9 +17,19 @@ namespace Excess.Compiler.Roslyn
 {
     public interface ICompilationTool
     {
+        string displayName { get; }
         bool doNotCache { get; }
         bool compile(string file, string contents, Scope scope, Dictionary<string, string> result);
     }
+
+    public class ToolEventArgs
+    {
+        public ICompilationTool Tool { get; set; }
+        public string Document { get; set; }
+        public Dictionary<string, string> Result { get; set; }
+    }
+
+    public delegate void ToolEventHandler(object sender, ToolEventArgs e);
 
     public class Compilation
     {
@@ -35,6 +45,9 @@ namespace Excess.Compiler.Roslyn
         {
             _environment.setPath(path);
         }
+
+        public event ToolEventHandler ToolStarted;
+        public event ToolEventHandler ToolFinished;
 
         public ICompilerEnvironment Environment { get { return _environment; } }
 
@@ -211,7 +224,7 @@ namespace Excess.Compiler.Roslyn
                     _compilation.AddSyntaxTrees(tree);
             }
 
-            _csharpFiles.Add(file, tree);
+            _csharpFiles[file] = tree;
         }
 
         public void addCSharpFile(string file, string contents)
@@ -260,10 +273,28 @@ namespace Excess.Compiler.Roslyn
                 if (hash == 0 || hash != doc.Hash)
                 {
                     var result = new Dictionary<string, string>();
-                    tool.compile(doc.Id, doc.Contents, _scope, result);
+                    if (ToolStarted != null)
+                        ToolStarted(this, new ToolEventArgs { Tool = tool, Document = doc.Id });
 
-                    doc.Hash = hash;
-                    toolResults(result, doc.Id, hash);
+                    bool failed = false;
+                    try
+                    {
+                        tool.compile(doc.Id, doc.Contents, _scope, result);
+                    }
+                    catch (Exception e)
+                    {
+                        failed = true;
+                        result["error"] = e.Message;
+                    }
+
+                    if (ToolFinished != null)
+                        ToolFinished(this, new ToolEventArgs { Tool = tool, Document = doc.Id, Result = result });
+
+                    if (!failed)
+                    {
+                        doc.Hash = hash;
+                        toolResults(result, doc.Id, hash);
+                    }
                 }
             }
 
@@ -312,6 +343,8 @@ namespace Excess.Compiler.Roslyn
             {
                 if (hasDocument(file.Key))
                     updateDocument(file.Key, file.Value);
+                else if (_csharpFiles.ContainsKey(file.Key))
+                    addCSharpFile(file.Key, file.Value);
                 else
                 {
                     if (storage != null)

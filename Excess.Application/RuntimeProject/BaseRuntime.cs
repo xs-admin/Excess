@@ -21,6 +21,24 @@ namespace Excess.RuntimeProject
         public BaseRuntime(IPersistentStorage storage)
         {
             _compilation = new Compilation(storage);
+            _compilation.ToolStarted += (sender, args) => notify(NotificationKind.System, "Starting tool: " + args.Tool.displayName + " for " + args.Document);
+            _compilation.ToolFinished += (sender, args) =>
+            {
+                if (args.Result != null)
+                {
+                    bool hasError = args.Result.ContainsKey("error");
+                    if (hasError)
+                        notify(NotificationKind.Error, "Tool failed: " + args.Result["error"]);
+                    else
+                    {
+                        foreach(var msg in args.Result)
+                            notify(NotificationKind.System, msg.Key);
+                    }
+                }
+
+                notify(NotificationKind.System, "Finished: " + args.Tool.displayName + " for " + args.Document);
+            };
+
 
             foreach (var tool in _tools)
             {

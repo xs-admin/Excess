@@ -21,6 +21,8 @@
 
 
     $scope.compileTest = function () {
+        $scope.targetCode = "Compiling...";
+
         var sourceEditor = $('#source-editor').isolateScope();
         xsProject.debugDSL(sourceEditor.content())
             .then(function (result) {

@@ -489,9 +489,10 @@ namespace Excess.Compiler.Core
         public ILexicalAnalysis<TToken, TNode, TModel> with(
             Func<TNode, IEnumerable<TNode>, Scope, TNode> statements = null,
             Func<TNode, IEnumerable<TNode>, Scope, TNode> members    = null,
-            Func<TNode, IEnumerable<TNode>, Scope, TNode> types      = null)
+            Func<TNode, IEnumerable<TNode>, Scope, TNode> types      = null,
+            Func<TNode, Scope, TNode>                     then       = null)
         {
-            _owner.normalize(statements, members, types);
+            _owner.normalize(statements, members, types, then);
             return _owner;
         }
 
@@ -512,6 +513,13 @@ namespace Excess.Compiler.Core
             _owner.normalize(types: handler);
             return _owner;
         }
+
+        public ILexicalAnalysis<TToken, TNode, TModel> then(Func<TNode, Scope, TNode> handler)
+        {
+            _owner.normalize(then: handler);
+            return _owner;
+        }
+
     }
 
     public abstract class BaseLexicalAnalysis<TToken, TNode, TModel> :  ILexicalAnalysis<TToken, TNode, TModel>,
@@ -668,9 +676,11 @@ namespace Excess.Compiler.Core
         protected Func<TNode, IEnumerable<TNode>, Scope, TNode> _normalizeStatements;
         protected Func<TNode, IEnumerable<TNode>, Scope, TNode> _normalizeMembers;
         protected Func<TNode, IEnumerable<TNode>, Scope, TNode> _normalizeTypes;
+        protected Func<TNode, Scope, TNode> _normalizeThen;
         public void normalize(Func<TNode, IEnumerable<TNode>, Scope, TNode> statements = null, 
-                              Func<TNode, IEnumerable<TNode>, Scope, TNode> members = null,
-                              Func<TNode, IEnumerable<TNode>, Scope, TNode> types = null)
+                              Func<TNode, IEnumerable<TNode>, Scope, TNode> members    = null,
+                              Func<TNode, IEnumerable<TNode>, Scope, TNode> types      = null,
+                              Func<TNode, Scope, TNode>                     then       = null)
         {
             if (statements != null)
                 _normalizeStatements = statements; //overrides
@@ -680,6 +690,9 @@ namespace Excess.Compiler.Core
 
             if (types != null)
                 _normalizeTypes = types;
+
+            if (then != null)
+                _normalizeThen = then;
         }
 
         public virtual ILexicalTransform<TToken, TNode, TModel> transform()

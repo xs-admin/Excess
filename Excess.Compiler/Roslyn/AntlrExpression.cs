@@ -47,6 +47,21 @@ namespace Excess.Compiler.Roslyn
             _handlers["PostfixIncrementContext"] = PostFix;
             _handlers["PostfixDecrementContext"] = PostFix;
             _handlers["IdentifierContext"] = Identifer;
+            _handlers["StringLiteralContext"] = StringLiteral;
+            _handlers["ArgumentExpressionListContext"] = Hidden;
+            _handlers["UnaryOperatorContext"] = Hidden;
+            _handlers["AssignmentOperatorContext"] = Hidden;
+            _handlers["ConstantExpressionContext"] = Hidden;
+        }
+
+        private static ExpressionSyntax StringLiteral(ParserRuleContext arg)
+        {
+            return CSharp.ParseExpression(arg.GetText());
+        }
+
+        private static ExpressionSyntax Hidden(ParserRuleContext arg)
+        {
+            throw new InvalidOperationException("This node should not be processed directly");
         }
 
         private static ExpressionSyntax Identifer(ParserRuleContext arg)

@@ -60,7 +60,7 @@ namespace Excess.RuntimeProject
             compiler
                 .Lexical()
                     .normalize()
-                        .statements(MoveToApply);
+                        .with(statements: MoveToApply, then: CreateExtensionClass);
         });
 
         static private CompilationUnitSyntax ExtensionClass = CSharp.ParseCompilationUnit(@"
@@ -75,6 +75,18 @@ namespace Excess.RuntimeProject
 
                 }
             }");
+
+        private static SyntaxNode CreateExtensionClass(SyntaxNode root, Scope scope)
+        {
+            if (!root
+                .DescendantNodes()
+                .OfType<ClassDeclarationSyntax>()
+                .Where(@class => @class.Identifier.ToString() == "Extension")
+                .Any())
+                return ExtensionClass;
+
+            return root;
+        }
 
         private static SyntaxNode MoveToApply(SyntaxNode root, IEnumerable<SyntaxNode> statements, Scope scope)
         {
@@ -95,7 +107,7 @@ namespace Excess.RuntimeProject
             compiler
                 .Lexical()
                     .normalize()
-                        .members(MoveToClass);
+                        .with(members: MoveToClass, then: CreateTransformClass);
         });
 
         static private CompilationUnitSyntax TransformClass = CSharp.ParseCompilationUnit(@"
@@ -104,6 +116,18 @@ namespace Excess.RuntimeProject
             {
             }");
 
+
+        private static SyntaxNode CreateTransformClass(SyntaxNode root, Scope scope)
+        {
+            if (!root
+                .DescendantNodes()
+                .OfType<ClassDeclarationSyntax>()
+                .Where(@class => @class.Identifier.ToString() == "Extension")
+                .Any())
+                return TransformClass;
+
+            return root;
+        }
 
         private static SyntaxNode MoveToClass(SyntaxNode root, IEnumerable<SyntaxNode> members, Scope scope)
         {

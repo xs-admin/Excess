@@ -54,6 +54,19 @@ namespace Excess.Web.Entities
             return file.Hash;
         }
 
+        public int GetFileId(string name, int projectID)
+        {
+            var file = _db
+                .ProjectFiles
+                .Where(f => f.OwnerProject == projectID && f.Name == name)
+                .FirstOrDefault();
+
+            if (file != null)
+                return file.ID;
+
+            return -1;
+        }
+
         public void fileCache(int fileID, int hash)
         {
             var file = _db

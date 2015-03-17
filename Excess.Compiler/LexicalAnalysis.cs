@@ -128,11 +128,13 @@ namespace Excess.Compiler
     {
         ILexicalAnalysis<TToken, TNode, TModel> with(Func<TNode, IEnumerable<TNode>, Scope, TNode> statements = null,
                                                      Func<TNode, IEnumerable<TNode>, Scope, TNode> members = null,
-                                                     Func<TNode, IEnumerable<TNode>, Scope, TNode> types = null);
+                                                     Func<TNode, IEnumerable<TNode>, Scope, TNode> types = null,
+                                                     Func<TNode, Scope, TNode> then = null);
 
         ILexicalAnalysis<TToken, TNode, TModel> statements(Func<TNode, IEnumerable<TNode>, Scope, TNode> handler);
         ILexicalAnalysis<TToken, TNode, TModel> members(Func<TNode, IEnumerable<TNode>, Scope, TNode> handler);
         ILexicalAnalysis<TToken, TNode, TModel> types(Func<TNode, IEnumerable<TNode>, Scope, TNode> handler);
+        ILexicalAnalysis<TToken, TNode, TModel> then(Func<TNode, Scope, TNode> handler);
     }
 
     public interface ILexicalAnalysis<TToken, TNode, TModel>
