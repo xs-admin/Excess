@@ -618,6 +618,34 @@ namespace Excess.Compiler.Roslyn
             };
         }
 
+        public static Func<SyntaxNode, Scope, SyntaxNode> ExplodeBlock(SyntaxNode newNode)
+        {
+            return (node, scope) =>
+            {
+                var block = node as BlockSyntax;
+                return block
+                    .WithStatements(CSharp.List(
+                        ExplodeStatements(block.Statements, newNode)));
+            };
+        }
+
+        private static IEnumerable<StatementSyntax> ExplodeStatements(SyntaxList<StatementSyntax> statements, SyntaxNode newNode)
+        {
+            var block = (BlockSyntax)newNode;
+            var nodeID = RoslynCompiler.NodeMark(newNode);
+            foreach (var statement in statements)
+            {
+                var innerID = RoslynCompiler.NodeMark(statement);
+                if (innerID == nodeID)
+                {
+                    foreach (var inner in block.Statements)
+                        yield return inner;
+                }
+                else
+                    yield return statement;
+            }
+        }
+
         public static Func<SyntaxNode, Scope, SyntaxNode> ReplaceNode(SyntaxNode newNode)
         {
             return (node, scope) => RoslynCompiler.ReplaceExcessId(newNode, node);

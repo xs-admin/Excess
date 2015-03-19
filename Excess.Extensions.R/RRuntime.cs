@@ -211,12 +211,13 @@ namespace Excess.Extensions.R
             for (int i = 0; i < values.Length; i++)
             {
                 var value = values[i];
-                if (type == null)
-                    type = value.GetType();
+                var valueType = value.GetType();
 
                 var vector = value as IVector;
                 if (vector != null)
                 {
+                    valueType = vector.type;
+
                     if (start < stop)
                     {
                         result.Add(Vector<object>.create(stop - start, Range(values, start, stop)));
@@ -238,8 +239,9 @@ namespace Excess.Extensions.R
                     len++;
                 }
 
-                var valueType = value.GetType();
-                if (higher(valueType, type))
+                if (type == null)
+                    type = valueType;
+                else if (higher(valueType, type))
                     type = valueType;
             }
 
@@ -249,25 +251,7 @@ namespace Excess.Extensions.R
             if (start < stop)
                 result.Add(Vector<object>.create(stop - start, Range(values, start, stop)));
 
-            if (type == typeof(Double))
-                return Vector<Double>.create(len, EnumerateVectors<Double>(result));
-
-            if (type == typeof(Single))
-                return Vector<Single>.create(len, EnumerateVectors<Single>(result));
-
-            if (type == typeof(Int64))
-                return Vector<Int64>.create(len, EnumerateVectors<Int64>(result));
-
-            if (type == typeof(Int32))
-                return Vector<Int32>.create(len, EnumerateVectors<Int32>(result));
-
-            if (type == typeof(Boolean))
-                return Vector<Boolean>.create(len, EnumerateVectors<Boolean>(result));
-
-            if (type == typeof(String))
-                return Vector<String>.create(len, EnumerateVectors<String>(result));
-
-            throw new InvalidOperationException("invalid concatenation type: " + type.Name);
+            return concat(result, len, type);
         }
 
         private static IEnumerable<T> EnumerateVectors<T>(IEnumerable<IVector> vectors)

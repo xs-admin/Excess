@@ -1,5 +1,8 @@
 ﻿using System;
+using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Collections.Generic;
+using Excess.Extensions.R;
 
 namespace Excess.Compiler.Tests
 {
@@ -11,7 +14,7 @@ namespace Excess.Compiler.Tests
         {
             dynamic result;
             result = RuntimeHelper.ExecuteTest(
-                @"void test()
+                @"static void test()
                 {
                     R()
                     {
@@ -21,10 +24,20 @@ namespace Excess.Compiler.Tests
                     }
 
                     result[""z""] = z;
-                    result[""xlen""] = x.Count();
                 }", compiler => Excess.Extensions.R.Extension.Apply(compiler));
 
+            //must have executed
             Assert.IsNotNull(result);
+
+            //must have return doubles
+            Assert.IsInstanceOfType(result.z, typeof(Vector<Double>));
+
+            IEnumerable<Double> values = result.z.getEnumerable<Double>();
+
+            //must have returned 9 values, with -1 in between x and y
+            Assert.IsNotNull(values);
+            Assert.AreEqual(values.Count(), 9);
+            Assert.AreEqual(values.ElementAt(5), -1);
         }
     }
 }

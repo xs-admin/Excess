@@ -56,7 +56,6 @@ namespace Excess.Entensions.XS
 
                     .then(Transform);
             ;
-            ;
         }
 
         static Template createJson = Template.ParseExpression("JObject.FromObject(__0)");

@@ -38,6 +38,9 @@
 #>
 
 using System;
+using System.Collections.Generic;
+using System.Linq; 
+
 namespace Excess.Extensions.R
 {
 	public static partial class RR {
@@ -120,12 +123,12 @@ namespace Excess.Extensions.R
 						var type2 = numericTypes[j]; #>
 						
 						if (type2 == typeof(<#= type2.Name #>))
-							return false;
+							return true;
 					<# } #>
 				}
 			<# } #>
 
-			return true;
+			return false;
         }
 
 		//dynamic operations
@@ -158,5 +161,15 @@ namespace Excess.Extensions.R
 
 			throw new InvalidOperationException("index vectors expects only boolean or int");
 		}
+
+        private static object concat(IEnumerable<IVector> values, int len, Type type)
+        {
+			<# foreach (var type in allTypes) { #> 
+				if (type == typeof(<#= type.Name #>) || type == typeof(Vector<<#= type.Name #>>))
+					return Vector<<#= type.Name #>>.create(len, EnumerateVectors<<#= type.Name #>>(values));
+			<# } #>
+
+			throw new InvalidOperationException("cannont concatenate type: " + type.FullName);
+        }
 	}
 }

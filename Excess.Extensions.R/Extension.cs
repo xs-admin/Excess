@@ -95,7 +95,31 @@ namespace Excess.Extensions.R
                     .transform<RParser.SublistContext>(ArgumentList)
                     .transform<RParser.IndexContext>(Index)
                     .transform<RParser.SequenceContext>(LinearSequence)
-                    ;
+                    
+                    .then(Transform)
+            ;
+        }
+
+        private static SyntaxNode Transform(SyntaxNode oldNode, SyntaxNode newNode, Scope scope, LexicalExtension<SyntaxToken> extension)
+        {
+            Debug.Assert(newNode is BlockSyntax);
+            var isAssignment = oldNode is LocalDeclarationStatementSyntax;
+            if (!isAssignment && oldNode is BinaryExpressionSyntax)
+            {
+                var expr = oldNode as BinaryExpressionSyntax;
+                isAssignment = expr.CSharpKind() == SyntaxKind.SimpleAssignmentExpression;
+            }
+
+            if (isAssignment)
+            {
+                scope.AddError("r01", "R does not return", oldNode);
+                return newNode;
+            }
+
+            var document = scope.GetDocument<SyntaxToken, SyntaxNode, SemanticModel>();
+            document.change(oldNode.Parent, RoslynCompiler.ExplodeBlock(newNode));
+
+            return newNode;
         }
 
         static Template binaryOperatorCall = Template.ParseExpression("__0(__1, __2)");
@@ -168,7 +192,7 @@ namespace Excess.Extensions.R
         private static SyntaxNode LinearSequence(RParser.SequenceContext sequence, Func<ParserRuleContext, Scope, SyntaxNode> transform, Scope scope)
         {
             var exprs = sequence.expr();
-            Debug.Assert(exprs.Count == 2);
+            Debug.Assert(exprs.Length == 2);
 
 
             var left = transform(exprs[0], scope) as ExpressionSyntax;
@@ -181,7 +205,7 @@ namespace Excess.Extensions.R
         private static SyntaxNode Index(RParser.IndexContext index, Func<ParserRuleContext, Scope, SyntaxNode> transform, Scope scope)
         {
             var indexExprs = index.sublist().sub();
-            if (indexExprs.Count != 1)
+            if (indexExprs.Length != 1)
             {
                 //td: error
                 return null;

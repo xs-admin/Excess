@@ -16,6 +16,7 @@ namespace Excess.Compiler.Tests
     using DelegateInjector = DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel>;
     using CompositeInjector = CompositeInjector<SyntaxToken, SyntaxNode, SemanticModel>;
     using Microsoft.CodeAnalysis.CSharp.Syntax;
+    using System.Dynamic;
 
     public class RuntimeHelper
     {
@@ -50,9 +51,18 @@ namespace Excess.Compiler.Tests
                 return null;
             }
 
-            Type console = assembly.GetType("testclass");
-            var method = console.GetMethod("test");
-            return method.Invoke(null, new object[] { });
+            Type testtype = assembly.GetType("testclass");
+            //var method = console.GetMethod("test", BindingFlags.Static);
+
+            var result = new Dictionary<string, object>();
+            testtype.InvokeMember("test", BindingFlags.InvokeMethod | BindingFlags.Static | BindingFlags.NonPublic, null, null, new object[] { result });
+
+            var xo = new ExpandoObject();
+            var xod = xo as IDictionary<string, object>;
+            foreach (var kp in result)
+                xod.Add(kp.Key, kp.Value);
+
+            return xo;
         }
 
         private static SyntaxNode Normalize(SyntaxNode root, IEnumerable<SyntaxNode> members, Scope scope)

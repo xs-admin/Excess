@@ -1,6 +1,9 @@
 ﻿
 
 using System;
+using System.Collections.Generic;
+using System.Linq; 
+
 namespace Excess.Extensions.R
 {
 	public static partial class RR {
@@ -2434,33 +2437,33 @@ namespace Excess.Extensions.R
 				{
 											
 						if (type2 == typeof(Single))
-							return false;
+							return true;
 											
 						if (type2 == typeof(Int64))
-							return false;
+							return true;
 											
 						if (type2 == typeof(Int32))
-							return false;
+							return true;
 									}
 			
 				if (type1 == typeof(Single))
 				{
 											
 						if (type2 == typeof(Int64))
-							return false;
+							return true;
 											
 						if (type2 == typeof(Int32))
-							return false;
+							return true;
 									}
 			
 				if (type1 == typeof(Int64))
 				{
 											
 						if (type2 == typeof(Int32))
-							return false;
+							return true;
 									}
 			
-			return true;
+			return false;
         }
 
 		//dynamic operations
@@ -2529,5 +2532,29 @@ namespace Excess.Extensions.R
 
 			throw new InvalidOperationException("index vectors expects only boolean or int");
 		}
+
+        private static object concat(IEnumerable<IVector> values, int len, Type type)
+        {
+			 
+				if (type == typeof(Double) || type == typeof(Vector<Double>))
+					return Vector<Double>.create(len, EnumerateVectors<Double>(values));
+			 
+				if (type == typeof(Single) || type == typeof(Vector<Single>))
+					return Vector<Single>.create(len, EnumerateVectors<Single>(values));
+			 
+				if (type == typeof(Int64) || type == typeof(Vector<Int64>))
+					return Vector<Int64>.create(len, EnumerateVectors<Int64>(values));
+			 
+				if (type == typeof(Int32) || type == typeof(Vector<Int32>))
+					return Vector<Int32>.create(len, EnumerateVectors<Int32>(values));
+			 
+				if (type == typeof(Boolean) || type == typeof(Vector<Boolean>))
+					return Vector<Boolean>.create(len, EnumerateVectors<Boolean>(values));
+			 
+				if (type == typeof(String) || type == typeof(Vector<String>))
+					return Vector<String>.create(len, EnumerateVectors<String>(values));
+			
+			throw new InvalidOperationException("cannont concatenate type: " + type.FullName);
+        }
 	}
 }
