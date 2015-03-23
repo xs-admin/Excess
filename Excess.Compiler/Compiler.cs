@@ -49,6 +49,7 @@ namespace Excess.Compiler
         ILexicalAnalysis<TToken, TNode, TModel> Lexical();
         ISyntaxAnalysis<TToken, TNode, TModel> Syntax();
         ISemanticAnalysis<TToken, TNode, TModel> Semantics();
+        IInstanceAnalisys<TNode> Instance();
         ICompilerEnvironment Environment();
 
         Scope Scope { get; }

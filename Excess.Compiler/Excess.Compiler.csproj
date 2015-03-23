@@ -101,6 +101,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Compiler.cs" />
+    <Compile Include="Core\InstanceBase.cs" />
+    <Compile Include="InstanceAnalysis.cs" />
     <Compile Include="Roslyn\AntlrErrors.cs" />
     <Compile Include="Core\CompilerBase.cs" />
     <Compile Include="Core\DocumentBase.cs" />

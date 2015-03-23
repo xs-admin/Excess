@@ -231,7 +231,7 @@ namespace Excess.Compiler.Core
         protected TNode _root;
         protected TNode _original;
 
-        private void applyLexical()
+        protected virtual void applyLexical()
         {
             Debug.Assert(_root == null);
 
@@ -461,7 +461,7 @@ namespace Excess.Compiler.Core
         protected abstract TNode transform(TNode root, Dictionary<int, Func<TNode, Scope, TNode>> transformers);
         protected abstract TNode transform(TNode root, Dictionary<int, Func<TNode, TNode, TModel, Scope, TNode>> transformers);
 
-        private void applySyntactical()
+        protected virtual void applySyntactical()
         {
             Debug.Assert(_root != null);
             _root = pass("syntactical-extensions", _root, _scope);
@@ -493,7 +493,7 @@ namespace Excess.Compiler.Core
             return node;
         }
 
-        private bool applySemantical()
+        protected virtual bool applySemantical()
         {
             if (_semanticalTries > 5)
                 return true; //shortcut
