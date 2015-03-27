@@ -23,6 +23,7 @@ namespace Excess.Compiler
         bool hasErrors();
 
         string Text { get; set; }
+        CompilerStage Stage { get; }
         TNode SyntaxRoot { get; }
         TModel Model { get; set; }
         Scope Scope { get; }

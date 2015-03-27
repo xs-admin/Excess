@@ -78,7 +78,7 @@ namespace Excess.Compiler.Tests
             Assert.IsTrue(tree.GetRoot()
                 .DescendantNodes()
                 .OfType<BinaryExpressionSyntax>()
-                .Where(expr => expr.OperatorToken.CSharpKind() == SyntaxKind.BarBarToken)
+                .Where(expr => expr.OperatorToken.Kind() == SyntaxKind.BarBarToken)
                 .Count() == 1); //must have added an or expression for multiple cases, 
                                 //but not on the case containing the default statement
         }

@@ -99,7 +99,7 @@ namespace Excess.RuntimeProject
             return method
                 .WithModifiers(CSharp.TokenList(method
                         .Modifiers
-                        .Where(modifier => modifier.CSharpKind() != SyntaxKind.VirtualKeyword)
+                        .Where(modifier => modifier.Kind() != SyntaxKind.VirtualKeyword)
                         .Union(new[] { CSharp.Token(SyntaxKind.OverrideKeyword) })
                         .ToArray()))
                 .WithBody(CSharp.Block()

@@ -107,7 +107,7 @@ namespace Excess.Extensions.R
             if (!isAssignment && oldNode is BinaryExpressionSyntax)
             {
                 var expr = oldNode as BinaryExpressionSyntax;
-                isAssignment = expr.CSharpKind() == SyntaxKind.SimpleAssignmentExpression;
+                isAssignment = expr.Kind() == SyntaxKind.SimpleAssignmentExpression;
             }
 
             if (isAssignment)

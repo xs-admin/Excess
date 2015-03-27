@@ -23,6 +23,7 @@ namespace Excess.Compiler.Core
 
 
         protected string _text;
+        public CompilerStage Stage { get; internal set; }
         public string Text { get { return _text; } set { update(value); } }
         public TNode SyntaxRoot { get { return getRoot(); } }
         public TModel Model { get; set; }

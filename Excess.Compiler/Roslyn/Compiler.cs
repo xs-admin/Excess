@@ -107,7 +107,7 @@ namespace Excess.Compiler.Roslyn
 
         public bool isIdentifier(SyntaxToken token)
         {
-            return RoslynCompiler.isLexicalIdentifier(token.CSharpKind());
+            return RoslynCompiler.isLexicalIdentifier(token.Kind());
         }
 
 
@@ -119,7 +119,7 @@ namespace Excess.Compiler.Roslyn
         public IEnumerable<SyntaxToken> ParseTokens(string text)
         {
             return CSharp.ParseTokens(text)
-                .Where(token => token.CSharpKind() != SyntaxKind.EndOfFileToken);
+                .Where(token => token.Kind() != SyntaxKind.EndOfFileToken);
         }
 
         public IEnumerable<SyntaxNode> Find(SyntaxNode node, IEnumerable<string> xsIds)
@@ -445,7 +445,7 @@ namespace Excess.Compiler.Roslyn
             var tokens = CSharp.ParseTokens(text);
             foreach (var token in tokens)
             {
-                if (token.CSharpKind() != SyntaxKind.EndOfFileToken)
+                if (token.Kind() != SyntaxKind.EndOfFileToken)
                     yield return token;
             }
         }
@@ -466,7 +466,7 @@ namespace Excess.Compiler.Roslyn
         }
         public static bool isLexicalIdentifier(SyntaxToken token)
         {
-            return isLexicalIdentifier(token.CSharpKind());
+            return isLexicalIdentifier(token.Kind());
         }
 
         public static bool isLexicalIdentifier(SyntaxKind kind)
@@ -572,7 +572,7 @@ namespace Excess.Compiler.Roslyn
         {
             foreach(var modifier in modifiers)
             {
-                switch (modifier.CSharpKind())
+                switch (modifier.Kind())
                 {
                     case SyntaxKind.PublicKeyword:
                     case SyntaxKind.PrivateKeyword:
@@ -673,7 +673,7 @@ namespace Excess.Compiler.Roslyn
 
         public static TypeSyntax ConstantType(ExpressionSyntax value)
         {
-            switch (value.CSharpKind())
+            switch (value.Kind())
             {
                 case SyntaxKind.NumericLiteralExpression:
                 { 
@@ -760,8 +760,8 @@ namespace Excess.Compiler.Roslyn
         {
             return method
                 .Modifiers
-                .Where(modifier => modifier.CSharpKind() == SyntaxKind.PublicKeyword
-                                || modifier.CSharpKind() == SyntaxKind.InternalKeyword)
+                .Where(modifier => modifier.Kind() == SyntaxKind.PublicKeyword
+                                || modifier.Kind() == SyntaxKind.InternalKeyword)
                 .Any();
         }
 
@@ -789,7 +789,7 @@ namespace Excess.Compiler.Roslyn
             if (node is BinaryExpressionSyntax)
             {
                 var expr = node as BinaryExpressionSyntax;
-                if (expr.CSharpKind() == SyntaxKind.SimpleAssignmentExpression)
+                if (expr.Kind() == SyntaxKind.SimpleAssignmentExpression)
                 {
                     isAssignment = true;
                     return expr.WithRight((ExpressionSyntax)newNode);

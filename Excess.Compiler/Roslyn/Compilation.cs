@@ -7,6 +7,7 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.MSBuild;
 using System.Reflection;
 
 using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
@@ -64,7 +65,7 @@ namespace Excess.Compiler.Roslyn
         {
             public string Id { get; set; }
             public CompilerStage Stage { get; set; }
-            public RoslynDocument Document { get; set; }
+            public IDocument<SyntaxToken, SyntaxNode, SemanticModel> Document { get; set; }
             public RoslynCompiler Compiler { get; set; }
             public ICompilationTool Tool { get; set; }
             public int Hash { get; set; }
@@ -81,6 +82,24 @@ namespace Excess.Compiler.Roslyn
                 .Where(doc => doc.Id == id)
                 .Any();
         }
+
+        public void addDocument(string id, IDocument<SyntaxToken, SyntaxNode, SemanticModel> document)
+        {
+            if (_documents
+                .Where(doc => doc.Id == id)
+                .Any())
+                throw new InvalidOperationException();
+
+            var newDoc = new CompilationDocument
+            {
+                Id = id,
+                Stage = CompilerStage.Started,
+                Document = document,
+            };
+
+            _documents.Add(newDoc);
+        }
+
         public void addDocument(string id, string contents, ICompilerInjector<SyntaxToken, SyntaxNode, SemanticModel> injector)
         {
             if (_documents
@@ -189,7 +208,7 @@ namespace Excess.Compiler.Roslyn
                 return null;
 
             var doc = _documents.Find(document => document.Id == id);
-            return doc != null? doc.Document : null;
+            return doc != null? doc.Document as RoslynDocument : null;
         }
 
         public string getFileByExtension(string ext)
@@ -469,7 +488,7 @@ namespace Excess.Compiler.Roslyn
 
             foreach (var doc in _documents)
             {
-                var document = doc.Document;
+                var document = doc.Document as RoslynDocument;
                 if (document == null)
                     continue;
 

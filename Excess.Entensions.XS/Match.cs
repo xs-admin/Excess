@@ -127,7 +127,7 @@ namespace Excess.Entensions.XS
 
         private static ExpressionSyntax caseExpression(SwitchLabelSyntax label, ExpressionSyntax control, out bool isDefault)
         {
-            isDefault = label.Keyword.CSharpKind() == SyntaxKind.DefaultKeyword;
+            isDefault = label.Keyword.Kind() == SyntaxKind.DefaultKeyword;
 
             var caseLabel = label as CaseSwitchLabelSyntax;
             if (caseLabel != null)
@@ -137,7 +137,7 @@ namespace Excess.Entensions.XS
                 {
                     var expr = result as BinaryExpressionSyntax;
                     if (expr.Left.IsMissing)
-                        return CSharp.BinaryExpression(expr.CSharpKind(), control, expr.Right);
+                        return CSharp.BinaryExpression(expr.Kind(), control, expr.Right);
 
                     return expr;
                 }

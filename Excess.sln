@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.22310.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Excess.Core", "Excess.Core\Excess.Core.csproj", "{17298EA0-AF73-4F30-B6F1-2066100D7D74}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Excess.Application", "Excess.Application\Excess.Application.csproj", "{EDF5D964-4C0F-4F19-B674-58A38A5E5401}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Excess.Web", "Excess.Web\Excess.Web.csproj", "{897F6FD8-6F90-48E4-95A5-B4429B896205}"
@@ -30,10 +28,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{17298EA0-AF73-4F30-B6F1-2066100D7D74}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{17298EA0-AF73-4F30-B6F1-2066100D7D74}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{17298EA0-AF73-4F30-B6F1-2066100D7D74}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{17298EA0-AF73-4F30-B6F1-2066100D7D74}.Release|Any CPU.Build.0 = Release|Any CPU
 		{EDF5D964-4C0F-4F19-B674-58A38A5E5401}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{EDF5D964-4C0F-4F19-B674-58A38A5E5401}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EDF5D964-4C0F-4F19-B674-58A38A5E5401}.Release|Any CPU.ActiveCfg = Release|Any CPU

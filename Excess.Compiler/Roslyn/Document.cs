@@ -31,8 +31,6 @@ namespace Excess.Compiler.Roslyn
 
         public string LexicalText { get; internal set; }
 
-        public CompilerStage Stage { get; internal set; }
-
         public FileLinePositionSpan OriginalPosition(Location location)
         {
             var tree = location.SourceTree;

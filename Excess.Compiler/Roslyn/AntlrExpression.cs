@@ -93,7 +93,7 @@ namespace Excess.Compiler.Roslyn
         private static SyntaxToken GetBinaryOperator(string value, out SyntaxKind kind)
         {
             var result = CSharp.ParseToken(value);
-            kind = result.CSharpKind();
+            kind = result.Kind();
             switch (kind)
             {
                 case SyntaxKind.PlusToken:
@@ -145,7 +145,7 @@ namespace Excess.Compiler.Roslyn
         private static SyntaxToken GetUnaryOperator(string value, out SyntaxKind kind)
         {
             var result = CSharp.ParseToken(value);
-            kind = result.CSharpKind();
+            kind = result.Kind();
             switch (kind)
             {
                 case SyntaxKind.EqualsToken:

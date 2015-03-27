@@ -51,13 +51,13 @@ namespace Excess.Entensions.XS
             {
                 if (found)
                 {
-                    if (token.CSharpKind() == SyntaxKind.SemicolonToken)
+                    if (token.Kind() == SyntaxKind.SemicolonToken)
                         break;
 
                     yield return token;
                 }
                 else
-                    found = token.CSharpKind() == SyntaxKind.EqualsToken;
+                    found = token.Kind() == SyntaxKind.EqualsToken;
             }
 
             var document = scope.GetDocument<SyntaxToken, SyntaxNode, SemanticModel>();
