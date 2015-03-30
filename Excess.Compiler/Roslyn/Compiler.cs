@@ -156,6 +156,7 @@ namespace Excess.Compiler.Roslyn
                  new RoslynSyntaxAnalysis(),
                  new RoslynSemanticAnalysis(),
                  environment,
+                 new InstanceAnalisysBase<SyntaxToken, SyntaxNode, SemanticModel>(),
                  scope)
         {
             _scope.set<ICompilerService<SyntaxToken, SyntaxNode, SemanticModel>>(new CompilerService());
@@ -300,6 +301,15 @@ namespace Excess.Compiler.Roslyn
             result = document.SyntaxRoot.NormalizeWhitespace().ToFullString();
             return document.SyntaxRoot.SyntaxTree;
         }
+
+        public SyntaxTree CompileInstance(RoslynInstanceDocument document, out string result)
+        {
+            var iHandler = _instance as IDocumentInjector<SyntaxToken, SyntaxNode, SemanticModel>;
+            iHandler.apply(document);
+
+            return ApplySemanticalPass(document, out result);
+        }
+
 
         public static Func<SyntaxNode, Scope, SyntaxNode> AddMember(MemberDeclarationSyntax member)
         {

@@ -17,6 +17,11 @@ namespace Excess.Compiler.Core
 
     public class Instance<TNode>
     {
+        public Instance()
+        {
+            Connections = new List<InstanceConnection<TNode>>();
+        }
+
         public string Id { get; set; }
         public string Class { get; set; }
         public object Value { get; set; }
@@ -25,6 +30,7 @@ namespace Excess.Compiler.Core
         internal IInstanceTransform<TNode> Transform { get; set; }
         internal List<InstanceConnection<TNode>> Connections { get; set; }
     }
+
 
     public class InstanceMatchBase<TNode> : IInstanceMatch<TNode>
     {
@@ -103,6 +109,11 @@ namespace Excess.Compiler.Core
             return then((id, instance, node, connections, scope) => handler(id, instance, scope));
         }
 
+        public IInstanceAnalisys<TNode> then(Func<string, object, IEnumerable<InstanceConnection<TNode>>, Scope, TNode> handler)
+        {
+            return then((id, instance, node, connections, scope) => handler(id, instance, connections, scope));
+        }
+
         public IInstanceAnalisys<TNode> then(Func<string, object, TNode, IEnumerable<InstanceConnection<TNode>>, Scope, TNode> handler)
         {
             return then(new FunctorInstanceTransform<TNode>(_input, _output, _dataTransform, _nodeTransform, handler));
@@ -113,6 +124,13 @@ namespace Excess.Compiler.Core
             Debug.Assert(_transform == null);
             _transform = transform;
             return _owner;
+        }
+
+        internal void apply(IInstanceDocument<TNode> document)
+        {
+            Debug.Assert(_match != null);
+            Debug.Assert(_transform != null);
+            document.change(_match, _transform);
         }
     }
 
@@ -193,123 +211,130 @@ namespace Excess.Compiler.Core
         }
     }
 
-    public abstract class InstanceDocumentBase<TToken, TNode, TModel> : BaseDocument<TToken, TNode, TModel>, IInstanceDocument<TNode>
+    public class InstanceDocumentBase<TNode> : IInstanceDocument<TNode>
     {
-        public InstanceDocumentBase(Scope scope) : base(scope)
+        public InstanceDocumentBase()
         {
         }
 
-        Dictionary<Func<object, Scope, bool>, IInstanceTransform<TNode>> _mt = new Dictionary<Func<object, Scope, bool>, IInstanceTransform<TNode>>();
-        public void change(Func<object, Scope, bool> match, IInstanceTransform<TNode> transform)
+        Dictionary<Func<string, object, Scope, bool>, IInstanceTransform<TNode>> _mt = new Dictionary<Func<string, object, Scope, bool>, IInstanceTransform<TNode>>();
+        public void change(Func<string, object, Scope, bool> match, IInstanceTransform<TNode> transform)
         {
             _mt[match] = transform;
         }
 
-        bool _hasErrors = false;
-        protected override void applyLexical()
+        Func<IDictionary<string, Tuple<object, TNode>>, Scope, TNode> _transform;
+        public void change(Func<IDictionary<string, Tuple<object, TNode>>, Scope, TNode> transform)
         {
-            IEnumerable<Instance<TNode>> instances;
-            IEnumerable<Connection> connections;
+            Debug.Assert(_transform == null);
+            _transform = transform;
+        }
 
-            if (parse(_text, _scope, out instances, out connections))
+        bool _hasErrors = false;
+        public TNode transform(IDictionary<string, object> instances, IEnumerable<Connection> connections, Scope scope)
+        {
+            Debug.Assert(_transform != null);
+
+            //match
+            var namedInstances = new Dictionary<string, Instance<TNode>>();
+            foreach (var i in instances)
             {
-                //collect valid instances
-                var namedInstances = new Dictionary<string, Instance<TNode>>();
-                foreach (var instance in instances)
-                {
-                    if (validate(instance, _scope, namedInstances))
-                    {
-                        Debug.Assert(instance.Value != null);
+                Debug.Assert(i.Value != null);
 
-                        foreach (var mt in _mt)
+                foreach (var mt in _mt)
+                {
+                    var match = mt.Key;
+                    var transform = mt.Value;
+
+                    if (match(i.Key, i.Value, scope))
+                    {
+                        var instance = new Instance<TNode>
                         {
-                            var match = mt.Key;
-                            var transform = mt.Value;
+                            Id = i.Key,
+                            Value = i.Value
+                        };
 
-                            if (match(instance.Value, _scope))
-                            {
-                                var iid = instance.Id;
-                                namedInstances[iid] = instance;
+                        namedInstances[instance.Id] = instance;
 
-                                Debug.Assert(instance.Transform == null);
-                                instance.Transform = transform;
-                            }
-                        }
-                    }
-                    else
-                        _hasErrors = true;
-                }
-
-                //fill instance connections
-                foreach (var connection in connections)
-                {
-                    var source = null as Instance<TNode>;
-                    var target = null as Instance<TNode>;
-                    if (!namedInstances.TryGetValue(connection.Source, out source))
-                    {
-                        //td: error, invalid source
-                        continue;
-                    }
-
-                    if (!namedInstances.TryGetValue(connection.Target, out target))
-                    {
-                        //td: error, invalid source
-                        continue;
-                    }
-
-                    var outputDT = null as Action<InstanceConnector, InstanceConnection<TNode>, Scope>;
-                    var output = source.Transform.output(connection.OutputConnector, out outputDT);
-
-                    var inputDT = null as Action<InstanceConnector, InstanceConnection<TNode>, Scope>;
-                    var input = target.Transform.input(connection.InputConnector, out inputDT);
-
-                    var iconn = new InstanceConnection<TNode>()
-                    {
-                        Source = source.Id,
-                        Output = output,
-                        OutputModel = source.Value,
-                        OutputModelNode = source.Node,
-                        Target = target.Id,
-                        Input = input,
-                        InputModel = target.Value,
-                        InputModelNode = target.Node,
-                    };
-
-                    if (outputDT != null)
-                        outputDT(iconn.Output, iconn, _scope);
-
-                    if (inputDT != null)
-                        inputDT(iconn.Input, iconn, _scope);
-
-                    source.Connections.Add(iconn);
-                    target.Connections.Add(iconn);
-                }
-
-                foreach (var instance in namedInstances.Values)
-                {
-                    instance.Node = instance.Transform.transform(instance.Id, instance.Value, instance.Node, instance.Connections, _scope);
-                    foreach (var conn in instance.Connections)
-                    {
-                        if (!conn.Ready)
-                            continue;
-
-                        bool isInput = instance.Id == conn.Source;
-                        var inputInstance = instance;
-                        var outputInstance = instance;
-                        if (isInput)
-                            outputInstance = namedInstances[conn.Target];
-                        else
-                            inputInstance = namedInstances[conn.Source];
-
-                        applyConnection(conn, inputInstance, outputInstance, _scope);
+                        Debug.Assert(instance.Transform == null);
+                        instance.Transform = transform;
                     }
                 }
             }
-            else
-                _hasErrors = true;
+
+            //apply connections
+            foreach (var connection in connections)
+            {
+                var source = null as Instance<TNode>;
+                var target = null as Instance<TNode>;
+                if (!namedInstances.TryGetValue(connection.Source, out source))
+                {
+                    //td: error, invalid source
+                    continue;
+                }
+
+                if (!namedInstances.TryGetValue(connection.Target, out target))
+                {
+                    //td: error, invalid source
+                    continue;
+                }
+
+                var outputDT = null as Action<InstanceConnector, InstanceConnection<TNode>, Scope>;
+                var output = source.Transform.output(connection.OutputConnector, out outputDT);
+
+                var inputDT = null as Action<InstanceConnector, InstanceConnection<TNode>, Scope>;
+                var input = target.Transform.input(connection.InputConnector, out inputDT);
+
+                var iconn = new InstanceConnection<TNode>()
+                {
+                    Source = source.Id,
+                    Output = output,
+                    OutputModel = source.Value,
+                    OutputModelNode = source.Node,
+                    Target = target.Id,
+                    Input = input,
+                    InputModel = target.Value,
+                    InputModelNode = target.Node,
+                };
+
+                if (outputDT != null)
+                    outputDT(iconn.Output, iconn, scope);
+
+                if (inputDT != null)
+                    inputDT(iconn.Input, iconn, scope);
+
+                source.Connections.Add(iconn);
+                target.Connections.Add(iconn);
+            }
+
+            foreach (var instance in namedInstances.Values)
+            {
+                instance.Node = instance.Transform.transform(instance.Id, instance.Value, instance.Node, instance.Connections, scope);
+                foreach (var conn in instance.Connections)
+                {
+                    if (!conn.Ready)
+                        continue;
+
+                    bool isInput = instance.Id == conn.Source;
+                    var inputInstance = instance;
+                    var outputInstance = instance;
+                    if (isInput)
+                        outputInstance = namedInstances[conn.Target];
+                    else
+                        inputInstance = namedInstances[conn.Source];
+
+                    applyConnection(conn, inputInstance, outputInstance, scope);
+                }
+            }
 
             if (_hasErrors)
-                return;
+                return default(TNode);
+
+            var items = new Dictionary<string, Tuple<object, TNode>>();
+            foreach (var item in namedInstances)
+                items[item.Key] = new Tuple<object, TNode>(item.Value.Value, item.Value.Node);
+
+            return _transform(items, scope);
         }
 
         private void applyConnection(InstanceConnection<TNode> connection, Instance<TNode> input, Instance<TNode> output, Scope scope)
@@ -323,13 +348,11 @@ namespace Excess.Compiler.Core
             if (connection.InputTransform != null)
                 input.Node = connection.InputTransform(input.Node, connection.Input, connection, scope);
         }
-
-        internal abstract bool validate(Instance<TNode> instance, Scope scope, Dictionary<string, Instance<TNode>> namedInstances);
-        protected abstract bool parse(string text, Scope scope, out IEnumerable<Instance<TNode>> instances, out IEnumerable<Connection> connections);
     }
 
 
-    public class InstanceAnalisysBase<TNode> : IInstanceAnalisys<TNode>
+    public class InstanceAnalisysBase<TToken, TNode, TModel> : IInstanceAnalisys<TNode>, 
+                                                               IDocumentInjector<TToken, TNode, TModel>
     {
         List<InstanceMatchBase<TNode>> _matchers = new List<InstanceMatchBase<TNode>>();
         public IInstanceMatch<TNode> match(Func<string, object, Scope, bool> handler)
@@ -349,6 +372,24 @@ namespace Excess.Compiler.Core
             return match((iid, instance, scope) => iid == id);
         }
 
+        Func<IDictionary<string, Tuple<object, TNode>>, Scope, TNode> _transform;
+        public void then(Func<IDictionary<string, Tuple<object, TNode>>, Scope, TNode> transform)
+        {
+            Debug.Assert(_transform == null);
+            _transform = transform;
+        }
+
+        public void apply(IDocument<TToken, TNode, TModel> document)
+        {
+            var doc = document as IInstanceDocument<TNode>;
+
+            Debug.Assert(doc != null);
+            Debug.Assert(_transform != null);
+            doc.change(_transform);
+
+            foreach (var matcher in _matchers)
+                matcher.apply(doc);
+        }
     }
 
 }

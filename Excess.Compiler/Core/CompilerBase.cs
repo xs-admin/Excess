@@ -23,12 +23,14 @@ namespace Excess.Compiler.Core
                             ISyntaxAnalysis<TToken, TNode, TModel> syntax, 
                             ISemanticAnalysis<TToken, TNode, TModel> semantics,
                             ICompilerEnvironment environment,
+                            IInstanceAnalisys<TNode> instance,
                             Scope scope)
         {
             _lexical  = lexical;
             _syntax = syntax;
             _semantics = semantics;
             _environment = environment;
+            _instance = instance;
 
             _scope = new Scope(scope); 
         }

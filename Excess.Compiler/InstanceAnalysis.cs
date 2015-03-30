@@ -45,6 +45,7 @@ namespace Excess.Compiler
         IInstanceMatch<TNode> output(InstanceConnector connector, Func<TNode, InstanceConnector, InstanceConnection<TNode>, Scope, TNode> handler);
 
         IInstanceAnalisys<TNode> then(Func<string, object, TNode, IEnumerable<InstanceConnection<TNode>>, Scope, TNode> handler);
+        IInstanceAnalisys<TNode> then(Func<string, object, IEnumerable<InstanceConnection<TNode>>, Scope, TNode> handler);
         IInstanceAnalisys<TNode> then(Func<string, object, TNode, Scope, TNode> handler);
         IInstanceAnalisys<TNode> then(Func<string, object, Scope, TNode> handler);
         IInstanceAnalisys<TNode> then(IInstanceTransform<TNode> transform);
@@ -56,11 +57,13 @@ namespace Excess.Compiler
         IInstanceMatch<TNode> match(Func<string, object, Scope, bool> handler);
         IInstanceMatch<TNode> match<Model>();
         IInstanceMatch<TNode> match(string id);
+        void then(Func<IDictionary<string, Tuple<object, TNode>>, Scope, TNode> transform);
     }
 
     public interface IInstanceDocument<TNode>
     {
-        void change(Func<object, Scope, bool> match, IInstanceTransform<TNode> transform);
+        void change(Func<string, object, Scope, bool> match, IInstanceTransform<TNode> transform);
+        void change(Func<IDictionary<string, Tuple<object, TNode>>, Scope, TNode> transform);
     }
 
 }

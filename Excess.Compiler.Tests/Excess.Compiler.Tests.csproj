@@ -128,6 +128,7 @@
     <Compile Include="RuntimeHelper.cs" />
     <Compile Include="ExtUsage.cs" />
     <Compile Include="RRuntime.cs" />
+    <Compile Include="Instance.cs" />
     <Compile Include="XSUsage.cs" />
     <Compile Include="Usage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

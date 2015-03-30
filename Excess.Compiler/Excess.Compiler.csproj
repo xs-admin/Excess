@@ -117,7 +117,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Compiler.cs" />
-    <Compile Include="Core\InstanceBase.cs" />
+    <Compile Include="Core\InstanceAnalysisBase.cs" />
+    <Compile Include="Core\InstanceScope.cs" />
     <Compile Include="InstanceAnalysis.cs" />
     <Compile Include="Roslyn\AntlrErrors.cs" />
     <Compile Include="Core\CompilerBase.cs" />
@@ -136,6 +137,7 @@
     <Compile Include="Roslyn\Compiler.cs" />
     <Compile Include="Roslyn\Document.cs" />
     <Compile Include="Roslyn\Environment.cs" />
+    <Compile Include="Roslyn\InstanceDocument.cs" />
     <Compile Include="Roslyn\LexicalAnalysis.cs" />
     <Compile Include="Roslyn\Scope.cs" />
     <Compile Include="Roslyn\SemanticAnalysis.cs" />
