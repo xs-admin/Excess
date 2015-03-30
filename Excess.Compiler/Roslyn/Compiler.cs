@@ -370,8 +370,6 @@ namespace Excess.Compiler.Roslyn
             }
         }
 
-
-
         //declarations
         public static TypeSyntax @void    = CSharp.PredefinedType(CSharp.Token(SyntaxKind.VoidKeyword));
         public static TypeSyntax @object  = CSharp.PredefinedType(CSharp.Token(SyntaxKind.ObjectKeyword));
@@ -392,6 +390,10 @@ namespace Excess.Compiler.Roslyn
         public static ExpressionSyntax @null = CSharp.ParseExpression("null");
         public static ExpressionSyntax @true = CSharp.ParseExpression("true");
         public static ExpressionSyntax @false = CSharp.ParseExpression("false");
+
+        //tokens
+        public static SyntaxToken semicolon = CSharp.ParseToken(";");
+        
 
         //node marking
         static private int _seed = 0;

@@ -1,4 +1,5 @@
 ﻿using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,6 +26,29 @@ namespace Excess.Compiler.Roslyn
         {
             var doc = scope.GetDocument();
             doc.AddError(id, message, offset, length);
+        }
+
+        internal static void InitDocumentScope(this Scope scope)
+        {
+            scope.set("__additionalTypes", new List <TypeDeclarationSyntax>());
+        }
+
+        public static void AddType(this Scope scope, TypeDeclarationSyntax type)
+        {
+            var types = scope.find<List<TypeDeclarationSyntax>>("__additionalTypes");
+            if (types == null)
+                throw new InvalidOperationException("document scope not initialized");
+
+            types.Add(type);
+        }
+
+        public static IEnumerable<TypeDeclarationSyntax> GetAdditionalTypes(this Scope scope)
+        {
+            var types = scope.find<List<TypeDeclarationSyntax>>("__additionalTypes");
+            if (types == null)
+                throw new InvalidOperationException("document scope not initialized");
+
+            return types;
         }
     }
 }

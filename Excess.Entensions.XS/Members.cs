@@ -15,7 +15,7 @@ namespace Excess.Entensions.XS
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
     using ExcessCompiler = ICompiler<SyntaxToken, SyntaxNode, SemanticModel>;
 
-    class Members
+    public class Members
     {
         static public void Apply(ExcessCompiler compiler)
         {

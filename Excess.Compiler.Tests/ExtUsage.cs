@@ -352,5 +352,45 @@ namespace Excess.Compiler.Tests
                 .OfType<ImplicitArrayCreationExpressionSyntax>()
                 .Count() == 4); //4 arrays
         }
+
+        [TestMethod]
+        public void FlukeUsage()
+        {
+            RoslynCompiler compiler = new RoslynCompiler();
+            Entensions.XS.Members.Apply(compiler);
+            Extensions.Fluke.Extension.Apply(compiler);
+
+            SyntaxTree tree = null;
+            string text = null;
+
+            //usage
+            var Usage = @"
+            public repository CompanyAddress
+            {
+                repository<AddressType> _address;
+                constructor(repository<AddressType> address)
+                {
+                    _address = address;
+                }
+
+                private AddressType GetDefaultAddressType()
+                {
+                    //get default address type
+                    return __address.ToList().FirstOrDefault();
+                }
+            }";
+
+            tree = compiler.ApplySemanticalPass(Usage, out text);
+
+            Assert.AreEqual(tree.GetRoot()
+                .DescendantNodes()
+                .OfType<ClassDeclarationSyntax>()
+                .Count(), 1); //must have added a class
+
+            Assert.AreEqual(tree.GetRoot()
+                .DescendantNodes()
+                .OfType<InterfaceDeclarationSyntax>()
+                .Count(), 1); //must have added an interface
+        }
     }
 }

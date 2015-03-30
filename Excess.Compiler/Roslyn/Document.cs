@@ -18,6 +18,7 @@ namespace Excess.Compiler.Roslyn
         public RoslynDocument(Scope scope) : base(scope)
         {
             _scope.set<IDocument<SyntaxToken, SyntaxNode, SemanticModel>>(this);
+            _scope.InitDocumentScope();
         }
 
         string _documentID;
@@ -25,6 +26,7 @@ namespace Excess.Compiler.Roslyn
         {
             Text = text;
             _scope.set<IDocument<SyntaxToken, SyntaxNode, SemanticModel>>(this);
+            _scope.InitDocumentScope();
 
             _documentID = id;
         }
@@ -177,6 +179,31 @@ namespace Excess.Compiler.Roslyn
         protected override SyntaxNode getRoot()
         {
             return _root;
+        }
+
+        protected override void applySyntactical()
+        {
+            base.applySyntactical();
+
+            var additionalTypes = _scope.GetAdditionalTypes();
+            if (additionalTypes != null && additionalTypes.Any())
+            {
+                var namespaces = _root
+                    .DescendantNodes()
+                    .OfType<NamespaceDeclarationSyntax>();
+
+                if (!namespaces.Any())
+                {
+                    _root = (_root as CompilationUnitSyntax)
+                        .AddMembers(additionalTypes.ToArray());
+                }
+                else
+                {
+                    _root = _root
+                        .ReplaceNodes(namespaces,
+                        (on, nn) => nn.AddMembers(additionalTypes.ToArray()));
+                }   
+            }
         }
     }
 }
