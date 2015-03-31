@@ -41,5 +41,13 @@ namespace Excess.Compiler.Core
 
             return _instanceDeclaration;
         }
+
+        internal static void InitInstance(this Scope scope)
+        {
+            Debug.Assert(scope.find<List<SyntaxNode>>("_instanceDeclaration") == null);
+
+            scope.set("_instanceDeclaration", new List<SyntaxNode>());
+            scope.set("_instanceInitializer", new List<SyntaxNode>());
+        }
     }
 }

@@ -35,7 +35,10 @@ namespace Excess.Compiler.Roslyn
             var instances = new Dictionary<string, object>();
             var connections = new List<Connection>();
             if (_parser(_text, instances, connections, _scope))
+            {
+                _scope.InitInstance();
                 _root = _instance.transform(instances, connections, _scope);
+            }
         }
     }
 }

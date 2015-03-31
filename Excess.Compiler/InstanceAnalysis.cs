@@ -25,24 +25,35 @@ namespace Excess.Compiler
         public TNode InputNode { get; set; }
         public TNode InputModelNode { get; set; }
 
-        public Func<TNode, InstanceConnector, InstanceConnection<TNode>, Scope, TNode> InputTransform { get; set; }
-        public Func<TNode, InstanceConnector, InstanceConnection<TNode>, Scope, TNode> OutputTransform { get; set; }
-        public bool Ready { get { return OutputModelNode != null && InputModelNode != null; } }
+        public Action<InstanceConnector, object, object, Scope> InputDt { get; set; }
+        public Action<InstanceConnector, object, object, Scope> OutputDt { get; set; }
+        public Action<InstanceConnector, InstanceConnection<TNode>, Scope> InputTransform { get; set; }
+        public Action<InstanceConnector, InstanceConnection<TNode>, Scope> OutputTransform { get; set; }
     }
 
     public interface IInstanceTransform<TNode>
     {
         TNode transform(string id, object instance, TNode node, IEnumerable<InstanceConnection<TNode>> connections, Scope scope);
-        InstanceConnector output(string connector, out Action<InstanceConnector, InstanceConnection<TNode>, Scope> dt);
-        InstanceConnector input(string connector, out Action<InstanceConnector, InstanceConnection<TNode>, Scope> dt);
+        InstanceConnector output(
+            string connector,
+            out Action<InstanceConnector, object, object, Scope> dt,
+            out Action<InstanceConnector, InstanceConnection<TNode>, Scope> transform);
+        InstanceConnector input(
+            string connector,
+            out Action<InstanceConnector, object, object, Scope> dt,
+            out Action<InstanceConnector, InstanceConnection<TNode>, Scope> transform);
     }
 
     public interface IInstanceMatch<TNode>
     {
-        IInstanceMatch<TNode> input(InstanceConnector connector, Action<InstanceConnector, InstanceConnection<TNode>, Scope> handler);
-        IInstanceMatch<TNode> input(InstanceConnector connector, Func<TNode, InstanceConnector, InstanceConnection<TNode>, Scope, TNode> handler);
-        IInstanceMatch<TNode> output(InstanceConnector connector, Action<InstanceConnector, InstanceConnection<TNode>, Scope> handler);
-        IInstanceMatch<TNode> output(InstanceConnector connector, Func<TNode, InstanceConnector, InstanceConnection<TNode>, Scope, TNode> handler);
+        IInstanceMatch<TNode> input(
+            InstanceConnector connector, 
+            Action<InstanceConnector, object, object, Scope> dt = null,
+            Action<InstanceConnector, InstanceConnection<TNode>, Scope> transform = null);
+        IInstanceMatch<TNode> output(
+            InstanceConnector connector,
+            Action<InstanceConnector, object, object, Scope> dt = null,
+            Action<InstanceConnector, InstanceConnection<TNode>, Scope> transform = null);
 
         IInstanceAnalisys<TNode> then(Func<string, object, TNode, IEnumerable<InstanceConnection<TNode>>, Scope, TNode> handler);
         IInstanceAnalisys<TNode> then(Func<string, object, IEnumerable<InstanceConnection<TNode>>, Scope, TNode> handler);

@@ -477,9 +477,8 @@ namespace Excess.Compiler.Core
 
             //add modules before going into semantics
             ICompilerEnvironment environment = _scope.find<ICompilerEnvironment>();
-            Debug.Assert(environment != null);
-
-            _root = addModules(_root, environment.modules());
+            if (environment != null)
+                _root = addModules(_root, environment.modules());
         }
 
         protected abstract TNode addModules(TNode root, IEnumerable<string> modules);

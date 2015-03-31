@@ -26,20 +26,23 @@ namespace Excess.Compiler.Tests
             //code extension
             instance
                 .match<InstanceFoo>()
-                    .input(new InstanceConnector { Id = "input" }, FooInput)
+                    .input (new InstanceConnector { Id = "input" }, dt: FooInput)
+                    .output(new InstanceConnector { Id = "output" })
                     .then(TransformFoo)
                 .match<InstanceBar>()
-                    .output(new InstanceConnector { Id = "output" }, BarOutput)
+                    .input(new InstanceConnector { Id = "input" })
+                    .output(new InstanceConnector { Id = "output" }, transform:  BarOutput)
                     .then(TransformBar)
-                .then(TransformInstance);
+
+                .then(TransformInstances);
 
             RoslynInstanceDocument doc = new RoslynInstanceDocument(InstanceTestParser);
             tree = compiler.CompileInstance(doc, out text);
             Assert.IsTrue(tree
                 .GetRoot()
                 .DescendantNodes()
-                .OfType<StatementSyntax>()
-                .Count() == 5); //must have added a couple of statements
+                .OfType<ParenthesizedLambdaExpressionSyntax>()
+                .Count() == 1); //must have added a PropertyChanged handler
         }
 
         static CompilationUnitSyntax UsageApp = CSharp.ParseCompilationUnit(@"
@@ -71,7 +74,7 @@ namespace Excess.Compiler.Tests
                     set 
                     {
                         _output = value;
-                        NotifyPropertyChanged(""input"");
+                        NotifyPropertyChanged(""output"");
                     }
                 }
             }
@@ -106,7 +109,7 @@ namespace Excess.Compiler.Tests
             }
         ");
 
-        private static SyntaxNode TransformInstance(IDictionary<string, Tuple<object, SyntaxNode>> instances, Scope scope)
+        private static SyntaxNode TransformInstances(IDictionary<string, Tuple<object, SyntaxNode>> instances, Scope scope)
         {
             var main = UsageApp
                 .DescendantNodes()
@@ -120,12 +123,18 @@ namespace Excess.Compiler.Tests
                 {
                     var newStatements = scope
                         .GetInstanceDeclarations()
-                        .Select(instance => instance as StatementSyntax);
+                        .Select(instance => (StatementSyntax)instance);
+
+                    var initStatements = scope
+                        .GetInstanceInitializers()
+                        .Select(instance => (StatementSyntax)instance);
 
                     return nn
                         .WithBody(nn.Body
                             .WithStatements(CSharp.List(
                                 newStatements
+                                    .Union(
+                                initStatements)
                                     .Union(
                                 nn.Body.Statements))));
                 });
@@ -148,24 +157,20 @@ namespace Excess.Compiler.Tests
         static Template FooInputInit = Template.ParseStatement(@"
             _0.PropertyChanged += (sender, args) => 
             {
-                if (args.PropertyName == _1)
+                if (args.PropertyName == __1)
                     __2;
             }
         ");
 
-        private static void FooInput(InstanceConnector input, InstanceConnection<SyntaxNode> connection, Scope scope)
+        private static void FooInput(InstanceConnector input, object source, object target, Scope scope)
         {
-            Assert.IsNotNull(connection.OutputNode);
-            Assert.IsNotNull(connection.InputNode);
-            Assert.IsInstanceOfType(connection.InputNode, typeof(ExpressionSyntax));
-            Assert.IsInstanceOfType(connection.OutputNode, typeof(ExpressionSyntax));
+            var bar = source as InstanceBar;
+            var foo = target as InstanceFoo;
 
-            scope.AddInstanceInitializer(FooInputInit.Get(
-                connection.Source,
-                CSharp.Literal(connection.Input.Id),
-                CSharp.BinaryExpression(SyntaxKind.SimpleAssignmentExpression,
-                    (ExpressionSyntax)connection.InputNode,
-                    (ExpressionSyntax)connection.OutputNode)));
+            Assert.IsNotNull(source);
+            Assert.IsNotNull(target);
+
+            foo.Callers.Add(bar);
         }
 
         private static void BarOutput(InstanceConnector output, InstanceConnection<SyntaxNode> connection, Scope scope)
@@ -177,8 +182,10 @@ namespace Excess.Compiler.Tests
 
             scope.AddInstanceInitializer(FooInputInit.Get(
                 connection.Source,
-                CSharp.Literal(connection.Input.Id),
-                CSharp.InvocationExpression(CSharp.ParseExpression("Notify"))));
+                CSharp.ParseExpression('"' + connection.Input.Id + '"'),
+                CSharp.BinaryExpression(SyntaxKind.EqualsExpression,
+                    (ExpressionSyntax)connection.InputNode,
+                    (ExpressionSyntax)connection.OutputNode)));
         }
 
         static Template instanceCreation = Template.ParseStatement(@"
@@ -206,7 +213,7 @@ namespace Excess.Compiler.Tests
                 else
                 {
                     Assert.IsTrue(connection.Target == id);
-                    connection.OutputNode = CSharp.ParseExpression(id + "." + connection.Input.Id);
+                    connection.InputNode = CSharp.ParseExpression(id + "." + connection.Input.Id);
                 }
 
             }
@@ -231,12 +238,24 @@ namespace Excess.Compiler.Tests
 
             foreach (var connection in connections)
             {
+                if (connection.Input == null)
+                {
+                    scope.AddError("test01", "unregistered connection", connection.OutputModelNode);
+                    continue;
+                }
+
+                if (connection.Output == null)
+                {
+                    scope.AddError("test01", "unregistered connection", connection.InputModelNode);
+                    continue;
+                }
+
                 if (connection.Source == id)
                     connection.OutputNode = CSharp.ParseExpression(id + "." + connection.Output.Id);
                 else
                 {
                     Assert.IsTrue(connection.Target == id);
-                    connection.OutputNode = CSharp.ParseExpression(id + "." + connection.Input.Id);
+                    connection.InputNode = CSharp.ParseExpression(id + "." + connection.Input.Id);
                 }
 
             }
@@ -246,8 +265,14 @@ namespace Excess.Compiler.Tests
 
         private class InstanceFoo
         {
+            public InstanceFoo()
+            {
+                Callers = new List<InstanceBar>();
+            }
+
             public string Id { get; set; }
             public int[] Values { get; set; }
+            public List<InstanceBar> Callers { get; set; }
         }
 
         private class InstanceBar

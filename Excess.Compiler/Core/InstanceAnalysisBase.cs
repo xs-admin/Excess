@@ -44,57 +44,37 @@ namespace Excess.Compiler.Core
 
         Dictionary<string, InstanceConnector> _input = new Dictionary<string, InstanceConnector>();
         Dictionary<string, InstanceConnector> _output = new Dictionary<string, InstanceConnector>();
-        Dictionary<InstanceConnector, Action<InstanceConnector, InstanceConnection<TNode>, Scope>> _dataTransform = new Dictionary<InstanceConnector, Action<InstanceConnector, InstanceConnection<TNode>, Scope>>();
-        Dictionary<InstanceConnector, Func<TNode, InstanceConnector, InstanceConnection<TNode>, Scope, TNode>> _nodeTransform = new Dictionary<InstanceConnector, Func<TNode, InstanceConnector, InstanceConnection<TNode>, Scope, TNode>>();
-        public IInstanceMatch<TNode> input(InstanceConnector connector, Action<InstanceConnector, InstanceConnection<TNode>, Scope> handler)
+        Dictionary<InstanceConnector, Action<InstanceConnector, object, object, Scope>> _dataTransform = new Dictionary<InstanceConnector, Action<InstanceConnector, object, object, Scope>>();
+        Dictionary<InstanceConnector, Action<InstanceConnector, InstanceConnection<TNode>, Scope>> _nodeTransform = new Dictionary<InstanceConnector, Action<InstanceConnector, InstanceConnection<TNode>, Scope>>();
+        public IInstanceMatch<TNode> input(InstanceConnector connector, Action<InstanceConnector, object, object, Scope> dt, Action<InstanceConnector, InstanceConnection<TNode>, Scope> transform)
         {
             var id = connector.Id;
             if (_input.ContainsKey(id))
                 throw new InvalidOperationException("duplicate input");
 
-            _input[id] = connector;
+            if (dt != null)
+                _dataTransform[connector] = dt;
 
-            Debug.Assert(handler != null);
-            _dataTransform[connector] = handler;
+            if (transform != null)
+                _nodeTransform[connector] = transform;
+
+            _input[id] = connector;
             return this;
         }
 
-        public IInstanceMatch<TNode> input(InstanceConnector connector, Func<TNode, InstanceConnector, InstanceConnection<TNode>, Scope, TNode> handler)
-        {
-            var id = connector.Id;
-            if (_input.ContainsKey(id))
-                throw new InvalidOperationException("duplicate input");
-
-            _input[id] = connector;
-
-            Debug.Assert(handler != null);
-            _nodeTransform[connector] = handler;
-            return this;
-        }
-
-        public IInstanceMatch<TNode> output(InstanceConnector connector, Action<InstanceConnector, InstanceConnection<TNode>, Scope> handler)
+        public IInstanceMatch<TNode> output(InstanceConnector connector, Action<InstanceConnector, object, object, Scope> dt, Action<InstanceConnector, InstanceConnection<TNode>, Scope> transform)
         {
             var id = connector.Id;
             if (_output.ContainsKey(id))
                 throw new InvalidOperationException("duplicate input");
 
-            _output[id] = connector;
+            if (dt != null)
+                _dataTransform[connector] = dt;
 
-            Debug.Assert(handler != null);
-            _dataTransform[connector] = handler;
-            return this;
-        }
-
-        public IInstanceMatch<TNode> output(InstanceConnector connector, Func<TNode, InstanceConnector, InstanceConnection<TNode>, Scope, TNode> handler)
-        {
-            var id = connector.Id;
-            if (_output.ContainsKey(id))
-                throw new InvalidOperationException("duplicate input");
+            if (transform != null)
+                _nodeTransform[connector] = transform;
 
             _output[id] = connector;
-
-            Debug.Assert(handler != null);
-            _nodeTransform[connector] = handler;
             return this;
         }
 
@@ -138,13 +118,13 @@ namespace Excess.Compiler.Core
     {
         Dictionary<string, InstanceConnector> _input;
         Dictionary<string, InstanceConnector> _output;
-        Dictionary<InstanceConnector, Action<InstanceConnector, InstanceConnection<TNode>, Scope>> _connectorDataTransform;
-        Dictionary<InstanceConnector, Func<TNode, InstanceConnector, InstanceConnection<TNode>, Scope, TNode>> _connectionTransform;
+        Dictionary<InstanceConnector, Action<InstanceConnector, object, object, Scope>> _connectorDataTransform;
+        Dictionary<InstanceConnector, Action<InstanceConnector, InstanceConnection<TNode>, Scope>> _connectionTransform;
         public InstanceTransformBase(
             Dictionary<string, InstanceConnector> input,
             Dictionary<string, InstanceConnector> output,
-            Dictionary<InstanceConnector, Action<InstanceConnector, InstanceConnection<TNode>, Scope>> connectorDataTransform,
-            Dictionary<InstanceConnector, Func<TNode, InstanceConnector, InstanceConnection<TNode>, Scope, TNode>> connectionTransform)
+            Dictionary<InstanceConnector, Action<InstanceConnector, object, object, Scope>> connectorDataTransform,
+            Dictionary<InstanceConnector, Action<InstanceConnector, InstanceConnection<TNode>, Scope>> connectionTransform)
         {
             _input = input;
             _output = output;
@@ -159,9 +139,17 @@ namespace Excess.Compiler.Core
             {
                 bool isInput = connection.InputModel == instance;
                 if (isInput)
-                    connection.InputTransform = _connectionTransform[connection.Input];
+                {
+                    var tmp = connection.InputTransform;
+                    _connectionTransform.TryGetValue(connection.Input, out tmp);
+                    connection.InputTransform = tmp;
+                }
                 else
-                    connection.OutputTransform = _connectionTransform[connection.Output];
+                {
+                    var tmp = connection.OutputTransform;
+                    _connectionTransform.TryGetValue(connection.Output, out tmp);
+                    connection.OutputTransform = tmp;
+                }
             }
 
             return result;
@@ -169,24 +157,38 @@ namespace Excess.Compiler.Core
 
         protected abstract TNode doTransform(string id, object instance, TNode node, IEnumerable<InstanceConnection<TNode>> connections, Scope scope);
 
-        public InstanceConnector output(string connector, out Action<InstanceConnector, InstanceConnection<TNode>, Scope> dt)
+        public InstanceConnector output(
+            string connector, 
+            out Action<InstanceConnector, object, object, Scope> dt, 
+            out Action<InstanceConnector, InstanceConnection<TNode>, Scope> transform)
         {
             dt = null;
+            transform = null;
 
             var result = null as InstanceConnector;
             if (_output.TryGetValue(connector, out result))
+            {
                 _connectorDataTransform.TryGetValue(result, out dt);
+                _connectionTransform.TryGetValue(result, out transform);
+            }
 
             return result;
         }
 
-        public InstanceConnector input(string connector, out Action<InstanceConnector, InstanceConnection<TNode>, Scope> dt)
+        public InstanceConnector input(
+            string connector,
+            out Action<InstanceConnector, object, object, Scope> dt,
+            out Action<InstanceConnector, InstanceConnection<TNode>, Scope> transform)
         {
             dt = null;
+            transform = null;
 
             var result = null as InstanceConnector;
             if (_input.TryGetValue(connector, out result))
+            {
                 _connectorDataTransform.TryGetValue(result, out dt);
+                _connectionTransform.TryGetValue(result, out transform);
+            }
 
             return result;
         }
@@ -198,8 +200,8 @@ namespace Excess.Compiler.Core
         public FunctorInstanceTransform(
             Dictionary<string, InstanceConnector> input,
             Dictionary<string, InstanceConnector> output,
-            Dictionary<InstanceConnector, Action<InstanceConnector, InstanceConnection<TNode>, Scope>> connectorDataTransform,
-            Dictionary<InstanceConnector, Func<TNode, InstanceConnector, InstanceConnection<TNode>, Scope, TNode>> connectionTransform,
+            Dictionary<InstanceConnector, Action<InstanceConnector, object, object, Scope>> connectorDataTransform,
+            Dictionary<InstanceConnector, Action<InstanceConnector, InstanceConnection<TNode>, Scope>> connectionTransform,
             Func<string, object, TNode, IEnumerable<InstanceConnection<TNode>>, Scope, TNode> handler) : base(input, output, connectorDataTransform, connectionTransform)
         {
             _handler = handler;
@@ -262,7 +264,7 @@ namespace Excess.Compiler.Core
                 }
             }
 
-            //apply connections
+            //apply connections, save 
             foreach (var connection in connections)
             {
                 var source = null as Instance<TNode>;
@@ -279,11 +281,13 @@ namespace Excess.Compiler.Core
                     continue;
                 }
 
-                var outputDT = null as Action<InstanceConnector, InstanceConnection<TNode>, Scope>;
-                var output = source.Transform.output(connection.OutputConnector, out outputDT);
+                var outputDT = null as Action<InstanceConnector, object, object, Scope>;
+                var outputTransform = null as Action<InstanceConnector, InstanceConnection<TNode>, Scope>;
+                var output = source.Transform.output(connection.OutputConnector, out outputDT, out outputTransform);
 
-                var inputDT = null as Action<InstanceConnector, InstanceConnection<TNode>, Scope>;
-                var input = target.Transform.input(connection.InputConnector, out inputDT);
+                var inputDT = null as Action<InstanceConnector, object, object, Scope>;
+                var inputTransform = null as Action<InstanceConnector, InstanceConnection<TNode>, Scope>;
+                var input = target.Transform.input(connection.InputConnector, out inputDT, out inputTransform);
 
                 var iconn = new InstanceConnection<TNode>()
                 {
@@ -298,32 +302,40 @@ namespace Excess.Compiler.Core
                 };
 
                 if (outputDT != null)
-                    outputDT(iconn.Output, iconn, scope);
+                    outputDT(iconn.Output, iconn.InputModel, iconn.OutputModel, scope);
 
                 if (inputDT != null)
-                    inputDT(iconn.Input, iconn, scope);
+                    inputDT(iconn.Input, iconn.OutputModel, iconn.InputModel, scope);
 
+                iconn.InputTransform = inputTransform;
+                iconn.OutputTransform = outputTransform;
                 source.Connections.Add(iconn);
                 target.Connections.Add(iconn);
             }
 
             foreach (var instance in namedInstances.Values)
             {
-                instance.Node = instance.Transform.transform(instance.Id, instance.Value, instance.Node, instance.Connections, scope);
+                transformInstance(instance, scope);
+            }
+
+
+            foreach (var instance in namedInstances.Values)
+            {
                 foreach (var conn in instance.Connections)
                 {
-                    if (!conn.Ready)
-                        continue;
-
                     bool isInput = instance.Id == conn.Source;
                     var inputInstance = instance;
                     var outputInstance = instance;
                     if (isInput)
+                    {
                         outputInstance = namedInstances[conn.Target];
+                        applyConnection(conn, outputInstance, isInput, conn.OutputTransform, scope);
+                    }
                     else
+                    {
                         inputInstance = namedInstances[conn.Source];
-
-                    applyConnection(conn, inputInstance, outputInstance, scope);
+                        applyConnection(conn, inputInstance, isInput, conn.InputTransform, scope);
+                    }
                 }
             }
 
@@ -337,16 +349,35 @@ namespace Excess.Compiler.Core
             return _transform(items, scope);
         }
 
-        private void applyConnection(InstanceConnection<TNode> connection, Instance<TNode> input, Instance<TNode> output, Scope scope)
+        private void transformInstance(Instance<TNode> instance, Scope scope)
         {
-            if (connection.OutputTransform != null)
-            {
-                output.Node = connection.OutputTransform(output.Node, connection.Output, connection, scope);
-                connection.OutputModelNode = output.Node;
-            }
+            instance.Node = instance.Transform.transform(instance.Id, instance.Value, instance.Node, instance.Connections, scope);
 
-            if (connection.InputTransform != null)
-                input.Node = connection.InputTransform(input.Node, connection.Input, connection, scope);
+            foreach (var conn in instance.Connections)
+            {
+                bool isInput = instance.Id == conn.Source;
+                if (isInput)
+                    conn.InputModelNode = instance.Node;
+                else
+                    conn.OutputModelNode = instance.Node;
+            }
+        }
+
+        private void applyConnection(
+            InstanceConnection<TNode> connection,
+            Instance<TNode> instance,
+            bool isInput,
+            Action<InstanceConnector, InstanceConnection<TNode>, Scope> transform, 
+            Scope scope)
+        {
+
+            if (transform != null)
+            {
+                var connector = isInput ? connection.Input : connection.Output;
+
+                transform(connector, connection, scope);
+                instance.Node = isInput ? connection.InputModelNode : connection.OutputModelNode;
+            }
         }
     }
 
