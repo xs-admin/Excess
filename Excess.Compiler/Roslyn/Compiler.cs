@@ -768,10 +768,17 @@ namespace Excess.Compiler.Roslyn
             });
         }
 
-        public static bool IsVisible(MethodDeclarationSyntax method)
+        public static bool IsVisible(MemberDeclarationSyntax member)
         {
-            return method
-                .Modifiers
+            var modifiers = default(SyntaxTokenList);
+            if (member is MethodDeclarationSyntax)
+                modifiers = (member as MethodDeclarationSyntax).Modifiers;
+            else if (member is PropertyDeclarationSyntax)
+                modifiers = (member as PropertyDeclarationSyntax).Modifiers;
+            else
+                throw new NotImplementedException();
+
+            return modifiers
                 .Where(modifier => modifier.Kind() == SyntaxKind.PublicKeyword
                                 || modifier.Kind() == SyntaxKind.InternalKeyword)
                 .Any();
