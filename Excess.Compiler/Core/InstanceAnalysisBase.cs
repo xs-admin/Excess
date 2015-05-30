@@ -140,15 +140,21 @@ namespace Excess.Compiler.Core
                 bool isInput = connection.InputModel == instance;
                 if (isInput)
                 {
-                    var tmp = connection.InputTransform;
-                    _connectionTransform.TryGetValue(connection.Input, out tmp);
-                    connection.InputTransform = tmp;
+                    if (connection.Input != null)
+                    {
+                        var tmp = connection.InputTransform;
+                        _connectionTransform.TryGetValue(connection.Input, out tmp);
+                        connection.InputTransform = tmp;
+                    }
                 }
                 else
                 {
-                    var tmp = connection.OutputTransform;
-                    _connectionTransform.TryGetValue(connection.Output, out tmp);
-                    connection.OutputTransform = tmp;
+                    if (connection.Output != null)
+                    {
+                        var tmp = connection.OutputTransform;
+                        _connectionTransform.TryGetValue(connection.Output, out tmp);
+                        connection.OutputTransform = tmp;
+                    }
                 }
             }
 
@@ -323,18 +329,18 @@ namespace Excess.Compiler.Core
             {
                 foreach (var conn in instance.Connections)
                 {
-                    bool isInput = instance.Id == conn.Source;
+                    bool isInput = instance.Id == conn.Target;
                     var inputInstance = instance;
                     var outputInstance = instance;
                     if (isInput)
                     {
                         outputInstance = namedInstances[conn.Target];
-                        applyConnection(conn, outputInstance, isInput, conn.OutputTransform, scope);
+                        applyConnection(conn, outputInstance, isInput, conn.InputTransform, scope);
                     }
                     else
                     {
                         inputInstance = namedInstances[conn.Source];
-                        applyConnection(conn, inputInstance, isInput, conn.InputTransform, scope);
+                        applyConnection(conn, inputInstance, isInput, conn.OutputTransform, scope);
                     }
                 }
             }
@@ -355,7 +361,7 @@ namespace Excess.Compiler.Core
 
             foreach (var conn in instance.Connections)
             {
-                bool isInput = instance.Id == conn.Source;
+                bool isInput = instance.Id == conn.Target;
                 if (isInput)
                     conn.InputModelNode = instance.Node;
                 else

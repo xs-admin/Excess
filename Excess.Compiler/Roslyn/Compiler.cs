@@ -371,13 +371,15 @@ namespace Excess.Compiler.Roslyn
         }
 
         //declarations
-        public static TypeSyntax @void    = CSharp.PredefinedType(CSharp.Token(SyntaxKind.VoidKeyword));
-        public static TypeSyntax @object  = CSharp.PredefinedType(CSharp.Token(SyntaxKind.ObjectKeyword));
-        public static TypeSyntax @double  = CSharp.PredefinedType(CSharp.Token(SyntaxKind.DoubleKeyword));
-        public static TypeSyntax @int     = CSharp.PredefinedType(CSharp.Token(SyntaxKind.IntKeyword));
-        public static TypeSyntax @string  = CSharp.PredefinedType(CSharp.Token(SyntaxKind.StringKeyword));
-        public static TypeSyntax @boolean = CSharp.PredefinedType(CSharp.Token(SyntaxKind.BoolKeyword));
-        public static TypeSyntax @dynamic = CSharp.ParseTypeName("dynamic");
+        public static TypeSyntax @void      = CSharp.PredefinedType(CSharp.Token(SyntaxKind.VoidKeyword));
+        public static TypeSyntax @object    = CSharp.PredefinedType(CSharp.Token(SyntaxKind.ObjectKeyword));
+        public static TypeSyntax @double    = CSharp.PredefinedType(CSharp.Token(SyntaxKind.DoubleKeyword));
+        public static TypeSyntax @int       = CSharp.PredefinedType(CSharp.Token(SyntaxKind.IntKeyword));
+        public static TypeSyntax @string    = CSharp.PredefinedType(CSharp.Token(SyntaxKind.StringKeyword));
+        public static TypeSyntax @boolean   = CSharp.PredefinedType(CSharp.Token(SyntaxKind.BoolKeyword));
+        public static TypeSyntax @dynamic   = CSharp.ParseTypeName("dynamic");
+        public static TypeSyntax @exception = CSharp.ParseTypeName("Exception");
+        
 
         //modifiers
         public static SyntaxTokenList @public  = CSharp.TokenList(CSharp.Token(SyntaxKind.PublicKeyword));
@@ -412,6 +414,15 @@ namespace Excess.Compiler.Roslyn
                 .WithAdditionalAnnotations(
                     new SyntaxAnnotation(NodeIdAnnotation + id),
                     new SyntaxAnnotation(NodeIdAnnotation, id));
+        }
+
+        public static SyntaxNode TrackNode(SyntaxNode node)
+        {
+            var id = NodeMark(node);
+            if (id != null)
+                return node;
+
+            return MarkNode(node, uniqueId());
         }
 
         public static string NodeMark(SyntaxNode node)
@@ -775,6 +786,8 @@ namespace Excess.Compiler.Roslyn
                 modifiers = (member as MethodDeclarationSyntax).Modifiers;
             else if (member is PropertyDeclarationSyntax)
                 modifiers = (member as PropertyDeclarationSyntax).Modifiers;
+            else if (member is FieldDeclarationSyntax)
+                modifiers = (member as FieldDeclarationSyntax).Modifiers;
             else
                 throw new NotImplementedException();
 
@@ -816,6 +829,83 @@ namespace Excess.Compiler.Roslyn
             }
 
             return newNode;
+        }
+
+        //symbols
+        public static ITypeSymbol SymbolType(SemanticModel model, SyntaxNode node)
+        {
+            if (node is CastExpressionSyntax)
+                return SymbolType(model
+                    .GetSymbolInfo((node as CastExpressionSyntax)
+                        .Type)
+                    .Symbol);
+
+            return SymbolType(model.GetSymbolInfo(node).Symbol);
+        }
+
+        public static TypeSyntax SymbolTypeSyntax(SemanticModel model, SyntaxNode node)
+        {
+            ITypeSymbol type = SymbolType(model, node);
+            if (type == null)
+                return null;
+
+            return CSharp.ParseTypeName(type.Name);
+        }
+
+        public static TypeSyntax SymbolTypeSyntax(ISymbol symbol)
+        {
+            ITypeSymbol type = SymbolType(symbol);
+            if (type == null)
+                return null;
+
+            return CSharp.ParseTypeName(type.Name);
+        }
+
+        public static ITypeSymbol SymbolType(ISymbol symbol)
+        {
+            if (symbol == null)
+                return null;
+
+            switch (symbol.Kind)
+            {
+                case SymbolKind.Local: return ((ILocalSymbol)symbol).Type;
+                case SymbolKind.Field: return ((IFieldSymbol)symbol).Type;
+                case SymbolKind.Property: return ((IPropertySymbol)symbol).Type;
+                case SymbolKind.Method: return ((IMethodSymbol)symbol).ReturnType;
+                case SymbolKind.Parameter: return ((IParameterSymbol)symbol).Type;
+                case SymbolKind.NamedType: return (ITypeSymbol)symbol;
+                default:
+                    {
+                        return null;
+                    }
+            }
+        }
+
+        public static Dictionary<SyntaxNode, SyntaxNode> Track(SyntaxTree syntaxTree, Dictionary<SyntaxNode, SyntaxNode> nodes)
+        {
+            var result = new Dictionary<SyntaxNode, SyntaxNode>();
+            foreach (var node in nodes)
+            {
+                if (node.Key.SyntaxTree == syntaxTree)
+                    result[node.Key] = node.Value;
+                else
+                {
+                    var nn = Track(syntaxTree, node.Key);
+                    if (nn != null)
+                        result[nn] = node.Value;
+                }
+            }
+
+            return result;
+        }
+
+        public static SyntaxNode Track(SyntaxTree syntaxTree, SyntaxNode node)
+        {
+            var mark = NodeMark(node);
+            if (mark == null)
+                return null;
+
+            return FindNode(syntaxTree.GetRoot(), mark);
         }
     }
 

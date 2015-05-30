@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.22310.1
+VisualStudioVersion = 14.0.22823.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Excess.Application", "Excess.Application\Excess.Application.csproj", "{EDF5D964-4C0F-4F19-B674-58A38A5E5401}"
 EndProject
@@ -23,6 +23,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Excess.Entensions.XS", "Excess.Entensions.XS\Excess.Entensions.XS.csproj", "{A9FC6A37-7E7C-4098-9908-CB2E927B9274}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Excess.Extensions.Fluke", "Excess.Extensions.Fluke\Excess.Extensions.Fluke.csproj", "{412EFA46-1145-4393-9B40-3CEAD0E033F0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Excess.Compiler.Razor", "Excess.Compiler.Razor\Excess.Compiler.Razor.csproj", "{FF771A02-CF66-4F21-9E04-A87CEBCD7952}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -58,6 +60,10 @@ Global
 		{412EFA46-1145-4393-9B40-3CEAD0E033F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{412EFA46-1145-4393-9B40-3CEAD0E033F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{412EFA46-1145-4393-9B40-3CEAD0E033F0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FF771A02-CF66-4F21-9E04-A87CEBCD7952}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FF771A02-CF66-4F21-9E04-A87CEBCD7952}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FF771A02-CF66-4F21-9E04-A87CEBCD7952}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FF771A02-CF66-4F21-9E04-A87CEBCD7952}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
