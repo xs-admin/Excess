@@ -134,6 +134,42 @@ namespace Excess.Web.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to concurrent class chopstick
+        ///{
+        ///    [Forever]
+        ///    void main()
+        ///    {
+        ///        {acquire | release}
+        ///    }
+        ///
+        ///    public void acquire(object owner)
+        ///    {
+        ///        if (_owner != null)
+        ///        {
+        ///            {release}
+        ///        }
+        ///                        
+        ///        _owner = owner;
+        ///    }
+        ///	
+        ///    public void release(object owner)
+        ///    {
+        ///        if (_owner != owner)
+        ///            throw new InvalidOperationException();
+        ///
+        ///        _owner = null;
+        ///    }
+        ///
+        ///    private object _owner;
+        ///}.
+        /// </summary>
+        internal static string Chopsticks {
+            get {
+                return ResourceManager.GetString("Chopsticks", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to environment.
         ///    keyword(&quot;contract&quot;);
         ///
@@ -498,6 +534,62 @@ namespace Excess.Web.Resources {
         internal static string Misc {
             get {
                 return ResourceManager.GetString("Misc", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to concurrent class philosopher 
+        ///{
+        ///    [Forever]
+        ///    void main(string name, chopstick left, chopstick right) 
+        ///    {
+        ///        _name  = name;
+        ///        _left  = left;
+        ///        _right = right;
+        ///                               
+        ///        {think()}
+        ///    }
+        ///	
+        ///    void think()
+        ///    {
+        ///        console.write(_name + &quot; is thinking&quot;);
+        ///        {wait(sec: rand(1.0, 2.0))
+        ///            -&gt; hungry()}
+        ///    }
+        ///
+        ///    void hungry()
+        ///    {
+        ///        console.write(_name + &quot; is hungry&quot;);
+        ///
+        ///        {(_left.acquire(this) &amp; _right.ac [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string Philosophers {
+            get {
+                return ResourceManager.GetString("Philosophers", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to var names = [&quot;Kant&quot;, &quot;Archimedes&quot;, &quot;Nietzche&quot;, &quot;Plato&quot;, &quot;Engels&quot;];
+        ///
+        ///int phCount = 5;
+        ///
+        ///var philosophers = spawn&lt;philosopher&gt;(phCount).ToArray();
+        ///var chopsticks   = spawn&lt;chopstick&gt;(phCount).ToArray();
+        ///
+        ///foreach (var chopstick in chopsticks)
+        ///    start(chopstick);
+        ///
+        ///for (var i = 0; i &lt; phCount; i++)
+        ///{
+        ///    var left = chopsticks[i];
+        ///    var right = i == phCount - 1 ? chopsticks[0] : chopsticks[i + 1];
+        ///    start(philosophers[i], names[i], left, right);
+        ///}.
+        /// </summary>
+        internal static string PhilosophersApp {
+            get {
+                return ResourceManager.GetString("PhilosophersApp", resourceCulture);
             }
         }
     }

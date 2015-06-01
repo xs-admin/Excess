@@ -50,6 +50,18 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Castle.Windsor.3.3.0\lib\net45\Castle.Windsor.dll</HintPath>
     </Reference>
+    <Reference Include="Concurrent.Compiler, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Concurrent\Concurrent.Compiler\bin\Debug\Concurrent.Compiler.dll</HintPath>
+    </Reference>
+    <Reference Include="Concurrent.Runtime, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Concurrent\Concurrent.Compiler\bin\Debug\Concurrent.Runtime.dll</HintPath>
+    </Reference>
+    <Reference Include="Concurrent.THC, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Concurrent\Concurrent.Compiler\bin\Debug\Concurrent.THC.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.CodeAnalysis, Version=1.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Microsoft.CodeAnalysis.Common.1.0.0-rc1\lib\net45\Microsoft.CodeAnalysis.dll</HintPath>
@@ -134,6 +146,7 @@
     <Compile Include="ProjectTree.cs" />
     <Compile Include="RuntimeProject\AntlrTool.cs" />
     <Compile Include="RuntimeProject\BaseRuntime.cs" />
+    <Compile Include="RuntimeProject\ConcurrentRuntime.cs" />
     <Compile Include="RuntimeProject\ConsoleRuntime.cs" />
     <Compile Include="RuntimeProject\ExtensionRuntime.cs" />
     <Compile Include="RuntimeProject\Runtime.cs" />

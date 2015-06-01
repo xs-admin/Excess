@@ -224,6 +224,31 @@ namespace Excess.Web.Migrations
                     Name         = "transform",
                     Contents     = Samples.AsynchTransform,
                 },
+
+                //philosophers
+                new ProjectFile
+                {
+                    ID           = 15,
+                    OwnerProject = 6,
+                    Name         = "application",
+                    Contents     = Samples.PhilosophersApp
+                },
+
+                new ProjectFile
+                {
+                    ID           = 16,
+                    OwnerProject = 6,
+                    Name         = "philosopher",
+                    Contents     = Samples.Philosophers,
+                },
+
+                new ProjectFile
+                {
+                    ID           = 17,
+                    OwnerProject = 6,
+                    Name         = "chopstick",
+                    Contents     = Samples.Chopsticks,
+                },
             };
         }
 
@@ -268,6 +293,14 @@ namespace Excess.Web.Migrations
                     ID = 5,
                     ProjectType = "extension",
                     Name = "Asynch Extension",
+                    IsSample = true,
+                },
+
+                new Project
+                {
+                    ID = 6,
+                    ProjectType = "concurrent",
+                    Name = "Dining Philosophers",
                     IsSample = true,
                 },
             };

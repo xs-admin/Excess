@@ -17,6 +17,7 @@ namespace Excess.Services
             {
                 case "console": result = new ConsoleRuntime(storage); break;
                 case "extension": result = new ExtensionRuntime(storage); break;
+                case "concurrent": result = new ConcurrentRuntime(storage); break;
             }
 
             if (result == null)
