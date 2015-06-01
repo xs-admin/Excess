@@ -21,6 +21,11 @@ namespace Excess.RuntimeProject
         public string Message { get; set; }
     }
 
+    public interface INotifier
+    {
+        void notify(Notification notification);
+    }
+
     public class Error
     {
         public string File { get; set; }
@@ -33,10 +38,9 @@ namespace Excess.RuntimeProject
     {
         bool busy();
         IEnumerable<Error> compile();
-        IEnumerable<Error> run(out dynamic client);
+        IEnumerable<Error> run(INotifier notifier, out dynamic client);
         void add(string file, int id, string contents);
         void modify(string file, string contents);
-        IEnumerable<Notification> notifications();
         string defaultFile();
         string fileContents(string file);
         int fileId(string file);

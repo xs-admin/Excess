@@ -1,6 +1,7 @@
 ﻿using Excess.Compiler;
 using Excess.RuntimeProject;
 using Excess.Web.Entities;
+using Excess.Web.Services;
 using Microsoft.AspNet.Identity;
 using System;
 using System.Collections.Generic;
@@ -196,26 +197,16 @@ namespace Excess.Web.Controllers
             return Json(result, JsonRequestBehavior.AllowGet);
         }
 
-        public ActionResult Execute()
+        public ActionResult Execute(string notification)
         {
             var project = Session["project"] as IRuntimeProject;
             if (project == null)
                 return HttpNotFound(); //td: right error
 
             dynamic clientData;
-            var errors = project.run(out clientData);
+            var errors = project.run(new HubNotifier(notification), out clientData);
             var result = new CompilationResult(errors, clientData);
             return Json(result, JsonRequestBehavior.AllowGet);
-        }
-
-        public ActionResult Notifications()
-        {
-            var project = Session["project"] as IRuntimeProject;
-            if (project == null)
-                return HttpNotFound(); //td: right error
-
-            var notifications = project.notifications();
-            return Json(notifications, JsonRequestBehavior.AllowGet);
         }
 
         public ActionResult UserProjects()
@@ -250,18 +241,19 @@ namespace Excess.Web.Controllers
             {
                 result = runtime.debugExtension(text);
 
-                var notProvider = runtime as IRuntimeProject;
-                var nots = notProvider.notifications();
+                //td: !!!
+                //var notProvider = runtime as IRuntimeProject;
+                //var nots = notProvider.notifications();
 
-                if (nots.Any())
-                {
-                    StringBuilder notBuilder = new StringBuilder();
-                    foreach (var not in nots)
-                        notBuilder.AppendLine(not.Message);
+                //if (nots.Any())
+                //{
+                //    StringBuilder notBuilder = new StringBuilder();
+                //    foreach (var not in nots)
+                //        notBuilder.AppendLine(not.Message);
 
-                    result = string.Format("{0} \n ================= Notifications ================= \n {1}", 
-                        result, notBuilder.ToString());
-                }
+                //    result = string.Format("{0} \n ================= Notifications ================= \n {1}", 
+                //        result, notBuilder.ToString());
+                //}
             }
             catch (Exception ex)
             {

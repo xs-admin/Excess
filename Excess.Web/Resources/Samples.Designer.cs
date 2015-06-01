@@ -571,19 +571,18 @@ namespace Excess.Web.Resources {
         
         /// <summary>
         ///   Looks up a localized string similar to var names = [&quot;Kant&quot;, &quot;Archimedes&quot;, &quot;Nietzche&quot;, &quot;Plato&quot;, &quot;Engels&quot;];
+        ///var count = names.Length;
         ///
-        ///int phCount = 5;
-        ///
-        ///var philosophers = spawn&lt;philosopher&gt;(phCount).ToArray();
-        ///var chopsticks   = spawn&lt;chopstick&gt;(phCount).ToArray();
+        ///var philosophers = spawn&lt;philosopher&gt;(count).ToArray();
+        ///var chopsticks   = spawn&lt;chopstick&gt;(count).ToArray();
         ///
         ///foreach (var chopstick in chopsticks)
         ///    start(chopstick);
         ///
-        ///for (var i = 0; i &lt; phCount; i++)
+        ///for (var i = 0; i &lt; count; i++)
         ///{
         ///    var left = chopsticks[i];
-        ///    var right = i == phCount - 1 ? chopsticks[0] : chopsticks[i + 1];
+        ///    var right = i == count - 1 ? chopsticks[0] : chopsticks[i + 1];
         ///    start(philosophers[i], names[i], left, right);
         ///}.
         /// </summary>

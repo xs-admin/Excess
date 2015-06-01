@@ -72,7 +72,10 @@ namespace Excess.Web
 
                         "~/Scripts/jquery.bootstrap.wizard.js",
                         "~/Scripts/rcWizard.js",
-                        "~/Scripts/hotkeys.js" 
+                        "~/Scripts/hotkeys.js",
+
+                        "~/Scripts/jquery.signalR-2.2.0.min.js",
+                        "~/signalr/hubs"
                     )
                 );
 

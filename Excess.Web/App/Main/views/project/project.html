@@ -1,4 +1,6 @@
-﻿<div ng-controller="app.views.project as vm">
+﻿<script src='/signalr/js'></script>
+
+<div ng-controller="app.views.project as vm">
     <layout id="main-layout"
             ng-splitters="false" ng-control="layoutControl"
             ng-center="{minSize: 400, resize: updateCodeEditor, triggerEventsOnLoad: true}"
@@ -36,3 +38,4 @@
         </div>
     </layout>
 </div>
+

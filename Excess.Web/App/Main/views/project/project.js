@@ -5,6 +5,8 @@
         function ($scope, $rootScope, $window, $stateParams, $timeout, dialogs, hotkeys, xsProject) {
             var vm = this;
             
+            xsProject.initNotifications(consoleNotification);
+
             //project tree
             $scope.projectTree = null;
 
@@ -197,7 +199,7 @@
                 startConsole("Compiling...");
                 
                 $scope.saveFiles();
-                xsProject.compile(consoleNotification)
+                xsProject.compile()
                     .then(function (result)
                     {
                         var compilation = result.data;
@@ -224,15 +226,18 @@
                         var compilation = result.data;
                         if (compilation.Succeded)
                         {
-                            $scope.console.add("Built Successfully");
+                            $scope.console.add("Ran Successfully");
 
-                            var debuggerDlg = compilation.ClientData.debuggerDlg;
-                            var debuggerCtrl = compilation.ClientData.debuggerCtrl;
-                            if (debuggerDlg && debuggerCtrl) {
-                                var dlg = dialogs.create(debuggerDlg,
-                                                         debuggerCtrl,
-                                                         compilation.ClientData.debuggerData,
-                                                         { size: "1200px" });
+                            if (compilation.ClientData)
+                            {
+                                var debuggerDlg = compilation.ClientData.debuggerDlg;
+                                var debuggerCtrl = compilation.ClientData.debuggerCtrl;
+                                if (debuggerDlg && debuggerCtrl) {
+                                    var dlg = dialogs.create(debuggerDlg,
+                                                             debuggerCtrl,
+                                                             compilation.ClientData.debuggerData,
+                                                             { size: "1200px" });
+                                }
                             }
                         }
                         else

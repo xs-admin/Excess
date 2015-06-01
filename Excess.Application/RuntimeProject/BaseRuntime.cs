@@ -80,12 +80,13 @@ namespace Excess.RuntimeProject
             return errors;
         }
 
-        public IEnumerable<Error> run(out dynamic client)
+        public IEnumerable<Error> run(INotifier notifier, out dynamic client)
         {
             client = null;
             if (_busy)
                 throw new InvalidOperationException();
 
+            _notifier = notifier;
             _busy = true;
             IEnumerable<Error> errors = null;
             try
@@ -161,28 +162,6 @@ namespace Excess.RuntimeProject
             _dirty = true;
         }
 
-        public IEnumerable<Notification> notifications()
-        {
-            List<Notification> result = new List<Notification>();
-            lock (_notificationLock)
-            {
-                int toRemove = 0;
-                foreach (var not in _notifications)
-                {
-                    result.Add(not);
-                    toRemove++;
-
-                    if (not.Kind == NotificationKind.Finished)
-                        break;
-                }
-
-                if (toRemove > 0)
-                    _notifications.RemoveRange(0, toRemove);
-            }
-
-            return result;
-        }
-
         public abstract string defaultFile();
 
         public string fileContents(string file)
@@ -235,16 +214,13 @@ namespace Excess.RuntimeProject
 
         protected abstract void doRun(Assembly asm, out dynamic clientData);
         
-        protected Dictionary<string, int> _files            = new Dictionary<string, int>();
-        private List<Notification>        _notifications    = new List<Notification>();
-        private object                    _notificationLock = new object();
+        protected Dictionary<string, int> _files = new Dictionary<string, int>();
+        private INotifier _notifier;
 
         protected void notify(NotificationKind kind, string message)
         {
-            lock(_notificationLock)
-            {
-                _notifications.Add(new Notification { Kind = kind, Message = message });
-            }
+            if (_notifier != null)
+                _notifier.notify(new Notification { Kind = kind, Message = message });
         }
 
         //Console

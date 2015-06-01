@@ -43,43 +43,32 @@
         });
     }
     
+    this.initNotifications = function (notify)
+    {
+        var notificationHubProxy = $.connection.notificationHub;
+        notificationHubProxy.client.notify = function (message) {
+            notify(message);
+        };
 
-    function getNotifications(notify) {
-
-        function tick() {
-            $http.get('/Project/Notifications')
-                .then(function (result) {
-                    var finished = false;
-
-                    angular.forEach(result.data, function (value, key) {
-                        if (notify)
-                            notify(value);
-
-                        if (value.Kind == 4) {
-                            finished = true;
-                        }
-                    });
-
-                    if (!finished)
-                        $timeout(tick, 100);
-                })
-        }
-
-        $timeout(tick, 100);
+        $.connection.hub.start()
+            .done(function ()
+            {
+                console.log('Now connected, connection ID=' + $.connection.hub.id);
+            })
+            .fail(function () { console.log('Could not Connect!'); });
     }
+
 
     this.userProjects = function () {
         return $http.get('/Project/UserProjects');
     }
 
-    this.compile = function (notify) {
-        getNotifications(notify);
-        return $http.post('/Project/Compile');
+    this.compile = function () {
+        return $http.post('/Project/Compile', { notification: $.connection.hub.id });
     }
 
-    this.execute = function (notify) {
-        getNotifications(notify);
-        return $http.post('/Project/Execute');
+    this.execute = function () {
+        return $http.post('/Project/Execute', { notification: $.connection.hub.id });
     }
 
     this.debugDSL = function (text) {
