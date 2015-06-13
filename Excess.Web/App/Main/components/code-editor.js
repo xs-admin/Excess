@@ -31,14 +31,14 @@
 
         CodeMirror.defineMIME("text/x-xs", {
             name: "clike",
-            keywords: words("abstract as base break case catch checked class const continue" +
+            keywords: words("abstract as await base break case catch checked class const continue" +
                     " default delegate do else enum event explicit extern finally fixed for" +
                     " foreach goto if implicit in interface internal is lock namespace new" +
                     " operator out override params private protected public readonly ref return sealed" +
                     " sizeof stackalloc static struct switch this throw try typeof unchecked" +
                     " unsafe using virtual void volatile while add alias ascending descending dynamic from get" +
                     " global group into join let orderby partial remove select set value var yield" +
-                    " function method on typedef constructor property" + extraKeywords),
+                    " function method on typedef constructor property concurrent" + extraKeywords),
             blockKeywords: words("catch class do else finally for foreach if struct switch try while" + extraKeywords),
             builtin: words("Boolean Byte Char DateTime DateTimeOffset Decimal Double" +
                     " Guid Int16 Int32 Int64 Object SByte Single String TimeSpan UInt16 UInt32" +

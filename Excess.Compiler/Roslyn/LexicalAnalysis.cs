@@ -18,13 +18,19 @@ namespace Excess.Compiler.Roslyn
     {
         protected override SyntaxNode normalize(SyntaxNode root, Scope scope)
         {
-            IEnumerable<SyntaxNode> rootStatements;
-            IEnumerable<SyntaxNode> rootMembers;
-            IEnumerable<SyntaxNode> rootTypes;
+            IEnumerable<SyntaxNode> rootStatements = null;
+            IEnumerable<SyntaxNode> rootMembers = null;
+            IEnumerable<SyntaxNode> rootTypes = null;
 
-            bool noNeed;
-            var node = normalizePass(root, out rootStatements, out rootMembers, out rootTypes, out noNeed);
-            if (!noNeed)
+            var node = root;
+            var normalized = false;
+            if (_normalizeStatements != null)
+                node = normalizeCode(root, out rootStatements, out normalized);
+
+            if (!normalized && (_normalizeMembers != null || _normalizeTypes != null))
+                node = normalizePass(root, out rootMembers, out rootTypes, out normalized);
+
+            if (normalized)
             {
                 if (_normalizeStatements != null &&  rootStatements != null && rootStatements.Any())
                     node = _normalizeStatements(node, rootStatements, scope);
@@ -33,7 +39,7 @@ namespace Excess.Compiler.Roslyn
                 {
                     if (node != root)
                     {
-                        node = normalizePass(node, out rootStatements, out rootMembers, out rootTypes, out noNeed);
+                        node = normalizePass(node, out rootMembers, out rootTypes, out normalized);
                         root = node;
                     }
 
@@ -44,7 +50,7 @@ namespace Excess.Compiler.Roslyn
                 if (_normalizeTypes != null)
                 {
                     if (node != root)
-                        node = normalizePass(node, out rootStatements, out rootMembers, out rootTypes, out noNeed);
+                        node = normalizePass(node, out rootMembers, out rootTypes, out normalized);
 
                     if (rootTypes != null && rootTypes.Any())
                         node = _normalizeTypes(node, rootTypes, scope);
@@ -57,12 +63,41 @@ namespace Excess.Compiler.Roslyn
             return node;
         }
 
-        private SyntaxNode normalizePass(SyntaxNode root, out IEnumerable<SyntaxNode> rootStatements, out IEnumerable<SyntaxNode> rootMembers, out IEnumerable<SyntaxNode> rootTypes, out bool noNeed)
+        private SyntaxNode normalizeCode(SyntaxNode root, out IEnumerable<SyntaxNode> rootStatements, out bool normalized)
         {
+            normalized = true;
             rootStatements = null;
+
+            //td: line numbers!
+            var newTree = CSharp.ParseSyntaxTree("void m() {" + root.ToFullString() + "}", options: new CSharpParseOptions(kind: SourceCodeKind.Script));
+            try
+            {
+                var block = newTree
+                    .GetRoot()
+                    .ChildNodes()
+                    .OfType<MethodDeclarationSyntax>()
+                    .Single()
+                    .Body;
+
+                if (block.ChildNodes().All(child => child is StatementSyntax))
+                {
+                    rootStatements = new List<StatementSyntax>(block.ChildNodes().OfType<StatementSyntax>());
+                    return block;
+                }
+            }
+            catch
+            {
+            }
+
+            normalized = false;
+            return root;
+        }
+
+        private SyntaxNode normalizePass(SyntaxNode root, out IEnumerable<SyntaxNode> rootMembers, out IEnumerable<SyntaxNode> rootTypes, out bool normalized)
+        {
             rootMembers = null;
             rootTypes = null;
-            noNeed = true;
+            normalized = false;
 
             var tree = root.SyntaxTree;
             var codeErrors = root.GetDiagnostics().Where(error => error.Id == "CS1022").
@@ -166,12 +201,11 @@ namespace Excess.Compiler.Roslyn
                 toRemove.Add(errorSpan);
             }
 
-            noNeed = !statements.Any() && !members.Any() && !types.Any();
+            normalized = statements.Any() || members.Any() || !types.Any();
 
-            if (noNeed)
+            if (!normalized)
                 return root; //nothing to se here
 
-            rootStatements = statements;
             rootMembers = members;
             rootTypes = types;
 

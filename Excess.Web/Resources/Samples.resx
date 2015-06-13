@@ -202,6 +202,101 @@ static private StatementSyntax SynchTemplate = CSharp.ParseStatement(@"
     }
 }</value>
   </data>
+  <data name="BarbersApp" xml:space="preserve">
+    <value>var shop = spawn&lt;barbershop&gt;();
+var barber1 = spawn&lt;barber&gt;();
+var barber2 = spawn&lt;barber&gt;();
+
+start(barber1);
+start(barber2);
+start(shop, barber1, barber2);
+
+var rand = new Random();
+for (int i = 1; i &lt;= 30; i++)
+{
+    Thread.Sleep((int)(3000*rand.NextDouble()));
+    shop.visit(i);
+}</value>
+  </data>
+  <data name="BarbersBarber" xml:space="preserve">
+    <value>concurrent class barber
+{
+    [Forever]                        
+    void main()
+    {
+        {shave -&gt; tip}
+    }
+
+    public void shave(int client)
+    {
+        await wait(sec: rand(1, 2));
+    }
+
+    double _tip = 0;
+    public void tip(double amount)
+    {
+        _tip += amount;
+        console.write("tipped: " + amount.ToString("C2") + " total: " + _tip.ToString("C2"));
+    }
+}</value>
+  </data>
+  <data name="BarbersShop" xml:space="preserve">
+    <value>concurrent class barbershop
+{
+    barber _barber1, _barber2;
+    bool _busy1, _busy2;
+                    
+    void main(barber b1, barber b2)
+    {
+        _barber1 = b1; _busy1 = false;
+        _barber2 = b2; _busy2 = false;
+
+        while(true)
+            await visit;
+    }
+
+    [Blocking]
+    public void visit(int client)
+    {
+        console.write("entered : " + client);
+        if (_busy1 &amp;&amp; _busy2)
+            await next_client;
+
+        if (!_busy1)
+        {
+            _busy1 = true;
+            yield return _barber1.shave(client)
+                -&gt; barber_free(_barber1);
+        }
+
+        if (!_busy2)
+        {
+            _busy2 = true;
+            yield return _barber2.shave(client)
+                -&gt; barber_free(_barber2);
+        }
+    }
+
+    private void next_client();
+    private void barber_free(barber which)
+    {
+        double tip = rand(5, 10);
+        which.tip(tip);
+        if (which == _barber1)
+        {
+            console.write("barber 1 finished");
+            _busy1 = false;
+        }
+        else 
+        {
+            console.write("barber 2 finished");
+            _busy2 = false;
+        }
+
+        next_client();
+    }
+}</value>
+  </data>
   <data name="Chopsticks" xml:space="preserve">
     <value>concurrent class chopstick
 {
@@ -215,9 +310,9 @@ static private StatementSyntax SynchTemplate = CSharp.ParseStatement(@"
     {
         if (_owner != null)
         {
-            {release}
+            await release;
         }
-                        
+                                
         _owner = owner;
     }
 	
@@ -332,6 +427,55 @@ static private StatementSyntax ContractCheck = CSharp.ParseStatement(@"
         }
     }
 }</value>
+  </data>
+  <data name="Factorial" xml:space="preserve">
+    <value>concurrent class factorial
+{
+    static int buckets = 3;
+    double main(int n)
+    {
+        double fact = 0;
+        {fact = parallel&lt;double&gt;(n, 
+            map: () =&gt; {
+                var size = (int)(n/buckets);
+                for(int i = 0; i &lt; buckets; i++)
+                {
+                    int lower = i == 0? 1 : i * size + 1;
+                    int upper = i == (buckets - 1)? n : (i + 1) * size;
+
+                    yield return () =&gt; {
+                        double result = 1;
+                        for(int j = lower; j &lt;= upper; j++)    
+                            result *= j;
+                                        
+                        return result;
+                    };                                
+                }
+            },
+            reduce: (values) =&gt; {
+                double result = 1;
+                foreach(double value in values)
+                    result *= value;
+                return result;
+            })
+        }
+
+        return fact;
+    }
+}</value>
+  </data>
+  <data name="FactorialApp" xml:space="preserve">
+    <value>var fact = spawn&lt;factorial&gt;();
+
+var n = 100;
+var result = start&lt;double&gt;(fact, n);
+
+double naive = 1.0;
+for (int i = 1; i &lt;= n; i++)
+    naive *= i;
+
+console.write("Distributed: " + result);
+console.write("Naive: " + naive);</value>
   </data>
   <data name="Functions" xml:space="preserve">
     <value>class Functions 
@@ -684,24 +828,24 @@ private static ExpressionSyntax caseExpression(SwitchLabelSyntax label, Expressi
     void think()
     {
         console.write(_name + " is thinking");
-        {wait(sec: rand(1.0, 2.0))
-            -&gt; hungry()}
+        await wait(sec: rand(1.0, 2.0))
+                        -&gt; hungry();
     }
 
     void hungry()
     {
         console.write(_name + " is hungry");
 
-        {(_left.acquire(this) &amp; _right.acquire(this))
-            -&gt; eat()}
+        await (_left.acquire(this) &amp; _right.acquire(this))
+                         -&gt; eat();
     }
 	
     void eat()
     {
         console.write(_name + " is eating");
 	                    
-        {wait(sec: rand(1.0, 2.0))
-            -&gt; (_left.release(this) &amp; _right.release(this))}
+        await wait(sec: rand(1.0, 2.0))
+                        -&gt; (_left.release(this) &amp; _right.release(this));
 
         console.write(_name + " is full");
     }
@@ -726,6 +870,347 @@ for (var i = 0; i &lt; count; i++)
     var left = chopsticks[i];
     var right = i == count - 1 ? chopsticks[0] : chopsticks[i + 1];
     start(philosophers[i], names[i], left, right);
+}</value>
+  </data>
+  <data name="ReadersWriterApp" xml:space="preserve">
+    <value>var resource = spawn&lt;resource&gt;();
+var clients = spawn&lt;client&gt;(5);
+
+start(resource);
+foreach(var client in clients)
+    start(client, resource);</value>
+  </data>
+  <data name="ReadersWriterClient" xml:space="preserve">
+    <value>concurrent class client
+{
+    resource _resource;
+    void main(resource r)
+    {
+        _resource = r;
+        {read() &amp; write()}
+    }
+
+    [Forever]
+    public void read()
+    {
+        await wait(sec: rand(0.2, 0.5));
+        var result = 0;
+        {result = _resource.read()}
+
+        console.write("read: " + result);
+    }
+
+    [Forever]
+    public void write()
+    {
+        await wait(sec: rand(1, 2));
+        _resource.write();
+    }
+}</value>
+  </data>
+  <data name="ReadersWriterResource" xml:space="preserve">
+    <value>concurrent class resource
+{
+    [Blocking]
+    public int read()
+    {
+        if (_writing)
+            await writing_done;
+                        
+        return _value++;        
+    }
+
+    bool _writing = false;
+    int _value = 0;                    
+
+    [Blocking]
+    public void write()
+    {
+        console.write("writing at: " + _value);
+        _writing = true;
+        await wait(sec: rand(0.5, 1));
+        _writing = false;
+                        
+        console.write("finished writing at: " + _value);
+        writing_done();        
+    }
+
+    private void writing_done();
+}</value>
+  </data>
+  <data name="SantaCreaturesApp" xml:space="preserve">
+    <value>var santa = spawn&lt;santa&gt;();
+var reindeer = spawn&lt;reindeer&gt;( 8).ToArray();
+var elves = spawn&lt;elf&gt;( 10).ToArray();
+
+var rnames = ["Dasher", "Dancer", "Prancer", "Vixen", "Comet", "Cupid", "Dunder", "Rudolph"];
+var enames = ["Alabaster", "Bushy", "Pepper", "Shinny", "Sugarplum", "Wunorse", "Buddy", "Kringle", "Tinsel", "Jangle"];
+
+start(santa);
+
+for(var i = 0; i &lt; rnames.Length; i++)
+    start(reindeer[i], santa, rnames[i]);
+
+for (var i = 0; i &lt; enames.Length; i++)
+    start(elves[i], santa, enames[i]);</value>
+  </data>
+  <data name="SantaCreaturesCreatures" xml:space="preserve">
+    <value>concurrent class reindeer
+{
+    santa _santa;
+    string _name;                    
+
+    [Forever]    
+    void main(santa s, string name)
+    {
+        _santa = s;
+        _name = name;
+ 
+        {vacation()}
+    }
+
+    public void unharness()
+    {
+        console.write(_name + ": job well done");
+    }
+
+    private void vacation()
+    {
+        await wait(sec: rand(3, 7))
+                -&gt; console.write(_name + ": back from vacation")
+                -&gt; (_santa.reindeer_back(this) &amp; unharness);
+    }
+}
+
+concurrent class elf
+{
+    santa _santa;
+    string _name;                    
+
+    [Forever]    
+    void main(santa s, string name)
+    {
+        _santa = s;
+        _name = name;
+                        
+        {work()}
+    }
+
+    public void advice(bool given)
+    {
+        if (given)
+            console.write(_name + ": great advice, santa!");
+        else 
+            console.write(_name + ": too bad santa had to go");
+    }
+
+    private void work()
+    {
+        try
+        {
+            await wait(sec: rand(1, 5))
+                    -&gt; console.write(_name + ": Off to see Santa")
+                    -&gt; (_santa.elf_request(this) &amp; advice);
+        }
+        catch(InvalidOperationException e)
+        {
+            console.write(_name + ": Santa's busy, back to work! ");
+        }
+    }
+}</value>
+  </data>
+  <data name="SantaCreaturesSanta" xml:space="preserve">
+    <value>concurrent class santa
+{
+    List&lt;reindeer&gt; _reindeer = new List&lt;reindeer&gt;();
+    List&lt;elf&gt;      _elves = new List&lt;elf&gt;();
+                    
+    private bool isDelivering { get {return _reindeer.Count == 8;} }
+                    
+    public void reindeer_back(reindeer r)
+    {
+        _reindeer.Add(r);
+        if (isDelivering)
+        {
+            await cancel_elves();
+
+            console.write("Santa: Off to deliver toys!");
+            await wait(sec:rand(5, 10));
+            console.write("Santa: Merry Christmas, enjoy the toys!");
+
+            foreach(var rd in _reindeer)
+                rd.unharness();
+
+            _reindeer.Clear();
+        }
+    }
+
+    public void elf_request(elf e)
+    {
+        if (isDelivering)
+            await reindeer_back;
+
+        _elves.Add(e);
+        if (_elves.Count == 3)
+        {
+            console.write("Santa: hey guys, need help?");
+            await wait(sec: rand(1, 2)) | cancel_elves;
+
+            if (isDelivering)
+                console.write("Santa: sorry fellows, got toys to deliver!");
+            else
+                console.write("Santa: Good to see you, little fellas!");
+
+            foreach(var el in _elves)
+                el.advice(!isDelivering);
+
+            _elves.Clear();
+        }    
+    }
+
+    private void cancel_elves();
+}</value>
+  </data>
+  <data name="SantaShopApp" xml:space="preserve">
+    <value>var santa = spawn&lt;santa&gt;();
+var shop = spawn&lt;shop&gt;();
+
+start(santa);
+start(shop, santa);</value>
+  </data>
+  <data name="SantaShopSanta" xml:space="preserve">
+    <value>concurrent class santa
+{
+    bool _delivering = false;
+    bool _helping = false;
+                    
+    public void reindeer()
+    {
+        _delivering = true;
+        if (!_helping)
+            await deliver();    
+    }
+
+    public void elves()
+    {
+        if (_delivering)
+        {
+            console.write("elves: nobody home, back to work!");
+            return;
+        }
+
+        console.write("santa: hey guys, need help?");
+                        
+        _helping = true;
+        await wait(sec: rand(1, 2)) | reindeer;
+                        
+        _helping = false;
+        if (_delivering)
+        {
+            console.write("santa: sorry fellows, got toys to deliver!");
+            await deliver();
+        }
+        else
+            console.write("elves: great advice santa!");
+    }
+                    
+    private void deliver()
+    {
+        console.write("santa: Off to deliver toys!");
+        {wait(sec: rand(5, 7))}
+        console.write("santa: Merry Christmas, enjoy the toys!");
+                        
+        _delivering = false;
+    }
+}</value>
+  </data>
+  <data name="SantaShopShop" xml:space="preserve">
+    <value>concurrent class shop
+{
+    santa _santa;
+    int   _reindeer = 0;
+    int   _elves    = 0;
+    void main(santa s)
+    {
+        _santa = s;
+                        
+        {reindeer() &amp; elves()}
+    }
+
+    [Forever]
+    public void reindeer()
+    {
+        console.write("reindeer: back from vacation");
+        _reindeer++;
+
+        if (_reindeer == 8)
+        {
+            await _santa.reindeer();
+            _reindeer = 0;
+        }
+
+        {wait(sec: rand(2, 3))}
+    }
+
+    [Forever]
+    public void elves()
+    {
+        console.write("elf: need santa");
+        _elves++;
+        if (_elves == 3)
+        {
+            await _santa.elves();
+            _elves = 0;
+        }
+
+        {wait(sec: rand(1, 2))}
+    }
+}</value>
+  </data>
+  <data name="StarvingPhilosophers" xml:space="preserve">
+    <value>concurrent class philosopher 
+{
+    [Forever]
+    void main(string name, chopstick left, chopstick right) 
+    {
+        _name  = name;
+        _left  = left;
+        _right = right;
+                               
+        {hungry()}
+    }
+	
+    void hungry()
+    {
+        console.write(_name + " is hungry");
+
+        try
+        {
+            await ((_left.acquire(this) &amp; _right.acquire(this))
+                  | timeout(sec: 2.1))
+                      -&gt; eat();
+        }
+        catch
+        {
+            console.write(_name + " livelock");
+            _left.release(this);
+            _right.release(this);
+        }
+    }
+	
+    void eat()
+    {
+        console.write(_name + " is eating");
+	                    
+        {wait(sec: 1.0)
+            -&gt; (_left.release(this) &amp; _right.release(this))}
+
+        console.write(_name + " is full");
+    }
+	                
+    private string _name;
+    private chopstick _left;
+    private chopstick _right;
 }</value>
   </data>
 </root>

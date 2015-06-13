@@ -134,6 +134,88 @@ namespace Excess.Web.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to var shop = spawn&lt;barbershop&gt;();
+        ///var barber1 = spawn&lt;barber&gt;();
+        ///var barber2 = spawn&lt;barber&gt;();
+        ///
+        ///start(barber1);
+        ///start(barber2);
+        ///start(shop, barber1, barber2);
+        ///
+        ///var rand = new Random();
+        ///for (int i = 1; i &lt;= 30; i++)
+        ///{
+        ///    Thread.Sleep((int)(3000*rand.NextDouble()));
+        ///    shop.visit(i);
+        ///}.
+        /// </summary>
+        internal static string BarbersApp {
+            get {
+                return ResourceManager.GetString("BarbersApp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to concurrent class barber
+        ///{
+        ///    [Forever]                        
+        ///    void main()
+        ///    {
+        ///        {shave -&gt; tip}
+        ///    }
+        ///
+        ///    public void shave(int client)
+        ///    {
+        ///        await wait(sec: rand(1, 2));
+        ///    }
+        ///
+        ///    double _tip = 0;
+        ///    public void tip(double amount)
+        ///    {
+        ///        _tip += amount;
+        ///        console.write(&quot;tipped: &quot; + amount.ToString(&quot;C2&quot;) + &quot; total: &quot; + _tip.ToString(&quot;C2&quot;));
+        ///    }
+        ///}.
+        /// </summary>
+        internal static string BarbersBarber {
+            get {
+                return ResourceManager.GetString("BarbersBarber", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to concurrent class barbershop
+        ///{
+        ///    barber _barber1, _barber2;
+        ///    bool _busy1, _busy2;
+        ///                    
+        ///    void main(barber b1, barber b2)
+        ///    {
+        ///        _barber1 = b1; _busy1 = false;
+        ///        _barber2 = b2; _busy2 = false;
+        ///
+        ///        while(true)
+        ///            await visit;
+        ///    }
+        ///
+        ///    [Blocking]
+        ///    public void visit(int client)
+        ///    {
+        ///        console.write(&quot;entered : &quot; + client);
+        ///        if (_busy1 &amp;&amp; _busy2)
+        ///            await next_client;
+        ///
+        ///        if (!_busy1)
+        ///        {
+        ///            _bu [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string BarbersShop {
+            get {
+                return ResourceManager.GetString("BarbersShop", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to concurrent class chopstick
         ///{
         ///    [Forever]
@@ -146,9 +228,9 @@ namespace Excess.Web.Resources {
         ///    {
         ///        if (_owner != null)
         ///        {
-        ///            {release}
+        ///            await release;
         ///        }
-        ///                        
+        ///                                
         ///        _owner = owner;
         ///    }
         ///	
@@ -272,6 +354,49 @@ namespace Excess.Web.Resources {
         internal static string Extensions {
             get {
                 return ResourceManager.GetString("Extensions", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to concurrent class factorial
+        ///{
+        ///    static int buckets = 3;
+        ///    double main(int n)
+        ///    {
+        ///        double fact = 0;
+        ///        {fact = parallel&lt;double&gt;(n, 
+        ///            map: () =&gt; {
+        ///                var size = (int)(n/buckets);
+        ///                for(int i = 0; i &lt; buckets; i++)
+        ///                {
+        ///                    int lower = i == 0? 1 : i * size + 1;
+        ///                    int upper = i == (buckets - 1)? n : (i + 1) * size;
+        ///
+        ///                    yield return () =&gt; {
+        ///                        double result =  [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string Factorial {
+            get {
+                return ResourceManager.GetString("Factorial", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to var fact = spawn&lt;factorial&gt;();
+        ///
+        ///var n = 100;
+        ///var result = start&lt;double&gt;(fact, n);
+        ///
+        ///double naive = 1.0;
+        ///for (int i = 1; i &lt;= n; i++)
+        ///    naive *= i;
+        ///
+        ///console.write(&quot;Distributed: &quot; + result);
+        ///console.write(&quot;Naive: &quot; + naive);.
+        /// </summary>
+        internal static string FactorialApp {
+            get {
+                return ResourceManager.GetString("FactorialApp", resourceCulture);
             }
         }
         
@@ -553,15 +678,15 @@ namespace Excess.Web.Resources {
         ///    void think()
         ///    {
         ///        console.write(_name + &quot; is thinking&quot;);
-        ///        {wait(sec: rand(1.0, 2.0))
-        ///            -&gt; hungry()}
+        ///        await wait(sec: rand(1.0, 2.0))
+        ///                        -&gt; hungry();
         ///    }
         ///
         ///    void hungry()
         ///    {
         ///        console.write(_name + &quot; is hungry&quot;);
         ///
-        ///        {(_left.acquire(this) &amp; _right.ac [rest of string was truncated]&quot;;.
+        ///        await (_left.acq [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string Philosophers {
             get {
@@ -589,6 +714,275 @@ namespace Excess.Web.Resources {
         internal static string PhilosophersApp {
             get {
                 return ResourceManager.GetString("PhilosophersApp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to var resource = spawn&lt;resource&gt;();
+        ///var clients = spawn&lt;client&gt;(5);
+        ///
+        ///start(resource);
+        ///foreach(var client in clients)
+        ///    start(client, resource);.
+        /// </summary>
+        internal static string ReadersWriterApp {
+            get {
+                return ResourceManager.GetString("ReadersWriterApp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to concurrent class client
+        ///{
+        ///    resource _resource;
+        ///    void main(resource r)
+        ///    {
+        ///        _resource = r;
+        ///        {read() &amp; write()}
+        ///    }
+        ///
+        ///    [Forever]
+        ///    public void read()
+        ///    {
+        ///        await wait(sec: rand(0.2, 0.5));
+        ///        var result = 0;
+        ///        {result = _resource.read()}
+        ///
+        ///        console.write(&quot;read: &quot; + result);
+        ///    }
+        ///
+        ///    [Forever]
+        ///    public void write()
+        ///    {
+        ///        await wait(sec: rand(1, 2));
+        ///        _resource.write();
+        ///    }
+        ///}.
+        /// </summary>
+        internal static string ReadersWriterClient {
+            get {
+                return ResourceManager.GetString("ReadersWriterClient", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to concurrent class resource
+        ///{
+        ///    [Blocking]
+        ///    public int read()
+        ///    {
+        ///        if (_writing)
+        ///            await writing_done;
+        ///                        
+        ///        return _value++;        
+        ///    }
+        ///
+        ///    bool _writing = false;
+        ///    int _value = 0;                    
+        ///
+        ///    [Blocking]
+        ///    public void write()
+        ///    {
+        ///        console.write(&quot;writing at: &quot; + _value);
+        ///        _writing = true;
+        ///        await wait(sec: rand(0.5, 1));
+        ///        _writing = false;
+        ///                        
+        ///        console.write(&quot;f [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string ReadersWriterResource {
+            get {
+                return ResourceManager.GetString("ReadersWriterResource", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to var santa = spawn&lt;santa&gt;();
+        ///var reindeer = spawn&lt;reindeer&gt;( 8).ToArray();
+        ///var elves = spawn&lt;elf&gt;( 10).ToArray();
+        ///
+        ///var rnames = [&quot;Dasher&quot;, &quot;Dancer&quot;, &quot;Prancer&quot;, &quot;Vixen&quot;, &quot;Comet&quot;, &quot;Cupid&quot;, &quot;Dunder&quot;, &quot;Rudolph&quot;];
+        ///var enames = [&quot;Alabaster&quot;, &quot;Bushy&quot;, &quot;Pepper&quot;, &quot;Shinny&quot;, &quot;Sugarplum&quot;, &quot;Wunorse&quot;, &quot;Buddy&quot;, &quot;Kringle&quot;, &quot;Tinsel&quot;, &quot;Jangle&quot;];
+        ///
+        ///start(santa);
+        ///
+        ///for(var i = 0; i &lt; rnames.Length; i++)
+        ///    start(reindeer[i], santa, rnames[i]);
+        ///
+        ///for (var i = 0; i &lt; enames.Length; i++)
+        ///    start(elves[i], santa, ename [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string SantaCreaturesApp {
+            get {
+                return ResourceManager.GetString("SantaCreaturesApp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to concurrent class reindeer
+        ///{
+        ///    santa _santa;
+        ///    string _name;                    
+        ///
+        ///    [Forever]    
+        ///    void main(santa s, string name)
+        ///    {
+        ///        _santa = s;
+        ///        _name = name;
+        /// 
+        ///        {vacation()}
+        ///    }
+        ///
+        ///    public void unharness()
+        ///    {
+        ///        console.write(_name + &quot;: job well done&quot;);
+        ///    }
+        ///
+        ///    private void vacation()
+        ///    {
+        ///        await wait(sec: rand(3, 7))
+        ///                -&gt; console.write(_name + &quot;: back from vacation&quot;)
+        ///                -&gt; (_santa.reindeer_back(this) [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string SantaCreaturesCreatures {
+            get {
+                return ResourceManager.GetString("SantaCreaturesCreatures", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to concurrent class santa
+        ///{
+        ///    List&lt;reindeer&gt; _reindeer = new List&lt;reindeer&gt;();
+        ///    List&lt;elf&gt;      _elves = new List&lt;elf&gt;();
+        ///                    
+        ///    private bool isDelivering { get {return _reindeer.Count == 8;} }
+        ///                    
+        ///    public void reindeer_back(reindeer r)
+        ///    {
+        ///        _reindeer.Add(r);
+        ///        if (isDelivering)
+        ///        {
+        ///            await cancel_elves();
+        ///
+        ///            console.write(&quot;Santa: Off to deliver toys!&quot;);
+        ///            await wait(sec:rand(5, 10));
+        ///            consol [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string SantaCreaturesSanta {
+            get {
+                return ResourceManager.GetString("SantaCreaturesSanta", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to var santa = spawn&lt;santa&gt;();
+        ///var shop = spawn&lt;shop&gt;();
+        ///
+        ///start(santa);
+        ///start(shop, santa);.
+        /// </summary>
+        internal static string SantaShopApp {
+            get {
+                return ResourceManager.GetString("SantaShopApp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to concurrent class santa
+        ///{
+        ///    bool _delivering = false;
+        ///    bool _helping = false;
+        ///                    
+        ///    public void reindeer()
+        ///    {
+        ///        _delivering = true;
+        ///        if (!_helping)
+        ///            await deliver();    
+        ///    }
+        ///
+        ///    public void elves()
+        ///    {
+        ///        if (_delivering)
+        ///        {
+        ///            console.write(&quot;elves: nobody home, back to work!&quot;);
+        ///            return;
+        ///        }
+        ///
+        ///        console.write(&quot;santa: hey guys, need help?&quot;);
+        ///                        
+        ///        _helping = true; [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string SantaShopSanta {
+            get {
+                return ResourceManager.GetString("SantaShopSanta", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to concurrent class shop
+        ///{
+        ///    santa _santa;
+        ///    int   _reindeer = 0;
+        ///    int   _elves    = 0;
+        ///    void main(santa s)
+        ///    {
+        ///        _santa = s;
+        ///                        
+        ///        {reindeer() &amp; elves()}
+        ///    }
+        ///
+        ///    [Forever]
+        ///    public void reindeer()
+        ///    {
+        ///        console.write(&quot;reindeer: back from vacation&quot;);
+        ///        _reindeer++;
+        ///
+        ///        if (_reindeer == 8)
+        ///        {
+        ///            await _santa.reindeer();
+        ///            _reindeer = 0;
+        ///        }
+        ///
+        ///        {wait(sec: rand(2, 3))}
+        ///    }
+        ///
+        ///    [ [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string SantaShopShop {
+            get {
+                return ResourceManager.GetString("SantaShopShop", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to concurrent class philosopher 
+        ///{
+        ///    [Forever]
+        ///    void main(string name, chopstick left, chopstick right) 
+        ///    {
+        ///        _name  = name;
+        ///        _left  = left;
+        ///        _right = right;
+        ///                               
+        ///        {hungry()}
+        ///    }
+        ///	
+        ///    void hungry()
+        ///    {
+        ///        console.write(_name + &quot; is hungry&quot;);
+        ///
+        ///        try
+        ///        {
+        ///            await ((_left.acquire(this) &amp; _right.acquire(this))
+        ///                  | timeout(sec: 2.1))
+        ///                      -&gt; eat();
+        ///        }
+        ///        cat [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string StarvingPhilosophers {
+            get {
+                return ResourceManager.GetString("StarvingPhilosophers", resourceCulture);
             }
         }
     }

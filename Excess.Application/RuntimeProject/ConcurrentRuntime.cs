@@ -42,8 +42,23 @@ namespace Excess.RuntimeProject
                 public void main()
                 {
                     _node = new Node(3);
+                    _node.StopOnEmpty();
+
                     run();
-                    _node.runFor(30000);
+
+                    var tokenSource = new CancellationTokenSource();
+                    try
+                    {
+                        CancellationToken token = tokenSource.Token;
+                        Task.Delay(30000, token)
+                            .ContinueWith((t) => _node.stop());
+
+                        _node.waitForCompletion();
+                        tokenSource.Cancel();
+                    }
+                    catch (OperationCanceledException)
+                    {
+                    }    
                 }
 
                 private void run()
@@ -55,7 +70,12 @@ namespace Excess.RuntimeProject
                     _node.run(obj as ConcurrentObject, args);
                 }
 
-                private IConcurrentObject spawn<T>() where T : IConcurrentObject, new ()
+                private T start<T>(IConcurrentObject obj, params object[] args)
+                {
+                    return _node.run<T>(obj as ConcurrentObject, args);
+                }
+
+                private T spawn<T>() where T : IConcurrentObject, new ()
                 {
                     return _node.spawn<T>();
                 }

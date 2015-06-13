@@ -249,6 +249,148 @@ namespace Excess.Web.Migrations
                     Name         = "chopstick",
                     Contents     = Samples.Chopsticks,
                 },
+
+                //starving philosophers
+                new ProjectFile
+                {
+                    ID           = 18,
+                    OwnerProject = 7,
+                    Name         = "application",
+                    Contents     = Samples.PhilosophersApp
+                },
+
+                new ProjectFile
+                {
+                    ID           = 19,
+                    OwnerProject = 7,
+                    Name         = "philosopher",
+                    Contents     = Samples.StarvingPhilosophers,
+                },
+
+                new ProjectFile
+                {
+                    ID           = 20,
+                    OwnerProject = 7,
+                    Name         = "chopstick",
+                    Contents     = Samples.Chopsticks,
+                },
+
+                //santa's shop
+                new ProjectFile
+                {
+                    ID           = 21,
+                    OwnerProject = 8,
+                    Name         = "application",
+                    Contents     = Samples.SantaShopApp
+                },
+
+                new ProjectFile
+                {
+                    ID           = 22,
+                    OwnerProject = 8,
+                    Name         = "santa",
+                    Contents     = Samples.SantaShopSanta,
+                },
+
+                new ProjectFile
+                {
+                    ID           = 23,
+                    OwnerProject = 8,
+                    Name         = "shop",
+                    Contents     = Samples.SantaShopShop,
+                },
+
+                //santa's creatures
+                new ProjectFile
+                {
+                    ID           = 24,
+                    OwnerProject = 9,
+                    Name         = "application",
+                    Contents     = Samples.SantaCreaturesApp
+                },
+
+                new ProjectFile
+                {
+                    ID           = 25,
+                    OwnerProject = 9,
+                    Name         = "santa",
+                    Contents     = Samples.SantaCreaturesSanta,
+                },
+
+                new ProjectFile
+                {
+                    ID           = 26,
+                    OwnerProject = 9,
+                    Name         = "creatures",
+                    Contents     = Samples.SantaCreaturesCreatures,
+                },
+
+                //barbershop
+                new ProjectFile
+                {
+                    ID           = 27,
+                    OwnerProject = 10,
+                    Name         = "application",
+                    Contents     = Samples.BarbersApp
+                },
+
+                new ProjectFile
+                {
+                    ID           = 28,
+                    OwnerProject = 10,
+                    Name         = "barbershop",
+                    Contents     = Samples.BarbersShop,
+                },
+
+                new ProjectFile
+                {
+                    ID           = 29,
+                    OwnerProject = 10,
+                    Name         = "barber",
+                    Contents     = Samples.BarbersBarber,
+                },
+
+                //barbershop
+                new ProjectFile
+                {
+                    ID           = 30,
+                    OwnerProject = 11,
+                    Name         = "application",
+                    Contents     = Samples.ReadersWriterApp
+                },
+
+                new ProjectFile
+                {
+                    ID           = 31,
+                    OwnerProject = 11,
+                    Name         = "resource",
+                    Contents     = Samples.ReadersWriterResource,
+                },
+
+                new ProjectFile
+                {
+                    ID           = 32,
+                    OwnerProject = 11,
+                    Name         = "client",
+                    Contents     = Samples.ReadersWriterClient,
+                },
+
+                //factorial
+                new ProjectFile
+                {
+                    ID           = 33,
+                    OwnerProject = 12,
+                    Name         = "application",
+                    Contents     = Samples.FactorialApp
+                },
+
+                new ProjectFile
+                {
+                    ID           = 34,
+                    OwnerProject = 12,
+                    Name         = "factorial",
+                    Contents     = Samples.Factorial,
+                },
             };
         }
 
@@ -301,6 +443,54 @@ namespace Excess.Web.Migrations
                     ID = 6,
                     ProjectType = "concurrent",
                     Name = "Dining Philosophers",
+                    IsSample = true,
+                },
+
+                new Project
+                {
+                    ID = 7,
+                    ProjectType = "concurrent",
+                    Name = "Starving Philosophers",
+                    IsSample = true,
+                },
+
+                new Project
+                {
+                    ID = 8,
+                    ProjectType = "concurrent",
+                    Name = "Santa's Shop",
+                    IsSample = true,
+                },
+
+                new Project
+                {
+                    ID = 9,
+                    ProjectType = "concurrent",
+                    Name = "Santa's Creatures",
+                    IsSample = true,
+                },
+
+                new Project
+                {
+                    ID = 10,
+                    ProjectType = "concurrent",
+                    Name = "Barbershop",
+                    IsSample = true,
+                },
+
+                new Project
+                {
+                    ID = 11,
+                    ProjectType = "concurrent",
+                    Name = "Readers Writer",
+                    IsSample = true,
+                },
+
+                new Project
+                {
+                    ID = 12,
+                    ProjectType = "concurrent",
+                    Name = "Factorial",
                     IsSample = true,
                 },
             };

@@ -648,14 +648,24 @@ namespace Excess.Compiler.Roslyn
                 var block = node as BlockSyntax;
                 return block
                     .WithStatements(CSharp.List(
-                        ExplodeStatements(block.Statements, newNode)));
+                        ExplodeStatements(block.Statements, newNode, (BlockSyntax)newNode)));
             };
         }
 
-        private static IEnumerable<StatementSyntax> ExplodeStatements(SyntaxList<StatementSyntax> statements, SyntaxNode newNode)
+        public static Func<SyntaxNode, Scope, SyntaxNode> ExplodeStatement(SyntaxNode toReplace, BlockSyntax statements)
         {
-            var block = (BlockSyntax)newNode;
-            var nodeID = RoslynCompiler.NodeMark(newNode);
+            return (node, scope) =>
+            {
+                var block = node as BlockSyntax;
+                return block
+                    .WithStatements(CSharp.List(
+                        ExplodeStatements(block.Statements, toReplace, statements)));
+            };
+        }
+
+        private static IEnumerable<StatementSyntax> ExplodeStatements(SyntaxList<StatementSyntax> statements, SyntaxNode toReplace, BlockSyntax block)
+        {
+            var nodeID = RoslynCompiler.NodeMark(toReplace);
             foreach (var statement in statements)
             {
                 var innerID = RoslynCompiler.NodeMark(statement);
