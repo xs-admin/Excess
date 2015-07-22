@@ -281,9 +281,9 @@ namespace Excess.Compiler.Roslyn
                 syntaxTrees: new[] { tree },
                 references: new[]
                 {
-                    MetadataReference.CreateFromAssembly(typeof(object).Assembly),
-                    MetadataReference.CreateFromAssembly(typeof(Enumerable).Assembly),
-                    MetadataReference.CreateFromAssembly(typeof(Dictionary<int, int>).Assembly),
+                    MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
+                    MetadataReference.CreateFromFile(typeof(Enumerable).Assembly.Location),
+                    MetadataReference.CreateFromFile(typeof(Dictionary<int, int>).Assembly.Location),
                 },
                 options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
 

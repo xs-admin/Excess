@@ -22,15 +22,17 @@ namespace Excess.Compiler.Core
         }
 
 
-        protected string _text;
         public CompilerStage Stage { get; internal set; }
         public string Text { get { return _text; } set { update(value); } }
-        public TNode SyntaxRoot { get { return getRoot(); } }
+        public TNode SyntaxRoot { get { return getRoot(); } set { setRoot(value); } }
         public TModel Model { get; set; }
         public Scope Scope { get { return _scope; } }
+        public IMappingService<TNode> Mapper { get; set; }
 
         protected abstract TNode getRoot();
+        protected abstract void setRoot(TNode node);
 
+        protected string _text;
         protected void update(string text)
         {
             Debug.Assert(_text == null); //td: merge, or reset
@@ -222,9 +224,27 @@ namespace Excess.Compiler.Core
             }
 
             if (oldStage <= CompilerStage.Semantical && stage >= CompilerStage.Semantical)
-                return applySemantical();
+            {
+                bool result = applySemantical();
+                if (result)
+                    _semanticalTries = 0;
+                else
+                    _semanticalTries++;
+                return result;
+            }
 
             return true; //finished
+        }
+
+        public bool HasSemanticalChanges()
+        {
+            if (_semanticalTries > 5)
+                return false; //shortcut
+
+            if (_semanticalTries == 0 && _semantical.Count > 0)
+                return true;
+
+            return _semanticalChanges.Count > 0;
         }
 
         public abstract bool hasErrors();
@@ -499,12 +519,14 @@ namespace Excess.Compiler.Core
                 return true; //shortcut
 
             var oldRoot = _root;
+
+            _root = applyNodeChanges(_root, CompilerStage.Semantical);
+
             foreach (var semantical in _semantical)
             {
                 _root = semantical(_root, Model, _scope);
             }
 
-            _root = applyNodeChanges(_root, CompilerStage.Semantical);
             return oldRoot.Equals(_root); 
         }
     }

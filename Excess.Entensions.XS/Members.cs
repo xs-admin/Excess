@@ -155,7 +155,7 @@ namespace Excess.Entensions.XS
                 var document = scope.GetDocument<SyntaxToken, SyntaxNode, SemanticModel>();
                 document.change(method, FixReturnType);
 
-                return method.WithReturnType(RoslynCompiler.@dynamic);
+                return method.WithReturnType(RoslynCompiler.@void);
             }
 
             return method;

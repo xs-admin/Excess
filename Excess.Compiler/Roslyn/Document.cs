@@ -142,8 +142,14 @@ namespace Excess.Compiler.Roslyn
 
                 Debug.Assert(tNode != null); //td: cases
 
+                if (Mapper != null)
+                    tNode = Mapper.SemanticalMap(tNode);
+
                 nodes[tNode] = transformer.Value;
             }
+
+            if (Mapper != null)
+                node = Mapper.SemanticalMap(node);
 
             IEnumerable<SyntaxNode> toReplace = nodes.Keys;
             return node.ReplaceNodes(toReplace, (oldNode, newNode) =>
@@ -180,6 +186,12 @@ namespace Excess.Compiler.Roslyn
         {
             return _root;
         }
+
+        protected override void setRoot(SyntaxNode node)
+        {
+            _root = node;
+        }
+
 
         protected override void applySyntactical()
         {

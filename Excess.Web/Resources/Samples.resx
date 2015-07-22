@@ -938,6 +938,13 @@ foreach(var client in clients)
     private void writing_done();
 }</value>
   </data>
+  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="Samples" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>samples.resx;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
+  <data name="Samples_Designer" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>samples.designer.cs;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
   <data name="SantaCreaturesApp" xml:space="preserve">
     <value>var santa = spawn&lt;santa&gt;();
 var reindeer = spawn&lt;reindeer&gt;( 8).ToArray();

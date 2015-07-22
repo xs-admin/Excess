@@ -46,7 +46,7 @@ namespace Excess.Compiler.Roslyn
 
         public ICompilerEnvironment dependency<T>(IEnumerable<string> modules)
         {
-            MetadataReference reference = MetadataReference.CreateFromAssembly(typeof(T).Assembly);
+            MetadataReference reference = MetadataReference.CreateFromFile(typeof(T).Assembly.Location);
             Debug.Assert(reference != null);
 
             _references.Add(reference);

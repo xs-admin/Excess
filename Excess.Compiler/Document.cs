@@ -21,12 +21,14 @@ namespace Excess.Compiler
         bool applyChanges();
         bool applyChanges(CompilerStage stage);
         bool hasErrors();
+        bool HasSemanticalChanges();
 
         string Text { get; set; }
         CompilerStage Stage { get; }
-        TNode SyntaxRoot { get; }
+        TNode SyntaxRoot { get; set; }
         TModel Model { get; set; }
         Scope Scope { get; }
+        IMappingService<TNode> Mapper { get; set; }
     }
 
     public interface IDocumentInjector<TToken, TNode, TModel>
@@ -51,4 +53,17 @@ namespace Excess.Compiler
         public int Length { get; internal set; }
     }
 
+    public interface IMappingService<TNode>
+    {
+        TNode LexicalTree { get; set; }
+        TNode SyntacticalTree { get; set; }
+        TNode SemanticalTree { get; set; }
+
+        void LexicalChange(SourceSpan oldSpan, int newLength);
+        void SemanticalChange(TNode oldNode, TNode newNode);
+
+        TNode SemanticalMap(SourceSpan src);
+        TNode SemanticalMap(TNode node);
+        SourceSpan SourceMap(TNode node);
+    }
 }
