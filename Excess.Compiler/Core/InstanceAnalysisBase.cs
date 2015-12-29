@@ -46,6 +46,27 @@ namespace Excess.Compiler.Core
         Dictionary<string, InstanceConnector> _output = new Dictionary<string, InstanceConnector>();
         Dictionary<InstanceConnector, Action<InstanceConnector, object, object, Scope>> _dataTransform = new Dictionary<InstanceConnector, Action<InstanceConnector, object, object, Scope>>();
         Dictionary<InstanceConnector, Action<InstanceConnector, InstanceConnection<TNode>, Scope>> _nodeTransform = new Dictionary<InstanceConnector, Action<InstanceConnector, InstanceConnection<TNode>, Scope>>();
+        Action<InstanceConnection<TNode>, Scope> _defaultInputTransform;
+        Action<InstanceConnection<TNode>, Scope> _defaultOutputTransform;
+
+        public IInstanceMatch<TNode> input(Action<InstanceConnection<TNode>, Scope> transform)
+        {
+            if (_defaultInputTransform != null)
+                throw new InvalidOperationException("duplicate default transform");
+
+            _defaultInputTransform = transform;
+            return this;
+        }
+
+        public IInstanceMatch<TNode> output(Action<InstanceConnection<TNode>, Scope> transform)
+        {
+            if (_defaultOutputTransform != null)
+                throw new InvalidOperationException("duplicate default transform");
+
+            _defaultOutputTransform = transform;
+            return this;
+        }
+
         public IInstanceMatch<TNode> input(InstanceConnector connector, Action<InstanceConnector, object, object, Scope> dt, Action<InstanceConnector, InstanceConnection<TNode>, Scope> transform)
         {
             var id = connector.Id;
@@ -96,7 +117,7 @@ namespace Excess.Compiler.Core
 
         public IInstanceAnalisys<TNode> then(Func<string, object, TNode, IEnumerable<InstanceConnection<TNode>>, Scope, TNode> handler)
         {
-            return then(new FunctorInstanceTransform<TNode>(_input, _output, _dataTransform, _nodeTransform, handler));
+            return then(new FunctorInstanceTransform<TNode>(_input, _output, _dataTransform, _nodeTransform, _defaultInputTransform, _defaultOutputTransform, handler));
         }
 
         public IInstanceAnalisys<TNode> then(IInstanceTransform<TNode> transform)
@@ -120,16 +141,23 @@ namespace Excess.Compiler.Core
         Dictionary<string, InstanceConnector> _output;
         Dictionary<InstanceConnector, Action<InstanceConnector, object, object, Scope>> _connectorDataTransform;
         Dictionary<InstanceConnector, Action<InstanceConnector, InstanceConnection<TNode>, Scope>> _connectionTransform;
+        Action<InstanceConnection<TNode>, Scope> _defaultInputTransform;
+        Action<InstanceConnection<TNode>, Scope> _defaultOutputTransform;
+
         public InstanceTransformBase(
             Dictionary<string, InstanceConnector> input,
             Dictionary<string, InstanceConnector> output,
             Dictionary<InstanceConnector, Action<InstanceConnector, object, object, Scope>> connectorDataTransform,
-            Dictionary<InstanceConnector, Action<InstanceConnector, InstanceConnection<TNode>, Scope>> connectionTransform)
+            Dictionary<InstanceConnector, Action<InstanceConnector, InstanceConnection<TNode>, Scope>> connectionTransform,
+            Action<InstanceConnection<TNode>, Scope> defaultInputTransform,
+            Action<InstanceConnection<TNode>, Scope> defaultOutputTransform)
         {
             _input = input;
             _output = output;
             _connectorDataTransform = connectorDataTransform;
             _connectionTransform = connectionTransform;
+            _defaultInputTransform = defaultInputTransform;
+            _defaultOutputTransform = defaultOutputTransform;
         }
 
         public TNode transform(string id, object instance, TNode node, IEnumerable<InstanceConnection<TNode>> connections, Scope scope)
@@ -140,21 +168,27 @@ namespace Excess.Compiler.Core
                 bool isInput = connection.InputModel == instance;
                 if (isInput)
                 {
+                    var transform = connection.InputTransform;
+                    var found = false;
                     if (connection.Input != null)
-                    {
-                        var tmp = connection.InputTransform;
-                        _connectionTransform.TryGetValue(connection.Input, out tmp);
-                        connection.InputTransform = tmp;
-                    }
+                        found = _connectionTransform.TryGetValue(connection.Input, out transform);
+
+                    if (!found && _defaultInputTransform != null)
+                        transform = (connector, connection_, scope_) => _defaultInputTransform(connection_, scope_);
+
+                    connection.InputTransform = transform;
                 }
                 else
                 {
+                    var transform = connection.InputTransform;
+                    var found = false;
                     if (connection.Output != null)
-                    {
-                        var tmp = connection.OutputTransform;
-                        _connectionTransform.TryGetValue(connection.Output, out tmp);
-                        connection.OutputTransform = tmp;
-                    }
+                        found = _connectionTransform.TryGetValue(connection.Output, out transform);
+
+                    if (!found && _defaultOutputTransform != null)
+                        transform = (connector, connection_, scope_) => _defaultOutputTransform(connection_, scope_);
+
+                    connection.InputTransform = transform;
                 }
             }
 
@@ -208,7 +242,9 @@ namespace Excess.Compiler.Core
             Dictionary<string, InstanceConnector> output,
             Dictionary<InstanceConnector, Action<InstanceConnector, object, object, Scope>> connectorDataTransform,
             Dictionary<InstanceConnector, Action<InstanceConnector, InstanceConnection<TNode>, Scope>> connectionTransform,
-            Func<string, object, TNode, IEnumerable<InstanceConnection<TNode>>, Scope, TNode> handler) : base(input, output, connectorDataTransform, connectionTransform)
+            Action<InstanceConnection<TNode>, Scope> defaultInputTransform,
+            Action<InstanceConnection<TNode>, Scope> defaultOutputTransform,
+            Func<string, object, TNode, IEnumerable<InstanceConnection<TNode>>, Scope, TNode> handler) : base(input, output, connectorDataTransform, connectionTransform, defaultInputTransform, defaultOutputTransform)
         {
             _handler = handler;
         }
@@ -290,10 +326,14 @@ namespace Excess.Compiler.Core
                 var outputDT = null as Action<InstanceConnector, object, object, Scope>;
                 var outputTransform = null as Action<InstanceConnector, InstanceConnection<TNode>, Scope>;
                 var output = source.Transform.output(connection.OutputConnector, out outputDT, out outputTransform);
+                if (output == null)
+                    output = new InstanceConnector { Id = connection.OutputConnector };
 
                 var inputDT = null as Action<InstanceConnector, object, object, Scope>;
                 var inputTransform = null as Action<InstanceConnector, InstanceConnection<TNode>, Scope>;
                 var input = target.Transform.input(connection.InputConnector, out inputDT, out inputTransform);
+                if (input == null)
+                    input = new InstanceConnector { Id = connection.InputConnector };
 
                 var iconn = new InstanceConnection<TNode>()
                 {

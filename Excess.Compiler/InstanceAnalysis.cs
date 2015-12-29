@@ -55,6 +55,9 @@ namespace Excess.Compiler
             Action<InstanceConnector, object, object, Scope> dt = null,
             Action<InstanceConnector, InstanceConnection<TNode>, Scope> transform = null);
 
+        IInstanceMatch<TNode> input(Action<InstanceConnection<TNode>, Scope> transform);
+        IInstanceMatch<TNode> output(Action<InstanceConnection<TNode>, Scope> transform);
+
         IInstanceAnalisys<TNode> then(Func<string, object, TNode, IEnumerable<InstanceConnection<TNode>>, Scope, TNode> handler);
         IInstanceAnalisys<TNode> then(Func<string, object, IEnumerable<InstanceConnection<TNode>>, Scope, TNode> handler);
         IInstanceAnalisys<TNode> then(Func<string, object, TNode, Scope, TNode> handler);
