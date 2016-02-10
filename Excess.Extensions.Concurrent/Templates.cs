@@ -51,5 +51,76 @@ namespace Excess.Extensions.Concurrent
             }");
 
         public static Template PrivateSignal = Template.ParseStatement("{throw new InvalidOperationException(\"calling a private signal\");}");
+
+        public static Template OperatorState = Template.Parse("private bool? _0;");
+        public static Template OrOperatorEval = Template.Parse(@"
+            private void _0(bool? v1, bool? v2)
+            {
+                Debug.Assert(!v1.HasValue || !v2.HasValue);
+                if (v1.HasValue)
+                {
+                    Debug.Assert(!_1.HasValue);
+                    _1 = v1;
+                }
+                else
+                {
+                    Debug.Assert(v2.HasValue && !_2.HasValue);
+                    _2 = v2;
+                }
+
+                if (_1.HasValue && _2.HasValue)
+                    complete(_1.Value || _2.Value, __3);
+            }");
+
+        public static Template AndOperatorEval = Template.Parse(@"
+            private void _0(bool? v1, bool? v2)
+            {
+                Debug.Assert(!v1.HasValue || !v2.HasValue);
+                if (v1.HasValue)
+                {
+                    Debug.Assert(!_1.HasValue);
+                    _1 = v1;
+                }
+                else
+                {
+                    Debug.Assert(v2.HasValue && !_2.HasValue);
+                    _2 = v2;
+                }
+
+                if (_1.HasValue && _2.HasValue)
+                    complete(_1.Value && _2.Value, __3);
+            }");
+
+        public static Template ContinuationOperatorEval = Template.Parse(@"
+            private void _0(bool? v1, bool? v2)
+            {
+                Debug.Assert(!v1.HasValue || !v2.HasValue);
+                if (v1.HasValue)
+                {
+                    Debug.Assert(!_2.HasValue);
+                    _1 = v1;
+                    if (_1.Value)
+                        _4();
+                    else
+                        complete(false, _3)
+                }
+                else
+                {
+                    Debug.Assert(v2.HasValue && !_2.HasValue);
+                    _2 = v2;
+                    complete(_2.Value, _3);
+                }
+            }");
+
+        public static Template ExpressionClass = Template.Parse(@"
+            private class _0
+            {
+            }");
+
+        public static Template ExpressionInstantiation = Template.ParseStatement(@"
+            return new _0();");
+
+        public static Template StartCallback  = Template.ParseExpression("_0(__1, __2)");
+        public static Template StarExpression = Template.ParseExpression("__marker__(__0, __1)");
     }
 }

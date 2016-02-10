@@ -96,9 +96,11 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BlockRewriter.cs" />
     <Compile Include="Class1.cs" />
     <Compile Include="Extension.cs" />
     <Compile Include="Model\ClassModel.cs" />
+    <Compile Include="Model\ExpressionModel.cs" />
     <Compile Include="Model\SignalModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Runtime\Object.cs" />

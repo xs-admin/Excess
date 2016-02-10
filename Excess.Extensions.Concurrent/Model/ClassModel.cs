@@ -81,6 +81,10 @@ namespace Excess.Extensions.Concurrent.Model
             return signal;
         }
 
+        public void AddType(TypeDeclarationSyntax type)
+        {
+            _add.Add(type);
+        }
 
         static TypeSyntax inheritType = CSharp.ParseTypeName("ConcurrentObject");
         public ClassDeclarationSyntax Update(ClassDeclarationSyntax @class)
