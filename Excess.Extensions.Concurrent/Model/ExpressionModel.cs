@@ -154,7 +154,7 @@ namespace Excess.Extensions.Concurrent.Model
                 addStart(exprOperator, expr.Left, true, evalName);
 
             if (expr.Right is BinaryExpressionSyntax)
-                build(expr.Left as BinaryExpressionSyntax, exprOperator, continuationName);
+                build(expr.Right as BinaryExpressionSyntax, exprOperator, continuationName);
             else if (continuationName != null)
             {
                 //case: continuation into a simple expression

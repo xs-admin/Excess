@@ -39,6 +39,12 @@ namespace Excess.Extensions.Concurrent.Model
             _add.Add(member);
         }
 
+        public bool IsSignal(MethodDeclarationSyntax node)
+        {
+            return _signals
+                .Any(s => s.Key == node.Identifier.ToString());
+        }
+
         List<MemberDeclarationSyntax> _remove = new List<MemberDeclarationSyntax>();
         public void RemoveMember(MemberDeclarationSyntax member)
         {

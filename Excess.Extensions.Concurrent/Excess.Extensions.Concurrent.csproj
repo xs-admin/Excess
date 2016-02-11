@@ -98,6 +98,7 @@
   <ItemGroup>
     <Compile Include="BlockRewriter.cs" />
     <Compile Include="Class1.cs" />
+    <Compile Include="ClassLinker.cs" />
     <Compile Include="Extension.cs" />
     <Compile Include="Model\ClassModel.cs" />
     <Compile Include="Model\ExpressionModel.cs" />

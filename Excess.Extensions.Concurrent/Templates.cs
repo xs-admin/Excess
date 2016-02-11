@@ -122,5 +122,7 @@ namespace Excess.Extensions.Concurrent
 
         public static Template StartCallback  = Template.ParseExpression("_0(__1, __2)");
         public static Template StarExpression = Template.ParseExpression("__marker__(__0, __1)");
+
+        public static Template ExpressionVariable = Template.ParseStatement("var _0 = __1;");
     }
 }
