@@ -389,9 +389,10 @@ namespace Excess.Compiler.Roslyn
         public static SyntaxToken     @out     = CSharp.Token(SyntaxKind.OutKeyword);
 
         //constants
-        public static ExpressionSyntax @null = CSharp.ParseExpression("null");
-        public static ExpressionSyntax @true = CSharp.ParseExpression("true");
-        public static ExpressionSyntax @false = CSharp.ParseExpression("false");
+        public static ExpressionSyntax @null      = CSharp.ParseExpression("null");
+        public static SyntaxToken      @nullToken = CSharp.ParseToken("null");
+        public static ExpressionSyntax @true      = CSharp.ParseExpression("true");
+        public static ExpressionSyntax @false     = CSharp.ParseExpression("false");
 
         //tokens
         public static SyntaxToken semicolon = CSharp.ParseToken(";");

@@ -36,12 +36,7 @@ namespace Excess.Extensions.Concurrent
                     .then(lexical.transform()
                         .remove("keyword")
                         .replace("ref", "class")
-                        .then(CompileObject))
-                .match()
-                    .token("->")
-                    .token("(", named: "ref")
-                    .then(lexical.transform()
-                        .insert("__seq", before: "ref"));
+                        .then(CompileObject));
 
             //var environment = compiler.Environment();
             //environment
@@ -92,7 +87,7 @@ namespace Excess.Extensions.Concurrent
 
             if (ctx.Main == null)
             {
-                compileMethod(Templates.EmptyMain.Get<MethodDeclarationSyntax>(), ctx, scope);
+                Debug.Assert(false); //td: unprotected
             }
 
             @class = ctx.Update(@class);
@@ -106,7 +101,8 @@ namespace Excess.Extensions.Concurrent
                 Debug.Assert(newNode is ClassDeclarationSyntax);
                 var @class = (ClassDeclarationSyntax)newNode;
 
-                throw new NotImplementedException();
+                //td: !!! linker
+                return newNode;
             };
         }
 
@@ -194,19 +190,12 @@ namespace Excess.Extensions.Concurrent
                 var isContinued = (cc == null) && checkContinued(statements);
                 if (isContinued)
                 {
-                    ctx.AcceptPublicSignals = true;
-
                     method = method
                         .WithBody(CSharp.Block(statements
                             .Take(statements.Count - 1)));
                 }
 
                 concurrentMethod(ctx, method);
-                ctx.Main.OnGo(
-                    incomingSignal(isContinued 
-                        ? Templates.MainContinuated 
-                        : Templates.MainContinuation));
-
                 return true;
             }
 
@@ -216,13 +205,10 @@ namespace Excess.Extensions.Concurrent
                 createPublicSignals(ctx, method, signal);
 
                 concurrentMethod(ctx, method);
-                signal.OnGo(incomingSignal(Templates.SignalContinuation));
             }
             else if (cc != null)
             {
                 concurrentMethod(ctx, method);
-                ctx.AddMember(method
-                    .WithBody(Templates.PrivateSignal.Get<BlockSyntax>()));
             }
             else if (emptySignal)
             {
@@ -237,12 +223,52 @@ namespace Excess.Extensions.Concurrent
 
         private static BlockSyntax parseConcurrentBlock(ClassModel ctx, BlockSyntax body)
         {
-            throw new NotImplementedException("body rewriter");
+            var rewriter = new BlockRewriter(ctx);
+            return (BlockSyntax)rewriter.Visit(body);
         }
 
         private static void concurrentMethod(ClassModel ctx, MethodDeclarationSyntax method, bool forever = false)
         {
-            throw new NotImplementedException("Method rewriter");
+            var name = method.Identifier.ToString();
+
+            var body = method.Body;
+            var returnStatements = body
+                .DescendantNodes()
+                .OfType<ReturnStatementSyntax>();
+
+            var lastReturn = body.Statements.LastOrDefault() as ReturnStatementSyntax;
+
+            if (returnStatements.Any())
+                body = body
+                    .ReplaceNodes(returnStatements, 
+                    (on, nn) => Templates
+                        .ExpressionReturn
+                        .Get<StatementSyntax>(nn.Expression == null || nn.Expression.IsMissing
+                            ? Roslyn.@null
+                            : nn.Expression));
+
+            if (forever)
+            {
+                body = CSharp.Block(
+                    CSharp.ForStatement(body));
+            }
+            else if (lastReturn == null)
+                body = body.AddStatements(Templates
+                    .ExpressionReturn
+                    .Get<StatementSyntax>(Roslyn.@null));
+
+            var result = Templates
+                .ConcurrentMethod
+                .Get<MethodDeclarationSyntax>(name + "_concurrent");
+
+            ctx.AddMember(result
+                .WithParameterList(method
+                    .ParameterList
+                    .AddParameters(result
+                        .ParameterList
+                        .Parameters
+                        .ToArray()))
+                .WithBody(method.Body));
         }
 
         private static bool checkContinued(IEnumerable<StatementSyntax> statements)

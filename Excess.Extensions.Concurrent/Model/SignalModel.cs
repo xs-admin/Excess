@@ -28,18 +28,5 @@ namespace Excess.Extensions.Concurrent.Model
         public bool Internal { get; internal set; }
         public bool Public { get; internal set; }
         public TypeSyntax ReturnType { get; internal set; }
-        public IEnumerable<StatementSyntax> GoStatements { get { return _go; } }
-
-        List<StatementSyntax> _go = new List<StatementSyntax>();
-        public void OnGo(StatementSyntax statement)
-        {
-            _go.Add(statement);
-        }
-
-        public void OnGo(IEnumerable<StatementSyntax> statements)
-        {
-            foreach (var statement in statements)
-                _go.Add(statement);
-        }
     }
 }

@@ -57,8 +57,6 @@ namespace Excess.Extensions.Concurrent.Model
             _replace[oldNode] = newNode;
         }
 
-        public bool AcceptPublicSignals { get; set; }
-
         Dictionary<string, int> _signals = new Dictionary<string, int>();
         public SignalModel AddSignal(string name, bool isPublic)
         {
@@ -87,6 +85,14 @@ namespace Excess.Extensions.Concurrent.Model
             return signal;
         }
 
+        public SignalModel GetSignal(string name)
+        {
+            var result = 0;
+            if (_signals.TryGetValue(name, out result))
+                return Signals[result];
+            return null;
+        }
+
         public void AddType(TypeDeclarationSyntax type)
         {
             _add.Add(type);
@@ -111,6 +117,5 @@ namespace Excess.Extensions.Concurrent.Model
             _replace.Clear();
             return result;
         }
-
     }
 }

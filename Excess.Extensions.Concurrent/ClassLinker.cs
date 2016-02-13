@@ -12,15 +12,18 @@ using System.Threading.Tasks;
 namespace Excess.Extensions.Concurrent
 {
     using Microsoft.CodeAnalysis.CSharp;
+    using System.Diagnostics;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
     using Roslyn = RoslynCompiler;
 
     internal class ClassLinker : CSharpSyntaxRewriter
     {
         ClassModel _class;
-        public ClassLinker(ClassModel @class)
+        SemanticModel _model;
+        public ClassLinker(ClassModel @class, SemanticModel model)
         {
             _class = @class;
+            _model = model;
         }
 
         bool _first = true;
@@ -96,13 +99,13 @@ namespace Excess.Extensions.Concurrent
                 .WithBody(body
                     .WithStatements(CSharp.List(body
                         .Statements
-                        .Select(st => LinkStatement(st)))));
+                        .Select(st => LinkConcurrentStatement(st)))));
         }
 
-        private StatementSyntax LinkStatement(StatementSyntax statement)
+        private StatementSyntax LinkConcurrentStatement(StatementSyntax statement)
         {
             //we encode the process (in whichever form) as call in the form
-            //__marker__(process, success);
+            //__marker__(process, success, failure);
             //why? why not?
             var exprStatement = statement as ExpressionStatementSyntax;
             if (exprStatement == null)
@@ -111,44 +114,111 @@ namespace Excess.Extensions.Concurrent
             var invocation = exprStatement.Expression as InvocationExpressionSyntax;
             if (    invocation == null
                 ||  invocation.Expression.ToString() != "__marker__"
-                ||  invocation.ArgumentList.Arguments.Count != 2)
+                ||  invocation.ArgumentList.Arguments.Count != 3)
                 return statement; //td: error checking
 
 
             var operand = invocation.ArgumentList.Arguments[0].Expression;
-            var continuation = invocation.ArgumentList.Arguments[1].Expression as InvocationExpressionSyntax;
+            var success = invocation.ArgumentList.Arguments[1].Expression as ParenthesizedLambdaExpressionSyntax;
+            var failure = invocation.ArgumentList.Arguments[2].Expression as ParenthesizedLambdaExpressionSyntax;
 
             if (operand is InvocationExpressionSyntax)
-                return LinkProcessInvocation(operand as InvocationExpressionSyntax, continuation);
+                return LinkProcessInvocation(operand as InvocationExpressionSyntax, success, failure);
 
             if (operand is IdentifierNameSyntax)
-                return LinkSignal(operand as IdentifierNameSyntax, continuation);
+                return LinkSignal(operand as IdentifierNameSyntax, success, failure);
 
             throw new NotImplementedException(); //td:
         }
 
-        private StatementSyntax LinkSignal(IdentifierNameSyntax identifierNameSyntax, InvocationExpressionSyntax continuation)
+        private StatementSyntax LinkSignal(IdentifierNameSyntax identifierNameSyntax, ParenthesizedLambdaExpressionSyntax success, ParenthesizedLambdaExpressionSyntax failure)
         {
             throw new NotImplementedException();
         }
 
-        private StatementSyntax LinkProcessInvocation(InvocationExpressionSyntax invocation, InvocationExpressionSyntax continuation)
+        private StatementSyntax LinkProcessInvocation(InvocationExpressionSyntax invocation, ParenthesizedLambdaExpressionSyntax success, ParenthesizedLambdaExpressionSyntax failure)
         {
             var call = invocation.Expression;
             if (call is IdentifierNameSyntax)
-                return LinkThisInvocation(invocation, continuation);
+                return LinkThisInvocation(invocation, success, failure);
 
-            return LinkExternalInvocation(invocation, continuation);
+            return LinkExternalInvocation(invocation, success, failure);
         }
 
-        private StatementSyntax LinkThisInvocation(InvocationExpressionSyntax invocation, InvocationExpressionSyntax continuation)
+        private StatementSyntax LinkThisInvocation(InvocationExpressionSyntax invocation, ParenthesizedLambdaExpressionSyntax success, ParenthesizedLambdaExpressionSyntax failure)
         {
-            throw new NotImplementedException();
+            Debug.Assert(invocation.Expression is IdentifierNameSyntax);
+
+            //internal calls
+            StatementSyntax result;
+            if (syntaxOperation(invocation, out result))
+                return result;
+            else
+            {
+                var identifier = invocation.Expression as IdentifierNameSyntax;
+                SignalModel signal = _class.GetSignal(identifier.ToString());
+                if (signal != null)
+                    return CSharp.ExpressionStatement(
+                        invocation
+                        .WithArgumentList(invocation
+                            .ArgumentList
+                            .AddArguments(
+                                CSharp.Argument(success),
+                                CSharp.Argument(failure))));
+                else
+                    return Templates
+                        .MethodInvocation
+                        .Get<StatementSyntax>(invocation, success, failure);
+            }
         }
 
-        private StatementSyntax LinkExternalInvocation(InvocationExpressionSyntax invocation, InvocationExpressionSyntax continuation)
+        private StatementSyntax LinkExternalInvocation(InvocationExpressionSyntax invocation, ParenthesizedLambdaExpressionSyntax success, ParenthesizedLambdaExpressionSyntax failure)
         {
-            throw new NotImplementedException();
+            Debug.Assert(invocation.Expression is MemberAccessExpressionSyntax);
+            Debug.Assert(!invocation.Expression
+                .DescendantNodes()
+                .OfType<InvocationExpressionSyntax>()
+                .Any()); //td: errors
+
+            var symbol = _model.GetSymbolInfo(invocation.Expression).Symbol;
+            if (symbol == null)
+                return CSharp.ExpressionStatement(invocation);
+
+            if (isConcurrent(symbol.ContainingType))
+                return CSharp.ExpressionStatement(
+                    invocation
+                    .WithArgumentList(invocation
+                        .ArgumentList
+                        .AddArguments(
+                            CSharp.Argument(success),
+                            CSharp.Argument(failure))));
+
+            return Templates
+                .MethodInvocation
+                .Get<StatementSyntax>(invocation, success, failure);
+        }
+
+        private bool isConcurrent(INamedTypeSymbol type)
+        {
+            return type != null && type.MemberNames.Contains("__concurrent__");
+
+        }
+
+        private bool syntaxOperation(InvocationExpressionSyntax invocation, out StatementSyntax result)
+        {
+            result = null;
+            switch (invocation.Expression.ToString())
+            {
+                case "wait":
+                case "timeout":
+                    throw new NotImplementedException();
+                case "parallel":
+                    throw new NotImplementedException();
+                default:
+                    return false;            
+            }
+
+            return true;
         }
     }
 }

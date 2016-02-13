@@ -24,12 +24,26 @@ namespace Excess.Extensions.Concurrent.Model
         {
             Debug.Assert(_operators == null);
             _operators = new List<Operator>();
-            build(expression, null, operatorName());
+
+            var startStatements = new List<StatementSyntax>();
+            var root = build(expression, null, false, startStatements);
 
             if (!_operators.Any())
                 return expression;
 
             var members = new List<MemberDeclarationSyntax>();
+
+            //td: !! move to a runtime base class
+            members.Add(Templates
+                .ExpressionStartField
+                .Get<MemberDeclarationSyntax>());
+            members.Add(Templates
+                .ExpressionContinuationField
+                .Get<MemberDeclarationSyntax>());
+            members.Add(Templates
+                .ExpressionComplete
+                .Get<MemberDeclarationSyntax>());
+
             foreach (var op in _operators)
             {
                 if (op.Eval != null)
@@ -43,9 +57,9 @@ namespace Excess.Extensions.Concurrent.Model
 
                 if (op.StartName != null && op.StartName.Any())
                 {
-                    members.Add(CSharp.MethodDeclaration(Roslyn.@void, op.StartName)
-                        .WithBody(CSharp.Block(
-                            op.Start)));
+                    members.Add(Templates
+                        .OperatorStartField
+                        .Get<MemberDeclarationSyntax>(op.StartName));
                 }
             }
 
@@ -57,22 +71,25 @@ namespace Excess.Extensions.Concurrent.Model
                     members));
 
             _class.AddType(exprClass);
+
+            var startFunc = CSharp.ParenthesizedLambdaExpression(CSharp.Block(
+                startStatements));
+
             var result = Templates
                 .ExpressionInstantiation
-                .Get<StatementSyntax>(exprClassName);
+                .Get<StatementSyntax>(exprClassName, startFunc);
 
             return result.ReplaceNodes(result.DescendantNodes()
-                .OfType<ObjectCreationExpressionSyntax>(),
+                .OfType<InitializerExpressionSyntax>(),
                 (on, nn) => nn
-                    .WithInitializer(CSharp.InitializerExpression(
-                        SyntaxKind.ObjectInitializerExpression,
-                        CSharp.SeparatedList(_operators
-                            .Where(op => !string.IsNullOrEmpty(op.StartName))
-                            .Select(op => (ExpressionSyntax)CSharp.AssignmentExpression(
+                    .AddExpressions(_operators
+                        .Where(op => !string.IsNullOrEmpty(op.StartName))
+                        .Select(op => (ExpressionSyntax)CSharp.AssignmentExpression(
                             SyntaxKind.SimpleAssignmentExpression,
                             CSharp.IdentifierName(op.StartName),
                             CSharp.ParenthesizedLambdaExpression(CSharp.Block(
-                               op.Start))))))));
+                                op.Start))))
+                        .ToArray()));
         }
 
         class Operator
@@ -84,23 +101,21 @@ namespace Excess.Extensions.Concurrent.Model
             public FieldDeclarationSyntax LeftValue { get; set; }
             public FieldDeclarationSyntax RightValue { get; set; }
 
-            public ExpressionSyntax Callback
+            public SyntaxToken Callback
             {
                 get
                 {
                     Debug.Assert(Eval != null);
-                    return CSharp.LiteralExpression(SyntaxKind.IdentifierName, Eval.Identifier);
+                    return Eval.Identifier;
                 }
             }
         }
 
         List<Operator> _operators;
-        private void build(BinaryExpressionSyntax expr, Operator parent, string startFunction)
+        private Operator build(BinaryExpressionSyntax expr, Operator parent, bool leftOfParent, List<StatementSyntax> start)
         {
             var exprOperator = new Operator();
             exprOperator.Parent = parent;
-            exprOperator.Start = startFunction != null ? new List<StatementSyntax>() : null;
-            exprOperator.StartName = startFunction;
 
             var evalName = operatorName();
             var leftId = evalName + "_Left";
@@ -115,68 +130,97 @@ namespace Excess.Extensions.Concurrent.Model
                 .Get<FieldDeclarationSyntax>(rightId);
 
             //generate method to update the expression
-            ExpressionSyntax callback = parent == null
-                ? Roslyn.@null
-                : parent.Callback;
+            ExpressionSyntax success = parent == null
+                ? Templates
+                    .ExpressionCompleteCall
+                    .Get<ExpressionSyntax>(Roslyn.@true)
+                : CreateCallback(true, leftOfParent, parent.Callback);
 
-            var continuationName = null as string;
+            ExpressionSyntax failure = parent == null
+                ? Templates
+                    .ExpressionCompleteCall
+                    .Get<ExpressionSyntax>(Roslyn.@false)
+                : CreateCallback(false, leftOfParent, parent.Callback);
+
+            var continuationStart = null as List<StatementSyntax>;
             switch (expr.OperatorToken.Text)
             {
                 case "&":
                 case "&&":
                     exprOperator.Eval = Templates
-                        .OrOperatorEval
-                        .Get<MethodDeclarationSyntax>(evalName, leftId, rightId, callback);
+                        .AndOperatorEval
+                        .Get<MethodDeclarationSyntax>(evalName, leftId, rightId, success, failure);
                     break;
 
                 case "|":
                 case "||":
                     exprOperator.Eval = Templates
-                        .AndOperatorEval
-                        .Get<MethodDeclarationSyntax>(evalName, leftId, rightId, callback);
+                        .OrOperatorEval
+                        .Get<MethodDeclarationSyntax>(evalName, leftId, rightId, success, failure);
                     break;
 
                 case ">>":
-                    continuationName = operatorName();
+                    exprOperator.StartName = operatorName();
+                    exprOperator.Start = new List<StatementSyntax>();
+                    continuationStart = exprOperator.Start;
                     exprOperator.Eval = Templates
                         .ContinuationOperatorEval
-                        .Get<MethodDeclarationSyntax>(evalName, leftId, rightId, callback, continuationName);
+                        .Get<MethodDeclarationSyntax>(evalName, leftId, rightId, success, failure, exprOperator.StartName);
                     break;
 
                 default:
                     throw new NotImplementedException(); //td: error
             }
 
+            //register
+            _operators.Add(exprOperator);
+
             //recurse
-            if (expr.Left is BinaryExpressionSyntax)
-                build(expr.Left as BinaryExpressionSyntax, exprOperator, null);
+            BinaryExpressionSyntax binaryExpr;
+            if (isBinaryExpressionSyntax(expr.Left, out binaryExpr))
+                build(binaryExpr, exprOperator, true, start);
             else
-                addStart(exprOperator, expr.Left, true, evalName);
+                addStart(start, expr.Left, true, evalName);
 
-            if (expr.Right is BinaryExpressionSyntax)
-                build(expr.Right as BinaryExpressionSyntax, exprOperator, continuationName);
-            else if (continuationName != null)
-            {
-                //case: continuation into a simple expression
-                var contOperator = new Operator
-                {
-                    Parent = exprOperator,
-                };
-
-                addStart(contOperator, expr.Right, false, evalName);
-            }
+            if (isBinaryExpressionSyntax(expr.Right, out binaryExpr))
+                build(binaryExpr, exprOperator, false, continuationStart ?? start);
             else
-                addStart(exprOperator, expr.Right, false, evalName);
+                addStart(continuationStart ?? start, expr.Right, false, evalName);
+
+            return exprOperator;
         }
 
-        private void addStart(Operator exprOperator, ExpressionSyntax expr, bool leftOperand, string callbackName)
+        private ExpressionSyntax CreateCallback(bool success, bool leftOfParent, SyntaxToken token)
         {
-            if (exprOperator.StartName == null)
-            {
-                exprOperator.StartName = operatorName();
-                exprOperator.Start = new List<StatementSyntax>();
-            }
+            var arg1 = leftOfParent
+                ? success ? Roslyn.@true : Roslyn.@false
+                : Roslyn.@null;
 
+            var arg2 = leftOfParent
+                ? Roslyn.@null
+                : success ? Roslyn.@true : Roslyn.@false;
+
+            return CSharp
+                .InvocationExpression(CSharp.IdentifierName(token))
+                .WithArgumentList(CSharp.ArgumentList(CSharp.SeparatedList( new [] {
+                    CSharp.Argument(arg1),
+                    CSharp.Argument(arg2)})));
+        }
+
+        private bool isBinaryExpressionSyntax(ExpressionSyntax expr, out BinaryExpressionSyntax result)
+        {
+            result = expr as BinaryExpressionSyntax;
+            if (result != null)
+                return true;
+
+            if (expr is ParenthesizedExpressionSyntax)
+                return isBinaryExpressionSyntax((expr as ParenthesizedExpressionSyntax).Expression, out result);
+
+            return false;
+        }
+
+        private void addStart(List<StatementSyntax> start, ExpressionSyntax expr, bool leftOperand, string callbackName)
+        {
             var callback = Templates
                 .StartCallback
                 .Get<ExpressionSyntax>(
@@ -184,10 +228,9 @@ namespace Excess.Extensions.Concurrent.Model
                     leftOperand? CSharp.IdentifierName("result") : Roslyn.@null,
                     leftOperand? Roslyn.@null : CSharp.IdentifierName("result"));
 
-            exprOperator
-                .Start
+            start
                 .Add(CSharp.ExpressionStatement(Templates
-                    .StarExpression
+                    .StartExpression
                     .Get<ExpressionSyntax>(expr, callback)));
         }
 
