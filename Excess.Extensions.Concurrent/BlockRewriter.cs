@@ -18,13 +18,18 @@ namespace Excess.Extensions.Concurrent
             _class = @class;
         }
 
+        public bool HasConcurrent { get; internal set; }
+
         public override SyntaxNode VisitExpressionStatement(ExpressionStatementSyntax statement)
         {
             var expr = statement.Expression as BinaryExpressionSyntax;
             if (expr != null)
             {
                 var model = new ExpressionModel(_class);
-                return model.Parse(expr);
+                var result = model.Parse(expr);
+
+                HasConcurrent = HasConcurrent || result != expr;
+                return result;
             }
 
             return base.VisitExpressionStatement(statement);

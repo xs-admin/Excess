@@ -61,10 +61,8 @@ namespace Excess.Extensions.Concurrent
             var @class = node as ClassDeclarationSyntax;
             var className = @class.Identifier.ToString();
 
-            var myScope = new Scope(scope);
-
-            var ctx = new ClassModel(className, myScope);
-            myScope.set<ClassModel>(ctx);
+            var ctx = new ClassModel(className, scope);
+            scope.set<ClassModel>(ctx);
 
             foreach (var member in @class.Members)
             {
@@ -99,10 +97,11 @@ namespace Excess.Extensions.Concurrent
             return (oldNode, newNode, model, scope) =>
             {
                 Debug.Assert(newNode is ClassDeclarationSyntax);
-                var @class = (ClassDeclarationSyntax)newNode;
 
-                //td: !!! linker
-                return newNode;
+                var @class = scope.get<ClassModel>();
+                Debug.Assert(@class != null);
+
+                return new ClassLinker(@class, model).Visit(newNode);
             };
         }
 
@@ -201,22 +200,21 @@ namespace Excess.Extensions.Concurrent
 
             if (isVisible)
             {
-                var signal = ctx.AddSignal(name, returnType, isVisible);
-                createPublicSignals(ctx, method, signal);
-
-                concurrentMethod(ctx, method);
+                if (emptySignal)
+                    ctx.AddMember(Templates.EmptySignalMethod.Get<MethodDeclarationSyntax>(name, Roslyn.Quoted(name)));
+                else
+                    concurrentMethod(ctx, method);
             }
             else if (cc != null)
-            {
                 concurrentMethod(ctx, method);
-            }
             else if (emptySignal)
-            {
-                var signal = ctx.AddSignal(name, returnType, isVisible);
-                ctx.AddMember(Templates.EmptyPrivateMethod.Get<MethodDeclarationSyntax>(name, signal.Id));
-            }
+                ctx.AddMember(Templates.EmptySignalMethod.Get<MethodDeclarationSyntax>(name));
             else
                 return false;
+
+            var signal = ctx.AddSignal(name, returnType, isVisible);
+            if (isVisible)
+                createPublicSignals(ctx, method, signal);
 
             return true;
         }
@@ -224,7 +222,12 @@ namespace Excess.Extensions.Concurrent
         private static BlockSyntax parseConcurrentBlock(ClassModel ctx, BlockSyntax body)
         {
             var rewriter = new BlockRewriter(ctx);
-            return (BlockSyntax)rewriter.Visit(body);
+            var result = (BlockSyntax)rewriter.Visit(body);
+
+            if (rewriter.HasConcurrent)
+                return result;
+
+            return null;
         }
 
         private static void concurrentMethod(ClassModel ctx, MethodDeclarationSyntax method, bool forever = false)
@@ -259,7 +262,7 @@ namespace Excess.Extensions.Concurrent
 
             var result = Templates
                 .ConcurrentMethod
-                .Get<MethodDeclarationSyntax>(name + "_concurrent");
+                .Get<MethodDeclarationSyntax>("__concurrent" + name);
 
             ctx.AddMember(result
                 .WithParameterList(method
@@ -294,7 +297,7 @@ namespace Excess.Extensions.Concurrent
 
         private static void createPublicSignals(ClassModel ctx, MethodDeclarationSyntax method, SignalModel signal)
         {
-            throw new NotImplementedException();
+            //td: !!!
         }
 
         private static SyntaxNode CompileObject(SyntaxNode node, Scope scope)

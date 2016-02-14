@@ -1,101 +1,85 @@
-﻿using Excess.Extensions.Concurrent.Runtime;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Concurrent;
 
-namespace Excess.Extensions.Concurrent
+namespace Concurrent
 {
-    class SomeClass : ConcurrentObject
+    class SomeClass : Runtime.Object
     {
-        private class __expr0
+        private int D(int v)
         {
-            public Action Start;
-            public Func<Expression> Continuation;
-            private void complete(bool success)
-            {
-                if (!success)
-                {
-                    //td: exception
-                }
+            return v + 1;
+        }
 
-                Continuation(this);
-            }
-
-            private void __op0(bool? v1, bool? v2)
+        private class __expr1 : Runtime.Expression
+        {
+            public void __op1(bool? v1, bool? v2, Exception __ex)
             {
-                Debug.Assert(!v1.HasValue || !v2.HasValue);
+                if (!tryUpdate(v1, v2, ref __op1_Left, ref __op1_Right, __ex))
+                    return;
                 if (v1.HasValue)
                 {
-                    Debug.Assert(!__op0_Left.HasValue);
-                    __op0_Left = v1;
-                    if (v1.Value)
-                        complete(true);
-                    else if (__op0_Right.HasValue)
-                        complete(false);
-                }
-                else
-                {
-                    Debug.Assert(v2.HasValue && !__op0_Right.HasValue);
-                    __op0_Right = v2;
-                    if (v2.Value)
-                        complete(true);
-                    else if (__op0_Left.HasValue)
-                        complete(false);
-                }
-            }
-
-            private bool? __op0_Left;
-            private bool? __op0_Right;
-            private void __op1(bool? v1, bool? v2)
-            {
-                Debug.Assert(!v1.HasValue || !v2.HasValue);
-                if (v1.HasValue)
-                {
-                    Debug.Assert(!__op1_Right.HasValue);
-                    __op1_Left = v1;
                     if (__op1_Left.Value)
-                        __op2();
-                    else
-                        __op0(null, false);
+                        __complete(true, null);
+                    else if (__op1_Right.HasValue)
+                        __complete(false, __ex);
                 }
                 else
                 {
-                    Debug.Assert(v2.HasValue && !__op1_Right.HasValue);
-                    Debug.Assert(__op1_Left.HasValue && __op1_Left.HasValue);
-                    __op1_Right = v2;
                     if (__op1_Right.Value)
-                        __op0(null, true);
-                    else
-                        __op0(null, false);
+                        __complete(true, null);
+                    else if (__op1_Left.HasValue)
+                        __complete(false, __ex);
                 }
             }
 
             private bool? __op1_Left;
             private bool? __op1_Right;
-            private Func<object> __op2;
-            private void __op3(bool? v1, bool? v2)
+            public void __op2(bool? v1, bool? v2, Exception __ex)
             {
-                Debug.Assert(!v1.HasValue || !v2.HasValue);
+                if (!tryUpdate(v1, v2, ref __op2_Left, ref __op2_Right, __ex))
+                    return;
                 if (v1.HasValue)
                 {
-                    Debug.Assert(!__op3_Left.HasValue);
-                    __op3_Left = v1;
-                    if (!v1.Value)
-                        __op1(false, null);
-                    else if (__op3_Right.HasValue)
-                        __op1(true, null);
+                    if (__op2_Left.Value)
+                        __start1(this);
+                    else
+                        __op1(null, false, __ex);
                 }
                 else
                 {
-                    Debug.Assert(v2.HasValue && !__op3_Right.HasValue);
-                    __op3_Right = v2;
-                    if (!v2.Value)
-                        __op1(false, null);
+                    Debug.Assert(__op2_Left.HasValue && __op2_Left.Value);
+                    if (__op2_Right.Value)
+                        __op1(null, true, null);
+                    else
+                        __op1(null, false, __ex);
+                }
+            }
+
+            private bool? __op2_Left;
+            private bool? __op2_Right;
+            public Action<__expr1> __start1;
+            public void __op3(bool? v1, bool? v2, Exception __ex)
+            {
+                if (!tryUpdate(v1, v2, ref __op3_Left, ref __op3_Right, __ex))
+                    return;
+                if (v1.HasValue)
+                {
+                    if (!__op3_Left.Value)
+                        __op2(false, null, __ex);
+                    else if (__op3_Right.HasValue)
+                        __op2(true, null, null);
+                }
+                else
+                {
+                    if (!__op3_Right.Value)
+                        __op2(false, null, __ex);
                     else if (__op3_Left.HasValue)
-                        __op1(true, null);
+                        __op2(true, null, null);
                 }
             }
 
@@ -103,24 +87,236 @@ namespace Excess.Extensions.Concurrent
             private bool? __op3_Right;
         }
 
-        private IEnumerable<Expression> main_concurrent(Func<object> __success, Func<object> __failure)
+        private IEnumerable<Runtime.Expression> __concurrentmain(Action<object> __success, Action<Exception> __failure)
         {
-            return new __expr0
+            var __expr1_i = new __expr1
             {
-                Start = () =>
+                Start = (___expr) =>
                 {
-                    __marker__(A, __op0(result, null));
-                    __marker__(B, __op3(result, null));
-                    __marker__(C(), __op3(null, result));
+                    var __expr = (__expr1)___expr;
+                    __listen("A", () =>
+                    {
+                        __expr.__op1(true, null, null);
+                    }
+
+                    );
+                    __listen("B", () =>
+                    {
+                        __expr.__op3(true, null, null);
+                    }
+
+                    );
+                    __concurrentC((__res) =>
+                    {
+                        __expr.__op3(null, true, null);
+                    }
+
+                    , (__ex) =>
+                    {
+                        __expr.__op3(null, false, __ex);
+                    }
+
+                    );
                 }
 
             ,
-                Continuation = (expr) => Advance(expr),
-                __op2 = () =>
+                Continuation = (__expr) => run(() => __advance(__expr), __success, __failure),
+                __start1 = (___expr) =>
                 {
-                    __marker__(D(10), __op1(null, result));
+                    var __expr = (__expr1)___expr;
+                    try
+                    {
+                        D(10);
+                        try
+                        {
+                            __expr.__op2(null, true, null);
+                        }
+                        catch
+                        {
+                        }
+                    }
+                    catch (Exception __ex)
+                    {
+                        try
+                        {
+                            __expr.__op2(null, false, __ex);
+                        }
+                        catch
+                        {
+                        }
+                    }
                 }
             };
+            yield return __expr1_i;
+        }
+
+        private IEnumerable<Runtime.Expression> A(Action<object> __success, Action<Exception> __failure)
+        {
+            try
+            {
+                __dispatch("A");
+            }
+            catch (Exception __ex)
+            {
+                if (__failure != null)
+                    try
+                    {
+                        __failure(__ex);
+                    }
+                    catch
+                    {
+                    }
+            }
+
+            try
+            {
+                __success(null);
+            }
+            catch
+            {
+            }
+
+            yield break;
+        }
+
+        private IEnumerable<Runtime.Expression> B(Action<object> __success, Action<Exception> __failure)
+        {
+            try
+            {
+                __dispatch("B");
+            }
+            catch (Exception __ex)
+            {
+                if (__failure != null)
+                    try
+                    {
+                        __failure(__ex);
+                    }
+                    catch
+                    {
+                    }
+            }
+
+            try
+            {
+                __success(null);
+            }
+            catch
+            {
+            }
+
+            yield break;
+        }
+
+        private IEnumerable<Runtime.Expression> F(Action<object> __success, Action<Exception> __failure)
+        {
+            try
+            {
+                __dispatch("F");
+            }
+            catch (Exception __ex)
+            {
+                if (__failure != null)
+                    try
+                    {
+                        __failure(__ex);
+                    }
+                    catch
+                    {
+                    }
+            }
+
+            try
+            {
+                __success(null);
+            }
+            catch
+            {
+            }
+
+            yield break;
+        }
+
+        private IEnumerable<Runtime.Expression> G(Action<object> __success, Action<Exception> __failure)
+        {
+            try
+            {
+                __dispatch("G");
+            }
+            catch (Exception __ex)
+            {
+                if (__failure != null)
+                    try
+                    {
+                        __failure(__ex);
+                    }
+                    catch
+                    {
+                    }
+            }
+
+            try
+            {
+                __success(null);
+            }
+            catch
+            {
+            }
+
+            yield break;
+        }
+
+        private class __expr2 : Runtime.Expression
+        {
+            public void __op4(bool? v1, bool? v2, Exception __ex)
+            {
+                if (!tryUpdate(v1, v2, ref __op4_Left, ref __op4_Right, __ex))
+                    return;
+                if (v1.HasValue)
+                {
+                    if (!__op4_Left.Value)
+                        __complete(false, __ex);
+                    else if (__op4_Right.HasValue)
+                        __complete(true, null);
+                }
+                else
+                {
+                    if (!__op4_Right.Value)
+                        __complete(false, __ex);
+                    else if (__op4_Left.HasValue)
+                        __complete(true, null);
+                }
+            }
+
+            private bool? __op4_Left;
+            private bool? __op4_Right;
+        }
+
+        private IEnumerable<Runtime.Expression> __concurrentC(Action<object> __success, Action<Exception> __failure)
+        {
+            var __expr2_i = new __expr2
+            {
+                Start = (___expr) =>
+                {
+                    var __expr = (__expr2)___expr;
+                    __listen("F", () =>
+                    {
+                        __expr.__op4(true, null, null);
+                    }
+
+                    );
+                    __listen("G", () =>
+                    {
+                        __expr.__op4(null, true, null);
+                    }
+
+                    );
+                }
+
+            ,
+                Continuation = (__expr) => run(() => __advance(__expr), __success, __failure)
+            };
+            yield return __expr2_i;
         }
     }
 }

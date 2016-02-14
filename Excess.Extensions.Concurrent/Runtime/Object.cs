@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Excess.Extensions.Concurrent.Runtime
+namespace Concurrent.Runtime
 {
     class Node
     {
@@ -92,21 +93,111 @@ namespace Excess.Extensions.Concurrent.Runtime
             }
         }
 
-        internal void advance(IEnumerator<Expression> thread)
+        protected Expression __advance(Expression expression)
         {
+            var thread = expression.Continuator;
             if (!thread.MoveNext())
-                return;
+                return null;
 
             var expr = thread.Current;
-            expr.Continuation = thread;
+            expr.Continuator = thread;
             if (expr.Start != null)
-                expr.Start();
+                expr.Start(expr);
+
+            return expr;
+        }
+
+        Dictionary<string, List<Action>> _listeners = new Dictionary<string, List<Action>>();
+        protected void __listen(string signal, Action callback)
+        {
+            List<Action> actions;
+            if (!_listeners.TryGetValue(signal, out actions))
+            {
+                actions = new List<Action>();
+                _listeners[signal] = actions;
+            }
+
+            actions.Add(callback);
+        }
+
+        protected void __dispatch(string signal)
+        {
+            List<Action> actions;
+            if (_listeners.TryGetValue(signal, out actions))
+            {
+                foreach (var action in actions)
+                {
+                    try
+                    {
+                        action();
+                    }
+                    catch
+                    {
+                    }
+                }
+
+                actions.Clear();
+            }
         }
     }
 
-    class Expression
+    public class Expression
     {
-        public IEnumerator<Expression> Continuation { get; set; }
-        public Action Start { get; set; }
+        public Action<Expression>      Start        { get; set; }
+        public IEnumerator<Expression> Continuator  { get; set; }
+        public Action<Expression>      Continuation { get; set; }
+        public Exception               Failure      { get; set; }
+
+        List<Exception> _exceptions = new List<Exception>();
+        protected void __complete(bool success, Exception failure)
+        {
+            Debug.Assert(Continuator != null);
+            Debug.Assert(Continuation != null);
+
+            IEnumerable<Exception> allFailures = _exceptions;
+            if (failure != null)
+                allFailures = allFailures.Union(new[] { failure });
+
+            if (!success)
+            {
+                Debug.Assert(allFailures.Any());
+
+                if (allFailures.Count() == 1)
+                    Failure = allFailures.First();
+                else
+                    Failure = new AggregateException(allFailures);
+            }
+
+            Continuation(this);
+        }
+
+        protected bool tryUpdate(bool? v1, bool? v2, ref bool? s1, ref bool? s2, Exception ex)
+        {
+            Debug.Assert(!v1.HasValue || !v2.HasValue);
+
+            if (ex != null)
+            {
+                Debug.Assert((v1.HasValue && !v1.Value) || (v2.HasValue && !v2.Value));
+                _exceptions.Add(ex);
+            }
+
+            if (v1.HasValue)
+            {
+                if (s1.HasValue)
+                    return false;
+
+                s1 = v1;
+            }
+            else
+            {
+                Debug.Assert(v2.HasValue);
+                if (s2.HasValue)
+                    return false;
+
+                s2 = v2;
+            }
+
+            return true;
+        }
     }
 }

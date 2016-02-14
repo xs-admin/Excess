@@ -25,6 +25,21 @@ namespace Excess.Compiler.Tests
                     {
                         A | (B & C()) >> D(10);
                     }
+
+                    public void A();
+                    public void B();
+                    public void F();
+                    public void G();
+                    
+                    private void C()
+                    {
+                        F & G;
+                    }
+
+                    private int D(int v)
+                    {
+                        return v + 1;
+                    }
                 }", out text);
 
             Assert.IsTrue(tree.GetRoot()

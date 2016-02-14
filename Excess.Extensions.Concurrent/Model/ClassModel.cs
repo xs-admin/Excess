@@ -41,8 +41,13 @@ namespace Excess.Extensions.Concurrent.Model
 
         public bool IsSignal(MethodDeclarationSyntax node)
         {
+            var name = node.Identifier.ToString();
+            var pattern = "__concurrent";
+            if (name.StartsWith(pattern))
+                name = name.Substring(pattern.Length);
+
             return _signals
-                .Any(s => s.Key == node.Identifier.ToString());
+                .Any(s => s.Key == name);
         }
 
         List<MemberDeclarationSyntax> _remove = new List<MemberDeclarationSyntax>();
@@ -98,7 +103,7 @@ namespace Excess.Extensions.Concurrent.Model
             _add.Add(type);
         }
 
-        static TypeSyntax inheritType = CSharp.ParseTypeName("ConcurrentObject");
+        static TypeSyntax inheritType = CSharp.ParseTypeName("Runtime.Object");
         public ClassDeclarationSyntax Update(ClassDeclarationSyntax @class)
         {
             _replace = RoslynCompiler.Track(@class.SyntaxTree, _replace);
