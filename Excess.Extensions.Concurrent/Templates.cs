@@ -80,7 +80,10 @@ namespace Excess.Extensions.Concurrent
             yield return new _0
             {
                 Start = __1,
-                Continuation = (__expr) => run(() => __advance(__expr), __success, __failure)
+                End = (__expr) => 
+                {
+                    __run(() => __advance(__expr.Continuator), __success, __failure);
+                }
             };");
 
         public static Template StartCallback = Template.ParseExpression("__expr._1(__2, __3, __4)");
@@ -140,5 +143,24 @@ namespace Excess.Extensions.Concurrent
                 yield break;
             }");
 
+        public static Template TaskPublicMethod = Template.Parse(@"
+            public Task<__1> _0()
+            {
+                var completion = new TaskCompletionSource<__1>();
+                Action<object> __success = (__res) => completion.SetResult((__1)__res);
+                Action<Exception> __failure = (__ex) => completion.SetException(__ex);
+                __run(() => __advance(__2), null, null);
+                return completion.Task;
+            }");
+
+        public static Template TaskCallbackMethod = Template.Parse(@"
+            public void _0(Action<object> success, Action<Exception> failure)
+            {
+                var __success = success;
+                var __failure = failure;
+                __run(() => __advance(__1), null, null);
+            }");
+
+        public static Template InternalCall = Template.ParseExpression("_0(__success, __failure).GetEnumerator()");
     }
 }

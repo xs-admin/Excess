@@ -144,15 +144,17 @@ namespace Excess.Extensions.Concurrent
             return true;
         }
 
-        private static bool compileMethod(MethodDeclarationSyntax method, ClassModel ctx, Scope scope)
+        private static bool compileMethod(MethodDeclarationSyntax methodDeclaration, ClassModel ctx, Scope scope)
         {
+            var method = methodDeclaration;
             var name = method.Identifier.ToString();
             var isMain = name == "main";
 
             var isVisible = Roslyn.IsVisible(method);
             var hasReturnType = method.ReturnType.ToString() == "void";
-            var returnType = hasReturnType ?
-                Roslyn.boolean : method.ReturnType;
+            var returnType = hasReturnType 
+                ? Roslyn.boolean 
+                : method.ReturnType;
 
             var emptySignal = method.Body == null || method.Body.IsMissing;
             if (emptySignal)
@@ -201,14 +203,14 @@ namespace Excess.Extensions.Concurrent
             if (isVisible)
             {
                 if (emptySignal)
-                    ctx.AddMember(Templates.EmptySignalMethod.Get<MethodDeclarationSyntax>(name, Roslyn.Quoted(name)));
+                    ctx.AddMember(Templates.EmptySignalMethod.Get<MethodDeclarationSyntax>("__concurrent" + name, Roslyn.Quoted(name)));
                 else
                     concurrentMethod(ctx, method);
             }
             else if (cc != null)
                 concurrentMethod(ctx, method);
             else if (emptySignal)
-                ctx.AddMember(Templates.EmptySignalMethod.Get<MethodDeclarationSyntax>(name));
+                ctx.AddMember(Templates.EmptySignalMethod.Get<MethodDeclarationSyntax>("__concurrent" + name));
             else
                 return false;
 
@@ -271,7 +273,7 @@ namespace Excess.Extensions.Concurrent
                         .ParameterList
                         .Parameters
                         .ToArray()))
-                .WithBody(method.Body));
+                .WithBody(body));
         }
 
         private static bool checkContinued(IEnumerable<StatementSyntax> statements)
@@ -290,14 +292,49 @@ namespace Excess.Extensions.Concurrent
             throw new NotImplementedException();
         }
 
-        private static IEnumerable<StatementSyntax> incomingSignal(ExpressionSyntax continuation)
-        {
-            throw new NotImplementedException();
-        }
-
         private static void createPublicSignals(ClassModel ctx, MethodDeclarationSyntax method, SignalModel signal)
         {
-            //td: !!!
+            var returnType = method.ReturnType.ToString() != "void"
+                ? method.ReturnType
+                : Roslyn.@object;
+
+            var internalMethod = method.Identifier.ToString();
+            if (!internalMethod.StartsWith("__concurrent"))
+                internalMethod = "__concurrent" + internalMethod;
+
+            var internalCall = Templates
+                .InternalCall
+                .Get<InvocationExpressionSyntax>(internalMethod); internalCall = internalCall
+                .WithArgumentList(CSharp.ArgumentList(CSharp.SeparatedList(
+                    method.ParameterList.Parameters
+                        .Select(param => CSharp.Argument(
+                            CSharp.IdentifierName(method.Identifier)))
+                    .Union(internalCall.ArgumentList.Arguments))));
+
+            ctx.AddMember(AddParameters(
+                method.ParameterList,
+                Templates.TaskPublicMethod
+                .Get<MethodDeclarationSyntax>(
+                    method.Identifier.ToString(),
+                    returnType,
+                    internalCall)));
+
+            ctx.AddMember(AddParameters(
+                method.ParameterList,
+                Templates.TaskCallbackMethod
+                .Get<MethodDeclarationSyntax>(
+                    method.Identifier.ToString(),
+                    internalCall)));
+        }
+
+        private static MemberDeclarationSyntax AddParameters(ParameterListSyntax parameterList, MethodDeclarationSyntax methodDeclarationSyntax)
+        {
+            return methodDeclarationSyntax
+            .WithParameterList(methodDeclarationSyntax.ParameterList
+                .WithParameters(CSharp.SeparatedList(
+                    parameterList.Parameters
+                    .Union(methodDeclarationSyntax
+                        .ParameterList.Parameters))));
         }
 
         private static SyntaxNode CompileObject(SyntaxNode node, Scope scope)

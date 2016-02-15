@@ -120,7 +120,12 @@ namespace Concurrent
                 }
 
             ,
-                Continuation = (__expr) => run(() => __advance(__expr), __success, __failure),
+                End = (__expr) =>
+                {
+                    __run(() => __advance(__expr.Continuator), __success, __failure);
+                }
+
+            ,
                 __start1 = (___expr) =>
                 {
                     var __expr = (__expr1)___expr;
@@ -148,9 +153,14 @@ namespace Concurrent
                 }
             };
             yield return __expr1_i;
+            {
+                if (__success != null)
+                    __success(null);
+                yield break;
+            }
         }
 
-        private IEnumerable<Runtime.Expression> A(Action<object> __success, Action<Exception> __failure)
+        private IEnumerable<Runtime.Expression> __concurrentA(Action<object> __success, Action<Exception> __failure)
         {
             try
             {
@@ -179,7 +189,23 @@ namespace Concurrent
             yield break;
         }
 
-        private IEnumerable<Runtime.Expression> B(Action<object> __success, Action<Exception> __failure)
+        public Task<object> A()
+        {
+            var completion = new TaskCompletionSource<object>();
+            Action<object> __success = (__res) => completion.SetResult((object)__res);
+            Action<Exception> __failure = (__ex) => completion.SetException(__ex);
+            __run(() => __advance(__concurrentA(__success, __failure).GetEnumerator()), null, null);
+            return completion.Task;
+        }
+
+        public void A(Action<object> success, Action<Exception> failure)
+        {
+            var __success = success;
+            var __failure = failure;
+            __run(() => __advance(__concurrentA(__success, __failure).GetEnumerator()), null, null);
+        }
+
+        private IEnumerable<Runtime.Expression> __concurrentB(Action<object> __success, Action<Exception> __failure)
         {
             try
             {
@@ -208,7 +234,23 @@ namespace Concurrent
             yield break;
         }
 
-        private IEnumerable<Runtime.Expression> F(Action<object> __success, Action<Exception> __failure)
+        public Task<object> B()
+        {
+            var completion = new TaskCompletionSource<object>();
+            Action<object> __success = (__res) => completion.SetResult((object)__res);
+            Action<Exception> __failure = (__ex) => completion.SetException(__ex);
+            __run(() => __advance(__concurrentB(__success, __failure).GetEnumerator()), null, null);
+            return completion.Task;
+        }
+
+        public void B(Action<object> success, Action<Exception> failure)
+        {
+            var __success = success;
+            var __failure = failure;
+            __run(() => __advance(__concurrentB(__success, __failure).GetEnumerator()), null, null);
+        }
+
+        private IEnumerable<Runtime.Expression> __concurrentF(Action<object> __success, Action<Exception> __failure)
         {
             try
             {
@@ -237,7 +279,23 @@ namespace Concurrent
             yield break;
         }
 
-        private IEnumerable<Runtime.Expression> G(Action<object> __success, Action<Exception> __failure)
+        public Task<object> F()
+        {
+            var completion = new TaskCompletionSource<object>();
+            Action<object> __success = (__res) => completion.SetResult((object)__res);
+            Action<Exception> __failure = (__ex) => completion.SetException(__ex);
+            __run(() => __advance(__concurrentF(__success, __failure).GetEnumerator()), null, null);
+            return completion.Task;
+        }
+
+        public void F(Action<object> success, Action<Exception> failure)
+        {
+            var __success = success;
+            var __failure = failure;
+            __run(() => __advance(__concurrentF(__success, __failure).GetEnumerator()), null, null);
+        }
+
+        private IEnumerable<Runtime.Expression> __concurrentG(Action<object> __success, Action<Exception> __failure)
         {
             try
             {
@@ -264,6 +322,22 @@ namespace Concurrent
             }
 
             yield break;
+        }
+
+        public Task<object> G()
+        {
+            var completion = new TaskCompletionSource<object>();
+            Action<object> __success = (__res) => completion.SetResult((object)__res);
+            Action<Exception> __failure = (__ex) => completion.SetException(__ex);
+            __run(() => __advance(__concurrentG(__success, __failure).GetEnumerator()), null, null);
+            return completion.Task;
+        }
+
+        public void G(Action<object> success, Action<Exception> failure)
+        {
+            var __success = success;
+            var __failure = failure;
+            __run(() => __advance(__concurrentG(__success, __failure).GetEnumerator()), null, null);
         }
 
         private class __expr2 : Runtime.Expression
@@ -294,6 +368,13 @@ namespace Concurrent
 
         private IEnumerable<Runtime.Expression> __concurrentC(Action<object> __success, Action<Exception> __failure)
         {
+            if (2 > 1)
+            {
+                if (__success != null)
+                    __success("SomeValue");
+                yield break;
+            }
+
             var __expr2_i = new __expr2
             {
                 Start = (___expr) =>
@@ -314,9 +395,24 @@ namespace Concurrent
                 }
 
             ,
-                Continuation = (__expr) => run(() => __advance(__expr), __success, __failure)
+                End = (__expr) =>
+                {
+                    __run(() => __advance(__expr.Continuator), __success, __failure);
+                }
             };
             yield return __expr2_i;
+            if (1 > 2)
+            {
+                if (__success != null)
+                    __success("SomeValue");
+                yield break;
+            }
+
+            {
+                if (__success != null)
+                    __success("SomeOtherValue");
+                yield break;
+            }
         }
     }
 }

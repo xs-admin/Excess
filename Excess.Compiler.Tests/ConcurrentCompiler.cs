@@ -31,9 +31,16 @@ namespace Excess.Compiler.Tests
                     public void F();
                     public void G();
                     
-                    private void C()
+                    private string C()
                     {
+                        if (2 > 1)
+                            return ""SomeValue"";
+
                         F & G;
+
+                        if (1 > 2)
+                            return ""SomeValue"";
+                        return ""SomeOtherValue"";
                     }
 
                     private int D(int v)

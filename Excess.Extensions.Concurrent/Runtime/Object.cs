@@ -22,11 +22,12 @@ namespace Concurrent.Runtime
 
         ConcurrentQueue<Event> _queue = new ConcurrentQueue<Event>();
 
-        public void Queue(Func<object> what, Action<object> success, Action<Exception> failure)
+        public void Queue(Object who, Func<object> what, Action<object> success, Action<Exception> failure)
         {
             _queue.Enqueue(new Event
             {
                 Tries = 0,
+                Target = who,
                 What = what,
                 Success = success,
                 Failure = failure
@@ -54,7 +55,7 @@ namespace Concurrent.Runtime
                             continue;
                         }
 
-                        message.Target.run(message.What, message.Success, message.Failure);
+                        message.Target.__run(message.What, message.Success, message.Failure);
                     }
                 });
 
@@ -68,12 +69,21 @@ namespace Concurrent.Runtime
     {
         Node _node;
         int _busy;
-        internal void run(Func<object> what, Action<object> success, Action<Exception> failure)
+        internal void __run(Action what, Action<object> success, Action<Exception> failure)
+        {
+            __run(() =>
+            {
+                what();
+                return null;
+            }, success, failure);
+        }
+
+        internal void __run(Func<object> what, Action<object> success, Action<Exception> failure)
         {
             var was_busy = Interlocked.CompareExchange(ref _busy, 1, 0) == 1;
             if (was_busy)
             {
-                _node.Queue(what, success, failure);
+                _node.Queue(this, what, success, failure);
             }
             else
             {
@@ -81,30 +91,27 @@ namespace Concurrent.Runtime
                 {
                     var result = what();
                     if (success != null)
-                        success(result);
+                        try { success(result); } catch { }
                 }
-                catch (Exception e)
+                catch (Exception ex)
                 {
                     if (failure != null)
-                        failure(e);
+                        try { failure(ex); } catch { }
                 }
 
                 Interlocked.CompareExchange(ref _busy, 0, 1);
             }
         }
 
-        protected Expression __advance(Expression expression)
+        protected void __advance(IEnumerator<Expression> thread)
         {
-            var thread = expression.Continuator;
             if (!thread.MoveNext())
-                return null;
+                return;
 
             var expr = thread.Current;
             expr.Continuator = thread;
             if (expr.Start != null)
                 expr.Start(expr);
-
-            return expr;
         }
 
         Dictionary<string, List<Action>> _listeners = new Dictionary<string, List<Action>>();
@@ -145,14 +152,14 @@ namespace Concurrent.Runtime
     {
         public Action<Expression>      Start        { get; set; }
         public IEnumerator<Expression> Continuator  { get; set; }
-        public Action<Expression>      Continuation { get; set; }
+        public Action<Expression>      End          { get; set; }
         public Exception               Failure      { get; set; }
 
         List<Exception> _exceptions = new List<Exception>();
         protected void __complete(bool success, Exception failure)
         {
             Debug.Assert(Continuator != null);
-            Debug.Assert(Continuation != null);
+            Debug.Assert(End != null);
 
             IEnumerable<Exception> allFailures = _exceptions;
             if (failure != null)
@@ -168,7 +175,7 @@ namespace Concurrent.Runtime
                     Failure = new AggregateException(allFailures);
             }
 
-            Continuation(this);
+            End(this);
         }
 
         protected bool tryUpdate(bool? v1, bool? v2, ref bool? s1, ref bool? s2, Exception ex)

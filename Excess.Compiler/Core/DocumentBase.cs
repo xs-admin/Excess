@@ -147,7 +147,7 @@ namespace Excess.Compiler.Core
         }
 
         List<Change> _syntacticalChanges = new List<Change>();
-        public TNode change(TNode node, Func<TNode, Scope, TNode> transform, string kind)
+        public TNode change(TNode node, Func<TNode, Scope, TNode> transform, string kind = null)
         {
             int nodeId;
             TNode result = _compiler.MarkNode(node, out nodeId);
