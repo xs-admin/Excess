@@ -31,11 +31,21 @@ namespace Excess.Extensions.Concurrent
         {
             if (_first)
             {
+                //the one we are linking
                 _first = false;
                 return base.VisitClassDeclaration(node);
             }
 
-            return node; //ignore all subsequent types 
+            //custom types, may be the generated expression types
+            var fields = null as Dictionary<string, TypeSyntax>;
+            if (_typeAssignments.TryGetValue(node.Identifier.ToString(), out fields))
+                return node.AddMembers(fields
+                    .Select(f => Templates
+                    .AssignmentField
+                    .Get<MemberDeclarationSyntax>(f.Key, f.Value))
+                    .ToArray());
+
+            return node; //let it go unmodified
         }
 
         public override SyntaxNode VisitMethodDeclaration(MethodDeclarationSyntax node)
@@ -53,6 +63,7 @@ namespace Excess.Extensions.Concurrent
                     .SelectMany(st => LinkExpressionStatement(st))));
         }
 
+        Dictionary<string, Dictionary<string, TypeSyntax>> _typeAssignments = new Dictionary<string, Dictionary<string, TypeSyntax>>();
         private IEnumerable<StatementSyntax> LinkExpressionStatement(StatementSyntax statement)
         {
             var yieldStatement = statement as YieldStatementSyntax;
@@ -68,15 +79,22 @@ namespace Excess.Extensions.Concurrent
                     yield return statement;
                 else
                 {
+                    var assignments = new Dictionary<string, TypeSyntax>();
+                    var typeName = expression.Type.ToString();
+
                     expression = expression
                         .ReplaceNodes(expression
                             .DescendantNodes()
                             .OfType<ParenthesizedLambdaExpressionSyntax>(),
-                            (on, nn) => LinkExpresion(nn));
+                            (on, nn) => LinkExpresion(nn, assignments));
+
+                    //keep the assignments as to add fields to the expression classes
+                    if (assignments.Any())
+                        _typeAssignments[typeName] = assignments;
 
                     //create a variable to hold the expressions, then return it 
-                    //after completion the results of the expression will be extracted from it 
-                    var varName = expression.Type.ToString() + "_i";
+                    //after completion the results of the expression will be extracted from it
+                    var varName = typeName + "_var";
                     yield return Templates
                         .ExpressionVariable
                         .Get<StatementSyntax>(varName, expression);
@@ -84,12 +102,26 @@ namespace Excess.Extensions.Concurrent
                     yield return yieldStatement
                         .WithExpression(CSharp.IdentifierName(varName));
 
-                    //td: !!! assigments
+                    //we must check whether the expression failed
+                    yield return Templates
+                        .ExpressionFailedCheck
+                        .Get<StatementSyntax>(varName);
+
+                    //and finally, we must generate expression assignments for 
+                    //all the assigments inside the concurrent expression
+                    foreach (var assigment in assignments)
+                    {
+                        yield return Templates
+                            .AssigmentAfterExpression
+                            .Get<StatementSyntax>(
+                                assigment.Key,
+                                varName);
+                    }
                 }
             }
         }
 
-        private ParenthesizedLambdaExpressionSyntax LinkExpresion(ParenthesizedLambdaExpressionSyntax expression)
+        private ParenthesizedLambdaExpressionSyntax LinkExpresion(ParenthesizedLambdaExpressionSyntax expression, Dictionary<string, TypeSyntax> assignments)
         {
             var body = expression.Body as BlockSyntax;
             if (body == null)
@@ -99,10 +131,10 @@ namespace Excess.Extensions.Concurrent
                 .WithBody(body
                     .WithStatements(CSharp.List(body
                         .Statements
-                        .Select(st => LinkConcurrentStatement(st)))));
+                        .Select(st => LinkConcurrentStatement(st, assignments)))));
         }
 
-        private StatementSyntax LinkConcurrentStatement(StatementSyntax statement)
+        private StatementSyntax LinkConcurrentStatement(StatementSyntax statement, Dictionary<string, TypeSyntax> assignments)
         {
             //we encode the process (in whichever form) as call in the form
             //__marker__(process, success, failure);
@@ -122,13 +154,80 @@ namespace Excess.Extensions.Concurrent
             var success = invocation.ArgumentList.Arguments[1].Expression as InvocationExpressionSyntax;
             var failure = invocation.ArgumentList.Arguments[2].Expression as InvocationExpressionSyntax;
 
+            return LinkOperand(operand, success, failure, assignments);
+        }
+
+        private StatementSyntax LinkOperand(ExpressionSyntax operand, InvocationExpressionSyntax success, InvocationExpressionSyntax failure, Dictionary<string, TypeSyntax> assignments)
+        {
             if (operand is InvocationExpressionSyntax)
                 return LinkProcessInvocation(operand as InvocationExpressionSyntax, success, failure);
 
             if (operand is IdentifierNameSyntax)
                 return LinkSignal(operand as IdentifierNameSyntax, success, failure);
 
+            if (operand is AssignmentExpressionSyntax)
+                return LinkAssignment(operand as AssignmentExpressionSyntax, success, failure, assignments);
+
+            if (operand is ParenthesizedExpressionSyntax)
+                return LinkOperand((operand as ParenthesizedExpressionSyntax).Expression, success, failure, assignments);
+
             throw new NotImplementedException(); //td:
+        }
+
+        private StatementSyntax LinkAssignment(AssignmentExpressionSyntax assignment, InvocationExpressionSyntax success, InvocationExpressionSyntax failure, Dictionary<string, TypeSyntax> assignments)
+        {
+            var leftString = assignment.Left.ToString();
+            var leftType = Roslyn.SymbolTypeSyntax(_model, assignment.Left);
+
+            Debug.Assert(assignment.Left is IdentifierNameSyntax);
+            Debug.Assert(!assignments.ContainsKey(leftString));
+            Debug.Assert(leftType != null); //td: error
+
+            assignments[leftString] = leftType;
+
+            var emptyAssignments = new Dictionary<string, TypeSyntax>();
+            var right = LinkOperand(assignment.Right, success, failure, emptyAssignments);
+
+            Debug.Assert(right != null);
+            Debug.Assert(!emptyAssignments.Any());
+
+            //there are 2 scenarios, first, the right operand was a concurrent expression
+            //in which case it would have a success function
+            var successFunc = right
+                .DescendantNodes()
+                .OfType<ParenthesizedLambdaExpressionSyntax>()
+                .Where(fn => fn
+                    .ParameterList
+                    .Parameters
+                    .Any(p => p.Identifier.ToString() == "__res"))
+                .SingleOrDefault();
+
+            if (successFunc != null)
+                return right.ReplaceNode(successFunc, successFunc
+                    .WithBody(CSharp.Block( new[] {
+                        Templates
+                            .ExpressionAssigment
+                            .Get<StatementSyntax>(assignment.Left, leftType) }
+                        .Union(successFunc.Body is BlockSyntax
+                            ? (successFunc.Body as BlockSyntax)
+                                .Statements
+                                .AsEnumerable()
+                            : new[] { successFunc.Body as StatementSyntax })
+                        .ToArray())));
+
+            //else, we need to substitute the actual Right expr by 
+            //an assignment.
+            var rightString = assignment.Right.ToString();
+            return right.ReplaceNodes(right.
+                DescendantNodes()
+                .OfType<ExpressionSyntax>()
+                .Where(node => node.ToString().Equals(rightString)),
+                (on, nn) => CSharp.AssignmentExpression(
+                    assignment.Kind(), 
+                    Templates
+                        .ExpressionProperty
+                        .Get<ExpressionSyntax>(assignment.Left),
+                    nn));
         }
 
         private ParenthesizedLambdaExpressionSyntax WrapInLambda(params ExpressionSyntax[] expressions)

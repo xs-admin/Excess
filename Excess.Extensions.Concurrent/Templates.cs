@@ -154,7 +154,7 @@ namespace Excess.Extensions.Concurrent
             }");
 
         public static Template TaskCallbackMethod = Template.Parse(@"
-            public void _0(Action<object> success, Action<Exception> failure)
+            public void _0(Action<object> success = null, Action<Exception> failure = null)
             {
                 var __success = success;
                 var __failure = failure;
@@ -162,5 +162,16 @@ namespace Excess.Extensions.Concurrent
             }");
 
         public static Template InternalCall = Template.ParseExpression("_0(__success, __failure).GetEnumerator()");
+
+        public static Template ExpressionAssigment = Template.ParseStatement("__expr._0 = (__1)__res;");
+        public static Template AssigmentAfterExpression = Template.ParseStatement("_0 = _1._0;");
+
+        public static Template ExpressionProperty = Template.ParseExpression("__expr._0");
+
+        public static Template ExpressionFailedCheck = Template.ParseStatement(@"
+            if (_0.Failure != null)
+                throw _0.Failure;");
+
+        public static Template AssignmentField = Template.Parse("public __1 _0;");
     }
 }

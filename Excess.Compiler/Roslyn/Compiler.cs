@@ -851,6 +851,9 @@ namespace Excess.Compiler.Roslyn
                         .Type)
                     .Symbol);
 
+            if (node is InvocationExpressionSyntax)
+                return SymbolType(model, (node as InvocationExpressionSyntax).Expression);
+
             return SymbolType(model.GetSymbolInfo(node).Symbol);
         }
 

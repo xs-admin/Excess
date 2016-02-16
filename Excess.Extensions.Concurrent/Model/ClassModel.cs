@@ -98,9 +98,10 @@ namespace Excess.Extensions.Concurrent.Model
             return null;
         }
 
+        List<TypeDeclarationSyntax> _types = new List<TypeDeclarationSyntax>();
         public void AddType(TypeDeclarationSyntax type)
         {
-            _add.Add(type);
+            _types.Add(type);
         }
 
         static TypeSyntax inheritType = CSharp.ParseTypeName("Runtime.Object");
@@ -111,14 +112,15 @@ namespace Excess.Extensions.Concurrent.Model
             var result = @class
                 .ReplaceNodes(_replace.Keys, (on, nn) => _replace[on])
                 .RemoveNodes(_remove, SyntaxRemoveOptions.KeepNoTrivia)
-                .WithBaseList(CSharp.BaseList(CSharp.SeparatedList(new[] {(BaseTypeSyntax)CSharp
-                        .SimpleBaseType(inheritType)})))
+                .AddBaseListTypes(CSharp.SimpleBaseType(inheritType))
                 .AddMembers(_add
+                    .Union(_types)
                     .Select(add => (MemberDeclarationSyntax)RoslynCompiler.TrackNode(add))
                     .ToArray());
 
             _remove.Clear();
             _add.Clear();
+            _types.Clear();
             _replace.Clear();
             return result;
         }

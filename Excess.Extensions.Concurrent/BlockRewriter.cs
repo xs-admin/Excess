@@ -23,6 +23,7 @@ namespace Excess.Extensions.Concurrent
         public override SyntaxNode VisitExpressionStatement(ExpressionStatementSyntax statement)
         {
             var expr = statement.Expression as BinaryExpressionSyntax;
+
             if (expr != null)
             {
                 var model = new ExpressionModel(_class);
