@@ -13,21 +13,21 @@ namespace Excess.Extensions.Concurrent.Model
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
     using Roslyn = RoslynCompiler;
 
-    internal class ClassModel
+    internal class Class
     {
-        public ClassModel(string name, Scope scope)
+        public Class(string name, Scope scope)
         {
             Scope = scope;
-            Signals = new Dictionary<int, SignalModel>();
+            Signals = new Dictionary<int, Signal>();
             Name = name;
         }
 
         public string Name { get; set; }
-        public SignalModel Main { get; set; }
-        public IDictionary<int, SignalModel> Signals { get; private set; }
+        public Signal Main { get; set; }
+        public IDictionary<int, Signal> Signals { get; private set; }
         public Scope Scope { get; private set; }
 
-        public IEnumerable<SignalModel> AllSignals()
+        public IEnumerable<Signal> AllSignals()
         {
             return (new[] { Main })
                 .Union(Signals.Values);
@@ -43,11 +43,8 @@ namespace Excess.Extensions.Concurrent.Model
         {
             var name = node.Identifier.ToString();
             var pattern = "__concurrent";
-            if (name.StartsWith(pattern))
-                name = name.Substring(pattern.Length);
-
             return _signals
-                .Any(s => s.Key == name);
+                .Any(s => pattern + s.Key == name);
         }
 
         List<MemberDeclarationSyntax> _remove = new List<MemberDeclarationSyntax>();
@@ -63,7 +60,7 @@ namespace Excess.Extensions.Concurrent.Model
         }
 
         Dictionary<string, int> _signals = new Dictionary<string, int>();
-        public SignalModel AddSignal(string name, bool isPublic)
+        public Signal AddSignal(string name, bool isPublic)
         {
             if (_signals.ContainsKey(name))
                 throw new InvalidOperationException("duplicate concurrent signal");
@@ -71,26 +68,26 @@ namespace Excess.Extensions.Concurrent.Model
             var id = _signals.Count;
             _signals[name] = id;
 
-            var signal = new SignalModel(id, name, isPublic);
+            var signal = new Signal(id, name, isPublic);
             Signals[id] = signal;
             return signal;
         }
 
-        public SignalModel AddSignal(string name, TypeSyntax returnType, bool isPublic)
+        public Signal AddSignal(string name, TypeSyntax returnType, bool isPublic)
         {
             var signal = AddSignal(name, isPublic);
             signal.ReturnType = returnType;
             return signal;
         }
 
-        public SignalModel AddSignal()
+        public Signal AddSignal()
         {
             var signal = AddSignal(Roslyn.uniqueId(), false);
             signal.Internal = true;
             return signal;
         }
 
-        public SignalModel GetSignal(string name)
+        public Signal GetSignal(string name)
         {
             var result = 0;
             if (_signals.TryGetValue(name, out result))

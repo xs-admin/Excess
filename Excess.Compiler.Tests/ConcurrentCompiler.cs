@@ -58,7 +58,7 @@ namespace Excess.Compiler.Tests
         }
 
         [TestMethod]
-        public void AssigmentOperators()
+        public void BasicAssigment()
         {
             RoslynCompiler compiler = new RoslynCompiler();
             Extensions.Concurrent.Extension.Apply(compiler);
@@ -90,6 +90,50 @@ namespace Excess.Compiler.Tests
                     private int D(int v)
                     {
                         return v + 1;
+                    }
+                }", out text);
+
+            Assert.IsTrue(tree.GetRoot()
+                .DescendantNodes()
+                .OfType<MethodDeclarationSyntax>()
+                .First()
+                .ReturnType
+                .ToString() == "void"); //must have added a return type
+        }
+
+        [TestMethod]
+        public void BasicTryCatch()
+        {
+            RoslynCompiler compiler = new RoslynCompiler();
+            Extensions.Concurrent.Extension.Apply(compiler);
+
+            SyntaxTree tree = null;
+            string text = null;
+
+            tree = compiler.ApplySemanticalPass(@"
+                concurrent class SomeClass 
+                { 
+                    public void A();
+                    public void B();
+
+                    void main() 
+                    {
+                        try
+                        {
+                            int someValue = 10;
+                            int someOtherValue = 11;
+
+                            A | B;
+
+                            someValue++;
+
+                            B >> A;
+
+                            someOtherValue++;
+                        }
+                        catch
+                        {
+                        }
                     }
                 }", out text);
 

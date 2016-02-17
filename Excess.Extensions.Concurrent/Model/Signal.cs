@@ -12,9 +12,9 @@ namespace Excess.Extensions.Concurrent.Model
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
     using Roslyn = RoslynCompiler;
 
-    internal class SignalModel
+    internal class Signal
     {
-        public SignalModel(int id, string name, bool @public)
+        public Signal(int id, string name, bool @public)
         {
             Id = id;
             Name = name;

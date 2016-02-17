@@ -12,10 +12,10 @@ namespace Excess.Extensions.Concurrent.Model
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
     using Roslyn = RoslynCompiler;
 
-    internal class ExpressionModel
+    internal class Expression
     {
-        ClassModel _class;
-        public ExpressionModel(ClassModel @class)
+        Class _class;
+        public Expression(Class @class)
         {
             _class = @class;
         }
@@ -84,10 +84,22 @@ namespace Excess.Extensions.Concurrent.Model
             var startFunc = Templates
                 .StartCallbackLambda
                 .Get<ParenthesizedLambdaExpressionSyntax>(exprClassName);
+
+            var funcLambda = startFunc
+                .DescendantNodes()
+                .OfType<InvocationExpressionSyntax>()
+                .Single()
+                    .ArgumentList
+                    .Arguments[0]
+                    .Expression as ParenthesizedLambdaExpressionSyntax;
+
+            Debug.Assert(funcLambda != null);
             return startFunc
-                .WithBody((startFunc.Body as BlockSyntax)
-                    .AddStatements(statements
-                        .ToArray()));
+                .ReplaceNode(funcLambda, funcLambda
+                    .WithBody((funcLambda.Body as BlockSyntax)
+                        .AddStatements(
+                            statements
+                            .ToArray())));
         }
 
         class Operator

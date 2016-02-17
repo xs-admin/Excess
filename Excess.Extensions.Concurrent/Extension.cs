@@ -61,8 +61,8 @@ namespace Excess.Extensions.Concurrent
             var @class = node as ClassDeclarationSyntax;
             var className = @class.Identifier.ToString();
 
-            var ctx = new ClassModel(className, scope);
-            scope.set<ClassModel>(ctx);
+            var ctx = new Class(className, scope);
+            scope.set<Class>(ctx);
 
             foreach (var member in @class.Members)
             {
@@ -92,20 +92,20 @@ namespace Excess.Extensions.Concurrent
             return document.change(@class, Link(ctx), null);
         }
 
-        private static Func<SyntaxNode, SyntaxNode, SemanticModel, Scope, SyntaxNode> Link(ClassModel ctx)
+        private static Func<SyntaxNode, SyntaxNode, SemanticModel, Scope, SyntaxNode> Link(Class ctx)
         {
             return (oldNode, newNode, model, scope) =>
             {
                 Debug.Assert(newNode is ClassDeclarationSyntax);
 
-                var @class = scope.get<ClassModel>();
+                var @class = scope.get<Class>();
                 Debug.Assert(@class != null);
 
                 return new ClassLinker(@class, model).Visit(newNode);
             };
         }
 
-        private static bool compileProperty(PropertyDeclarationSyntax property, ClassModel ctx, Scope scope)
+        private static bool compileProperty(PropertyDeclarationSyntax property, Class ctx, Scope scope)
         {
             if (!Roslyn.IsVisible(property))
                 return false;
@@ -144,7 +144,7 @@ namespace Excess.Extensions.Concurrent
             return true;
         }
 
-        private static bool compileMethod(MethodDeclarationSyntax methodDeclaration, ClassModel ctx, Scope scope)
+        private static bool compileMethod(MethodDeclarationSyntax methodDeclaration, Class ctx, Scope scope)
         {
             var method = methodDeclaration;
             var name = method.Identifier.ToString();
@@ -221,7 +221,7 @@ namespace Excess.Extensions.Concurrent
             return true;
         }
 
-        private static BlockSyntax parseConcurrentBlock(ClassModel ctx, BlockSyntax body)
+        private static BlockSyntax parseConcurrentBlock(Class ctx, BlockSyntax body)
         {
             var rewriter = new BlockRewriter(ctx);
             var result = (BlockSyntax)rewriter.Visit(body);
@@ -232,7 +232,7 @@ namespace Excess.Extensions.Concurrent
             return null;
         }
 
-        private static void concurrentMethod(ClassModel ctx, MethodDeclarationSyntax method, bool forever = false)
+        private static void concurrentMethod(Class ctx, MethodDeclarationSyntax method, bool forever = false)
         {
             var name = method.Identifier.ToString();
 
@@ -282,17 +282,17 @@ namespace Excess.Extensions.Concurrent
             return (statement != null && statement is ContinueStatementSyntax);
         }
 
-        private static void addGetter(ClassModel ctx, PropertyDeclarationSyntax property, AccessorDeclarationSyntax get)
+        private static void addGetter(Class ctx, PropertyDeclarationSyntax property, AccessorDeclarationSyntax get)
         {
             throw new NotImplementedException();
         }
 
-        private static void addSetter(ClassModel ctx, PropertyDeclarationSyntax property, AccessorDeclarationSyntax set)
+        private static void addSetter(Class ctx, PropertyDeclarationSyntax property, AccessorDeclarationSyntax set)
         {
             throw new NotImplementedException();
         }
 
-        private static void createPublicSignals(ClassModel ctx, MethodDeclarationSyntax method, SignalModel signal)
+        private static void createPublicSignals(Class ctx, MethodDeclarationSyntax method, Signal signal)
         {
             var returnType = method.ReturnType.ToString() != "void"
                 ? method.ReturnType

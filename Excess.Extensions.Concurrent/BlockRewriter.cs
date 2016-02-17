@@ -12,8 +12,8 @@ namespace Excess.Extensions.Concurrent
 {
     internal class BlockRewriter : CSharpSyntaxRewriter
     {
-        ClassModel _class;
-        public BlockRewriter(ClassModel @class)
+        Class _class;
+        public BlockRewriter(Class @class)
         {
             _class = @class;
         }
@@ -26,7 +26,7 @@ namespace Excess.Extensions.Concurrent
 
             if (expr != null)
             {
-                var model = new ExpressionModel(_class);
+                var model = new Expression(_class);
                 var result = model.Parse(expr);
 
                 HasConcurrent = HasConcurrent || result != expr;

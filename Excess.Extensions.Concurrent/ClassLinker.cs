@@ -18,9 +18,9 @@ namespace Excess.Extensions.Concurrent
 
     internal class ClassLinker : CSharpSyntaxRewriter
     {
-        ClassModel _class;
+        Class _class;
         SemanticModel _model;
-        public ClassLinker(ClassModel @class, SemanticModel model)
+        public ClassLinker(Class @class, SemanticModel model)
         {
             _class = @class;
             _model = model;
@@ -58,17 +58,185 @@ namespace Excess.Extensions.Concurrent
 
         public override SyntaxNode VisitBlock(BlockSyntax node)
         {
-            return node
-                .WithStatements(CSharp.List(node.Statements
-                    .SelectMany(st => LinkExpressionStatement(st))));
+            return node.WithStatements(CSharp.List(
+                node
+                .Statements
+                .SelectMany(st => LinkExpressionStatement(st))
+                .ToArray()));
         }
 
+        //the issue at hand, we cannot have "yield return"s inside a try catch (thanks, Obama)
+        //So we will split the try catch(es) around the requisition of the (proverbial) cheese.
+        int _trysInStack = 0;
+        bool _tryConcurrent = false;
+        List<string> _tryVariables = new List<string>();
+        public override SyntaxNode VisitTryStatement(TryStatementSyntax node)
+        {
+            _trysInStack++;
+            try
+            {
+                var newNode = (TryStatementSyntax)base.VisitTryStatement(node);
+
+                if (_tryConcurrent)
+                {
+                    var variableName = "__try" + _trysInStack;
+                    _tryVariables.Add(variableName);
+
+                    //we can only split on expressions directly on the try level
+                    //i.e. no try { if () { EXPRESSION }}
+                    if (_trysInStack > 1 && !(newNode.Parent.Parent is TryStatementSyntax))
+                    {
+                        Debug.Assert(false); //td: error
+                        return newNode;
+                    }
+
+                    var statements = new List<StatementSyntax>(newNode.Block.Statements);
+                    var newStatements = new List<StatementSyntax>();
+                    var currentIndex = 0;
+
+                    while (currentIndex < statements.Count)
+                    {
+                        var oldIndex = currentIndex;
+                        for (int i = oldIndex; i < statements.Count; i++, currentIndex++)
+                        {
+                            var statement = statements[i];
+
+                            if (statement is YieldStatementSyntax)
+                            {
+                                newStatements.Add(newNode
+                                    .WithBlock(CSharp.Block(
+                                        statements
+                                        .Skip(oldIndex)
+                                        .Take(currentIndex - oldIndex - 1))));
+
+                                //variable and return yield
+                                //td: assert
+                                newStatements.Add(statements[currentIndex - 1]);
+                                newStatements.Add(statements[currentIndex++]);
+                                break;
+                            }
+
+                            //must make variables available to later code, unless it precedes a yield
+                            var yieldNext = statements.Count > i + 1 && statements[i + 1] is YieldStatementSyntax;
+                            if (statement is LocalDeclarationStatementSyntax && !yieldNext)
+                            {
+                                var decl = statement as LocalDeclarationStatementSyntax;
+
+                                var varType = decl.Declaration.Type;
+                                if (varType == null || varType.Kind() == SyntaxKind.TypeVarKeyword)
+                                    varType = Roslyn.SymbolTypeSyntax(_model, decl
+                                        .Declaration
+                                        .Variables[0]
+                                        .Initializer
+                                        .Value);
+
+                                Debug.Assert(varType != null, "Untyped local variable on try fix");
+
+                                var assignmentStatements = new List<StatementSyntax>();
+                                newStatements.Add(decl
+                                    .WithDeclaration(decl.Declaration
+                                    .WithType(varType)
+                                    .WithVariables(CSharp.SeparatedList(
+                                        decl
+                                        .Declaration
+                                        .Variables
+                                        .Select(v =>
+                                        {
+                                            assignmentStatements.Add(CSharp.ExpressionStatement(
+                                                CSharp.AssignmentExpression(
+                                                    SyntaxKind.SimpleAssignmentExpression,
+                                                    CSharp.IdentifierName(v.Identifier),
+                                                    v.Initializer.Value)));
+
+                                            return v.WithInitializer(v
+                                                .Initializer
+                                                .WithValue(Templates
+                                                    .DefaultValue
+                                                    .Get<ExpressionSyntax>(varType)));
+                                        })))));
+
+                                //once moved the variables "up" scope
+                                //we must keep the assignments
+                                Debug.Assert(assignmentStatements.Any());
+                                statements.RemoveAt(i);
+                                statements.InsertRange(i, assignmentStatements);
+                            }
+                        }
+                    }
+
+                    Debug.Assert(newStatements.Any());
+                    return LinkTryStatements(newStatements, variableName);
+                }
+
+                return newNode;
+            }
+            finally
+            {
+                _trysInStack--;
+            }
+        }
+
+        private SyntaxNode LinkTryStatements(List<StatementSyntax> statements, string variable)
+        {
+            var newStatements = new List<StatementSyntax>();
+            var firstTry = _trysInStack == 1;
+            if (firstTry)
+            {
+                foreach (var v in _tryVariables)
+                    newStatements.Add(Templates
+                        .TryVariable
+                        .Get<StatementSyntax>(v));
+
+                _tryConcurrent = false;
+                _tryVariables.Clear();
+            }
+
+            return CSharp.Block(
+                newStatements.Union(
+                CreateTrySplit(statements, 0, variable)));
+        }
+
+        private IEnumerable<StatementSyntax> CreateTrySplit(List<StatementSyntax> statements, int index, string variable)
+        {
+            bool foundTry = false;
+            for (int i = index; i < statements.Count; i++, index++)
+            {
+                if (foundTry)
+                {
+                    yield return CSharp.IfStatement(
+                        Templates.Negation.Get<ExpressionSyntax>(CSharp.IdentifierName(variable)),
+                        CSharp.Block(CreateTrySplit(statements, index, variable)));
+
+                    yield break;
+                }
+
+                var statement = statements[i];
+                if (statement is TryStatementSyntax)
+                {
+                    foundTry = true;
+                    var @try = statement as TryStatementSyntax;
+                    yield return @try
+                        .WithCatches(CSharp.List(
+                            @try
+                            .Catches
+                            .Select(c => c.WithBlock(CSharp.Block(new [] {
+                                Templates
+                                .SetTryVariable
+                                .Get<StatementSyntax>(variable)}.Union(
+                                c.Block.Statements))))));
+                }
+                else
+                    yield return statement;
+            }
+        }
+
+        //concurrent expressions, must remember all assignents
         Dictionary<string, Dictionary<string, TypeSyntax>> _typeAssignments = new Dictionary<string, Dictionary<string, TypeSyntax>>();
         private IEnumerable<StatementSyntax> LinkExpressionStatement(StatementSyntax statement)
         {
             var yieldStatement = statement as YieldStatementSyntax;
             if (yieldStatement == null)
-                yield return statement;
+                yield return (StatementSyntax)Visit(statement);
             else
             {
                 var expression = yieldStatement
@@ -76,9 +244,16 @@ namespace Excess.Extensions.Concurrent
                     as ObjectCreationExpressionSyntax;
 
                 if (expression == null)
-                    yield return statement;
+                    yield return (StatementSyntax)Visit(statement);
                 else
                 {
+                    //check for try/catch statements 
+                    if (_trysInStack > 0)
+                    {
+                        _tryConcurrent = true;
+                        Debug.Assert(statement.Parent.Parent is TryStatementSyntax); //td: error
+                    }
+
                     var assignments = new Dictionary<string, TypeSyntax>();
                     var typeName = expression.Type.ToString();
 
@@ -88,16 +263,18 @@ namespace Excess.Extensions.Concurrent
                             .OfType<ParenthesizedLambdaExpressionSyntax>(),
                             (on, nn) => LinkExpresion(nn, assignments));
 
-                    //keep the assignments as to add fields to the expression classes
                     if (assignments.Any())
                         _typeAssignments[typeName] = assignments;
 
-                    //create a variable to hold the expressions, then return it 
-                    //after completion the results of the expression will be extracted from it
+                    //create a variable to hold the expression, then yield-return it 
+                    //after completion, the results of the expression will be extracted from 
+                    //this variable
                     var varName = typeName + "_var";
-                    yield return Templates
+                    var exprVariable = Templates
                         .ExpressionVariable
                         .Get<StatementSyntax>(varName, expression);
+
+                    yield return exprVariable;
 
                     yield return yieldStatement
                         .WithExpression(CSharp.IdentifierName(varName));
@@ -107,8 +284,9 @@ namespace Excess.Extensions.Concurrent
                         .ExpressionFailedCheck
                         .Get<StatementSyntax>(varName);
 
-                    //and finally, we must generate expression assignments for 
-                    //all the assigments inside the concurrent expression
+                    //and finally, we must generate expression assignments 
+                    //this way, any operand result will stay in the expression
+                    //and only be used "after" the expression is complete.
                     foreach (var assigment in assignments)
                     {
                         yield return Templates
@@ -277,7 +455,7 @@ namespace Excess.Extensions.Concurrent
             {
                 var identifier = (invocation.Expression as IdentifierNameSyntax)
                     .ToString();
-                SignalModel signal = _class.GetSignal(identifier);
+                Signal signal = _class.GetSignal(identifier);
                 if (signal != null)
                     return CSharp.ExpressionStatement(
                         invocation

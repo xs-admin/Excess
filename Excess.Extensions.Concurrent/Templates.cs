@@ -92,6 +92,9 @@ namespace Excess.Extensions.Concurrent
             (___expr) => 
             {
                 var __expr = (_0)___expr;
+                __run(() => 
+                {
+                }, null, __failure);
             }");
 
         public static Template ExpressionVariable = Template.ParseStatement("var _0 = __1;");
@@ -111,7 +114,7 @@ namespace Excess.Extensions.Concurrent
         public static Template ExpressionReturn = Template.ParseStatement(@"
             {
                 if (__success != null)
-                    __success(__0);
+                    try { __success(null); } catch {}
                 yield break;
             }");
 
@@ -136,9 +139,11 @@ namespace Excess.Extensions.Concurrent
                 {
                     if (__failure != null)
                         try {__failure(__ex);} catch {}
+                    yield break;
                 }
 
-                try {__success(null);} catch {}
+                if (__success != null)
+                    try { __success(null); } catch {}
 
                 yield break;
             }");
@@ -173,5 +178,10 @@ namespace Excess.Extensions.Concurrent
                 throw _0.Failure;");
 
         public static Template AssignmentField = Template.Parse("public __1 _0;");
+
+        public static Template TryVariable = Template.ParseStatement("var _0 = false;");
+        public static Template SetTryVariable = Template.ParseStatement("_0 = true;");
+        public static Template DefaultValue = Template.ParseExpression("default(__0)");
+        public static Template Negation = Template.ParseExpression("!_0");
     }
 }
