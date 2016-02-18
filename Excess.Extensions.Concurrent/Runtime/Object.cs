@@ -146,6 +146,15 @@ namespace Concurrent.Runtime
                 actions.Clear();
             }
         }
+
+        protected bool __awaiting(string signal)
+        {
+            return _listeners
+                .Where(kvp => kvp.Key == signal
+                           && kvp.Value.Any())
+                .Any();
+
+        }
     }
 
     public class Expression

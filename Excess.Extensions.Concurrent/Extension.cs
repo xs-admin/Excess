@@ -150,14 +150,21 @@ namespace Excess.Extensions.Concurrent
             var name = method.Identifier.ToString();
             var isMain = name == "main";
 
-            var isVisible = Roslyn.IsVisible(method);
-            var hasReturnType = method.ReturnType.ToString() == "void";
-            var returnType = hasReturnType 
-                ? Roslyn.boolean 
-                : method.ReturnType;
+            var isProtected = method
+                .Modifiers
+                .Where(m => m.Kind() == SyntaxKind.ProtectedKeyword)
+                .Any();
 
-            var emptySignal = method.Body == null || method.Body.IsMissing;
-            if (emptySignal)
+            var isVisible = isProtected || Roslyn.IsVisible(method);
+
+            var hasReturnType = method.ReturnType.ToString() != "void";
+            var returnType = hasReturnType 
+                ? method.ReturnType
+                : Roslyn.boolean;
+
+            var isEmptySignal = method.Body == null 
+                             || method.Body.IsMissing;
+            if (isEmptySignal)
             {
                 if (method.ParameterList.Parameters.Count > 0)
                     scope.AddError("concurrent03", "empty signals cannot contain parameters", method);
@@ -202,15 +209,25 @@ namespace Excess.Extensions.Concurrent
 
             if (isVisible)
             {
-                if (emptySignal)
-                    ctx.AddMember(Templates.EmptySignalMethod.Get<MethodDeclarationSyntax>("__concurrent" + name, Roslyn.Quoted(name)));
+                if (isEmptySignal)
+                    ctx.AddMember(Templates
+                        .EmptySignalMethod
+                        .Get<MethodDeclarationSyntax>(
+                            "__concurrent" + name, 
+                            Roslyn.Quoted(name),
+                            isProtected ? Roslyn.@true : Roslyn.@false));
                 else
                     concurrentMethod(ctx, method);
             }
             else if (cc != null)
                 concurrentMethod(ctx, method);
-            else if (emptySignal)
-                ctx.AddMember(Templates.EmptySignalMethod.Get<MethodDeclarationSyntax>("__concurrent" + name));
+            else if (isEmptySignal)
+                ctx.AddMember(Templates
+                    .EmptySignalMethod
+                    .Get<MethodDeclarationSyntax>(
+                        "__concurrent" + name, 
+                        Roslyn.Quoted(name),
+                        isProtected? Roslyn.@true : Roslyn.@false));
             else
                 return false;
 

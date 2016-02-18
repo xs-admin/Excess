@@ -133,6 +133,8 @@ namespace Excess.Extensions.Concurrent
             {
                 try
                 {
+                    if (__2 && !__awaiting(__1))
+                        throw new InvalidOperationException(__1 + "" can not be executed in this state"");
                     __dispatch(__1);
                 }
                 catch(Exception __ex)

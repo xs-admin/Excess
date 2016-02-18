@@ -144,5 +144,38 @@ namespace Excess.Compiler.Tests
                 .ReturnType
                 .ToString() == "void"); //must have added a return type
         }
+
+        [TestMethod]
+        public void BasicProtection()
+        {
+            RoslynCompiler compiler = new RoslynCompiler();
+            Extensions.Concurrent.Extension.Apply(compiler);
+
+            SyntaxTree tree = null;
+            string text = null;
+
+            tree = compiler.ApplySemanticalPass(@"
+                concurrent class VendingMachine 
+                { 
+                    public    void coin();
+                    protected void choc();
+                    protected void toffee();
+
+                    void main() 
+                    {
+                        for (;;)
+                        {
+                            coin >> (choc | toffee);
+                        }
+                    }
+                }", out text);
+
+            Assert.IsTrue(tree.GetRoot()
+                .DescendantNodes()
+                .OfType<MethodDeclarationSyntax>()
+                .First()
+                .ReturnType
+                .ToString() == "void"); //must have added a return type
+        }
     }
 }
