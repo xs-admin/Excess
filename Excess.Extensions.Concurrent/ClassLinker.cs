@@ -349,6 +349,23 @@ namespace Excess.Extensions.Concurrent
             if (operand is ParenthesizedExpressionSyntax)
                 return LinkOperand((operand as ParenthesizedExpressionSyntax).Expression, success, failure, assignments);
 
+            if (operand is LiteralExpressionSyntax)
+            {
+                var literal = operand as LiteralExpressionSyntax;
+                switch (literal.Kind())
+                {
+                    case SyntaxKind.TrueLiteralExpression:
+                    case SyntaxKind.FalseLiteralExpression:
+                        return CSharp.ExpressionStatement(success
+                            .ReplaceNodes(success
+                            .DescendantNodes()
+                            .OfType<LiteralExpressionSyntax>()
+                            .Where(l => l.Kind() == SyntaxKind.TrueLiteralExpression
+                                     || l.Kind() == SyntaxKind.FalseLiteralExpression),
+                            (on, nn) => literal));
+                }
+            }
+
             throw new NotImplementedException(); //td:
         }
 

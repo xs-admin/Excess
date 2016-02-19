@@ -165,7 +165,8 @@ namespace Excess.Compiler.Tests
                     {
                         for (;;)
                         {
-                            coin >> (choc | toffee);
+                            await coin();
+                            //coin >> (choc | toffee);
                         }
                     }
                 }", out text);
