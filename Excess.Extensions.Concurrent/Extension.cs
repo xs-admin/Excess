@@ -83,7 +83,7 @@ namespace Excess.Extensions.Concurrent
                     scope.AddError("concurrent02", "concurrent classes only allow public properties and methods", node);
             }
 
-            if (ctx.Main == null)
+            if (!ctx.HasMain)
             {
                 Debug.Assert(false); //td: unprotected
             }
@@ -186,13 +186,13 @@ namespace Excess.Extensions.Concurrent
 
             if (isMain)
             {
-                if (ctx.Main != null)
+                if (ctx.HasMain)
                 {
                     scope.AddError("concurrent06", "multiple main methods", method);
                     return false;
                 }
 
-                ctx.Main = ctx.AddSignal(name, true);
+                ctx.HasMain = true;
 
                 var statements = method.Body.Statements;
                 var isContinued = (cc == null) && checkContinued(statements);
@@ -203,7 +203,31 @@ namespace Excess.Extensions.Concurrent
                             .Take(statements.Count - 1)));
                 }
 
-                concurrentMethod(ctx, method);
+                var mainMethod = concurrentMethod(ctx, method);
+
+                //hook up our start method
+                int currentIndex = 0;
+                ctx.AddMember(Templates
+                    .StartObject
+                    .Get<MethodDeclarationSyntax>(Templates
+                        .ConcurrentMain
+                        .Get<InvocationExpressionSyntax>()
+                        .WithArgumentList(CSharp.ArgumentList(CSharp.SeparatedList(
+                            mainMethod
+                            .ParameterList
+                            .Parameters
+                            .Where(param => param.Identifier.ToString() != "__success"
+                                         && param.Identifier.ToString() != "__failure")
+                            .Select(param => CSharp.Argument(Templates
+                                .StartObjectArgument
+                                .Get<ExpressionSyntax>(
+                                    param.Type,
+                                    currentIndex++)))
+                             .Union(new[] {
+                                 CSharp.Argument(Roslyn.@null),
+                                 CSharp.Argument(Roslyn.@null),
+                             }))))));
+
                 return true;
             }
 
@@ -249,7 +273,7 @@ namespace Excess.Extensions.Concurrent
             return null;
         }
 
-        private static void concurrentMethod(Class ctx, MethodDeclarationSyntax method, bool forever = false)
+        private static MethodDeclarationSyntax concurrentMethod(Class ctx, MethodDeclarationSyntax method, bool forever = false)
         {
             var name = method.Identifier.ToString();
 
@@ -282,15 +306,17 @@ namespace Excess.Extensions.Concurrent
             var result = Templates
                 .ConcurrentMethod
                 .Get<MethodDeclarationSyntax>("__concurrent" + name);
-
-            ctx.AddMember(result
+            result = result
                 .WithParameterList(method
                     .ParameterList
                     .AddParameters(result
                         .ParameterList
                         .Parameters
                         .ToArray()))
-                .WithBody(body));
+                .WithBody(body);
+
+            ctx.AddMember(result);
+            return result;
         }
 
         private static bool checkContinued(IEnumerable<StatementSyntax> statements)

@@ -23,15 +23,9 @@ namespace Excess.Extensions.Concurrent.Model
         }
 
         public string Name { get; set; }
-        public Signal Main { get; set; }
+        public bool HasMain { get; set; }
         public IDictionary<int, Signal> Signals { get; private set; }
         public Scope Scope { get; private set; }
-
-        public IEnumerable<Signal> AllSignals()
-        {
-            return (new[] { Main })
-                .Union(Signals.Values);
-        }
 
         List<MemberDeclarationSyntax> _add = new List<MemberDeclarationSyntax>();
         public void AddMember(MemberDeclarationSyntax member)
@@ -42,6 +36,9 @@ namespace Excess.Extensions.Concurrent.Model
         public bool IsSignal(MethodDeclarationSyntax node)
         {
             var name = node.Identifier.ToString();
+            if (name == "__concurrentmain")
+                return true;
+
             var pattern = "__concurrent";
             return _signals
                 .Any(s => pattern + s.Key == name);
@@ -101,7 +98,7 @@ namespace Excess.Extensions.Concurrent.Model
             _types.Add(type);
         }
 
-        static TypeSyntax inheritType = CSharp.ParseTypeName("Runtime.Object");
+        static TypeSyntax inheritType = CSharp.ParseTypeName("ConcurrentObject"); //td: !!!
         public ClassDeclarationSyntax Update(ClassDeclarationSyntax @class)
         {
             _replace = RoslynCompiler.Track(@class.SyntaxTree, _replace);
@@ -120,6 +117,11 @@ namespace Excess.Extensions.Concurrent.Model
             _types.Clear();
             _replace.Clear();
             return result;
+        }
+
+        internal void AddMember(object p)
+        {
+            throw new NotImplementedException();
         }
     }
 }

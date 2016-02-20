@@ -106,11 +106,14 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
-    <Compile Include="ConcurrentCompiler.cs" />
+    <Compile Include="ConcurrentUsage.cs" />
     <Compile Include="RuntimeHelper.cs" />
     <Compile Include="ExtUsage.cs" />
     <Compile Include="RRuntime.cs" />
     <Compile Include="Instance.cs" />
+    <Compile Include="TestRuntime\Concurrent.cs" />
+    <Compile Include="TestRuntime\ConcurrentObjects.cs" />
+    <Compile Include="TestRuntime\console.cs" />
     <Compile Include="XSUsage.cs" />
     <Compile Include="Usage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -141,6 +144,7 @@
     <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.1.1.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.Analyzers.dll" />
     <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.1.1.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.CSharp.Analyzers.dll" />
   </ItemGroup>
+  <ItemGroup />
   <Choose>
     <When Condition="'$(VisualStudioVersion)' == '10.0' And '$(IsCodedUITest)' == 'True'">
       <ItemGroup>

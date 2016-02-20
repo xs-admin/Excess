@@ -191,6 +191,12 @@ namespace Concurrent
             }
         }
 
+        protected override internal void __start(params object[] args)
+        {
+            var __enum = __concurrentmain(null, null);
+            __run(() => __advance(__enum.GetEnumerator()), null, null);
+        }
+
         private IEnumerable<Runtime.Expression> __concurrentC(Action<object> __success, Action<Exception> __failure)
         {
             var __expr3_var = new __expr3

@@ -3,11 +3,14 @@ using Microsoft.CodeAnalysis;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace Excess.Compiler.Tests
 {
+    using System;
+
     [TestClass]
-    public class ConcurrentCompiler
+    public class ConcurrentUsage
     {
         [TestMethod]
         public void BasicOperators()
@@ -214,6 +217,39 @@ namespace Excess.Compiler.Tests
                 .First()
                 .ReturnType
                 .ToString() == "void"); //must have added a return type
+        }
+
+        [TestMethod]
+        public void BasicProtectionRuntime()
+        {
+            var errors = null as IEnumerable<Diagnostic>;
+            var node = TestRuntime
+                .Concurrent
+                .Build(@"
+                    concurrent class VendingMachine 
+                    { 
+                        public    void coin();
+                        protected void choc();
+                        protected void toffee();
+
+                        void main() 
+                        {
+                            for (;;)
+                            {
+                                coin >> (choc | toffee);
+                            }
+                        }
+                    }", out errors);
+
+            //must not have compilation errors
+            Assert.IsNull(errors);
+
+            var vm = node.Spawn("VendingMachine");
+            TestRuntime.Concurrent.Succeeds(vm, "coin", "choc");
+            TestRuntime.Concurrent.Succeeds(vm, "coin", "toffee");
+            TestRuntime.Concurrent.Fails(vm, "coin", "coin");
+            TestRuntime.Concurrent.Fails(vm, "choc");
+            TestRuntime.Concurrent.Fails(vm, "toffee");
         }
     }
 }

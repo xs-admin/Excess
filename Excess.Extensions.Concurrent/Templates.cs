@@ -62,7 +62,6 @@ namespace Excess.Extensions.Concurrent
                 }
                 else
                 {
-                    Debug.Assert(_1.HasValue && _1.Value);
                     if (_2.Value) __3;
                     else          __4;
                 }
@@ -72,7 +71,7 @@ namespace Excess.Extensions.Concurrent
         public static ExpressionSyntax ExpressionParameter = CSharp.ParseExpression("__expr");
 
         public static Template ExpressionClass = Template.Parse(@"
-            private class _0 : Runtime.Expression
+            private class _0 : Expression
             {
             }");
 
@@ -119,7 +118,7 @@ namespace Excess.Extensions.Concurrent
             }");
 
         public static Template ConcurrentMethod = Template.Parse(@"
-            private IEnumerable<Runtime.Expression> _0(Action<object> __success, Action<Exception> __failure)
+            private IEnumerable<Expression> _0(Action<object> __success, Action<Exception> __failure)
             {
             }");
 
@@ -129,7 +128,7 @@ namespace Excess.Extensions.Concurrent
         public static Template SignalListener = Template.ParseStatement("__listen(__0, __1);");
 
         public static Template EmptySignalMethod = Template.Parse(@"
-            private IEnumerable<Runtime.Expression> _0(Action<object> __success, Action<Exception> __failure)
+            private IEnumerable<Expression> _0(Action<object> __success, Action<Exception> __failure)
             {
                 try
                 {
@@ -186,8 +185,17 @@ namespace Excess.Extensions.Concurrent
         public static Template DefaultValue = Template.ParseExpression("default(__0)");
         public static Template Negation = Template.ParseExpression("!_0");
 
-        public static Template AwaitExpr = Template.ParseStatement("(__0) || false;");
+        public static Template AwaitExpr = Template.ParseStatement("__0 || false;");
 
-        public static Template EmptyVariable = Template.ParseStatement("__1 __0;");
+        public static Template StartObject = Template.Parse(@"
+            protected override void __start(params object[] args)
+            {
+                var __enum = __0;
+                __advance(__enum.GetEnumerator());
+            }");
+
+        public static Template ConcurrentMain = Template.ParseExpression("__concurrentmain()");
+
+        public static Template StartObjectArgument = Template.ParseExpression("(__0)args[__1]");
     }
 }

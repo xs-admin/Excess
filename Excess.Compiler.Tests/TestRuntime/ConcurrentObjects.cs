@@ -1,51 +1,49 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 
-namespace Concurrent.Runtime
+namespace Excess.Compiler.Tests.TestRuntime
 {
-    using Spawner = Func<object[], Object>;
+    using System.Collections.Concurrent;
+    using System.Diagnostics;
+    using System.Threading;
+    using Spawner = Func<object[], ConcurrentObject>;
 
     public class Node
     {
+        IDictionary<string, Spawner> _types;
         public Node(int threads, IDictionary<string, Spawner> types)
         {
+            _types = types;
+
             Debug.Assert(threads > 0);
             createThreads(threads);
         }
 
-        public T Spawn<T>(params object[] args) where T : Object, new ()
+        public T Spawn<T>(params object[] args) where T : ConcurrentObject, new()
         {
             var result = new T();
-            result._node = this;
-            result.__start(args);
+            result.startRunning(this, args);
             return result;
         }
 
-        Dictionary<string, Func<object[], Object>> _types = new Dictionary<string, Func<object[], Object>>();
-        public Object Spawn(string type, params object[] args)
+        public ConcurrentObject Spawn(string type, params object[] args)
         {
-            var caller = null as Func<object[], Object>;
-            lock(_types)
-            {
-                _types.TryGetValue(type, out caller);
-            }
-
-            if (caller == null)
+            var caller = null as Func<object[], ConcurrentObject>;
+            if (!_types.TryGetValue(type, out caller))
                 throw new InvalidOperationException(type + " is not defined");
 
-            return caller(args);
+            var result = caller(args); 
+            result.startRunning(this, args);
+            return result;
         }
 
         private class Event
         {
             public int Tries { get; set; }
-            public Object Target { get; set; }
+            public ConcurrentObject Target { get; set; }
             public Func<object> What { get; set; }
             public Action<object> Success { get; set; }
             public Action<Exception> Failure { get; set; }
@@ -53,7 +51,7 @@ namespace Concurrent.Runtime
 
         ConcurrentQueue<Event> _queue = new ConcurrentQueue<Event>();
 
-        public void Queue(Object who, Func<object> what, Action<object> success, Action<Exception> failure)
+        public void Queue(ConcurrentObject who, Func<object> what, Action<object> success, Action<Exception> failure)
         {
             _queue.Enqueue(new Event
             {
@@ -96,21 +94,29 @@ namespace Concurrent.Runtime
         }
     }
 
-    public class Object
+    public class ConcurrentObject
     {
-        protected virtual internal void __start(params object[] args)
+        //internal access
+        private Node _node;
+        internal void startRunning(Node node, object[] args)
         {
             Debug.Assert(_busy == 0);
+            _node = node;
+            __start(args);
         }
 
-        internal Node _node;
-        protected T spawn<T>(params object[] args) where T : Object, new()
+
+        protected virtual void __start(object[] args)
+        {
+        }
+
+        protected T spawn<T>(params object[] args) where T : ConcurrentObject, new()
         {
             return _node.Spawn<T>(args);
         }
 
         int _busy = 0;
-        internal void __run(Action what, Action<object> success, Action<Exception> failure)
+        protected void __run(Action what, Action<object> success, Action<Exception> failure)
         {
             __run(() =>
             {
@@ -200,10 +206,10 @@ namespace Concurrent.Runtime
 
     public class Expression
     {
-        public Action<Expression>      Start        { get; set; }
-        public IEnumerator<Expression> Continuator  { get; set; }
-        public Action<Expression>      End          { get; set; }
-        public Exception               Failure      { get; set; }
+        public Action<Expression> Start { get; set; }
+        public IEnumerator<Expression> Continuator { get; set; }
+        public Action<Expression> End { get; set; }
+        public Exception Failure { get; set; }
 
         List<Exception> _exceptions = new List<Exception>();
         protected void __complete(bool success, Exception failure)

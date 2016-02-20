@@ -239,7 +239,7 @@ namespace Excess.Compiler.Roslyn
                 if (existing)
                     _compilation = _compilation.ReplaceSyntaxTree(_csharpFiles[file], tree);
                 else
-                    _compilation.AddSyntaxTrees(tree);
+                    _compilation = _compilation.AddSyntaxTrees(tree);
             }
 
             _csharpFiles[file] = tree;

@@ -10,6 +10,7 @@ using Excess.Compiler.Roslyn;
 namespace Excess.Compiler.Roslyn
 {
     using Microsoft.CodeAnalysis.CSharp;
+    using Microsoft.CodeAnalysis.CSharp.Syntax;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
     using Roslyn = RoslynCompiler;
 
