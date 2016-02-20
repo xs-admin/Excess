@@ -165,9 +165,46 @@ namespace Excess.Compiler.Tests
                     {
                         for (;;)
                         {
-                            await coin();
-                            //coin >> (choc | toffee);
+                            await coin;
+                            coin >> (choc | toffee);
                         }
+                    }
+                }", out text);
+
+            Assert.IsTrue(tree.GetRoot()
+                .DescendantNodes()
+                .OfType<MethodDeclarationSyntax>()
+                .First()
+                .ReturnType
+                .ToString() == "void"); //must have added a return type
+        }
+
+        [TestMethod]
+        public void BasicAwait()
+        {
+            RoslynCompiler compiler = new RoslynCompiler();
+            Extensions.Concurrent.Extension.Apply(compiler);
+
+            SyntaxTree tree = null;
+            string text = null;
+
+            tree = compiler.ApplySemanticalPass(@"
+                concurrent class SomeClass
+                { 
+                    public void A();
+                    public void B();
+
+                    void main() 
+                    {
+                        await A;
+                        int val = await C();
+                        val++;
+                    }
+
+                    private int C()
+                    {
+                        await B;
+                        return 10;
                     }
                 }", out text);
 

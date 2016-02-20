@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 
 namespace Excess.Extensions.Concurrent
 {
+    using Compiler;
     using Microsoft.CodeAnalysis.CSharp;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
     using Roslyn = RoslynCompiler;
@@ -19,9 +20,11 @@ namespace Excess.Extensions.Concurrent
     internal class BlockRewriter : CSharpSyntaxRewriter
     {
         Class _class;
-        public BlockRewriter(Class @class)
+        Scope _scope;
+        public BlockRewriter(Class @class, Scope scope)
         {
             _class = @class;
+            _scope = scope;
         }
 
         public bool HasConcurrent { get; internal set; }
@@ -51,11 +54,77 @@ namespace Excess.Extensions.Concurrent
             return base.VisitExpressionStatement(statement);
         }
 
+        public override SyntaxNode VisitLocalDeclarationStatement(LocalDeclarationStatementSyntax node)
+        {
+            var awaitExpr = null as ExpressionSyntax;
+            var extraStatement = null as StatementSyntax;
+
+            if (node.Declaration.Variables.Count == 1)
+            {
+                var variable = node
+                    .Declaration
+                    .Variables[0];
+
+                var value = variable
+                    ?.Initializer
+                    ?.Value;
+
+                if (node.Declaration.Type.ToString() == "await")
+                {
+                    //case: await signal;
+                    awaitExpr = CSharp.IdentifierName(variable.Identifier);
+                }
+                else if (value != null && value is AwaitExpressionSyntax)
+                {
+                    //case: var a = await b();
+                    extraStatement = CSharp
+                        .LocalDeclarationStatement(CSharp.VariableDeclaration(
+                            node.Declaration.Type, CSharp.SeparatedList(new[] {
+                            CSharp.VariableDeclarator(variable.Identifier)})));
+
+                    awaitExpr = CSharp.AssignmentExpression(
+                        SyntaxKind.SimpleAssignmentExpression,
+                        CSharp.IdentifierName(variable.Identifier),
+                        (value as AwaitExpressionSyntax)
+                            .Expression);
+                }
+
+            }
+
+            if (awaitExpr != null)
+            {
+                var result = VisitExpressionStatement(Templates
+                    .AwaitExpr
+                    .Get<ExpressionStatementSyntax>(awaitExpr))
+                    as StatementSyntax;
+
+                if (extraStatement != null)
+                {
+                    var block = Roslyn.TrackNode(CSharp.Block(
+                        extraStatement,
+                        result));
+
+                    var document = _scope.GetDocument();
+                    document.change(node.Parent, Roslyn.ExplodeBlock(block));
+                    return block;
+                }
+
+                return result;
+            }
+
+            return base.VisitLocalDeclarationStatement(node);
+        }
+
+        public override SyntaxNode VisitAwaitExpression(AwaitExpressionSyntax node)
+        {
+            Debug.Assert(false); //td: error
+            return node;
+        }
+
         private SyntaxNode Parse(BinaryExpressionSyntax expression)
         {
             var exprClassName = uniqueId("__expr");
 
-            Debug.Assert(_operators == null);
             _operators = new List<Operator>();
 
             var startStatements = new List<StatementSyntax>();

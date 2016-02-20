@@ -187,5 +187,7 @@ namespace Excess.Extensions.Concurrent
         public static Template Negation = Template.ParseExpression("!_0");
 
         public static Template AwaitExpr = Template.ParseStatement("(__0) || false;");
+
+        public static Template EmptyVariable = Template.ParseStatement("__1 __0;");
     }
 }

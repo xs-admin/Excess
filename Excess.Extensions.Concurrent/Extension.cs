@@ -177,7 +177,7 @@ namespace Excess.Extensions.Concurrent
                     .WithBody(CSharp.Block());
             }
 
-            var cc = parseConcurrentBlock(ctx, method.Body);
+            var cc = parseConcurrentBlock(ctx, method.Body, scope);
             if (cc != null)
                 method = method.WithBody(cc);
 
@@ -238,9 +238,9 @@ namespace Excess.Extensions.Concurrent
             return true;
         }
 
-        private static BlockSyntax parseConcurrentBlock(Class ctx, BlockSyntax body)
+        private static BlockSyntax parseConcurrentBlock(Class ctx, BlockSyntax body, Scope scope)
         {
-            var rewriter = new BlockRewriter(ctx);
+            var rewriter = new BlockRewriter(ctx, scope);
             var result = (BlockSyntax)rewriter.Visit(body);
 
             if (rewriter.HasConcurrent)
