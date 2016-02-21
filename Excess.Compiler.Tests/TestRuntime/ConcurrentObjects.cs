@@ -100,8 +100,7 @@ namespace Excess.Compiler.Tests.TestRuntime
 
     public class ConcurrentObject
     {
-        //internal access
-        private Node _node;
+        protected Node _node;
         internal void startRunning(Node node, object[] args)
         {
             Debug.Assert(_busy == 0);
@@ -198,6 +197,17 @@ namespace Excess.Compiler.Tests.TestRuntime
                            && kvp.Value.Any())
                 .Any();
 
+        }
+
+        Random __rand = new Random(); //td: test only
+        protected double rand()
+        {
+            return __rand.NextDouble();
+        }
+
+        protected double rand(double from, double to)
+        {
+            return from + (to - from)*__rand.NextDouble();
         }
     }
 

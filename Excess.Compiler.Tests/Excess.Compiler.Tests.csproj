@@ -106,6 +106,7 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="ConcurrentDemos.cs" />
     <Compile Include="ConcurrentUsage.cs" />
     <Compile Include="RuntimeHelper.cs" />
     <Compile Include="ExtUsage.cs" />

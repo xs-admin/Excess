@@ -466,7 +466,7 @@ namespace Excess.Extensions.Concurrent
 
             //internal calls
             StatementSyntax result;
-            if (syntaxOperation(invocation, out result))
+            if (syntaxOperation(invocation, success, failure, out result))
                 return result;
             else
             {
@@ -505,32 +505,45 @@ namespace Excess.Extensions.Concurrent
             if (symbol == null)
                 return CSharp.ExpressionStatement(invocation);
 
-            if (isConcurrent(symbol.ContainingType))
+            if (isConcurrent(symbol))
                 return CSharp.ExpressionStatement(
                     invocation
                     .WithArgumentList(invocation
                         .ArgumentList
                         .AddArguments(
-                            CSharp.Argument(success),
-                            CSharp.Argument(failure))));
+                            CSharp.Argument(Templates
+                                .SuccessFunction
+                                .Get<ExpressionSyntax>(success)),
+                            CSharp.Argument(Templates
+                                .FailureFunction
+                                .Get<ExpressionSyntax>(failure)))));
 
             return Templates
                 .MethodInvocation
                 .Get<StatementSyntax>(invocation, success, failure);
         }
 
-        private bool isConcurrent(INamedTypeSymbol type)
+        private bool isConcurrent(ISymbol symbol)
         {
-            return type != null && type.MemberNames.Contains("__concurrent__");
+            var type = symbol.ContainingType;
+            return type != null && type.MemberNames.Contains("__concurrent" + symbol.Name);
 
         }
 
-        private bool syntaxOperation(InvocationExpressionSyntax invocation, out StatementSyntax result)
+        private bool syntaxOperation(InvocationExpressionSyntax invocation, InvocationExpressionSyntax success, InvocationExpressionSyntax failure, out StatementSyntax result)
         {
             result = null;
             switch (invocation.Expression.ToString())
             {
-                case "wait":
+                case "seconds":
+                    result = Templates
+                        .Seconds
+                        .Get<StatementSyntax>(invocation.ArgumentList
+                            .Arguments[0] //td: validate
+                            .Expression,
+                            success,
+                            failure);
+                    break;
                 case "timeout":
                     throw new NotImplementedException();
                 case "parallel":

@@ -191,5 +191,15 @@ namespace Excess.Extensions.Concurrent
         public static Template ConcurrentMain = Template.ParseExpression("__concurrentmain()");
 
         public static Template StartObjectArgument = Template.ParseExpression("(__0)args[__1]");
+
+        public static Template Seconds = Template.ParseStatement(@"
+            Task.Delay((int)((__0)*1000))
+                .ContinueWith(__task =>
+                {
+                    __enter(() => __1, (__ex) => __2);
+                });");
+
+        public static Template SuccessFunction = Template.ParseExpression("(__res) => __0");
+        public static Template FailureFunction = Template.ParseExpression("(__ex) => __0");
     }
 }

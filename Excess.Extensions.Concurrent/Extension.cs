@@ -37,20 +37,6 @@ namespace Excess.Extensions.Concurrent
                         .remove("keyword")
                         .replace("ref", "class")
                         .then(CompileObject));
-
-            //var environment = compiler.Environment();
-            //environment
-            //    .keyword("concurrent")
-            //    .global<ConcurrentNode>()
-            //    .dependency<IConcurrentObject>(new[] {
-            //        "Concurrent.Runtime",
-            //        "Concurrent.THC",
-            //        "System.Threading",
-            //        "System.Threading.Tasks",
-            //    })
-            //    .dependency<THC.ConcurrentObject>(new[] {
-            //        "Concurrent.THC",
-            //    });
         }
 
         private static SyntaxNode Compile(SyntaxNode node, Scope scope)
@@ -83,11 +69,6 @@ namespace Excess.Extensions.Concurrent
                     scope.AddError("concurrent02", "concurrent classes only allow public properties and methods", node);
             }
 
-            if (!ctx.HasMain)
-            {
-                Debug.Assert(false); //td: unprotected
-            }
-
             @class = ctx.Update(@class);
             return document.change(@class, Link(ctx), null);
         }
@@ -98,7 +79,7 @@ namespace Excess.Extensions.Concurrent
             {
                 Debug.Assert(newNode is ClassDeclarationSyntax);
 
-                var @class = scope.get<Class>();
+                var @class = ctx;
                 Debug.Assert(@class != null);
 
                 return new ClassLinker(@class, model).Visit(newNode);
@@ -347,12 +328,19 @@ namespace Excess.Extensions.Concurrent
 
             var internalCall = Templates
                 .InternalCall
-                .Get<InvocationExpressionSyntax>(internalMethod); internalCall = internalCall
-                .WithArgumentList(CSharp.ArgumentList(CSharp.SeparatedList(
-                    method.ParameterList.Parameters
-                        .Select(param => CSharp.Argument(CSharp.IdentifierName(
-                            method.Identifier)))
-                    .Union(internalCall.ArgumentList.Arguments))));
+                .Get<ExpressionSyntax>(internalMethod);
+
+            internalCall = internalCall
+                .ReplaceNodes(internalCall
+                    .DescendantNodes()
+                    .OfType<InvocationExpressionSyntax>()
+                    .Where(i => i.ArgumentList.Arguments.Count == 2),
+                (on, nn) => nn
+                    .WithArgumentList(CSharp.ArgumentList(CSharp.SeparatedList(
+                        method.ParameterList.Parameters
+                            .Select(param => CSharp.Argument(CSharp.IdentifierName(
+                                param.Identifier)))
+                        .Union(on.ArgumentList.Arguments)))));
 
             ctx.AddMember(AddParameters(
                 method.ParameterList,
