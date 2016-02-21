@@ -114,6 +114,7 @@
     <Compile Include="TestRuntime\Concurrent.cs" />
     <Compile Include="TestRuntime\ConcurrentObjects.cs" />
     <Compile Include="TestRuntime\console.cs" />
+    <Compile Include="TestRuntime\Debug.cs" />
     <Compile Include="XSUsage.cs" />
     <Compile Include="Usage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

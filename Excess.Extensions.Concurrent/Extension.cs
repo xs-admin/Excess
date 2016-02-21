@@ -350,8 +350,8 @@ namespace Excess.Extensions.Concurrent
                 .Get<InvocationExpressionSyntax>(internalMethod); internalCall = internalCall
                 .WithArgumentList(CSharp.ArgumentList(CSharp.SeparatedList(
                     method.ParameterList.Parameters
-                        .Select(param => CSharp.Argument(
-                            CSharp.IdentifierName(method.Identifier)))
+                        .Select(param => CSharp.Argument(CSharp.IdentifierName(
+                            method.Identifier)))
                     .Union(internalCall.ArgumentList.Arguments))));
 
             ctx.AddMember(AddParameters(

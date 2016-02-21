@@ -44,21 +44,19 @@ namespace Excess.Compiler.Tests.TestRuntime
         {
             public int Tries { get; set; }
             public ConcurrentObject Target { get; set; }
-            public Func<object> What { get; set; }
-            public Action<object> Success { get; set; }
+            public Action What { get; set; }
             public Action<Exception> Failure { get; set; }
         }
 
         ConcurrentQueue<Event> _queue = new ConcurrentQueue<Event>();
 
-        public void Queue(ConcurrentObject who, Func<object> what, Action<object> success, Action<Exception> failure)
+        public void Queue(ConcurrentObject who, Action what, Action<Exception> failure)
         {
             _queue.Enqueue(new Event
             {
                 Tries = 0,
                 Target = who,
                 What = what,
-                Success = success,
                 Failure = failure
             });
         }
@@ -84,7 +82,7 @@ namespace Excess.Compiler.Tests.TestRuntime
                             continue;
                         }
 
-                        message.Target.__run(message.What, message.Success, message.Failure);
+                        message.Target.__enter(message.What, message.Failure);
                     }
                 });
 
@@ -116,37 +114,30 @@ namespace Excess.Compiler.Tests.TestRuntime
         }
 
         int _busy = 0;
-        protected void __run(Action what, Action<object> success, Action<Exception> failure)
-        {
-            __run(() =>
-            {
-                what();
-                return null;
-            }, success, failure);
-        }
-
-        internal void __run(Func<object> what, Action<object> success, Action<Exception> failure)
+        protected internal void __enter(Action what, Action<Exception> failure)
         {
             var was_busy = Interlocked.CompareExchange(ref _busy, 1, 0) == 1;
             if (was_busy)
             {
-                _node.Queue(this, what, success, failure);
+                _node.Queue(this, what, failure);
             }
             else
             {
                 try
                 {
-                    var result = what();
-                    if (success != null)
-                        try { success(result); } catch { }
+                    what();
                 }
                 catch (Exception ex)
                 {
                     if (failure != null)
-                        try { failure(ex); } catch { }
+                        try { failure(ex); } catch { } //dont care if our failure handler fails, it shouldn't?
+                    else
+                        throw;
                 }
-
-                Interlocked.CompareExchange(ref _busy, 0, 1);
+                finally
+                {
+                    Interlocked.CompareExchange(ref _busy, 0, 1);
+                }
             }
         }
 

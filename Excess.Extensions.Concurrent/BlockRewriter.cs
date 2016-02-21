@@ -161,7 +161,7 @@ namespace Excess.Extensions.Concurrent
 
             _class.AddType(exprClass);
 
-            var startFunc = StartFunction(startStatements, exprClassName);
+            var startFunc = StartFunction(startStatements, exprClassName, false);
 
             var result = Templates
                 .ExpressionInstantiation
@@ -175,31 +175,54 @@ namespace Excess.Extensions.Concurrent
                         .Select(op => (ExpressionSyntax)CSharp.AssignmentExpression(
                             SyntaxKind.SimpleAssignmentExpression,
                             CSharp.IdentifierName(op.StartName),
-                            StartFunction(op.Start, exprClassName)))
+                            StartFunction(op.Start, exprClassName, true)))
                         .ToArray()));
         }
 
-        private ParenthesizedLambdaExpressionSyntax StartFunction(IEnumerable<StatementSyntax> statements, string exprClassName)
+        private ParenthesizedLambdaExpressionSyntax StartFunction(IEnumerable<StatementSyntax> statements, string exprClassName, bool mustEnter)
         {
             var startFunc = Templates
                 .StartCallbackLambda
                 .Get<ParenthesizedLambdaExpressionSyntax>(exprClassName);
 
-            var funcLambda = startFunc
-                .DescendantNodes()
-                .OfType<InvocationExpressionSyntax>()
-                .Single()
-                    .ArgumentList
-                    .Arguments[0]
-                    .Expression as ParenthesizedLambdaExpressionSyntax;
+            if (mustEnter)
+            {
+                var enterStatement = Templates
+                    .StartCallbackEnter
+                        .Get<StatementSyntax>();
 
-            Debug.Assert(funcLambda != null);
+                statements = new[]
+                {
+                    enterStatement
+                        .ReplaceNodes(enterStatement
+                            .DescendantNodes()
+                            .OfType<BlockSyntax>(),
+                            (on, nn) => nn.WithStatements(CSharp.List(
+                                statements)))
+                };
+            }
+
+            
             return startFunc
-                .ReplaceNode(funcLambda, funcLambda
-                    .WithBody((funcLambda.Body as BlockSyntax)
-                        .AddStatements(
-                            statements
-                            .ToArray())));
+                .WithBody((startFunc.Body as BlockSyntax)
+                    .AddStatements(
+                        statements.ToArray()));
+
+            //var funcLambda = startFunc
+            //    .DescendantNodes()
+            //    .OfType<InvocationExpressionSyntax>()
+            //    .Single()
+            //        .ArgumentList
+            //        .Arguments[0]
+            //        .Expression as ParenthesizedLambdaExpressionSyntax;
+
+            //Debug.Assert(funcLambda != null);
+            //return startFunc
+            //    .ReplaceNode(funcLambda, funcLambda
+            //        .WithBody((funcLambda.Body as BlockSyntax)
+            //            .AddStatements(
+            //                statements
+            //                .ToArray())));
         }
 
         class Operator

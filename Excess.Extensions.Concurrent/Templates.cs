@@ -81,7 +81,7 @@ namespace Excess.Extensions.Concurrent
                 Start = __1,
                 End = (__expr) => 
                 {
-                    __run(() => __advance(__expr.Continuator), __success, __failure);
+                    __enter(() => __advance(__expr.Continuator), __failure);
                 }
             };");
 
@@ -91,10 +91,12 @@ namespace Excess.Extensions.Concurrent
             (___expr) => 
             {
                 var __expr = (_0)___expr;
-                __run(() => 
-                {
-                }, null, __failure);
             }");
+
+        public static Template StartCallbackEnter = Template.ParseStatement(@"
+            __enter(() =>
+            {
+            }, __failure);");
 
         public static Template ExpressionVariable = Template.ParseStatement("var _0 = __1;");
 
@@ -113,7 +115,7 @@ namespace Excess.Extensions.Concurrent
         public static Template ExpressionReturn = Template.ParseStatement(@"
             {
                 if (__success != null)
-                    try { __success(null); } catch {}
+                    __success(null); 
                 yield break;
             }");
 
@@ -130,21 +132,13 @@ namespace Excess.Extensions.Concurrent
         public static Template EmptySignalMethod = Template.Parse(@"
             private IEnumerable<Expression> _0(Action<object> __success, Action<Exception> __failure)
             {
-                try
-                {
-                    if (__2 && !__awaiting(__1))
-                        throw new InvalidOperationException(__1 + "" can not be executed in this state"");
-                    __dispatch(__1);
-                }
-                catch(Exception __ex)
-                {
-                    if (__failure != null)
-                        try {__failure(__ex);} catch {}
-                    yield break;
-                }
+                if (__2 && !__awaiting(__1))
+                    throw new InvalidOperationException(__1 + "" can not be executed in this state"");
+                
+                __dispatch(__1);
 
                 if (__success != null)
-                    try { __success(null); } catch {}
+                    __success(null);
 
                 yield break;
             }");
@@ -155,16 +149,16 @@ namespace Excess.Extensions.Concurrent
                 var completion = new TaskCompletionSource<__1>();
                 Action<object> __success = (__res) => completion.SetResult((__1)__res);
                 Action<Exception> __failure = (__ex) => completion.SetException(__ex);
-                __run(() => __advance(__2), null, null);
+                __enter(() => __advance(__2), __failure);
                 return completion.Task;
             }");
 
         public static Template TaskCallbackMethod = Template.Parse(@"
-            public void _0(Action<object> success = null, Action<Exception> failure = null)
+            public void _0(Action<object> success, Action<Exception> failure)
             {
                 var __success = success;
                 var __failure = failure;
-                __run(() => __advance(__1), null, null);
+                __enter(() => __advance(__1), failure);
             }");
 
         public static Template InternalCall = Template.ParseExpression("_0(__success, __failure).GetEnumerator()");
