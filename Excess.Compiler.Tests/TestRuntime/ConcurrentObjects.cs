@@ -62,6 +62,12 @@ namespace Excess.Compiler.Tests.TestRuntime
         }
 
         CancellationTokenSource _stop = new CancellationTokenSource();
+        public void Stop()
+        {
+            _stop.Cancel();
+            Thread.Sleep(1);
+        }
+
         private void createThreads(int threads)
         {
             var cancellation = _stop.Token;
@@ -130,7 +136,7 @@ namespace Excess.Compiler.Tests.TestRuntime
                 catch (Exception ex)
                 {
                     if (failure != null)
-                        try { failure(ex); } catch { } //dont care if our failure handler fails, it shouldn't?
+                        failure(ex); 
                     else
                         throw;
                 }
