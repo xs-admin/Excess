@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -8,6 +9,7 @@ namespace Excess.Compiler.Tests.TestRuntime
 {
     class philosopher : ConcurrentObject
     {
+        static int Meals = 10;
         private string _name;
         private chopstick _left;
         private chopstick _right;
@@ -16,35 +18,40 @@ namespace Excess.Compiler.Tests.TestRuntime
             _name = name;
             _left = left;
             _right = right;
-            var __expr1_var = new __expr1
+            for (int i = 0; i < Meals; i++)
             {
-                Start = (___expr) =>
+                var __expr1_var = new __expr1
                 {
-                    var __expr = (__expr1)___expr;
-                    __concurrentthink((__res) =>
+                    Start = (___expr) =>
                     {
-                        __expr.__op1(true, null, null);
+                        var __expr = (__expr1)___expr;
+                        __advance((__concurrentthink((__res) =>
+                        {
+                            __expr.__op1(true, null, null);
+                        }
+
+                        , (__ex) =>
+                        {
+                            __expr.__op1(false, null, __ex);
+                        }
+
+                        )).GetEnumerator());
+                        __expr.__op1(null, false, null);
                     }
 
-                    , (__ex) =>
+                ,
+                    End = (__expr) =>
                     {
-                        __expr.__op1(false, null, __ex);
+                        __enter(() => __advance(__expr.Continuator), __failure);
                     }
+                };
+                yield return __expr1_var;
+                if (__expr1_var.Failure != null)
+                    throw __expr1_var.Failure;
+            }
 
-                    );
-                    __expr.__op1(null, false, null);
-                }
-
-            ,
-                End = (__expr) =>
-                {
-                    __enter(() => __advance(__expr.Continuator), __failure);
-                }
-            };
-            yield return __expr1_var;
-            if (__expr1_var.Failure != null)
-                throw __expr1_var.Failure;
             {
+                __dispatch("main");
                 if (__success != null)
                     __success(null);
                 yield break;
@@ -85,7 +92,7 @@ namespace Excess.Compiler.Tests.TestRuntime
                     var __expr = (__expr2)___expr;
                     __enter(() =>
                     {
-                        __concurrenthungry((__res) =>
+                        __advance((__concurrenthungry((__res) =>
                         {
                             __expr.__op2(null, true, null);
                         }
@@ -95,7 +102,7 @@ namespace Excess.Compiler.Tests.TestRuntime
                             __expr.__op2(null, false, __ex);
                         }
 
-                        );
+                        )).GetEnumerator());
                     }
 
                     , __failure);
@@ -105,6 +112,7 @@ namespace Excess.Compiler.Tests.TestRuntime
             if (__expr2_var.Failure != null)
                 throw __expr2_var.Failure;
             {
+                __dispatch("think");
                 if (__success != null)
                     __success(null);
                 yield break;
@@ -135,7 +143,7 @@ namespace Excess.Compiler.Tests.TestRuntime
                     var __expr = (__expr3)___expr;
                     __enter(() =>
                     {
-                        __concurrenteat((__res) =>
+                        __advance((__concurrenteat((__res) =>
                         {
                             __expr.__op3(null, true, null);
                         }
@@ -145,7 +153,7 @@ namespace Excess.Compiler.Tests.TestRuntime
                             __expr.__op3(null, false, __ex);
                         }
 
-                        );
+                        )).GetEnumerator());
                     }
 
                     , __failure);
@@ -155,6 +163,7 @@ namespace Excess.Compiler.Tests.TestRuntime
             if (__expr3_var.Failure != null)
                 throw __expr3_var.Failure;
             {
+                __dispatch("hungry");
                 if (__success != null)
                     __success(null);
                 yield break;
@@ -190,6 +199,7 @@ namespace Excess.Compiler.Tests.TestRuntime
             _left.release(this);
             _right.release(this);
             {
+                __dispatch("eat");
                 if (__success != null)
                     __success(null);
                 yield break;
@@ -359,14 +369,17 @@ namespace Excess.Compiler.Tests.TestRuntime
 
             _owner = owner;
             {
+                __dispatch("acquire");
                 if (__success != null)
                     __success(null);
                 yield break;
             }
         }
 
-        public Task<object> acquire(object owner)
+        public Task<object> acquire(object owner, bool async)
         {
+            if (!async)
+                throw new InvalidOperationException("use async: true");
             var completion = new TaskCompletionSource<object>();
             Action<object> __success = (__res) => completion.SetResult((object)__res);
             Action<Exception> __failure = (__ex) => completion.SetException(__ex);
@@ -374,7 +387,7 @@ namespace Excess.Compiler.Tests.TestRuntime
             return completion.Task;
         }
 
-        public void acquire(object owner, Action<object> success, Action<Exception> failure)
+        public void acquire(object owner, Action<object> success = null, Action<Exception> failure = null)
         {
             var __success = success;
             var __failure = failure;
@@ -387,14 +400,17 @@ namespace Excess.Compiler.Tests.TestRuntime
                 throw new InvalidOperationException();
             _owner = null;
             {
+                __dispatch("release");
                 if (__success != null)
                     __success(null);
                 yield break;
             }
         }
 
-        public Task<object> release(object owner)
+        public Task<object> release(object owner, bool async)
         {
+            if (!async)
+                throw new InvalidOperationException("use async: true");
             var completion = new TaskCompletionSource<object>();
             Action<object> __success = (__res) => completion.SetResult((object)__res);
             Action<Exception> __failure = (__ex) => completion.SetException(__ex);
@@ -402,7 +418,7 @@ namespace Excess.Compiler.Tests.TestRuntime
             return completion.Task;
         }
 
-        public void release(object owner, Action<object> success, Action<Exception> failure)
+        public void release(object owner, Action<object> success = null, Action<Exception> failure = null)
         {
             var __success = success;
             var __failure = failure;

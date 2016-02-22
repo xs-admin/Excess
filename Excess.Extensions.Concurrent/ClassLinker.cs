@@ -474,8 +474,8 @@ namespace Excess.Extensions.Concurrent
                     .ToString();
                 Signal signal = _class.GetSignal(identifier);
                 if (signal != null)
-                    return CSharp.ExpressionStatement(
-                        invocation
+                {
+                    var expr = invocation
                         .WithExpression(CSharp.IdentifierName("__concurrent" + identifier))
                         .WithArgumentList(invocation
                             .ArgumentList
@@ -485,11 +485,14 @@ namespace Excess.Extensions.Concurrent
                                         "__res")))),
                                 CSharp.Argument(WrapInLambda(failure)
                                     .AddParameterListParameters(CSharp.Parameter(CSharp.ParseToken(
-                                        "__ex")))))));
+                                        "__ex"))))));
 
-                return Templates
-                    .MethodInvocation
-                    .Get<StatementSyntax>(invocation, success, failure);
+                    return CSharp.ExpressionStatement(Templates
+                        .Advance
+                        .Get<ExpressionSyntax>(expr));
+                }
+
+                return CSharp.ExpressionStatement(invocation);
             }
         }
 
@@ -518,9 +521,7 @@ namespace Excess.Extensions.Concurrent
                                 .FailureFunction
                                 .Get<ExpressionSyntax>(failure)))));
 
-            return Templates
-                .MethodInvocation
-                .Get<StatementSyntax>(invocation, success, failure);
+            return CSharp.ExpressionStatement(invocation);
         }
 
         private bool isConcurrent(ISymbol symbol)

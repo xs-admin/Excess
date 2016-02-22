@@ -272,7 +272,8 @@ namespace Excess.Extensions.Concurrent
                         .ExpressionReturn
                         .Get<StatementSyntax>(nn.Expression == null || nn.Expression.IsMissing
                             ? Roslyn.@null
-                            : nn.Expression));
+                            : nn.Expression,
+                            Roslyn.Quoted(method.Identifier.ToString())));
 
             if (forever)
             {
@@ -282,7 +283,9 @@ namespace Excess.Extensions.Concurrent
             else if (lastReturn == null)
                 body = body.AddStatements(Templates
                     .ExpressionReturn
-                    .Get<StatementSyntax>(Roslyn.@null));
+                    .Get<StatementSyntax>(
+                        Roslyn.@null,
+                        Roslyn.Quoted(method.Identifier.ToString())));
 
             var result = Templates
                 .ConcurrentMethod

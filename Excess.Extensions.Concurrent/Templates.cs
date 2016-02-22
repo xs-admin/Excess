@@ -100,22 +100,11 @@ namespace Excess.Extensions.Concurrent
 
         public static Template ExpressionVariable = Template.ParseStatement("var _0 = __1;");
 
-        public static Template MethodInvocation = Template.ParseStatement(@"
-            try
-            {
-                __0;
-                
-                try {__1;} catch {}
-            }
-            catch(Exception __ex)
-            {
-                try {__2;} catch {}
-            }");
-
         public static Template ExpressionReturn = Template.ParseStatement(@"
             {
+                __dispatch(__1);
                 if (__success != null)
-                    __success(null); 
+                    __success(__0); 
                 yield break;
             }");
 
@@ -144,8 +133,11 @@ namespace Excess.Extensions.Concurrent
             }");
 
         public static Template TaskPublicMethod = Template.Parse(@"
-            public Task<__1> _0()
+            public Task<__1> _0(bool async)
             {
+                if (!async)
+                    throw new InvalidOperationException(""use async: true"");
+
                 var completion = new TaskCompletionSource<__1>();
                 Action<object> __success = (__res) => completion.SetResult((__1)__res);
                 Action<Exception> __failure = (__ex) => completion.SetException(__ex);
@@ -154,7 +146,7 @@ namespace Excess.Extensions.Concurrent
             }");
 
         public static Template TaskCallbackMethod = Template.Parse(@"
-            public void _0(Action<object> success, Action<Exception> failure)
+            public void _0(Action<object> success = null, Action<Exception> failure = null)
             {
                 var __success = success;
                 var __failure = failure;
@@ -201,5 +193,8 @@ namespace Excess.Extensions.Concurrent
 
         public static Template SuccessFunction = Template.ParseExpression("(__res) => __0");
         public static Template FailureFunction = Template.ParseExpression("(__ex) => __0");
+
+        public static Template Advance = Template.ParseExpression("__advance((__0).GetEnumerator())");
+        
     }
 }

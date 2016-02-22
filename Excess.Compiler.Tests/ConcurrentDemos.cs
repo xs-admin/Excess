@@ -1,10 +1,12 @@
 ﻿using Excess.Compiler.Roslyn;
+using Excess.Compiler.Tests.TestRuntime;
 using Microsoft.CodeAnalysis;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Excess.Compiler.Tests
@@ -21,14 +23,18 @@ namespace Excess.Compiler.Tests
                 .Build(@"
                 concurrent class philosopher 
                 {
-                    [Forever]
+                    static int Meals = 10;
+
                     void main(string name, chopstick left, chopstick right) 
 	                {
                         _name  = name;
 	                    _left  = left;
 	                    _right = right;
                                
-	                    await think();
+                        for(int i = 0; i < Meals; i++)
+                        {
+	                        await think();
+                        }    
 	                }
 	
 	                void think()
@@ -64,7 +70,9 @@ namespace Excess.Compiler.Tests
 	                public void acquire(object owner)
                     {
                         if (_owner != null)
-                            await release();
+                        {
+                            await release;
+                        }
                         
                         _owner = owner;
                     }
@@ -78,19 +86,38 @@ namespace Excess.Compiler.Tests
                     }
 
                     private object _owner;
-                }", out errors, threads: 3);
+                }", out errors, threads: 1);
 
             //must not have compilation errors
             Assert.IsNull(errors);
 
-            var vm = node.Spawn("VendingMachine");
+            var names = new[]
+            {
+                "Kant",
+                "Archimedes",
+                "Nietzche",
+                "Plato",
+                "Spinoza",
+            };
 
-            TestRuntime.Concurrent.Fails(vm, "choc");
-            TestRuntime.Concurrent.Fails(vm, "toffee");
+            var chopsticks = names.Select(n =>
+                //node.Spawn("chopstick"))
+                node.Spawn<chopstick>())
+                .ToArray();
 
-            TestRuntime.Concurrent.Succeeds(vm, "coin", "choc");
-            TestRuntime.Concurrent.Succeeds(vm, "coin", "toffee");
+            var phCount = names.Length;
+            for (int i = 0; i < phCount; i++)
+            {
+                var left = chopsticks[i];
+                var right = i == phCount - 1 ? chopsticks[0] : chopsticks[i + 1];
 
+                node.Spawn<philosopher>(names[i], left, right);
+                //node.Spawn("philosopher", names[i], left, right);
+            }
+
+            Thread.Sleep(45000);
+
+            var output = console.items();
             node.Stop();
         }
 
@@ -107,14 +134,18 @@ namespace Excess.Compiler.Tests
             tree = compiler.ApplySemanticalPass(@"
                 concurrent class philosopher 
                 {
-                    [Forever]
+                    static int Meals = 10;
+
                     void main(string name, chopstick left, chopstick right) 
 	                {
                         _name  = name;
 	                    _left  = left;
 	                    _right = right;
                                
-	                    await think();
+                        for(int i = 0; i < Meals; i++)
+                        {
+	                        await think();
+                        }    
 	                }
 	
 	                void think()
