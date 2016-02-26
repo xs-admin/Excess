@@ -799,6 +799,8 @@ namespace Excess.Compiler.Roslyn
                 modifiers = (member as PropertyDeclarationSyntax).Modifiers;
             else if (member is FieldDeclarationSyntax)
                 modifiers = (member as FieldDeclarationSyntax).Modifiers;
+            else if (member is ConstructorDeclarationSyntax)
+                modifiers = (member as ConstructorDeclarationSyntax).Modifiers;
             else
                 throw new NotImplementedException();
 

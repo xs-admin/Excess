@@ -4,6 +4,7 @@ using Microsoft.CodeAnalysis;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -121,6 +122,72 @@ namespace Excess.Compiler.Tests
             node.Stop();
         }
 
+
+        [TestMethod]
+        public void ThreadRing()
+        {
+            var errors = null as IEnumerable<Diagnostic>;
+            var node = TestRuntime
+                .Concurrent
+                .Build(@"
+                concurrent class ring_item
+                {
+                    ring_item _next;
+                    int _idx;
+                    public ring_item(int idx)
+                    {
+                        _idx = idx;
+                    }
+                    
+                    public ring_item Next 
+                    {
+                        set {_next = value;}
+                    }
+
+                    static int ITERATIONS = 50*1000*1000;
+                    public void token(int value)
+                    {
+                        if (value >= ITERATIONS)
+                        {
+                            console.write(_idx);
+                            Node.Stop();
+                        }
+                        else
+                            _next.token(value + 1);
+                    }                    
+                }", out errors, threads: 1);
+
+            //must not have compilation errors
+            Assert.IsNull(errors);
+
+            const int ringCount = 503;
+
+            //create the ring
+            var items = new ConcurrentObject[ringCount];
+            for (int i = 0; i < ringCount; i++)
+                items[i] = node.Spawn("ring_item", i);
+
+            //update connectivity
+            for (int i = 0; i < ringCount; i++)
+            {
+                var curr = items[i];
+                var next = i < ringCount - 1 ? items[i + 1] : items[0];
+                TestRuntime.Concurrent.Send(curr, "Next", next);
+            }
+
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
+            {
+                //run it by sending the first token, it will go around 50M times
+                TestRuntime.Concurrent.Send(items[0], "token", 0);
+                node.waitForCompletion();
+            }
+            sw.Stop();
+
+            TimeSpan rt = TimeSpan.FromTicks(sw.ElapsedTicks);
+            var ts = rt.TotalSeconds.ToString();
+            Assert.IsNotNull(ts);
+        }
 
         [TestMethod]
         public void DebugPrint()

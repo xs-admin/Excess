@@ -40,6 +40,11 @@ namespace Excess.Compiler.Tests.TestRuntime
             return result;
         }
 
+        public void Start(ConcurrentObject @object, params object[] args)
+        {
+            @object.startRunning(this, args);
+        }
+
         private class Event
         {
             public int Tries { get; set; }
@@ -96,6 +101,11 @@ namespace Excess.Compiler.Tests.TestRuntime
                 thread.Start();
             }
         }
+
+        public void waitForCompletion()
+        {
+            _stop.Token.WaitHandle.WaitOne();
+        }
     }
 
     public class ConcurrentObject
@@ -108,7 +118,7 @@ namespace Excess.Compiler.Tests.TestRuntime
             __start(args);
         }
 
-
+        protected Node Node { get { return _node; } }
         protected virtual void __start(object[] args)
         {
         }

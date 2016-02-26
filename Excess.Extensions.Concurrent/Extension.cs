@@ -54,19 +54,12 @@ namespace Excess.Extensions.Concurrent
             {
                 var isPublic = Roslyn.IsVisible(member);
                 if (member is PropertyDeclarationSyntax)
-                {
-                    if (compileProperty(member as PropertyDeclarationSyntax, ctx, scope))
-                        ctx.RemoveMember(member);
-                }
+                    compileProperty(member as PropertyDeclarationSyntax, ctx, scope);
                 else if (member is MethodDeclarationSyntax)
                 {
                     if (compileMethod(member as MethodDeclarationSyntax, ctx, scope))
                         ctx.RemoveMember(member);
                 }
-                else if (member is ConstructorDeclarationSyntax)
-                    scope.AddError("concurrent01", "concurrent classes are not allowed to have constructors", node);
-                else if (isPublic)
-                    scope.AddError("concurrent02", "concurrent classes only allow public properties and methods", node);
             }
 
             @class = ctx.Update(@class);
@@ -86,10 +79,10 @@ namespace Excess.Extensions.Concurrent
             };
         }
 
-        private static bool compileProperty(PropertyDeclarationSyntax property, Class ctx, Scope scope)
+        private static void compileProperty(PropertyDeclarationSyntax property, Class ctx, Scope scope)
         {
             if (!Roslyn.IsVisible(property))
-                return false;
+                return;
 
             var @get = null as AccessorDeclarationSyntax;
             var @set = null as AccessorDeclarationSyntax;
@@ -108,21 +101,20 @@ namespace Excess.Extensions.Concurrent
                 }
             }
 
-            if (@get != null || @set != null)
+            bool hasCustomGet = @get != null && @get.Body != null && @get.Body.Statements.Count > 0;
+            if (hasCustomGet && @get.Body.Statements.Count == 1)
+                hasCustomGet = !(@get.Body.Statements[0] is ReturnStatementSyntax);
+
+            bool hasCustomSet = @set != null && @set.Body != null && @set.Body.Statements.Count > 0;
+            if (hasCustomSet && @set.Body.Statements.Count == 1)
+                hasCustomSet = !(@set.Body.Statements[0] is ExpressionStatementSyntax)
+                            || (@set.Body.Statements[0] as ExpressionStatementSyntax)
+                                    .Expression.Kind() != SyntaxKind.SimpleAssignmentExpression;
+
+            if (hasCustomGet || hasCustomSet)
             {
-                scope.AddError("concurrent00", "invalid concurrent property", property);
-                return false;
+                scope.AddError("concurrent00", "invalid concurrent property, custom accessors are not allowed", property);
             }
-
-            ctx.RemoveMember(property);
-
-            if (@get != null)
-                addGetter(ctx, property, @get);
-
-            if (@set != null)
-                addSetter(ctx, property, @set);
-
-            return true;
         }
 
         private static bool compileMethod(MethodDeclarationSyntax methodDeclaration, Class ctx, Scope scope)
@@ -307,16 +299,6 @@ namespace Excess.Extensions.Concurrent
         {
             var statement = statements.LastOrDefault();
             return (statement != null && statement is ContinueStatementSyntax);
-        }
-
-        private static void addGetter(Class ctx, PropertyDeclarationSyntax property, AccessorDeclarationSyntax get)
-        {
-            throw new NotImplementedException();
-        }
-
-        private static void addSetter(Class ctx, PropertyDeclarationSyntax property, AccessorDeclarationSyntax set)
-        {
-            throw new NotImplementedException();
         }
 
         private static void createPublicSignals(Class ctx, MethodDeclarationSyntax method, Signal signal)

@@ -10,6 +10,7 @@ namespace Excess.Compiler.Tests.TestRuntime
 {
     using Core;
     using Microsoft.CodeAnalysis;
+    using System.Diagnostics;
     using System.Reflection;
     using Spawner = Func<object[], ConcurrentObject>;
 
@@ -122,11 +123,57 @@ namespace Excess.Compiler.Tests.TestRuntime
                 if (type.BaseType != typeof(ConcurrentObject))
                     continue;
 
+                var useParameterLess = type.GetConstructors().Length == 0;
+                if (!useParameterLess)
+                    useParameterLess = type.GetConstructor(new Type[] { }) != null;
+
                 var typeName = type.ToString();
-                exportTypes[typeName] = (args) => (ConcurrentObject)Activator.CreateInstance(type);
+                exportTypes[typeName] = (args) =>
+                {
+                    if (useParameterLess)
+                        return (ConcurrentObject)Activator.CreateInstance(type);
+
+                    var ctor = type.GetConstructor(args
+                        .Select(arg => arg.GetType())
+                        .ToArray());
+
+                    if (ctor != null)
+                        return (ConcurrentObject)ctor.Invoke(args);
+
+                    throw new InvalidOperationException("unable to find a constructor");
+                };
             }
 
             return new Node(threads, exportTypes);
+        }
+
+        public static void Send(ConcurrentObject @object, string name, params object[] args)
+        {
+            var method = @object
+                .GetType()
+                .GetMethods()
+                .Where(m => m.Name == name
+                         && m
+                            .ReturnType
+                            .ToString()
+                            .Contains("Task"))
+                .SingleOrDefault();
+
+            if (method != null)
+            {
+                args = args.Union(new object[] { true }).ToArray();
+                var tsk = method.Invoke(@object, args);
+                ((Task)tsk).Wait();
+            }
+            else
+            {
+                var property = @object
+                    .GetType()
+                    .GetProperty(name);
+
+                Debug.Assert(property != null && property.CanWrite);
+                property.SetValue(@object, args[0]);
+            }
         }
     }
 }
