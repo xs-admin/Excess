@@ -31,27 +31,44 @@ namespace Excess.Extensions.Concurrent
 
         public override SyntaxNode VisitExpressionStatement(ExpressionStatementSyntax statement)
         {
+            var result = null as SyntaxNode;
             if (statement.Expression is BinaryExpressionSyntax)
             {
-                var result = Parse(statement.Expression as BinaryExpressionSyntax);
+                result = Parse(statement.Expression as BinaryExpressionSyntax);
 
                 HasConcurrent = HasConcurrent || result != statement.Expression;
-                return result;
             }
-
-            if (statement.Expression is AwaitExpressionSyntax)
+            else if (statement.Expression is AwaitExpressionSyntax)
             {
                 HasConcurrent = true;
                 var expr = (statement.Expression as AwaitExpressionSyntax)
                     .Expression;
 
                 Debug.Assert(expr != null); //td: error
-                return VisitExpressionStatement(Templates
+                result = VisitExpressionStatement(Templates
                     .AwaitExpr
                     .Get<ExpressionStatementSyntax>(expr));
             }
+            else if (statement.Expression is InvocationExpressionSyntax)
+            {
+                var queueStatement = null as StatementSyntax;
+                if (_class.isQueueInvocation(
+                    statement.Expression as InvocationExpressionSyntax,
+                    false, //synch call
+                    null,
+                    out queueStatement))
+                    return queueStatement;
+            }
 
-            return base.VisitExpressionStatement(statement);
+            if (result == null)
+                result = base.VisitExpressionStatement(statement);
+
+            if (statement.Parent is BlockSyntax)
+                return result;
+
+            //in cases such as if (x) y; 
+            //we standarize the blocks, if (x) {y;}
+            return CSharp.Block((StatementSyntax)result); 
         }
 
         public override SyntaxNode VisitLocalDeclarationStatement(LocalDeclarationStatementSyntax node)

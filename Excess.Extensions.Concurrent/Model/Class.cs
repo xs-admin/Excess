@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 namespace Excess.Extensions.Concurrent.Model
 {
     using Compiler;
+    using System.Diagnostics;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
     using Roslyn = RoslynCompiler;
 
@@ -42,6 +43,12 @@ namespace Excess.Extensions.Concurrent.Model
             var pattern = "__concurrent";
             return _signals
                 .Any(s => pattern + s.Key == name);
+        }
+
+        public bool hasSignal(string name)
+        {
+            return _signals
+                .Any(s => s.Key == name);
         }
 
         List<MemberDeclarationSyntax> _remove = new List<MemberDeclarationSyntax>();
@@ -98,7 +105,6 @@ namespace Excess.Extensions.Concurrent.Model
             _types.Add(type);
         }
 
-        static TypeSyntax inheritType = CSharp.ParseTypeName("ConcurrentObject"); //td: !!!
         public ClassDeclarationSyntax Update(ClassDeclarationSyntax @class)
         {
             _replace = RoslynCompiler.Track(@class.SyntaxTree, _replace);
@@ -106,7 +112,6 @@ namespace Excess.Extensions.Concurrent.Model
             var result = @class
                 .ReplaceNodes(_replace.Keys, (on, nn) => _replace[on])
                 .RemoveNodes(_remove, SyntaxRemoveOptions.KeepNoTrivia)
-                .AddBaseListTypes(CSharp.SimpleBaseType(inheritType))
                 .AddMembers(_add
                     .Union(_types)
                     .Select(add => (MemberDeclarationSyntax)RoslynCompiler.TrackNode(add))
@@ -119,9 +124,82 @@ namespace Excess.Extensions.Concurrent.Model
             return result;
         }
 
-        internal void AddMember(object p)
+        public bool hasMember(string name)
         {
-            throw new NotImplementedException();
+            return _add
+                .Any(member =>
+                {
+                    if (member is MethodDeclarationSyntax)
+                        return (member as MethodDeclarationSyntax).Identifier.ToString() == name;
+                    else if (member is PropertyDeclarationSyntax)
+                        return (member as PropertyDeclarationSyntax).Identifier.ToString() == name;
+                    else if (member is FieldDeclarationSyntax)
+                        return (member as FieldDeclarationSyntax)
+                            .Declaration
+                            .Variables[0]
+                            .Identifier.ToString() == name;
+
+                    return false;
+                });
+        }
+
+        public bool isQueueInvocation(InvocationExpressionSyntax invocation, bool asynch, ExpressionSyntax success, out StatementSyntax result)
+        {
+            result = null;
+            var signal = invocation.Expression as MemberAccessExpressionSyntax;
+            if (signal == null)
+                return false;
+
+            if (!(signal.Expression is IdentifierNameSyntax))
+                return false;
+
+            var signalName = signal.Expression.ToString();
+            if (asynch && !hasSignal(signalName))
+                return false;
+
+            if (!asynch)
+            {
+                if (!invocation
+                    .Ancestors()
+                    .Where(node => node is ClassDeclarationSyntax)
+                    .First()
+                    .DescendantNodes()
+                    .OfType<MethodDeclarationSyntax>()
+                    .Where(method => method
+                        .Identifier.ToString()
+                        .Equals(signalName))
+                    .Any())
+                    return false;
+            }
+
+            var queueName = "__queue" + signalName;
+            switch (signal.Name.ToString())
+            {
+                case "enqueue":
+                    Debug.Assert(asynch);
+                    if (!hasMember(queueName))
+                        AddMember(Templates
+                            .SignalQueueMember
+                            .Get<MemberDeclarationSyntax>(queueName));
+
+                    result = Templates
+                        .Enqueue
+                        .Get<StatementSyntax>(queueName, success);
+                    break;
+                case "dequeue":
+                    result = asynch
+                        ? Templates
+                            .DequeueAsynch
+                            .Get<StatementSyntax>(queueName, queueName + "_Top")
+                        : Templates
+                            .DequeueSynch
+                            .Get<StatementSyntax>(queueName, queueName + "_Top");
+                    break;
+                default:
+                    return false;
+            }
+
+            return true;
         }
     }
 }

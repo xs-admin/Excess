@@ -195,6 +195,20 @@ namespace Excess.Extensions.Concurrent
         public static Template FailureFunction = Template.ParseExpression("(__ex) => __0");
 
         public static Template Advance = Template.ParseExpression("__advance((__0).GetEnumerator())");
+
+        public static Template Enqueue = Template.ParseStatement(@"
+            _0.Enqueue(() => __1);");
+
+        public static Template DequeueAsynch = Template.ParseStatement(@"
+            if (_0.Any())
+                __enter(() => _0.Dequeue()(), null);");
+
+        public static Template DequeueSynch = Template.ParseStatement(@"
+            if (_0.Any())
+                _0.Dequeue()();");
+
+        public static Template SignalQueueMember = Template.Parse(@"
+            Queue<Action> _0 = new Queue<Action>();");
         
     }
 }

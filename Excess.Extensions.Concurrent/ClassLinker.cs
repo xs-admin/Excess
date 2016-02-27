@@ -498,6 +498,10 @@ namespace Excess.Extensions.Concurrent
 
         private StatementSyntax LinkExternalInvocation(InvocationExpressionSyntax invocation, InvocationExpressionSyntax success, InvocationExpressionSyntax failure)
         {
+            var queueStatement = null as StatementSyntax;
+            if (_class.isQueueInvocation(invocation, true, success, out queueStatement))
+                return queueStatement;
+
             Debug.Assert(invocation.Expression is MemberAccessExpressionSyntax);
             Debug.Assert(!invocation.Expression
                 .DescendantNodes()

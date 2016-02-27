@@ -102,8 +102,7 @@ namespace Excess.Compiler.Tests
             };
 
             var chopsticks = names.Select(n =>
-                //node.Spawn("chopstick"))
-                node.Spawn<chopstick>())
+                node.Spawn("chopstick"))
                 .ToArray();
 
             var phCount = names.Length;
@@ -112,14 +111,14 @@ namespace Excess.Compiler.Tests
                 var left = chopsticks[i];
                 var right = i == phCount - 1 ? chopsticks[0] : chopsticks[i + 1];
 
-                node.Spawn<philosopher>(names[i], left, right);
-                //node.Spawn("philosopher", names[i], left, right);
+                node.Spawn("philosopher", names[i], left, right);
             }
 
             Thread.Sleep(45000);
-
-            var output = console.items();
             node.Stop();
+            node.waitForCompletion();
+
+            Assert.AreEqual(150, console.items().Length);
         }
 
 
@@ -132,17 +131,13 @@ namespace Excess.Compiler.Tests
                 .Build(@"
                 concurrent class ring_item
                 {
-                    ring_item _next;
                     int _idx;
                     public ring_item(int idx)
                     {
                         _idx = idx;
                     }
                     
-                    public ring_item Next 
-                    {
-                        set {_next = value;}
-                    }
+                    public ring_item Next {get; set;}
 
                     static int ITERATIONS = 50*1000*1000;
                     public void token(int value)
@@ -153,7 +148,7 @@ namespace Excess.Compiler.Tests
                             Node.Stop();
                         }
                         else
-                            _next.token(value + 1);
+                            Next_next.token(value + 1);
                     }                    
                 }", out errors, threads: 1);
 
@@ -190,6 +185,98 @@ namespace Excess.Compiler.Tests
         }
 
         [TestMethod]
+        public void Barbers()
+        {
+            var errors = null as IEnumerable<Diagnostic>;
+            var node = TestRuntime
+                .Concurrent
+                .Build(@"
+                concurrent class barbershop
+                {
+                    barber[] _barbers;
+                    bool[] _busy;
+                    
+                    barbershop()
+                    {
+                        _barbers = new []  {spawn<barber>(0), spawn<barber>(1)); 
+                        _busy    = new []  {false, false); 
+                    }
+
+                    public void visit(int client)
+                    {
+                        console.write(""entered client: "" + client);
+                        if (_busy[0] && _busy[1])
+                            await enqueue();
+
+                        for(int i = 0; i < 2; i++)
+                        {
+                            if (!_busy[i])
+                            {
+                            }
+                        }
+
+                        dequeue();
+                    }
+
+                    private void shave_client(int client, int which)
+                    {
+                        _busy[which] = true;
+                        
+                        var barber = _barbers[which];
+                        double tip = rand(5, 10);
+                        
+                        barber.shave(client)
+                            >> barber.tip(tip);
+                        
+                        _busy[which] = false;
+                    }
+                }
+
+                concurrent class barber
+                {
+                    int _index;
+                    void main(int index)
+                    {
+                        _index = index;
+                        shave >> tip;
+                    }
+
+                    public void shave(int client)
+                    {
+                        await seconds(rand(1, 2));
+                    }
+
+                    double _tip = 0;
+                    public void tip(int client, double amount)
+                    {
+                        _tip += amount;
+                        console.write($""Barber {_index}: {client} tipped {amount: C2}, for a total of {_tip:C2}"");
+                    }
+                }", out errors, threads: 1);
+
+            //must not have compilation errors
+            Assert.IsNull(errors);
+
+            var shop = node.Spawn("barbershop");
+            var rand = new Random();
+            var clients = 30;
+            for (int i = 1; i <= clients; i++)
+            {
+                Thread.Sleep((int)(3000 * rand.NextDouble()));
+                TestRuntime
+                    .Concurrent
+                    .Send(shop, "visit", i);
+            }
+
+            Thread.Sleep(3000); //wait for last one
+            node.Stop();
+            node.waitForCompletion();
+
+            var output = console.items();
+            Assert.AreEqual(output.Length, 30);
+        }
+
+        [TestMethod]
         public void DebugPrint()
         {
             RoslynCompiler compiler = new RoslynCompiler();
@@ -199,71 +286,76 @@ namespace Excess.Compiler.Tests
             string text = null;
 
             tree = compiler.ApplySemanticalPass(@"
-                concurrent class philosopher 
+                concurrent class barbershop
                 {
-                    static int Meals = 10;
+                    barber[] _barbers;
+                    bool[] _busy;
+                    
+                    barbershop()
+                    {
+                        _barbers = new [] {spawn<barber>(0), spawn<barber>(1)}; 
+                        _busy    = new [] {false, false}; 
+                    }
 
-                    void main(string name, chopstick left, chopstick right) 
-	                {
-                        _name  = name;
-	                    _left  = left;
-	                    _right = right;
-                               
-                        for(int i = 0; i < Meals; i++)
+                    public void visit(int client)
+                    {
+                        console.write(""entered client: "" + client);
+                        if (_busy[0] && _busy[1])
+                            await visit.enqueue();
+
+                        for(int i = 0; i < 2; i++)
                         {
-	                        await think();
-                        }    
-	                }
-	
-	                void think()
-	                {
-                        console.write(_name + "" is thinking"");
-                        seconds(rand(1.0, 2.0))
-                            >> hungry();
-	                }
+                            if (!_busy[i]) 
+                            {
+                                await shave_client(client, i);
+                                break;
+                            }
+                        }
 
-	                void hungry()
-	                {
-                        console.write(_name + "" is hungry"");
-	                    (_left.acquire(this) & _right.acquire(this)) 
-                            >> eat();
-	                }
-	
-	                void eat()
-	                {
-                        console.write(_name + "" is eating"");
-                        await seconds(rand(1.0, 2.0));
+                        visit.dequeue();
+                    }
 
-                        _left.release(this); 
-                        _right.release(this);
-	                }
-	                
-                    private string _name;
-                    private chopstick _left;
-	                private chopstick _right;
+                    private void shave_client(int client, int which)
+                    {
+                        _busy[which] = true;
+                        
+                        var barber = _barbers[which];
+                        double tip = rand(5, 10);
+                        
+                        try
+                        {
+                            barber.shave(client)
+                                >> barber.tip(client, tip);
+                        }                
+                        finally
+                        {
+                            _busy[which] = false;
+                        }                
+                    }
                 }
 
-                concurrent class chopstick
+                concurrent class barber
                 {
-	                public void acquire(object owner)
+                    int _index;
+                    void main(int index)
                     {
-                        if (_owner != null)
-                        {
-                            await release;
-                        }
-                        
-                        _owner = owner;
-                    }
-	
-	                public void release(object owner)
-                    {
-                        if (_owner != owner)
-                            throw new InvalidOperationException();
+                        _index = index;
 
-                        _owner = null;
+                        while(true)
+                            shave >> tip;
                     }
 
-                    private object _owner;
+                    public void shave(int client)
+                    {
+                        await seconds(rand(1, 2));
+                    }
+
+                    double _tip = 0;
+                    public void tip(int client, double amount)
+                    {
+                        _tip += amount;
+                        console.write($""Barber {_index}: {client} tipped {amount: C2}, for a total of {_tip:C2}"");
+                    }
                 }", out text);
 
             Assert.IsNotNull(text);

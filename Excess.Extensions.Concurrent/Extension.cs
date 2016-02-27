@@ -41,10 +41,11 @@ namespace Excess.Extensions.Concurrent
 
         private static SyntaxNode Compile(SyntaxNode node, Scope scope)
         {
-            var document = scope.GetDocument();
-
             Debug.Assert(node is ClassDeclarationSyntax);
-            var @class = node as ClassDeclarationSyntax;
+            var @class = (node as ClassDeclarationSyntax)
+                .AddBaseListTypes(CSharp.SimpleBaseType(
+                    CSharp.ParseTypeName("ConcurrentObject")));
+
             var className = @class.Identifier.ToString();
 
             var ctx = new Class(className, scope);
@@ -63,6 +64,8 @@ namespace Excess.Extensions.Concurrent
             }
 
             @class = ctx.Update(@class);
+
+            var document = scope.GetDocument();
             return document.change(@class, Link(ctx), null);
         }
 
@@ -71,11 +74,12 @@ namespace Excess.Extensions.Concurrent
             return (oldNode, newNode, model, scope) =>
             {
                 Debug.Assert(newNode is ClassDeclarationSyntax);
+                var @class = new ClassLinker(ctx, model)
+                    .Visit(newNode);
 
-                var @class = ctx;
                 Debug.Assert(@class != null);
-
-                return new ClassLinker(@class, model).Visit(newNode);
+                Debug.Assert(@class is ClassDeclarationSyntax);
+                return ctx.Update(@class as ClassDeclarationSyntax);
             };
         }
 
