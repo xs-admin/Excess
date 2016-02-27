@@ -208,7 +208,7 @@ namespace Excess.Extensions.Concurrent
                 _0.Dequeue()();");
 
         public static Template SignalQueueMember = Template.Parse(@"
-            Queue<Action> _0 = new Queue<Action>();");
-        
+            private Queue<Action> _0 = new Queue<Action>();");
+
     }
 }

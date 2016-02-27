@@ -1,11 +1,10 @@
-﻿using System;
+﻿using Excess.Compiler.Tests.TestRuntime;
+using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
-namespace Excess.Compiler.Tests.TestRuntime
+namespace Excess.Compiler.Tests.Demos
 {
     class barbershop : ConcurrentObject
     {

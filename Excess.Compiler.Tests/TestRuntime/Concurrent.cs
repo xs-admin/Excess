@@ -87,6 +87,10 @@ namespace Excess.Compiler.Tests.TestRuntime
                 new DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel>(compiler => compiler
                     .Environment()
                         .dependency<console>("Excess.Compiler.Tests.TestRuntime")
+                        //.dependency<object>(new[] {
+                        //    "System",
+                        //    "System.Collections",
+                        //    "System.Collections.Generic" })
                         .dependency(new[] {
                             "System.Threading",
                             "System.Threading.Tasks",
@@ -149,6 +153,16 @@ namespace Excess.Compiler.Tests.TestRuntime
 
         public static void Send(ConcurrentObject @object, string name, params object[] args)
         {
+            Send(@object, name, true, args);
+        }
+
+        public static void SendAsync(ConcurrentObject @object, string name, params object[] args)
+        {
+            Send(@object, name, false, args);
+        }
+
+        private static void Send(ConcurrentObject @object, string name, bool wait, object[] args)
+        {
             var method = @object
                 .GetType()
                 .GetMethods()
@@ -163,7 +177,9 @@ namespace Excess.Compiler.Tests.TestRuntime
             {
                 args = args.Union(new object[] { true }).ToArray();
                 var tsk = method.Invoke(@object, args);
-                ((Task)tsk).Wait();
+
+                if (wait)
+                    ((Task)tsk).Wait();
             }
             else
             {

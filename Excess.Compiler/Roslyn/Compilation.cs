@@ -12,6 +12,7 @@ using System.Reflection;
 using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 using System.IO;
 using System.Diagnostics;
+using System.Linq.Expressions;
 
 namespace Excess.Compiler.Roslyn
 {
@@ -448,8 +449,9 @@ namespace Excess.Compiler.Roslyn
         protected virtual RoslynEnvironment createEnvironment(IPersistentStorage storage)
         {
             var result = new RoslynEnvironment(_scope, storage);
-            result.dependency<object>(new[] { "System", "System.Collections", "System.Collections.Generic" });
-            result.dependency<IEnumerable<object>>(new[] { "System.Collections", "System.Collections.Generic" });
+            result.dependency<object>(new[] { "System", "System.Collections" });
+            result.dependency<Queue<object>>(new[] { "System.Collections.Generic" });
+            result.dependency<Expression>(new[] { "System.Linq" });
 
             return result;
         }

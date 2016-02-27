@@ -196,39 +196,48 @@ namespace Excess.Compiler.Tests
                     barber[] _barbers;
                     bool[] _busy;
                     
-                    barbershop()
+                    public barbershop(barber barber1, barber barber2)
                     {
-                        _barbers = new []  {spawn<barber>(0), spawn<barber>(1)); 
-                        _busy    = new []  {false, false); 
+                        _barbers = new [] {barber1, barber2}; 
+                        _busy    = new [] {false, false}; 
                     }
 
                     public void visit(int client)
                     {
-                        console.write(""entered client: "" + client);
+                        console.write($""Client: {client}, Barber1 {barber_status(0)},  Barber2: {barber_status(1)}"");
                         if (_busy[0] && _busy[1])
-                            await enqueue();
+                            await visit.enqueue();
 
                         for(int i = 0; i < 2; i++)
                         {
-                            if (!_busy[i])
+                            if (!_busy[i]) 
                             {
+                                await shave_client(client, i);
+                                break;
                             }
                         }
 
-                        dequeue();
+                        visit.dequeue();
                     }
 
                     private void shave_client(int client, int which)
                     {
-                        _busy[which] = true;
-                        
                         var barber = _barbers[which];
                         double tip = rand(5, 10);
                         
+                        _busy[which] = true;
+
                         barber.shave(client)
-                            >> barber.tip(tip);
-                        
+                            >> barber.tip(client, tip);
+
                         _busy[which] = false;
+                    }
+
+                    private string barber_status(int which)
+                    {
+                        return _busy[which]
+                            ? ""working""
+                            : ""available"";
                     }
                 }
 
@@ -238,7 +247,9 @@ namespace Excess.Compiler.Tests
                     void main(int index)
                     {
                         _index = index;
-                        shave >> tip;
+
+                        while(true)
+                            shave >> tip;
                     }
 
                     public void shave(int client)
@@ -250,14 +261,17 @@ namespace Excess.Compiler.Tests
                     public void tip(int client, double amount)
                     {
                         _tip += amount;
-                        console.write($""Barber {_index}: {client} tipped {amount: C2}, for a total of {_tip:C2}"");
+                        console.write($""Barber {_index}: {client} tipped {amount:C2}, for a total of {_tip:C2}"");
                     }
                 }", out errors, threads: 1);
 
             //must not have compilation errors
             Assert.IsNull(errors);
 
-            var shop = node.Spawn("barbershop");
+            var barber1 = node.Spawn("barber", 0);
+            var barber2 = node.Spawn("barber", 1);
+            var shop = node.Spawn("barbershop", barber1, barber2);
+
             var rand = new Random();
             var clients = 30;
             for (int i = 1; i <= clients; i++)
@@ -265,7 +279,7 @@ namespace Excess.Compiler.Tests
                 Thread.Sleep((int)(3000 * rand.NextDouble()));
                 TestRuntime
                     .Concurrent
-                    .Send(shop, "visit", i);
+                    .SendAsync(shop, "visit", i);
             }
 
             Thread.Sleep(3000); //wait for last one
@@ -273,7 +287,7 @@ namespace Excess.Compiler.Tests
             node.waitForCompletion();
 
             var output = console.items();
-            Assert.AreEqual(output.Length, 30);
+            Assert.AreEqual(output.Length, 60);
         }
 
         [TestMethod]
