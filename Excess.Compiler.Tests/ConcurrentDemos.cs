@@ -148,7 +148,7 @@ namespace Excess.Compiler.Tests
                             Node.Stop();
                         }
                         else
-                            Next_next.token(value + 1);
+                            Next.token(value + 1);
                     }                    
                 }", out errors, threads: 1);
 

@@ -20,9 +20,6 @@ namespace Excess.Compiler.Tests
             RoslynCompiler compiler = new RoslynCompiler();
             var instance = compiler.Instance();
 
-            SyntaxTree tree;
-            string text;
-
             //code extension
             instance
                 .match<InstanceFoo>()
@@ -36,13 +33,15 @@ namespace Excess.Compiler.Tests
 
                 .then(TransformInstances);
 
+            SyntaxTree tree;
+            string text;
             RoslynInstanceDocument doc = new RoslynInstanceDocument(InstanceTestParser);
             tree = compiler.CompileInstance(doc, out text);
             Assert.IsTrue(tree
                 .GetRoot()
                 .DescendantNodes()
                 .OfType<ParenthesizedLambdaExpressionSyntax>()
-                .Count() == 1); //must have added a PropertyChanged handler
+                .Count() == 2); //must have added a PropertyChanged handler
         }
 
         static CompilationUnitSyntax UsageApp = CSharp.ParseCompilationUnit(@"
