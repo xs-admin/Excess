@@ -801,6 +801,8 @@ namespace Excess.Compiler.Roslyn
                 modifiers = (member as FieldDeclarationSyntax).Modifiers;
             else if (member is ConstructorDeclarationSyntax)
                 modifiers = (member as ConstructorDeclarationSyntax).Modifiers;
+            else if (member is EnumDeclarationSyntax)
+                modifiers = (member as EnumDeclarationSyntax).Modifiers;
             else
                 throw new NotImplementedException();
 

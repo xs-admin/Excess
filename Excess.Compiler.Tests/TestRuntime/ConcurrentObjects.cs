@@ -14,12 +14,14 @@ namespace Excess.Compiler.Tests.TestRuntime
     public class Node
     {
         IDictionary<string, Spawner> _types;
+        int _threads;
         public Node(int threads, IDictionary<string, Spawner> types)
         {
+            _threads = threads;
             _types = types;
 
-            Debug.Assert(threads > 0);
-            createThreads(threads);
+            Debug.Assert(_threads > 0);
+            createThreads(_threads);
         }
 
         public T Spawn<T>(params object[] args) where T : ConcurrentObject, new()
@@ -105,6 +107,13 @@ namespace Excess.Compiler.Tests.TestRuntime
         public void waitForCompletion()
         {
             _stop.Token.WaitHandle.WaitOne();
+        }
+
+        public void restart()
+        {
+            Debug.Assert(_stop.Token.IsCancellationRequested);
+            _stop = new CancellationTokenSource();
+            createThreads(_threads);
         }
     }
 

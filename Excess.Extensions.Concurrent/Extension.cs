@@ -53,7 +53,6 @@ namespace Excess.Extensions.Concurrent
 
             foreach (var member in @class.Members)
             {
-                var isPublic = Roslyn.IsVisible(member);
                 if (member is PropertyDeclarationSyntax)
                     compileProperty(member as PropertyDeclarationSyntax, ctx, scope);
                 else if (member is MethodDeclarationSyntax)

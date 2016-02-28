@@ -106,6 +106,7 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="ConcurrentBenchmark.cs" />
     <Compile Include="ConcurrentDemos.cs" />
     <Compile Include="ConcurrentUsage.cs" />
     <Compile Include="RuntimeHelper.cs" />

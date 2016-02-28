@@ -123,68 +123,6 @@ namespace Excess.Compiler.Tests
 
 
         [TestMethod]
-        public void ThreadRing()
-        {
-            var errors = null as IEnumerable<Diagnostic>;
-            var node = TestRuntime
-                .Concurrent
-                .Build(@"
-                concurrent class ring_item
-                {
-                    int _idx;
-                    public ring_item(int idx)
-                    {
-                        _idx = idx;
-                    }
-                    
-                    public ring_item Next {get; set;}
-
-                    static int ITERATIONS = 50*1000*1000;
-                    public void token(int value)
-                    {
-                        if (value >= ITERATIONS)
-                        {
-                            console.write(_idx);
-                            Node.Stop();
-                        }
-                        else
-                            Next.token(value + 1);
-                    }                    
-                }", out errors, threads: 1);
-
-            //must not have compilation errors
-            Assert.IsNull(errors);
-
-            const int ringCount = 503;
-
-            //create the ring
-            var items = new ConcurrentObject[ringCount];
-            for (int i = 0; i < ringCount; i++)
-                items[i] = node.Spawn("ring_item", i);
-
-            //update connectivity
-            for (int i = 0; i < ringCount; i++)
-            {
-                var curr = items[i];
-                var next = i < ringCount - 1 ? items[i + 1] : items[0];
-                TestRuntime.Concurrent.Send(curr, "Next", next);
-            }
-
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
-            {
-                //run it by sending the first token, it will go around 50M times
-                TestRuntime.Concurrent.Send(items[0], "token", 0);
-                node.waitForCompletion();
-            }
-            sw.Stop();
-
-            TimeSpan rt = TimeSpan.FromTicks(sw.ElapsedTicks);
-            var ts = rt.TotalSeconds.ToString();
-            Assert.IsNotNull(ts);
-        }
-
-        [TestMethod]
         public void Barbers()
         {
             var errors = null as IEnumerable<Diagnostic>;
@@ -300,79 +238,118 @@ namespace Excess.Compiler.Tests
             string text = null;
 
             tree = compiler.ApplySemanticalPass(@"
-                concurrent class barbershop
+                concurrent class Chameneo
                 {
-                    barber[] _barbers;
-                    bool[] _busy;
-                    
-                    barbershop()
+                    public enum Color
                     {
-                        _barbers = new [] {spawn<barber>(0), spawn<barber>(1)}; 
-                        _busy    = new [] {false, false}; 
+                        blue,
+                        red,    
+                        yellow,    
                     }
 
-                    public void visit(int client)
-                    {
-                        console.write(""entered client: "" + client);
-                        if (_busy[0] && _busy[1])
-                            await visit.enqueue();
+                    public Color Colour {get; private set;}
+                    public int Meetings {get; private set;}
+                    public int MeetingsWithSelf {get; private set;}
+                    public Broker MeetingPlace {get; private set;}
 
-                        for(int i = 0; i < 2; i++)
+                    public Chameneo(Broker meetingPlace, Color color)
+                    {
+                        MeetingPlace = meetingPlace;
+                        Colour = color;
+                        Meetings = 0;
+                        MeetingsWithSelf = 0;
+                    }
+    
+                    void main() 
+	                {
+                        for(;;)
                         {
-                            if (!_busy[i]) 
-                            {
-                                await shave_client(client, i);
-                                break;
-                            }
+                            MeetingPlace.request(this);
+                            await meet;
                         }
-
-                        visit.dequeue();
-                    }
-
-                    private void shave_client(int client, int which)
+	                }
+	                
+                    public void meet(Chameneo other, Color color)
                     {
-                        _busy[which] = true;
-                        
-                        var barber = _barbers[which];
-                        double tip = rand(5, 10);
-                        
-                        try
+                        Colour = compliment(Colour, color);
+                        Meetings++;
+                        if (other == this)
+                            MeetingsWithSelf++;
+                    }                    
+
+                    public void print()
+                    {
+                        console.write($""{Colour}, {Meetings}, {MeetingsWithSelf}"");
+                    }                    
+
+                    private static Color compliment(Color c1, Color c2)
+                    {
+                        switch (c1)
                         {
-                            barber.shave(client)
-                                >> barber.tip(client, tip);
-                        }                
-                        finally
-                        {
-                            _busy[which] = false;
-                        }                
+                            case Color.blue:
+                                switch (c2)
+                                {
+                                    case Color.blue: return Color.blue;
+                                    case Color.red: return Color.yellow;
+                                    case Color.yellow: return Color.red;
+                                    default: break;
+                                }
+                                break;
+                            case Color.red:
+                                switch (c2)
+                                {
+                                    case Color.blue: return Color.yellow;
+                                    case Color.red: return Color.red;
+                                    case Color.yellow: return Color.blue;
+                                    default: break;
+                                }
+                                break;
+                            case Color.yellow:
+                                switch (c2)
+                                {
+                                    case Color.blue: return Color.red;
+                                    case Color.red: return Color.blue;
+                                    case Color.yellow: return Color.yellow;
+                                    default: break;
+                                }
+                                break;
+                        }
+                        throw new Exception();
                     }
+
                 }
 
-                concurrent class barber
+                concurrent class Broker
                 {
-                    int _index;
-                    void main(int index)
+                    int _meetings = 0;
+                    public Broker(int meetings)
                     {
-                        _index = index;
-
-                        while(true)
-                            shave >> tip;
+                        _meetings = meetings;
                     }
 
-                    public void shave(int client)
+                    Chameneo _first = null;
+                    public void request(Chameneo creature)
                     {
-                        await seconds(rand(1, 2));
-                    }
-
-                    double _tip = 0;
-                    public void tip(int client, double amount)
-                    {
-                        _tip += amount;
-                        console.write($""Barber {_index}: {client} tipped {amount: C2}, for a total of {_tip:C2}"");
+                        if (_first != null)
+                        {
+                            //perform meeting
+                            var firstColor = _first.Colour;
+                            _first.meet(creature, creature.Colour);
+                            creature.meet(_first, firstColor);
+                            
+                            //prepare for next
+                            _first = null;
+                            _meetings--;
+                            if (_meetings == 0)
+                                Node.Stop();
+                        }
+                        else
+                            _first = creature;
                     }
                 }", out text);
 
             Assert.IsNotNull(text);
         }
+
     }
 }
