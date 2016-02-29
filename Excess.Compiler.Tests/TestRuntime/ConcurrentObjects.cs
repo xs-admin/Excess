@@ -56,23 +56,45 @@ namespace Excess.Compiler.Tests.TestRuntime
         }
 
         ConcurrentQueue<Event> _queue = new ConcurrentQueue<Event>();
-
         public void Queue(ConcurrentObject who, Action what, Action<Exception> failure)
         {
-            _queue.Enqueue(new Event
-            {
-                Tries = 0,
-                Target = who,
-                What = what,
-                Failure = failure
-            });
+            //_queue.Enqueue(new Event
+            //{
+            //    Tries = 0,
+            //    Target = who,
+            //    What = what,
+            //    Failure = failure
+            //});
+            _queue.Enqueue(queueEvent(0, who, what, failure));
         }
 
         CancellationTokenSource _stop = new CancellationTokenSource();
+        int _stopCount = 1;
         public void Stop()
         {
+            _stopCount--;
+            if (_stopCount > 0)
+                return;
+
             _stop.Cancel();
             Thread.Sleep(1);
+        }
+
+        public void WaitForCompletion()
+        {
+            _stop.Token.WaitHandle.WaitOne();
+        }
+
+        public void Restart()
+        {
+            Debug.Assert(_stop.Token.IsCancellationRequested);
+            _stop = new CancellationTokenSource();
+            createThreads(_threads);
+        }
+
+        public void StopCount(int stopCount)
+        {
+            _stopCount = stopCount;
         }
 
         private void createThreads(int threads)
@@ -96,6 +118,7 @@ namespace Excess.Compiler.Tests.TestRuntime
                         }
 
                         message.Target.__enter(message.What, message.Failure);
+                        _cache.Enqueue(message);
                     }
                 });
 
@@ -104,16 +127,31 @@ namespace Excess.Compiler.Tests.TestRuntime
             }
         }
 
-        public void waitForCompletion()
+        //cache events to avoid allocations
+        ConcurrentQueue<Event> _cache = new ConcurrentQueue<Event>();
+        int _cacheHits = 0;
+        int _cacheMisses = 0;
+        private Event queueEvent(int tries, ConcurrentObject target, Action action, Action<Exception> failure)
         {
-            _stop.Token.WaitHandle.WaitOne();
-        }
+            var result = null as Event;
+            if (_cache.TryDequeue(out result))
+            {
+                _cacheHits++;
+                result.Tries = tries;
+                result.Target = target;
+                result.What = action;
+                result.Failure = failure;
+                return result;
+            }
 
-        public void restart()
-        {
-            Debug.Assert(_stop.Token.IsCancellationRequested);
-            _stop = new CancellationTokenSource();
-            createThreads(_threads);
+            _cacheMisses++;
+            return new Event
+            {
+                Tries = tries,
+                Target = target,
+                What = action,
+                Failure = failure
+            };
         }
     }
 

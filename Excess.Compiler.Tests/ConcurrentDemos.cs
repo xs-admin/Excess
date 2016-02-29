@@ -116,7 +116,7 @@ namespace Excess.Compiler.Tests
 
             Thread.Sleep(45000);
             node.Stop();
-            node.waitForCompletion();
+            node.WaitForCompletion();
 
             Assert.AreEqual(150, console.items().Length);
         }
@@ -222,7 +222,7 @@ namespace Excess.Compiler.Tests
 
             Thread.Sleep(3000); //wait for last one
             node.Stop();
-            node.waitForCompletion();
+            node.WaitForCompletion();
 
             var output = console.items();
             Assert.AreEqual(output.Length, 60);
@@ -251,6 +251,11 @@ namespace Excess.Compiler.Tests
                     public int Meetings {get; private set;}
                     public int MeetingsWithSelf {get; private set;}
                     public Broker MeetingPlace {get; private set;}
+
+                    public Chameneo(Broker meetingPlace, int color)
+                    : this(meetingPlace, (Color)color)
+                    {
+                    }
 
                     public Chameneo(Broker meetingPlace, Color color)
                     {

@@ -67,7 +67,7 @@ namespace Excess.Compiler.Tests
             {
                 //run it by sending the first token, it will go around 50M times
                 TestRuntime.Concurrent.Send(items[0], "token", 0);
-                node.waitForCompletion();
+                node.WaitForCompletion();
             }
             sw.Stop();
 
@@ -213,27 +213,21 @@ namespace Excess.Compiler.Tests
                 var broker = node.Spawn("Broker", meeetings);
                 for (int i = 0; i < colors.Length; i++)
                     node.Spawn("Chameneo", broker, colors[i]);
-
-                node.waitForCompletion();
             };
 
             Stopwatch sw = new Stopwatch();
-            var oldMode = GCSettings.LatencyMode;
-            //GCSettings.LatencyMode = GCLatencyMode.LowLatency;
-            //try
-            //{
-                sw.Start();
-                {
-                    run(iterations, new[] { blue, red, yellow });
-                    node.restart();
-                    run(iterations, new[] { blue, red, yellow, red, yellow, blue, red, yellow, red, blue });
-                }
-                sw.Stop();
-            //}
-            //finally
-            //{
-            //    GCSettings.LatencyMode = oldMode;
-            //}
+            sw.Start();
+            {
+                node.StopCount(2);
+
+                run(iterations, new[] { blue, red, yellow });
+                //node.WaitForCompletion();
+                //node.Restart();
+                run(iterations, new[] { blue, red, yellow, red, yellow, blue, red, yellow, red, blue });
+
+                node.WaitForCompletion();
+            }
+            sw.Stop();
 
             TimeSpan rt = TimeSpan.FromTicks(sw.ElapsedTicks);
             var ts = rt.TotalSeconds.ToString();
