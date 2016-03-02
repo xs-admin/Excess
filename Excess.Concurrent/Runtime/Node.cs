@@ -7,6 +7,7 @@ using System.Threading;
 namespace Excess.Concurrent.Runtime
 {
     using System.Linq;
+    using System.Threading.Tasks;
     using Spawner = Func<object[], ConcurrentObject>;
 
     public class Node
@@ -33,6 +34,13 @@ namespace Excess.Concurrent.Runtime
         {
             @object.startRunning(this, args);
             return @object;
+        }
+
+        public Task<bool> Queue(Action what)
+        {
+            var completion = new TaskCompletionSource<bool>();
+            Queue(null, what, (ex) => completion.SetException(ex));
+            return completion.Task;
         }
 
         public ConcurrentObject Spawn(string type, params object[] args)
@@ -121,7 +129,22 @@ namespace Excess.Concurrent.Runtime
                             continue;
                         }
 
-                        message.Target.__enter(message.What, message.Failure);
+                        if (message.Target != null)
+                            message.Target.__enter(message.What, message.Failure);
+                        else
+                        {
+                            try
+                            {
+                                message.What();
+                            }
+                            catch (Exception ex)
+                            {
+                                if (message.Failure != null)
+                                    message.Failure(ex);
+                                else
+                                    throw;
+                            }
+                        }
                     }
                 });
 
