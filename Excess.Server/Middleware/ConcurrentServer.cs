@@ -22,6 +22,7 @@ namespace Middleware
         void Build(Action<IConcurrentServer, Node> builder);
 
         void Register(Guid id, ServerFunc func);
+        void RegisterClass(Type @class);
         void RegisterClass<T>() where T : ConcurrentObject;
         void RegisterInstance(Guid id, ConcurrentObject @object);
     }
@@ -52,12 +53,12 @@ namespace Middleware
         }
 
         Dictionary<Type, Dictionary<string, MethodFunc>> _types = new Dictionary<Type, Dictionary<string, MethodFunc>>();
-        public void RegisterClass<T>() where T : ConcurrentObject
+        public void RegisterClass(Type @class)
         {
             if (_built)
                 throw new InvalidOperationException();
 
-            var type = typeof(T);
+            var type = @class;
             var publicMethods = type.GetMethods(System.Reflection.BindingFlags.Public);
             var methodFuncs = new Dictionary<string, MethodFunc>();
             foreach (var method in publicMethods)
@@ -100,6 +101,11 @@ namespace Middleware
             }
 
             _types[type] = methodFuncs;
+        }
+
+        public void RegisterClass<T>() where T : ConcurrentObject
+        {
+            RegisterClass(typeof(T));
         }
 
         public void RegisterInstance(Guid id, ConcurrentObject @object)

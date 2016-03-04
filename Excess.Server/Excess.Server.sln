@@ -7,6 +7,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Runtime", "..\Excess.Concur
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Middleware", "Middleware\Middleware.csproj", "{ED3D63D8-7C35-4F77-8430-7BC6BBFE56B9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Startup", "Startup\Startup.csproj", "{F30D6658-EA1A-4117-88CA-5B96AF6303AA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "xss", "xss\xss.csproj", "{8F97EF8D-0F91-445A-B3FC-F4C438FFBC17}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +25,14 @@ Global
 		{ED3D63D8-7C35-4F77-8430-7BC6BBFE56B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ED3D63D8-7C35-4F77-8430-7BC6BBFE56B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{ED3D63D8-7C35-4F77-8430-7BC6BBFE56B9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F30D6658-EA1A-4117-88CA-5B96AF6303AA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F30D6658-EA1A-4117-88CA-5B96AF6303AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F30D6658-EA1A-4117-88CA-5B96AF6303AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F30D6658-EA1A-4117-88CA-5B96AF6303AA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8F97EF8D-0F91-445A-B3FC-F4C438FFBC17}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8F97EF8D-0F91-445A-B3FC-F4C438FFBC17}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8F97EF8D-0F91-445A-B3FC-F4C438FFBC17}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8F97EF8D-0F91-445A-B3FC-F4C438FFBC17}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
