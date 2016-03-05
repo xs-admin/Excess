@@ -4,6 +4,7 @@ using Middleware;
 using Owin;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -32,8 +33,10 @@ namespace Startup
                 if (useStaticFiles)
                     app.UseStaticFiles();
 
+                var concurrentServer = null as IConcurrentServer;
                 app.UseConcurrent(server =>
                 {
+                    concurrentServer = server;
                     if (classes != null)
                     {
                         foreach (var @class in classes)
@@ -47,8 +50,11 @@ namespace Startup
                     }
                 });
 
+                Debug.Assert(concurrentServer != null);
                 if (onInit != null)
                     onInit(app);
+
+                concurrentServer.Start();
             }))
             {
                 Console.WriteLine("Press Enter to quit."); //td: lol

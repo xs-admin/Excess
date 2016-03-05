@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Startup", "Startup\Startup.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "xss", "xss\xss.csproj", "{8F97EF8D-0F91-445A-B3FC-F4C438FFBC17}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Node.NetMQ", "Node.NetMQ\Node.NetMQ.csproj", "{1258FDEA-C6EA-4932-871A-4259AA115464}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{8F97EF8D-0F91-445A-B3FC-F4C438FFBC17}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8F97EF8D-0F91-445A-B3FC-F4C438FFBC17}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8F97EF8D-0F91-445A-B3FC-F4C438FFBC17}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1258FDEA-C6EA-4932-871A-4259AA115464}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1258FDEA-C6EA-4932-871A-4259AA115464}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1258FDEA-C6EA-4932-871A-4259AA115464}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1258FDEA-C6EA-4932-871A-4259AA115464}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

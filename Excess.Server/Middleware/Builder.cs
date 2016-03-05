@@ -9,7 +9,7 @@ namespace Middleware
 {
     public static class BuilderExtensions
     {
-        public static void UseConcurrent(this IAppBuilder app, Action<IConcurrentServer> initialize)
+        public static void UseConcurrent(this IAppBuilder app, Action<IConcurrentServer> initialize = null)
         {
             app.Use<ConcurrentServer>(initialize);
         }
