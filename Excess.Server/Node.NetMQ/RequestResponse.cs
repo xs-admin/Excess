@@ -1,16 +1,12 @@
 ﻿using Excess.Concurrent.Runtime;
 using Middleware;
 using NetMQ;
-using NetMQ.Core;
 using NetMQ.Sockets;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using Microsoft.Owin;
-using System.IO;
 
 namespace NetMQNode
 {
@@ -83,45 +79,60 @@ namespace NetMQNode
 
     public class RequestResponseServer : ConcurrentServer
     {
+        string _url;
         public override void Start()
         {
-            base.Start();
-            //var node = new Runtime.Node(5); //td: config
-            //using(var context = NetMQContext.Create())
-            //using (var server = context.CreateResponseSocket())
-            //{
-            //    server.Bind(url);
-            //    var message = server.ReceiveFrameString();
-            //    if (message.Any())
-            //        throw new InvalidOperationException();
+            using (var context = NetMQContext.Create())
+            using (var server = context.CreateResponseSocket())
+            {
+                server.Bind(_url);
+                var message = server.ReceiveFrameString();
+                if (message.Any())
+                    throw new InvalidOperationException();
 
-            //    server.SendFrame(serverObjects());
-            //    while (true)
-            //    {
-            //        message = server.ReceiveFrameString();
+                //handshake
+                server.SendFrame(serverObjects());
 
-            //        try
-            //        {
-            //            JObject call = JObject.Parse(message);
+                //loop
+                for(;;)
+                {
+                    message = server.ReceiveFrameString();
 
-            //            var objectId = Guid.Parse(call.GetValue("id").ToString());
-            //            var method = call.GetValue("method").ToString();
-            //            var args = JObject.FromObject(call.GetValue("args"));
+                    try
+                    {
+                        JObject call = JObject.Parse(message);
 
-            //            var @object = _instances[objectId];
-            //        }
-            //        catch (Exception ex)
-            //        {
-            //        }
+                        var @object = Guid.Parse(call.GetValue("id").ToString());
+                        var method = call.GetValue("method").ToString();
+                        var args = JObject.FromObject(call.GetValue("args"));
 
+                        Invoke(@object, method, args,
+                            result => server.SendFrame(result.ToString()),
+                            ex => server.SendFrame(exceptionJson(ex).ToString()));
+                    }
+                    catch (Exception ex)
+                    {
+                        server.SendFrame(exceptionJson(ex).ToString());
+                    }
+                }
+            }
+        }
 
-            //        // processing the request
-            //        //hread.Sleep(100);
+        private string serverObjects()
+        {
+            return string.Join("|", _funcs
+                .Keys
+                .Select(key => key.ToString()
+                .ToArray()));
+        }
 
-            //        Console.WriteLine("Sending World");
-            //        server.SendFrame("World");
-            //    }
-            //}
+        private JObject exceptionJson(Exception ex)
+        {
+            return new JObject(new
+            {
+                ExceptionType = ex.GetType().AssemblyQualifiedName,
+                Message = ex.Message
+            });
         }
     }
 }

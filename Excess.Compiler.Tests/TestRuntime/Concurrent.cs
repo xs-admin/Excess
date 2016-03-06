@@ -81,7 +81,7 @@ namespace Excess.Compiler.Tests.TestRuntime
         {
             errors = null;
 
-            var compilation = new Roslyn.Compilation(null);
+            var compilation = new Roslyn.Compilation(null, null);
             var injector = new CompositeInjector<SyntaxToken, SyntaxNode, SemanticModel>(new[]
             {
                 new DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel>(compiler => compiler

@@ -29,7 +29,7 @@ namespace Excess.Compiler.Tests
 
         public static dynamic ExecuteTest(string text, Action<ICompiler<SyntaxToken, SyntaxNode, SemanticModel>> config)
         {
-            var compilation = new Excess.Compiler.Roslyn.Compilation(null);
+            var compilation = new Roslyn.Compilation(null, null);
             var injector = new CompositeInjector<SyntaxToken, SyntaxNode, SemanticModel>(new[] {
                 _main,
                 new DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel>(compiler => config(compiler))

@@ -16,7 +16,7 @@ using System.Linq.Expressions;
 
 namespace Excess.Compiler.Roslyn
 {
-    public interface ICompilationTool
+    public interface ICompilationTool //td: get rid of this
     {
         string displayName { get; }
         bool doNotCache { get; }
@@ -34,10 +34,12 @@ namespace Excess.Compiler.Roslyn
 
     public class Compilation
     {
-        public Compilation(IPersistentStorage storage)
+        ICompilationAnalysis<SyntaxToken, SyntaxNode, SemanticModel> _analysis;
+        public Compilation(IPersistentStorage storage, ICompilationAnalysis<SyntaxToken, SyntaxNode, SemanticModel> analysis)
         {
             _environment = createEnvironment(storage);
             _scope.set<ICompilerEnvironment>(_environment);
+            _analysis = analysis;
         }
 
         public string OutputFile { get; set; }
@@ -422,6 +424,9 @@ namespace Excess.Compiler.Roslyn
                     .Any())
                 return null;
 
+            if (_analysis != null)
+                performAnalysis((CompilationAnalysis)_analysis);
+
             using (var stream = new MemoryStream())
             {
                 var result = _compilation.Emit(stream);
@@ -454,6 +459,20 @@ namespace Excess.Compiler.Roslyn
             result.dependency<Expression>(new[] { "System.Linq" });
 
             return result;
+        }
+
+        private void performAnalysis(CompilationAnalysis analysis)
+        {
+            foreach (var document in _documents)
+            {
+                var root = document.Document.SyntaxRoot;
+                if (root != null)
+                {
+                    var model = _compilation.GetSemanticModel(root.SyntaxTree); //td: really neccesary?
+                    var visitor = new CompilationAnalysisVisitor(analysis, model, _scope);
+                    visitor.Visit(root);
+                }
+            }
         }
 
         public IEnumerable<Diagnostic> errors()

@@ -61,7 +61,7 @@ namespace Middleware
             builder(this, _node);
         }
 
-        ConcurrentDictionary<Guid, ServerFunc> _funcs = new ConcurrentDictionary<Guid, ServerFunc>();
+        protected ConcurrentDictionary<Guid, ServerFunc> _funcs = new ConcurrentDictionary<Guid, ServerFunc>();
         public void Register(Guid id, ServerFunc func)
         {
             for (;;)
@@ -159,6 +159,5 @@ namespace Middleware
             if (!_running)
                 throw new InvalidOperationException("timeout");
         }
-
     }
 }

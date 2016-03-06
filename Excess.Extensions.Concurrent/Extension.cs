@@ -1,28 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Diagnostics;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.CSharp;
 using Excess.Compiler;
 using Excess.Compiler.Roslyn;
-using Microsoft.CodeAnalysis.CSharp;
-using System.Diagnostics;
+using Excess.Extensions.Concurrent.Model;
 
 namespace Excess.Extensions.Concurrent
 {
-    using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
+    using CSharp = SyntaxFactory;
     using Roslyn = RoslynCompiler;
     using ExcessCompiler = ICompiler<SyntaxToken, SyntaxNode, SemanticModel>;
-    using Model;
 
     public class Extension
     {
         public static void Apply(ExcessCompiler compiler)
         {
             var lexical = compiler.Lexical();
-
             lexical
                 .match()
                     .token("concurrent", named: "keyword")
