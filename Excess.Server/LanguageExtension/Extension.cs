@@ -2,11 +2,13 @@
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis;
 using Excess.Compiler;
+using Excess.Compiler.Roslyn;
 
 namespace LanguageExtension
 {
     using ExcessCompiler = ICompiler<SyntaxToken, SyntaxNode, SemanticModel>;
     using ExcessCompilation = ICompilationAnalysis<SyntaxToken, SyntaxNode, SemanticModel>;
+    using System.Diagnostics;
 
     public class Extension
     {
@@ -27,7 +29,18 @@ namespace LanguageExtension
 
         private static SyntaxNode CompileConfig(SyntaxNode node, Scope scope, SyntacticalExtension<SyntaxNode> data)
         {
-            throw new NotImplementedException();
+            Debug.Assert(node is MethodDeclarationSyntax);
+            var methodSyntax = node as MethodDeclarationSyntax;
+
+            var classToAdd = Templates
+                .ConfigClass
+                .Get<ClassDeclarationSyntax>(data.Identifier);
+
+            var document = scope.GetDocument();
+            document.change(node.Parent, RoslynCompiler.AddType(classToAdd));
+            document.change(node.Parent, RoslynCompiler.RemoveMember(node));
+
+            return node;
         }
 
         private static bool isConcurrentObject(ClassDeclarationSyntax arg1, SemanticModel arg2, Scope arg3)

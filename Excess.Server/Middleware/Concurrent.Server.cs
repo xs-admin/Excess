@@ -17,7 +17,7 @@ namespace Middleware
 
     public interface IConcurrentNode
     {
-        void             Connect(IConcurrentServer server);
+        void Connect(IConcurrentServer parent, Action connected, Action<Exception> failure);
         ConcurrentObject Bind(Guid id);
     }
 
@@ -147,14 +147,16 @@ namespace Middleware
         {
             foreach (var node in _nodes)
             {
-                _node.Queue(null,
-                () =>
+                _node.Queue(null, () => 
                 {
-                    node.Connect(this);
-                    lock(_nodes)
-                    {
-                        _nodes.Remove(node);
-                    }
+                    node.Connect(this, () => //success
+                    { 
+                        lock (_nodes)
+                        {
+                            _nodes.Remove(node);
+                        }
+                    },
+                    (ex) => { _startFailed = ex; });
                 },
                 (ex) => { _startFailed = ex; });
             }

@@ -325,6 +325,26 @@ namespace Excess.Compiler.Roslyn
             };
         }
 
+        public static Func<SyntaxNode, Scope, SyntaxNode> AddType(TypeDeclarationSyntax member)
+        {
+            return (node, scope) =>
+            {
+                if (node is ClassDeclarationSyntax)
+                    return (node as ClassDeclarationSyntax)
+                        .AddMembers(member);
+                else if (node is CompilationUnitSyntax)
+                    return (node as CompilationUnitSyntax)
+                        .AddMembers(member);
+                else if (node is NamespaceDeclarationSyntax)
+                    return (node as NamespaceDeclarationSyntax)
+                        .AddMembers(member);
+
+                Debug.Assert(false); //td: case
+                return node;
+            };
+        }
+        
+
         public static Func<SyntaxNode, Scope, SyntaxNode> AddStatement(StatementSyntax statement, SyntaxNode before = null, SyntaxNode after = null)
         {
             return (node, scope) =>
@@ -536,9 +556,11 @@ namespace Excess.Compiler.Roslyn
             string memberId = NodeMark(member);
             return (node, scope) =>
             {
-                var clazz = (ClassDeclarationSyntax)node;
-                clazz = clazz.RemoveNode(FindNode(clazz.Members, memberId), SyntaxRemoveOptions.KeepTrailingTrivia);
-                return clazz;
+                return node.RemoveNode(node
+                    .DescendantNodes()
+                    .Where(child => NodeMark(child) == memberId)
+                    .First(), 
+                    SyntaxRemoveOptions.KeepTrailingTrivia);
             };
         }
 
