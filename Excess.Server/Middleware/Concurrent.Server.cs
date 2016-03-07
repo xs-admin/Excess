@@ -2,20 +2,18 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Linq;
-
-using Microsoft.Owin;
-using System.Collections.Concurrent;
-using Excess.Concurrent.Runtime;
-
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System.IO;
+using System.Reflection;
 using System.Threading;
+using System.Collections.Concurrent;
+
+using Newtonsoft.Json.Linq;
+
+using Excess.Concurrent.Runtime;
 
 namespace Middleware
 {
-    using ServerFunc = Action<IConcurrentServer, string, JObject, Action<JObject>, Action<Exception>>;
-    using MethodFunc = Action<ConcurrentObject, JObject, Action<JObject>, Action<Exception>>;
+    using ServerFunc = Action<IConcurrentServer, string, JObject, Action<JObject>>;
+    using MethodFunc = Action<ConcurrentObject, JObject, Action<JObject>>;
 
     public interface IConcurrentNode
     {
@@ -44,11 +42,11 @@ namespace Middleware
         {
         }
 
-        public void Invoke(Guid @object, string method, JObject args, Action<JObject> success, Action<Exception> failure)
+        public Task<bool> Invoke(Guid @object, string method, JObject args, Action<JObject> success)
         {
             ServerFunc func;
             if (_funcs.TryGetValue(@object, out func))
-                _node.Queue(() => func(this, method, args, success, failure));
+                return _node.Queue(() => func(this, method, args, success));
             else
                 throw new InvalidOperationException();
         }
@@ -78,30 +76,46 @@ namespace Middleware
                 throw new InvalidOperationException();
 
             var type = @class;
-            var publicMethods = type.GetMethods(System.Reflection.BindingFlags.Public);
+            var publicMethods = type
+                .GetMethods()
+                .Where(method => isConcurrent(method) );
+
             var methodFuncs = new Dictionary<string, MethodFunc>();
             foreach (var method in publicMethods)
             {
-                methodFuncs[method.Name] = (@object, args, success, failure) =>
+                var parameters = method
+                    .GetParameters();
+
+                var paramCount = parameters.Length - 2;
+                var paramNames = parameters
+                    .Take(paramCount)
+                    .Select(param => param.Name)
+                    .ToArray();
+
+                var paramTypes = parameters
+                    .Take(paramCount)
+                    .Select(param => param.ParameterType)
+                    .ToArray();
+
+                methodFuncs[method.Name] = (@object, args, success) =>
                 {
                     Action<object> __success = (object returnValue) =>
                     {
-                        success(JObject.FromObject(returnValue));
+                        success(JObject
+                            .FromObject(new { result = returnValue }));
                     };
 
-                    var parameters = method
-                        .GetParameters()
-                        .Select(parameter => {
-                            var property = args.Property(parameter.Name);
-                            return property.Value.ToObject(parameter.ParameterType);
-                        })
-                        .Union(new object[] {
-                            __success,
-                            failure
-                        })
-                        .ToArray();
+                    var arguments = new object[paramCount + 2];
+                    for (int i = 0; i < paramCount; i++)
+                    {
+                        var property = args.Property(paramNames[i]);
+                        arguments[i] = property.Value.ToObject(paramTypes[i]);
+                    }
 
-                    method.Invoke(@object, parameters);
+                    arguments[paramCount] = __success;
+                    arguments[paramCount + 1] = null as Action<Exception>;
+
+                    method.Invoke(@object, arguments);
                 };
             }
 
@@ -116,10 +130,10 @@ namespace Middleware
         public void RegisterInstance(Guid id, ConcurrentObject @object)
         {
             var methods = _types[@object.GetType()];
-            Register(id, (server, method, args, success, failure) =>
+            Register(id, (server, method, args, success) =>
             {
                 var methodFunc = methods[method];
-                methodFunc(@object, args, success, failure);
+                methodFunc(@object, args, success);
             });
         }
 
@@ -159,5 +173,21 @@ namespace Middleware
             if (!_running)
                 throw new InvalidOperationException("timeout");
         }
+
+        private bool isConcurrent(MethodInfo method)
+        {
+            if (!method.IsPublic)
+                return false;
+
+            var parameters = method
+                .GetParameters()
+                .ToArray();
+
+            var count = parameters.Length;
+            return count > 2
+                && parameters[count - 2].ParameterType == typeof(Action<object>)
+                && parameters[count - 1].ParameterType == typeof(Action<Exception>);
+        }
+
     }
 }

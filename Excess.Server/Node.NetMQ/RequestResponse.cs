@@ -31,22 +31,15 @@ namespace NetMQNode
             //register the objects in the main server
             foreach (var @object in publicObjects)
             {
-                server.Register(@object, (_, method, args, success, failure) =>
+                server.Register(@object, (_, method, args, success) =>
                 {
                     var request = buildCallRequest(@object, method, args);
                     Task.Run(() =>
                     {
-                        try
-                        {
-                            _socket.SendFrame(request);
+                        _socket.SendFrame(request);
 
-                            var response = _socket.ReceiveFrameString();
-                            success(JObject.Parse(response));
-                        }
-                        catch (Exception ex)
-                        {
-                            failure(ex);
-                        }
+                        var response = _socket.ReceiveFrameString();
+                        success(JObject.Parse(response));
                     });
                 });
             }
@@ -107,8 +100,7 @@ namespace NetMQNode
                         var args = JObject.FromObject(call.GetValue("args"));
 
                         Invoke(@object, method, args,
-                            result => server.SendFrame(result.ToString()),
-                            ex => server.SendFrame(exceptionJson(ex).ToString()));
+                            result => server.SendFrame(result.ToString()));
                     }
                     catch (Exception ex)
                     {

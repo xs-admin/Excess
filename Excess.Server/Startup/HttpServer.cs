@@ -1,13 +1,10 @@
-﻿using Excess.Concurrent.Runtime;
-using Microsoft.Owin.Hosting;
-using Middleware;
-using Owin;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Owin;
+using Microsoft.Owin.Hosting;
+using Excess.Concurrent.Runtime;
+using Middleware;
 
 namespace Startup
 {

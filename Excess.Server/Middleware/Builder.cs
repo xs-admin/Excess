@@ -11,7 +11,11 @@ namespace Middleware
     {
         public static void UseConcurrent(this IAppBuilder app, Action<IConcurrentServer> initialize = null)
         {
-            app.Use<ConcurrentServer>(initialize);
+            var server = new ConcurrentServer();
+            if (initialize != null)
+                initialize(server);
+
+            app.Use<ConcurrentOwinMiddleware>(server);
         }
     }
 }

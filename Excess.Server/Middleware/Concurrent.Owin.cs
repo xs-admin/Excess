@@ -12,12 +12,12 @@ namespace Middleware
 {
     class ConcurrentOwinMiddleware : OwinMiddleware
     {
-        public ConcurrentOwinMiddleware(OwinMiddleware next) : base(next)
+        ConcurrentServer _server;
+        public ConcurrentOwinMiddleware(OwinMiddleware next, ConcurrentServer server) : base(next)
         {
+            _server = server;
         }
 
-        //OwinMiddleware
-        ConcurrentServer _server;
         public async override Task Invoke(IOwinContext context)
         {
             if (context.Request.Method == "POST")
@@ -27,29 +27,35 @@ namespace Middleware
                 if (TryParsePath(context.Request.Path.Value, out id, out method))
                 {
                     var requestBody = context.Request.Body;
-                    StreamReader reader = new StreamReader(requestBody);
-                    JsonTextReader jsonReader = new JsonTextReader(reader);
-                    JsonSerializer serializer = new JsonSerializer();
-
-                    var args = serializer.Deserialize<JObject>(jsonReader);
                     var response = context.Response;
+                    try
+                    {
+                        StreamReader reader = new StreamReader(requestBody);
+                        JsonTextReader jsonReader = new JsonTextReader(reader);
+                        JsonSerializer serializer = new JsonSerializer();
 
-                    _server.Invoke(id, method, args, 
-						json => response.Write(json.ToString()),
-						ex =>
-                        {
-                            response.StatusCode = 500;
-                            response.ReasonPhrase = ex.Message;
-                        });
+                        var args = serializer.Deserialize<JObject>(jsonReader);
+
+                        await _server.Invoke(id, method, args,
+                            json => response.Write(json.ToString()));
+                    }
+                    catch (Exception ex)
+                    {
+                        errorResponse(response, ex);
+                    }
+
+                    return;
                 }
             }
 
             await Next.Invoke(context);
         }
 
-        private Action<JObject> sendResponse(IOwinResponse response)
+        private void errorResponse(IOwinResponse response, Exception ex)
         {
-            return (result) => response.Write(result.ToString());
+            response.StatusCode = 500;
+            response.ReasonPhrase = ex.Message;
+            response.Write(string.Empty);
         }
 
         private static bool TryParsePath(string value, out Guid id, out string method)
@@ -58,12 +64,18 @@ namespace Middleware
             method = null;
 
             var storage = new StringBuilder();
-            var awaitingId = true;
+            var first = true;
+            var awaitingId = false;
             foreach (var ch in value)
             {
                 if (ch == '/')
                 {
-                    if (awaitingId)
+                    if (first)
+                    {
+                        first = false;
+                        awaitingId = true;
+                    }
+                    else if (awaitingId)
                     {
                         if (!Guid.TryParse(storage.ToString(), out id))
                             return false;

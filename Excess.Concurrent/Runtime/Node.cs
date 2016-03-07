@@ -39,7 +39,9 @@ namespace Excess.Concurrent.Runtime
         public Task<bool> Queue(Action what)
         {
             var completion = new TaskCompletionSource<bool>();
-            Queue(null, what, (ex) => completion.SetException(ex));
+            Queue(null, 
+                () => { what(); completion.SetResult(false); }, 
+                ex => completion.SetException(ex));
             return completion.Task;
         }
 

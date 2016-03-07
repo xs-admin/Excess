@@ -1,0 +1,72 @@
+﻿using System;
+using System.Text;
+using System.Net.Http;
+using Newtonsoft.Json.Linq;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+namespace Tests
+{
+    [TestClass]
+    public class HttpServerTests
+    {
+        [TestMethod]
+        public void Usage()
+        {
+            //setup
+            const string UsageService = @"
+            concurrent class TestService
+            {
+                public string Hello(string what)
+                {
+                    return ""Hello "" + what;
+                }
+            }";
+
+            Guid serviceId = Guid.NewGuid();
+
+            //server
+            using (var server = Mock.CreateHttpServer(UsageService, serviceId, "TestService"))
+            {
+                HttpResponseMessage response;
+
+                //the server should not respond to regular requests
+                response = server.HttpClient.GetAsync("/").Result;
+                Assert.AreEqual(response.StatusCode, System.Net.HttpStatusCode.NotFound);
+
+                var uri = $"/{serviceId}/Hello";
+
+                //the server should not respond to get requests
+                response = server.HttpClient.GetAsync($"{uri}?what=world").Result;
+                Assert.AreEqual(response.StatusCode, System.Net.HttpStatusCode.NotFound);
+
+                //the server should not respond to post where te body is not json
+                response = server.HttpClient.PostAsync(uri,
+                    new StringContent(
+                        "what=world",
+                        Encoding.UTF8,
+                        "application/json")).Result;
+                Assert.AreEqual(response.StatusCode, System.Net.HttpStatusCode.InternalServerError);
+
+                //the server should accept a proper request
+                response = server.HttpClient.PostAsync(uri,
+                    new StringContent(
+                        "{what:\"world\"}",
+                        Encoding.UTF8,
+                        "application/json")).Result;
+
+                Assert.AreEqual(response.StatusCode, System.Net.HttpStatusCode.OK);
+
+                //the result should come in json format
+                var json = JObject.Parse(response
+                    .Content
+                    .ReadAsStringAsync()
+                    .Result);
+
+                Assert.IsNotNull(json);
+
+                //should say "Hello world"
+                Assert.AreEqual(json.Property("result").Value, "Hello world");
+            }
+        }
+    }
+}

@@ -70,7 +70,7 @@ namespace Excess.Extensions.Concurrent
             return (oldNode, newNode, model, scope) =>
             {
                 Debug.Assert(newNode is ClassDeclarationSyntax);
-                var @class = new ClassLinker(ctx, model)
+                var @class = new ExpressionLinker(ctx, model)
                     .Visit(newNode);
 
                 Debug.Assert(@class != null);
@@ -237,7 +237,7 @@ namespace Excess.Extensions.Concurrent
 
         private static BlockSyntax parseConcurrentBlock(Class ctx, BlockSyntax body, Scope scope)
         {
-            var rewriter = new BlockRewriter(ctx, scope);
+            var rewriter = new ExpressionParser(ctx, scope);
             var result = (BlockSyntax)rewriter.Visit(body);
 
             if (rewriter.HasConcurrent)

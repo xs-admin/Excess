@@ -97,13 +97,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BlockRewriter.cs" />
-    <Compile Include="ClassLinker.cs" />
+    <Compile Include="ExpressionParser.cs" />
+    <Compile Include="ExpressionLinker.cs" />
     <Compile Include="Extension.cs" />
     <Compile Include="Model\Class.cs" />
     <Compile Include="Model\Signal.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Runtime\Object.cs" />
     <Compile Include="Templates.cs" />
   </ItemGroup>
   <ItemGroup>
