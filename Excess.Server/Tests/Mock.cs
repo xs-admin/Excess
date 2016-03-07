@@ -124,7 +124,7 @@ namespace Tests
 
             classes = classList;
 
-            var threads = 1; //since we are not testing concurrent, simplify
+            var threads = 1; //td: config
             return new Node(threads, exportTypes);
         }
     }
