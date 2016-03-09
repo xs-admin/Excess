@@ -26,7 +26,7 @@ namespace Tests
                 {
                     Url = ""http://*.1080"";
                 
-                    Node someNode = new NetMQ.RequestResponse
+                    Node someNode = new NetMQ_RequestResponse
                     {
                         Url = ""http://*.2080"",
                         Threads = 25,
