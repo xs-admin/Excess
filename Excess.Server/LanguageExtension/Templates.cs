@@ -25,15 +25,21 @@ namespace LanguageExtension
             }");
 
         public static Template HttpServer = Template.ParseStatement(@"
-        Startup.HttpServer.Start(__0, __1,
-            classes: instantiator.ConcurrentClasses(this.GetType().Assembly),
-            instances: instantiator.ConcurrentInstances(this.GetType().Assembly, except: __2),
-            nodes : __3);");
+            Startup.HttpServer.Start(
+                url: __0, 
+                threads: __1
+                classes: instantiator.ConcurrentClasses(),
+                instances: instantiator.ConcurrentInstances(except: __2));");
 
         public static Template NodeServer = Template.ParseStatement(@"
-        Startup.__3.Start(__0, __1,
-            classes: instantiator.ConcurrentClasses(this.GetType().Assembly),
-            instances: instantiator.ConcurrentInstances(only: __2));");
+            Startup._0.Start(
+                url: __1, 
+                threads: __2
+                classes: instantiator.ConcurrentClasses(),
+                instances: instantiator.ConcurrentInstances(only: __3));");
+
+        public static Template NodeConnection = Template.ParseExpression("new _0(__1)");
+        
 
         public static ExpressionSyntax DefaultThreads = CSharp.ParseExpression("8");
         public static ArrayCreationExpressionSyntax TypeArray = Template
@@ -43,5 +49,8 @@ namespace LanguageExtension
         public static ArrayCreationExpressionSyntax NodeArray = Template
             .ParseExpression("new IConcurrentNode[] {}")
             .Get<ArrayCreationExpressionSyntax>();
+
+        public static StatementSyntax CreateInstantiator = CSharp
+            .ParseStatement("instantiator = instantiator ?? new AssemblyInstantiator(this.GetType().Assembly);");
     }
 }

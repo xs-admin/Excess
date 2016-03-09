@@ -210,5 +210,10 @@ namespace Excess.Extensions.Concurrent
         public static Template SignalQueueMember = Template.Parse(@"
             private Queue<Action> _0 = new Queue<Action>();");
 
+        public static Template ConcurrentObject = Template.Parse(@"
+            private _0 __singleton(IInstantiator instantiator)
+            {
+                return instantiator.Singleton<_0>();
+            }");
     }
 }

@@ -48,10 +48,10 @@ namespace LanguageExtension
             public ExpressionSyntax Url { get; set; }
             public ExpressionSyntax Threads { get; set; }
             public ExpressionSyntax Connection { get; set; }
-            public IList<ServerModel> Nodes { get; private set; }
-            public IList<StatementSyntax> DeployStatements { get; private set; }
-            public IList<StatementSyntax> StartStatements { get; private set; }
-            public IList<TypeSyntax> HostedClasses { get; private set; }
+            public List<ServerModel> Nodes { get; private set; }
+            public List<StatementSyntax> DeployStatements { get; private set; }
+            public List<StatementSyntax> StartStatements { get; private set; }
+            public List<TypeSyntax> HostedClasses { get; private set; }
         };
 
         //server compilation
@@ -182,13 +182,17 @@ namespace LanguageExtension
             //the web server
             result
                 .StartStatements
-                .Add(Templates
-                    .HttpServer
-                    .Get<StatementSyntax>(
-                        result.Url,
-                        result.Threads,
-                        hostedInstances,
-                        serverNodes));
+                .AddRange(new StatementSyntax[]
+                {
+                    Templates.CreateInstantiator,
+                    Templates
+                        .HttpServer
+                        .Get<StatementSyntax>(
+                            result.Url,
+                            result.Threads,
+                            hostedInstances,
+                            serverNodes)
+                });
 
             return true;
         }
@@ -214,17 +218,31 @@ namespace LanguageExtension
                             .HostedClasses
                             .Select(type => CSharp.TypeOfExpression(type)))));
 
-                result
-                    .StartStatements
-                    .Add(Templates
-                        .NodeServer
-                        .Get<StatementSyntax>(
-                            result.Url,
-                            result.Threads,
-                            nodeInstances,
-                            creation.Type));
+                string serverType;
+                string clientType;
+                if (getNodeTypes(creation.Type, out serverType, out clientType))
+                {
+                    //RequestResponseClient
+                    result.Connection = Templates
+                        .NodeConnection
+                        .Get<ExpressionSyntax>(clientType, result.Url);
 
-                return true;
+                    result
+                        .StartStatements
+                        .AddRange(new StatementSyntax[]
+                        {
+                            Templates
+                                .CreateInstantiator,
+                            Templates
+                                .NodeServer
+                                .Get<StatementSyntax>(
+                                    serverType,
+                                    result.Url,
+                                    result.Threads,
+                                    nodeInstances)
+                        });
+                    return true;
+                }
             }
 
             return false;
@@ -266,6 +284,23 @@ namespace LanguageExtension
                         return false; //td: error
                 default:
                     return false; //td: error
+            }
+
+            return true;
+        }
+
+        private static bool getNodeTypes(TypeSyntax type, out string serverType, out string clientType)
+        {
+            switch (type.ToString())
+            {
+                case "NetMQ.RequestResponse":
+                    serverType = "NetMQ_RequestResponseServer";
+                    clientType = "NetMQ_RequestResponseClient";
+                    break;
+                default:
+                    serverType = null;
+                    clientType = null;
+                    return false;
             }
 
             return true;

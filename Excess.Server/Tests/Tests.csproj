@@ -135,6 +135,7 @@
   </Choose>
   <ItemGroup>
     <Compile Include="ConcurrentCompiler.cs" />
+    <Compile Include="Debug.cs" />
     <Compile Include="LanguageExtensionTests.cs" />
     <Compile Include="HttpServerTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -156,6 +157,10 @@
     <ProjectReference Include="..\Middleware\Middleware.csproj">
       <Project>{ed3d63d8-7c35-4f77-8430-7bc6bbfe56b9}</Project>
       <Name>Middleware</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Startup\Startup.csproj">
+      <Project>{f30d6658-ea1a-4117-88ca-5b96af6303aa}</Project>
+      <Name>Startup</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

@@ -355,7 +355,24 @@ namespace Excess.Extensions.Concurrent
 
         private static SyntaxNode CompileObject(SyntaxNode node, Scope scope)
         {
-            throw new NotImplementedException();
+            var @class = node as ClassDeclarationSyntax;
+            Debug.Assert(@class != null);
+            if (@class
+                .DescendantNodes()
+                .OfType<ConstructorDeclarationSyntax>()
+                .Any())
+            {
+                //td: error
+                return node;
+            }
+
+            @class = Compile(node, scope) as ClassDeclarationSyntax;
+            Debug.Assert(@class != null);
+
+            return @class
+                .AddMembers(Templates
+                    .ConcurrentObject
+                    .Get<MethodDeclarationSyntax>(@class.Identifier));
         }
     }
 }

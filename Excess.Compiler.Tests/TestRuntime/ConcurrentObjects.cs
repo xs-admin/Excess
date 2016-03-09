@@ -11,14 +11,22 @@ namespace Excess.Compiler.Tests.TestRuntime
     using System.Threading;
     using Spawner = Func<object[], ConcurrentObject>;
 
+    public interface IInstantiator
+    {
+        ConcurrentObject Create(Type type, params object[] args);
+        T CreateSingleton<T>() where T : ConcurrentObject;
+    }
+
     public class Node
     {
         IDictionary<string, Spawner> _types;
         int _threads;
+        IInstantiator _instantiator;
         public Node(int threads, IDictionary<string, Spawner> types)
         {
             _threads = threads;
             _types = types;
+            _instantiator = new Instantiator(this);
 
             Debug.Assert(_threads > 0);
             createThreads(_threads);
@@ -40,6 +48,17 @@ namespace Excess.Compiler.Tests.TestRuntime
             var result = caller(args); 
             result.startRunning(this, args);
             return result;
+        }
+
+        ConcurrentDictionary<string, ConcurrentObject> _singletons = new ConcurrentDictionary<string, ConcurrentObject>();
+        public ConcurrentObject Get(string className)
+        {
+            return _singletons[className];
+        }
+
+        public T Get<T>() where T : ConcurrentObject
+        {
+            return (T)Get(typeof(T).Name);
         }
 
         public void Start(ConcurrentObject @object, params object[] args)
@@ -325,6 +344,28 @@ namespace Excess.Compiler.Tests.TestRuntime
             }
 
             return true;
+        }
+    }
+
+    public class Instantiator : IInstantiator
+    {
+        Node _node;
+        public Instantiator(Node node)
+        {
+            _node = node;
+        }
+
+        public ConcurrentObject Create(Type type, params object[] args)
+        {
+            var result = Activator.CreateInstance(type) as ConcurrentObject;
+            result.startRunning(_node, args);
+            return result;
+        }
+
+        public T CreateSingleton<T>() where T : ConcurrentObject
+        {
+            var result = (T)Create(typeof(T));
+            return result;
         }
     }
 }

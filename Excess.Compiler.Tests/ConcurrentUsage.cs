@@ -289,5 +289,51 @@ namespace Excess.Compiler.Tests
 
             node.Stop();
         }
+
+        [TestMethod]
+        public void BasicSingleton()
+        {
+            var errors = null as IEnumerable<Diagnostic>;
+            var node = TestRuntime
+                .Concurrent
+                .Build(@"
+                    concurrent object VendingMachine 
+                    { 
+                        public    void coin();
+                        protected void choc();
+                        protected void toffee();
+
+                        void main() 
+                        {
+                            for (;;)
+                            {
+                                coin >> (choc | toffee);
+                            }
+                        }
+                    }", out errors);
+
+            //must not have compilation errors
+            Assert.IsNull(errors);
+            bool throws = false;
+            try
+            {
+                var wrong = node.Spawn("VendingMachine");
+            }
+            catch
+            {
+                throws = true;
+            }
+
+            Assert.IsTrue(throws);
+
+            var vm = node.Get("VendingMachine");
+            TestRuntime.Concurrent.Fails(vm, "choc");
+            TestRuntime.Concurrent.Fails(vm, "toffee");
+
+            TestRuntime.Concurrent.Succeeds(vm, "coin", "choc");
+            TestRuntime.Concurrent.Succeeds(vm, "coin", "toffee");
+
+            node.Stop();
+        }
     }
 }

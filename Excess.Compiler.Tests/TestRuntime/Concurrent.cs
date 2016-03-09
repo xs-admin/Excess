@@ -124,7 +124,11 @@ namespace Excess.Compiler.Tests.TestRuntime
             var exportTypes = new Dictionary<string, Spawner>();
             foreach (var type in assembly.GetTypes())
             {
-                if (type.BaseType != typeof(ConcurrentObject))
+                if (type.BaseType != typeof(ConcurrentObject) ||
+                    type
+                        .GetMethods()
+                        .Where(method => method.Name == "__singleton")
+                        .Any())
                     continue;
 
                 var useParameterLess = type.GetConstructors().Length == 0;
