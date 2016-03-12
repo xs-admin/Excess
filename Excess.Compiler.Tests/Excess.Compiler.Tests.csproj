@@ -113,7 +113,7 @@
     <Compile Include="ExtUsage.cs" />
     <Compile Include="RRuntime.cs" />
     <Compile Include="Instance.cs" />
-    <Compile Include="TestRuntime\Concurrent.cs" />
+    <Compile Include="TestRuntime\ConcurrentMock.cs" />
     <Compile Include="TestRuntime\ConcurrentObjects.cs" />
     <Compile Include="TestRuntime\console.cs" />
     <Compile Include="TestRuntime\Debug.cs" />

@@ -14,12 +14,13 @@ namespace Excess.Compiler.Tests.TestRuntime
     using System.Reflection;
     using Spawner = Func<object[], ConcurrentObject>;
 
-    public class Concurrent
+    public class ConcurrentMock
     {
         private static void RunStep(ConcurrentObject @object, string methodName, Func<string> moveNext, Action<Exception> failure)
         {
             var method = @object.GetType().GetMethod(methodName, new[] 
             {
+                typeof(CancellationToken),
                 typeof(Action<object>),
                 typeof(Action<Exception>),
             });
@@ -38,7 +39,7 @@ namespace Excess.Compiler.Tests.TestRuntime
                 }
             };
 
-            method.Invoke(@object, new object[] { success, failure });
+            method.Invoke(@object, new object[] { default(CancellationToken), success, failure });
         }
 
         private static Exception RunSteps(ConcurrentObject @object, string[] steps)
@@ -87,10 +88,6 @@ namespace Excess.Compiler.Tests.TestRuntime
                 new DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel>(compiler => compiler
                     .Environment()
                         .dependency<console>("Excess.Compiler.Tests.TestRuntime")
-                        //.dependency<object>(new[] {
-                        //    "System",
-                        //    "System.Collections",
-                        //    "System.Collections.Generic" })
                         .dependency(new[] {
                             "System.Threading",
                             "System.Threading.Tasks",
@@ -122,20 +119,23 @@ namespace Excess.Compiler.Tests.TestRuntime
             }
 
             var exportTypes = new Dictionary<string, Spawner>();
+            var singletons = new Dictionary<string, ConcurrentObject>();
             foreach (var type in assembly.GetTypes())
             {
-                if (type.BaseType != typeof(ConcurrentObject) ||
-                    type
-                        .GetMethods()
-                        .Where(method => method.Name == "__singleton")
-                        .Any())
+                var attributes = type.CustomAttributes;
+                if (!attributes.Any(attr => attr.AttributeType == typeof(Concurrent)))
                     continue;
+
+                var typeName = type.ToString();
+                if (attributes.Any(attr => attr.AttributeType == typeof(ConcurrentSingleton)))
+                {
+                    singletons[typeName] = (ConcurrentObject)Activator.CreateInstance(type);
+                }
 
                 var useParameterLess = type.GetConstructors().Length == 0;
                 if (!useParameterLess)
                     useParameterLess = type.GetConstructor(new Type[] { }) != null;
 
-                var typeName = type.ToString();
                 exportTypes[typeName] = (args) =>
                 {
                     if (useParameterLess)
@@ -152,7 +152,7 @@ namespace Excess.Compiler.Tests.TestRuntime
                 };
             }
 
-            return new Node(threads, exportTypes);
+            return new Node(threads, exportTypes, singletons);
         }
 
         public static void Send(ConcurrentObject @object, string name, params object[] args)
@@ -179,7 +179,7 @@ namespace Excess.Compiler.Tests.TestRuntime
 
             if (method != null)
             {
-                args = args.Union(new object[] { true }).ToArray();
+                args = args.Union(new object[] { default(CancellationToken) }).ToArray();
                 var tsk = method.Invoke(@object, args);
 
                 if (wait)

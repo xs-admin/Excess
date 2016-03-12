@@ -480,6 +480,8 @@ namespace Excess.Extensions.Concurrent
                         .WithArgumentList(invocation
                             .ArgumentList
                             .AddArguments(
+                                CSharp.Argument(
+                                    Templates.CancelationArgument),
                                 CSharp.Argument(WrapInLambda(success)
                                     .AddParameterListParameters(CSharp.Parameter(CSharp.ParseToken(
                                         "__res")))),
@@ -518,6 +520,7 @@ namespace Excess.Extensions.Concurrent
                     .WithArgumentList(invocation
                         .ArgumentList
                         .AddArguments(
+                            CSharp.Argument(Templates.CancelationArgument),
                             CSharp.Argument(Templates
                                 .SuccessFunction
                                 .Get<ExpressionSyntax>(success)),

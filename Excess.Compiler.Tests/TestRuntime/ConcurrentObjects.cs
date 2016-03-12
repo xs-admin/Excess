@@ -11,6 +11,16 @@ namespace Excess.Compiler.Tests.TestRuntime
     using System.Threading;
     using Spawner = Func<object[], ConcurrentObject>;
 
+    [System.AttributeUsage(AttributeTargets.Class)]
+    public class Concurrent : Attribute
+    {
+    }
+
+    [System.AttributeUsage(AttributeTargets.Class)]
+    public class ConcurrentSingleton : Attribute
+    {
+    }
+
     public interface IInstantiator
     {
         ConcurrentObject Create(Type type, params object[] args);
@@ -22,25 +32,32 @@ namespace Excess.Compiler.Tests.TestRuntime
         IDictionary<string, Spawner> _types;
         int _threads;
         IInstantiator _instantiator;
-        public Node(int threads, IDictionary<string, Spawner> types)
+        IDictionary<string, ConcurrentObject> _singletons;
+        public Node(int threads, IDictionary<string, Spawner> types, IDictionary<string, ConcurrentObject> singletons)
         {
             _threads = threads;
             _types = types;
             _instantiator = new Instantiator(this);
+            _singletons = singletons;
+            foreach (var singleton in singletons)
+                singleton.Value.startRunning(this, new object[] { });
 
             Debug.Assert(_threads > 0);
             createThreads(_threads);
         }
 
-        public T Spawn<T>(params object[] args) where T : ConcurrentObject, new()
-        {
-            var result = new T();
-            result.startRunning(this, args);
-            return result;
-        }
+        //public T Spawn<T>(params object[] args) where T : ConcurrentObject, new()
+        //{
+        //    var result = new T();
+        //    result.startRunning(this, args);
+        //    return result;
+        //}
 
         public ConcurrentObject Spawn(string type, params object[] args)
         {
+            if (_singletons.ContainsKey(type))
+                throw new InvalidOperationException(type + " cannot be spawned, is a singleton");
+
             var caller = null as Func<object[], ConcurrentObject>;
             if (!_types.TryGetValue(type, out caller))
                 throw new InvalidOperationException(type + " is not defined");
@@ -50,7 +67,6 @@ namespace Excess.Compiler.Tests.TestRuntime
             return result;
         }
 
-        ConcurrentDictionary<string, ConcurrentObject> _singletons = new ConcurrentDictionary<string, ConcurrentObject>();
         public ConcurrentObject Get(string className)
         {
             return _singletons[className];
@@ -77,14 +93,14 @@ namespace Excess.Compiler.Tests.TestRuntime
         ConcurrentQueue<Event> _queue = new ConcurrentQueue<Event>();
         public void Queue(ConcurrentObject who, Action what, Action<Exception> failure)
         {
-            //_queue.Enqueue(new Event
-            //{
-            //    Tries = 0,
-            //    Target = who,
-            //    What = what,
-            //    Failure = failure
-            //});
-            _queue.Enqueue(queueEvent(0, who, what, failure));
+            _queue.Enqueue(new Event
+            {
+                Tries = 0,
+                Target = who,
+                What = what,
+                Failure = failure
+            });
+            //_queue.Enqueue(queueEvent(0, who, what, failure));
         }
 
         CancellationTokenSource _stop = new CancellationTokenSource();
@@ -137,7 +153,6 @@ namespace Excess.Compiler.Tests.TestRuntime
                         }
 
                         message.Target.__enter(message.What, message.Failure);
-                        _cache.Enqueue(message);
                     }
                 });
 
@@ -146,32 +161,6 @@ namespace Excess.Compiler.Tests.TestRuntime
             }
         }
 
-        //cache events to avoid allocations
-        ConcurrentQueue<Event> _cache = new ConcurrentQueue<Event>();
-        int _cacheHits = 0;
-        int _cacheMisses = 0;
-        private Event queueEvent(int tries, ConcurrentObject target, Action action, Action<Exception> failure)
-        {
-            var result = null as Event;
-            if (_cache.TryDequeue(out result))
-            {
-                _cacheHits++;
-                result.Tries = tries;
-                result.Target = target;
-                result.What = action;
-                result.Failure = failure;
-                return result;
-            }
-
-            _cacheMisses++;
-            return new Event
-            {
-                Tries = tries,
-                Target = target,
-                What = action,
-                Failure = failure
-            };
-        }
     }
 
     public class ConcurrentObject
@@ -189,10 +178,10 @@ namespace Excess.Compiler.Tests.TestRuntime
         {
         }
 
-        protected T spawn<T>(params object[] args) where T : ConcurrentObject, new()
-        {
-            return _node.Spawn<T>(args);
-        }
+        //protected T spawn<T>(params object[] args) where T : ConcurrentObject, new()
+        //{
+        //    return _node.Spawn<T>(args);
+        //}
 
         int _busy = 0;
         protected internal void __enter(Action what, Action<Exception> failure)

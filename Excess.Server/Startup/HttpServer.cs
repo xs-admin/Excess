@@ -8,7 +8,7 @@ using Middleware;
 
 namespace Startup
 {
-    public static class HttpServer
+    public class HttpServer
     {
         public static void Start<T>(string baseUrl)
         {
@@ -19,13 +19,14 @@ namespace Startup
             }
         }
 
-        public static void Start(string baseUrl, 
+        public static void Start(string url, 
+            int threads = 8,
             IEnumerable<Type> classes = null,
             IEnumerable<KeyValuePair<Guid, ConcurrentObject>> instances = null,
             Action<IAppBuilder> onInit = null,
             bool useStaticFiles = true)
         {
-            using (WebApp.Start(baseUrl, (app) =>
+            using (WebApp.Start(url, (app) =>
             {
                 if (useStaticFiles)
                     app.UseStaticFiles();

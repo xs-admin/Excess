@@ -2,286 +2,62 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Excess.Compiler.Tests.Demos
 {
-    class Chameneo : ConcurrentObject
+    [Concurrent]
+    class ring_item : ConcurrentObject
     {
-        public enum Color
-        {
-            blue,
-            red,
-            yellow,
-        }
+        public int _idx;
 
-        public Color Colour
+        public ring_item Next
         {
             get;
-            private set;
+            set;
         }
 
-        public int Meetings
+        static int ITERATIONS = 50 * 1000 * 1000;
+        public void token(int value)
         {
-            get;
-            private set;
+            token(value, default(CancellationToken)).Wait();
         }
 
-        public int MeetingsWithSelf
+        private IEnumerable<Expression> __concurrenttoken(int value, CancellationToken __cancellation, Action<object> __success, Action<Exception> __failure)
         {
-            get;
-            private set;
-        }
-
-        public Broker MeetingPlace
-        {
-            get;
-            private set;
-        }
-
-        public Chameneo(Broker meetingPlace, Color color)
-        {
-            MeetingPlace = meetingPlace;
-            Colour = color;
-            Meetings = 0;
-            MeetingsWithSelf = 0;
-        }
-
-        private static Color compliment(Color c1, Color c2)
-        {
-            switch (c1)
+            console.write(value);
+            if (value >= ITERATIONS)
             {
-                case Color.blue:
-                    switch (c2)
-                    {
-                        case Color.blue:
-                            return Color.blue;
-                        case Color.red:
-                            return Color.yellow;
-                        case Color.yellow:
-                            return Color.red;
-                        default:
-                            break;
-                    }
-
-                    break;
-                case Color.red:
-                    switch (c2)
-                    {
-                        case Color.blue:
-                            return Color.yellow;
-                        case Color.red:
-                            return Color.red;
-                        case Color.yellow:
-                            return Color.blue;
-                        default:
-                            break;
-                    }
-
-                    break;
-                case Color.yellow:
-                    switch (c2)
-                    {
-                        case Color.blue:
-                            return Color.red;
-                        case Color.red:
-                            return Color.blue;
-                        case Color.yellow:
-                            return Color.yellow;
-                        default:
-                            break;
-                    }
-
-                    break;
-            }
-
-            throw new Exception();
-        }
-
-        private IEnumerable<Expression> __concurrentmain(Action<object> __success, Action<Exception> __failure)
-        {
-            for (;;)
-            {
-                MeetingPlace.request(this);
-                {
-                    var __expr1_var = new __expr1
-                    {
-                        Start = (___expr) =>
-                        {
-                            var __expr = (__expr1)___expr;
-                            __listen("meet", () =>
-                            {
-                                __expr.__op1(true, null, null);
-                            }
-
-                            );
-                            __expr.__op1(null, false, null);
-                        }
-
-                    ,
-                        End = (__expr) =>
-                        {
-                            __enter(() => __advance(__expr.Continuator), __failure);
-                        }
-                    };
-                    yield return __expr1_var;
-                    if (__expr1_var.Failure != null)
-                        throw __expr1_var.Failure;
-                }
-            }
-
-            {
-                __dispatch("main");
-                if (__success != null)
-                    __success(null);
-                yield break;
-            }
-        }
-
-        protected override void __start(params object[] args)
-        {
-            var __enum = __concurrentmain(null, null);
-            __advance(__enum.GetEnumerator());
-        }
-
-        private IEnumerable<Expression> __concurrentmeet(Chameneo other, Color color, Action<object> __success, Action<Exception> __failure)
-        {
-            Colour = compliment(Colour, color);
-            Meetings++;
-            if (other == this)
-                MeetingsWithSelf++;
-            {
-                __dispatch("meet");
-                if (__success != null)
-                    __success(null);
-                yield break;
-            }
-        }
-
-        public Task<object> meet(Chameneo other, Color color, bool async)
-        {
-            if (!async)
-                throw new InvalidOperationException("use async: true");
-            var completion = new TaskCompletionSource<object>();
-            Action<object> __success = (__res) => completion.SetResult((object)__res);
-            Action<Exception> __failure = (__ex) => completion.SetException(__ex);
-            __enter(() => __advance(__concurrentmeet(other, color, __success, __failure).GetEnumerator()), __failure);
-            return completion.Task;
-        }
-
-        public void meet(Chameneo other, Color color, Action<object> success = null, Action<Exception> failure = null)
-        {
-            var __success = success;
-            var __failure = failure;
-            __enter(() => __advance(__concurrentmeet(other, color, __success, __failure).GetEnumerator()), failure);
-        }
-
-        private IEnumerable<Expression> __concurrentprint(Action<object> __success, Action<Exception> __failure)
-        {
-            console.write($"{Colour}, {Meetings}, {MeetingsWithSelf}");
-            {
-                __dispatch("print");
-                if (__success != null)
-                    __success(null);
-                yield break;
-            }
-        }
-
-        public Task<object> print(bool async)
-        {
-            if (!async)
-                throw new InvalidOperationException("use async: true");
-            var completion = new TaskCompletionSource<object>();
-            Action<object> __success = (__res) => completion.SetResult((object)__res);
-            Action<Exception> __failure = (__ex) => completion.SetException(__ex);
-            __enter(() => __advance(__concurrentprint(__success, __failure).GetEnumerator()), __failure);
-            return completion.Task;
-        }
-
-        public void print(Action<object> success = null, Action<Exception> failure = null)
-        {
-            var __success = success;
-            var __failure = failure;
-            __enter(() => __advance(__concurrentprint(__success, __failure).GetEnumerator()), failure);
-        }
-
-        private class __expr1 : Expression
-        {
-            public void __op1(bool? v1, bool? v2, Exception __ex)
-            {
-                if (!tryUpdate(v1, v2, ref __op1_Left, ref __op1_Right, __ex))
-                    return;
-                if (v1.HasValue)
-                {
-                    if (__op1_Left.Value)
-                        __complete(true, null);
-                    else if (__op1_Right.HasValue)
-                        __complete(false, __ex);
-                }
-                else
-                {
-                    if (__op1_Right.Value)
-                        __complete(true, null);
-                    else if (__op1_Left.HasValue)
-                        __complete(false, __ex);
-                }
-            }
-
-            private bool? __op1_Left;
-            private bool? __op1_Right;
-        }
-    }
-
-    class Broker : ConcurrentObject
-    {
-        int _meetings = 0;
-        public Broker(int meetings)
-        {
-            _meetings = meetings;
-        }
-
-        Chameneo _first = null;
-        private IEnumerable<Expression> __concurrentrequest(Chameneo creature, Action<object> __success, Action<Exception> __failure)
-        {
-            if (_first != null)
-            {
-                //meet, exchange colors, etc
-                var firstColor = _first.Colour;
-                _first.meet(creature, creature.Colour);
-                creature.meet(_first, firstColor);
-                //reset for new pair
-                _first = null;
-                _meetings--;
-                //exit
-                if (_meetings == 0)
-                    Node.Stop();
+                console.write(_idx);
+                Node.Stop();
             }
             else
-                _first = creature;
+                Next.token(value + 1);
             {
-                __dispatch("request");
+                __dispatch("token");
                 if (__success != null)
                     __success(null);
                 yield break;
             }
         }
 
-        public Task<object> request(Chameneo creature, bool async)
+        public Task<object> token(int value, CancellationToken cancellation)
         {
-            if (!async)
-                throw new InvalidOperationException("use async: true");
             var completion = new TaskCompletionSource<object>();
             Action<object> __success = (__res) => completion.SetResult((object)__res);
             Action<Exception> __failure = (__ex) => completion.SetException(__ex);
-            __enter(() => __advance(__concurrentrequest(creature, __success, __failure).GetEnumerator()), __failure);
+            var __cancellation = cancellation;
+            __enter(() => __advance(__concurrenttoken(value, __cancellation, __success, __failure).GetEnumerator()), __failure);
             return completion.Task;
         }
 
-        public void request(Chameneo creature, Action<object> success = null, Action<Exception> failure = null)
+        public void token(int value, CancellationToken cancellation, Action<object> success, Action<Exception> failure)
         {
             var __success = success;
             var __failure = failure;
-            __enter(() => __advance(__concurrentrequest(creature, __success, __failure).GetEnumerator()), failure);
+            var __cancellation = cancellation;
+            __enter(() => __advance(__concurrenttoken(value, __cancellation, __success, __failure).GetEnumerator()), failure);
         }
     }
 }

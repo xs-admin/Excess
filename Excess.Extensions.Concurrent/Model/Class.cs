@@ -16,17 +16,19 @@ namespace Excess.Extensions.Concurrent.Model
 
     internal class Class
     {
-        public Class(string name, Scope scope)
+        public Class(string name, Scope scope, bool isSingleton)
         {
             Scope = scope;
             Signals = new Dictionary<int, Signal>();
             Name = name;
+            IsSingleton = isSingleton;
         }
 
         public string Name { get; set; }
         public bool HasMain { get; set; }
         public IDictionary<int, Signal> Signals { get; private set; }
         public Scope Scope { get; private set; }
+        public bool IsSingleton { get; private set; }
 
         List<MemberDeclarationSyntax> _add = new List<MemberDeclarationSyntax>();
         public void AddMember(MemberDeclarationSyntax member)
@@ -49,12 +51,6 @@ namespace Excess.Extensions.Concurrent.Model
         {
             return _signals
                 .Any(s => s.Key == name);
-        }
-
-        List<MemberDeclarationSyntax> _remove = new List<MemberDeclarationSyntax>();
-        public void RemoveMember(MemberDeclarationSyntax member)
-        {
-            _remove.Add(member);
         }
 
         Dictionary<SyntaxNode, SyntaxNode> _replace = new Dictionary<SyntaxNode, SyntaxNode>();
@@ -111,17 +107,35 @@ namespace Excess.Extensions.Concurrent.Model
 
             var result = @class
                 .ReplaceNodes(_replace.Keys, (on, nn) => _replace[on])
-                .RemoveNodes(_remove, SyntaxRemoveOptions.KeepNoTrivia)
                 .AddMembers(_add
                     .Union(_types)
                     .Select(add => (MemberDeclarationSyntax)RoslynCompiler.TrackNode(add))
                     .ToArray());
 
-            _remove.Clear();
             _add.Clear();
             _types.Clear();
             _replace.Clear();
+
+            //add markers
+            result = addAttribute(result, "Concurrent");
+
+            if (IsSingleton)
+                result = addAttribute(result, "ConcurrentSingleton");
+
             return result;
+        }
+
+        private ClassDeclarationSyntax addAttribute(ClassDeclarationSyntax @class, string attributeName)
+        {
+            if (@class.AttributeLists.Any(attrList => attrList
+                            .Attributes
+                            .Any(attr => attr.Name.ToString() == attributeName)))
+                return @class;
+
+            return @class
+                .AddAttributeLists(CSharp.AttributeList(CSharp.SeparatedList(new[] {CSharp
+                    .Attribute(CSharp
+                        .ParseName(attributeName))})));
         }
 
         public bool hasMember(string name)

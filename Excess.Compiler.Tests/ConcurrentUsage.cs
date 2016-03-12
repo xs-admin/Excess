@@ -258,8 +258,7 @@ namespace Excess.Compiler.Tests
         public void BasicProtectionRuntime()
         {
             var errors = null as IEnumerable<Diagnostic>;
-            var node = TestRuntime
-                .Concurrent
+            var node = ConcurrentMock
                 .Build(@"
                     concurrent class VendingMachine 
                     { 
@@ -281,11 +280,11 @@ namespace Excess.Compiler.Tests
 
             var vm = node.Spawn("VendingMachine");
 
-            TestRuntime.Concurrent.Fails(vm, "choc");
-            TestRuntime.Concurrent.Fails(vm, "toffee");
+            ConcurrentMock.Fails(vm, "choc");
+            ConcurrentMock.Fails(vm, "toffee");
 
-            TestRuntime.Concurrent.Succeeds(vm, "coin", "choc");
-            TestRuntime.Concurrent.Succeeds(vm, "coin", "toffee");
+            ConcurrentMock.Succeeds(vm, "coin", "choc");
+            ConcurrentMock.Succeeds(vm, "coin", "toffee");
 
             node.Stop();
         }
@@ -294,8 +293,7 @@ namespace Excess.Compiler.Tests
         public void BasicSingleton()
         {
             var errors = null as IEnumerable<Diagnostic>;
-            var node = TestRuntime
-                .Concurrent
+            var node = ConcurrentMock
                 .Build(@"
                     concurrent object VendingMachine 
                     { 
@@ -327,11 +325,11 @@ namespace Excess.Compiler.Tests
             Assert.IsTrue(throws);
 
             var vm = node.Get("VendingMachine");
-            TestRuntime.Concurrent.Fails(vm, "choc");
-            TestRuntime.Concurrent.Fails(vm, "toffee");
+            ConcurrentMock.Fails(vm, "choc");
+            ConcurrentMock.Fails(vm, "toffee");
 
-            TestRuntime.Concurrent.Succeeds(vm, "coin", "choc");
-            TestRuntime.Concurrent.Succeeds(vm, "coin", "toffee");
+            ConcurrentMock.Succeeds(vm, "coin", "choc");
+            ConcurrentMock.Succeeds(vm, "coin", "toffee");
 
             node.Stop();
         }

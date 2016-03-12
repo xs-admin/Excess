@@ -51,6 +51,7 @@ namespace Excess.Compiler
         ISemanticAnalysis<TToken, TNode, TModel> Semantics();
         IInstanceAnalisys<TNode> Instance();
         ICompilerEnvironment Environment();
+        ICompilationAnalysis<TToken, TNode, TModel> Compilation();
 
         Scope Scope { get; }
 

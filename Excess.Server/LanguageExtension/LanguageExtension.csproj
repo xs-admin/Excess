@@ -34,6 +34,12 @@
     <Reference Include="Excess.Compiler">
       <HintPath>..\..\Excess.Compiler\bin\Debug\Excess.Compiler.dll</HintPath>
     </Reference>
+    <Reference Include="Excess.Compiler.Razor">
+      <HintPath>..\..\Excess.Compiler.Razor\bin\Debug\Excess.Compiler.Razor.dll</HintPath>
+    </Reference>
+    <Reference Include="Excess.Extensions.Concurrent">
+      <HintPath>..\..\Excess.Extensions.Concurrent\bin\Debug\Excess.Extensions.Concurrent.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.CodeAnalysis, Version=1.1.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.CodeAnalysis.Common.1.1.1\lib\net45\Microsoft.CodeAnalysis.dll</HintPath>
       <Private>True</Private>
@@ -100,6 +106,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Config.cs" />
     <Compile Include="Extension.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Templates.cs" />

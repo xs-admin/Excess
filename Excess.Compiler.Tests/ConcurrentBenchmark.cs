@@ -1,4 +1,5 @@
-﻿using Excess.Compiler.Tests.TestRuntime;
+﻿using Excess.Compiler.Tests.Demos;
+using Excess.Compiler.Tests.TestRuntime;
 using Microsoft.CodeAnalysis;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
@@ -7,6 +8,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Runtime;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Excess.Compiler.Tests
@@ -18,8 +20,7 @@ namespace Excess.Compiler.Tests
         public void ThreadRing()
         {
             var errors = null as IEnumerable<Diagnostic>;
-            var node = TestRuntime
-                .Concurrent
+            var node = ConcurrentMock
                 .Build(@"
                 concurrent class ring_item
                 {
@@ -49,7 +50,6 @@ namespace Excess.Compiler.Tests
 
             const int ringCount = 503;
 
-            //create the ring
             var items = new ConcurrentObject[ringCount];
             for (int i = 0; i < ringCount; i++)
                 items[i] = node.Spawn("ring_item", i);
@@ -59,14 +59,14 @@ namespace Excess.Compiler.Tests
             {
                 var curr = items[i];
                 var next = i < ringCount - 1 ? items[i + 1] : items[0];
-                TestRuntime.Concurrent.Send(curr, "Next", next);
+                ConcurrentMock.Send(curr, "Next", next);
             }
 
             Stopwatch sw = new Stopwatch();
             sw.Start();
             {
                 //run it by sending the first token, it will go around 50M times
-                TestRuntime.Concurrent.Send(items[0], "token", 0);
+                ConcurrentMock.Send(items[0], "token", 0);
                 node.WaitForCompletion();
             }
             sw.Stop();
@@ -81,8 +81,7 @@ namespace Excess.Compiler.Tests
         {
             IEnumerable<Diagnostic> errors;
 
-            var node = TestRuntime
-                .Concurrent
+            var node = ConcurrentMock
                 .Build(@"
                 concurrent class Chameneo
                 {

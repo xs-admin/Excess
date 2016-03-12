@@ -109,7 +109,7 @@ namespace Excess.Extensions.Concurrent
             }");
 
         public static Template ConcurrentMethod = Template.Parse(@"
-            private IEnumerable<Expression> _0(Action<object> __success, Action<Exception> __failure)
+            private IEnumerable<Expression> _0(CancellationToken __cancellation, Action<object> __success, Action<Exception> __failure)
             {
             }");
 
@@ -119,7 +119,7 @@ namespace Excess.Extensions.Concurrent
         public static Template SignalListener = Template.ParseStatement("__listen(__0, __1);");
 
         public static Template EmptySignalMethod = Template.Parse(@"
-            private IEnumerable<Expression> _0(Action<object> __success, Action<Exception> __failure)
+            private IEnumerable<Expression> _0(CancellationToken __cancellation, __Action<object> __success, Action<Exception> __failure)
             {
                 if (__2 && !__awaiting(__1))
                     throw new InvalidOperationException(__1 + "" can not be executed in this state"");
@@ -133,27 +133,26 @@ namespace Excess.Extensions.Concurrent
             }");
 
         public static Template TaskPublicMethod = Template.Parse(@"
-            public Task<__1> _0(bool async)
+            public Task<__1> _0(CancellationToken cancellation)
             {
-                if (!async)
-                    throw new InvalidOperationException(""use async: true"");
-
                 var completion = new TaskCompletionSource<__1>();
                 Action<object> __success = (__res) => completion.SetResult((__1)__res);
                 Action<Exception> __failure = (__ex) => completion.SetException(__ex);
+                var __cancellation = cancellation;
                 __enter(() => __advance(__2), __failure);
                 return completion.Task;
             }");
 
         public static Template TaskCallbackMethod = Template.Parse(@"
-            public void _0(Action<object> success = null, Action<Exception> failure = null)
+            public void _0(CancellationToken cancellation, Action<object> success, Action<Exception> failure)
             {
                 var __success = success;
                 var __failure = failure;
+                var __cancellation = cancellation;
                 __enter(() => __advance(__1), failure);
             }");
 
-        public static Template InternalCall = Template.ParseExpression("_0(__success, __failure).GetEnumerator()");
+        public static Template InternalCall = Template.ParseExpression("_0(__cancellation, __success, __failure).GetEnumerator()");
 
         public static Template ExpressionAssigment = Template.ParseStatement("__expr._0 = (__1)__res;");
         public static Template AssigmentAfterExpression = Template.ParseStatement("_0 = _1._0;");
@@ -174,7 +173,7 @@ namespace Excess.Extensions.Concurrent
         public static Template AwaitExpr = Template.ParseStatement("__0 || false;");
 
         public static Template StartObject = Template.Parse(@"
-            protected override void __start(params object[] args)
+            protected override void __start(object[] args)
             {
                 var __enum = __0;
                 __advance(__enum.GetEnumerator());
@@ -210,10 +209,12 @@ namespace Excess.Extensions.Concurrent
         public static Template SignalQueueMember = Template.Parse(@"
             private Queue<Action> _0 = new Queue<Action>();");
 
-        public static Template ConcurrentObject = Template.Parse(@"
-            private _0 __singleton(IInstantiator instantiator)
-            {
-                return instantiator.Singleton<_0>();
-            }");
+        public static Template SynchVoidMethod = Template.ParseStatement("__0;");
+        public static Template SynchReturnMethod = Template.ParseStatement("return __0.Result;");
+
+        public static ExpressionSyntax NullCancelationToken = CSharp.ParseExpression("default(CancellationToken)");
+        public static ExpressionSyntax CancelationArgument = CSharp.ParseExpression("__cancellation");
+        public static StatementSyntax PrivateSignal = CSharp.ParseStatement(
+            "throw new InvalidOperationException(\"Cannot call private signals directly\");");
     }
 }

@@ -26,17 +26,22 @@ namespace Excess.Extensions.Concurrent
                     .token("class", named: "ref")
                     .then(lexical.transform()
                         .remove("keyword")
-                        .then(Compile))
+                        .then(CompileClass))
                 .match()
                     .token("concurrent", named: "keyword")
                     .token("object", named: "ref")
                     .then(lexical.transform()
                         .remove("keyword")
-                        .replace("ref", "class")
+                        .replace("ref", "class ")
                         .then(CompileObject));
         }
 
-        private static SyntaxNode Compile(SyntaxNode node, Scope scope)
+        private static SyntaxNode CompileClass(SyntaxNode node, Scope scope)
+        {
+            return Compile(node, scope, false);
+        }
+
+        private static SyntaxNode Compile(SyntaxNode node, Scope scope, bool isSingleton)
         {
             Debug.Assert(node is ClassDeclarationSyntax);
             var @class = (node as ClassDeclarationSyntax)
@@ -45,7 +50,7 @@ namespace Excess.Extensions.Concurrent
 
             var className = @class.Identifier.ToString();
 
-            var ctx = new Class(className, scope);
+            var ctx = new Class(className, scope, isSingleton);
             scope.set<Class>(ctx);
 
             foreach (var member in @class.Members)
@@ -54,8 +59,45 @@ namespace Excess.Extensions.Concurrent
                     compileProperty(member as PropertyDeclarationSyntax, ctx, scope);
                 else if (member is MethodDeclarationSyntax)
                 {
-                    if (compileMethod(member as MethodDeclarationSyntax, ctx, scope))
-                        ctx.RemoveMember(member);
+                    var method = member as MethodDeclarationSyntax;
+                    if (compileMethod(method, ctx, scope))
+                    {
+                        var isVoid = method.ReturnType.ToString() == "void";
+                        var taskArgs = isVoid
+                            ? new[]
+                            {
+                                CSharp.Argument(Templates.NullCancelationToken),
+                                CSharp.Argument(Roslyn.@null),
+                                CSharp.Argument(Roslyn.@null)
+                            }
+                            : new[]
+                            {
+                                CSharp.Argument(Templates.NullCancelationToken)
+                            };
+
+                        var taskCall = CSharp
+                            .InvocationExpression(
+                                CSharp.IdentifierName(method.Identifier),
+                                CSharp.ArgumentList(CSharp.SeparatedList(
+                                    method
+                                    .ParameterList
+                                    .Parameters
+                                    .Select(parameter => CSharp
+                                        .Argument(CSharp.IdentifierName(parameter.Identifier)))
+                                    .Union(
+                                        taskArgs))));
+
+                        ctx.Replace(member, method
+                            .WithBody(CSharp.Block()
+                                .WithStatements(CSharp.List(new[] {
+                                    isVoid
+                                        ? Templates
+                                            .SynchVoidMethod
+                                            .Get<StatementSyntax>(taskCall)
+                                        : Templates
+                                            .SynchReturnMethod
+                                            .Get<StatementSyntax>(taskCall)}))));
+                    }
                 }
             }
 
@@ -180,7 +222,7 @@ namespace Excess.Extensions.Concurrent
 
                 //hook up our start method
                 int currentIndex = 0;
-                ctx.AddMember(Templates
+                ctx.Replace(methodDeclaration, Templates
                     .StartObject
                     .Get<MethodDeclarationSyntax>(Templates
                         .ConcurrentMain
@@ -189,7 +231,8 @@ namespace Excess.Extensions.Concurrent
                             mainMethod
                             .ParameterList
                             .Parameters
-                            .Where(param => param.Identifier.ToString() != "__success"
+                            .Where(param => param.Identifier.ToString() != "__cancellation"
+                                         && param.Identifier.ToString() != "__success"
                                          && param.Identifier.ToString() != "__failure")
                             .Select(param => CSharp.Argument(Templates
                                 .StartObjectArgument
@@ -197,11 +240,12 @@ namespace Excess.Extensions.Concurrent
                                     param.Type,
                                     currentIndex++)))
                              .Union(new[] {
+                                 CSharp.Argument(Templates.NullCancelationToken),
                                  CSharp.Argument(Roslyn.@null),
                                  CSharp.Argument(Roslyn.@null),
                              }))))));
 
-                return true;
+                return false;
             }
 
             if (isVisible)
@@ -231,6 +275,15 @@ namespace Excess.Extensions.Concurrent
             var signal = ctx.AddSignal(name, returnType, isVisible);
             if (isVisible)
                 createPublicSignals(ctx, method, signal);
+            else
+            {
+                ctx.Replace(methodDeclaration, method
+                    .WithBody(CSharp.Block()
+                        .WithStatements(CSharp.List(new[] {
+                            Templates.PrivateSignal
+                        }))));
+                return false;
+            }
 
             return true;
         }
@@ -319,7 +372,7 @@ namespace Excess.Extensions.Concurrent
                 .ReplaceNodes(internalCall
                     .DescendantNodes()
                     .OfType<InvocationExpressionSyntax>()
-                    .Where(i => i.ArgumentList.Arguments.Count == 2),
+                    .Where(i => i.ArgumentList.Arguments.Count == 3),
                 (on, nn) => nn
                     .WithArgumentList(CSharp.ArgumentList(CSharp.SeparatedList(
                         method.ParameterList.Parameters
@@ -366,13 +419,7 @@ namespace Excess.Extensions.Concurrent
                 return node;
             }
 
-            @class = Compile(node, scope) as ClassDeclarationSyntax;
-            Debug.Assert(@class != null);
-
-            return @class
-                .AddMembers(Templates
-                    .ConcurrentObject
-                    .Get<MethodDeclarationSyntax>(@class.Identifier));
+            return Compile(node, scope, true);
         }
     }
 }

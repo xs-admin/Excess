@@ -1,4 +1,5 @@
 ﻿using Excess.Concurrent.Runtime;
+using Middleware;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -17,7 +18,8 @@ namespace xss
             var url = null as string;
             var concurrentClasses = null as IEnumerable<Type>;
             var concurrentInstances = null as IEnumerable<KeyValuePair<Guid, ConcurrentObject>>;
-            if (!parseArguments(args, out errors, out url, out concurrentClasses, out concurrentInstances))
+            var concurrentNodes = null as IEnumerable<IConcurrentNode>;
+            if (!parseArguments(args, out errors, out url, out concurrentClasses, out concurrentInstances, out concurrentNodes))
             {
                 Console.Write(errors);
                 return;
@@ -29,12 +31,16 @@ namespace xss
                 instances: concurrentInstances);
         }
 
-        private static bool parseArguments(string[] args, out string errors, out string url, out IEnumerable<Type> concurrentClasses, out IEnumerable<KeyValuePair<Guid, ConcurrentObject>> concurrentInstances)
+        private static bool parseArguments(string[] args, out string errors, out string url, out IEnumerable<Type> concurrentClasses, out IEnumerable<KeyValuePair<Guid, ConcurrentObject>> concurrentInstances, out IEnumerable<IConcurrentNode> concurrentNodes)
         {
             errors = null;
             url = null;
             concurrentClasses = null;
             concurrentInstances = null;
+            concurrentNodes = null; //td: nodes
+            var directory = Environment.CurrentDirectory;
+
+
             switch (args.Length)
             {
                 case 1:
@@ -88,7 +94,7 @@ namespace xss
             if (type.BaseType == null || type.BaseType.Name != "ConcurrentObject")
                 return false;
 
-            var method = type.GetMethod("__ConcurrentInstances__", BindingFlags.Static);
+            var method = type.GetMethod("__singleton", BindingFlags.Static);
             if (method != null)
                 method.Invoke(null, new object[] { instances });
 

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Excess.Compiler.Roslyn
 {
-    public class CompilationAnalysisVisitor : CSharpSyntaxVisitor
+    public class CompilationAnalysisVisitor : SyntaxWalker
     {
         CompilationAnalysis _analysis;
         SemanticModel _model;
@@ -23,6 +23,7 @@ namespace Excess.Compiler.Roslyn
         public override void Visit(SyntaxNode node)
         {
             _analysis.Analyze(node, _model, _scope); //td: optimize
+            base.Visit(node);
         }
     }
 }

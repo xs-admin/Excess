@@ -1,8 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis;
+
 using Excess.Compiler;
 using Excess.Compiler.Roslyn;
 
@@ -11,8 +14,7 @@ namespace LanguageExtension
     using ExcessCompiler = ICompiler<SyntaxToken, SyntaxNode, SemanticModel>;
     using ExcessCompilation = ICompilationAnalysis<SyntaxToken, SyntaxNode, SemanticModel>;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
-    using System.Collections.Generic;
-    using Microsoft.CodeAnalysis.CSharp;
+    using Roslyn = RoslynCompiler;
 
     public class Extension
     {
@@ -20,11 +22,8 @@ namespace LanguageExtension
         {
             compiler.Syntax()
                 .extension("server", ExtensionKind.Type, CompileServer);
-        }
 
-        public static void Apply(ExcessCompilation compilation)
-        {
-            compilation
+            compiler.Compilation()
                 .match<ClassDeclarationSyntax>(isConcurrentClass)
                     .then(jsConcurrentClass)
                 .match<ClassDeclarationSyntax>(isConcurrentObject)
@@ -307,9 +306,16 @@ namespace LanguageExtension
         }
 
         //generation
-        private static bool isConcurrentObject(ClassDeclarationSyntax arg1, SemanticModel arg2, Scope arg3)
+        private static bool isConcurrentObject(ClassDeclarationSyntax @class, SemanticModel model, Scope scope)
         {
-            throw new NotImplementedException();
+            if (!isConcurrentClass(@class, model, scope))
+                return false;
+
+            return @class
+                .DescendantNodes()
+                .OfType<MethodDeclarationSyntax>()
+                .Where(method => method.Identifier.ToString() == "__singleton")
+                .Any();
         }
 
         private static void jsConcurrentObject(SyntaxNode arg1, SemanticModel arg2, Scope arg3)
@@ -317,14 +323,88 @@ namespace LanguageExtension
             throw new NotImplementedException();
         }
 
-        private static bool isConcurrentClass(ClassDeclarationSyntax arg1, SemanticModel arg2, Scope arg3)
+        private static bool isConcurrentClass(ClassDeclarationSyntax @class, SemanticModel model, Scope scope)
         {
-            throw new NotImplementedException();
+            if (@class.BaseList == null)
+                return false;
+
+            return @class
+                .BaseList
+                .Types
+                .Any(type => type.Type.ToString() == "ConcurrentObject");
         }
 
-        private static void jsConcurrentClass(SyntaxNode arg1, SemanticModel arg2, Scope arg3)
+        private static void jsConcurrentClass(SyntaxNode node, SemanticModel model, Scope scope)
         {
-            throw new NotImplementedException();
+            Debug.Assert(node is ClassDeclarationSyntax);
+            var @class = node as ClassDeclarationSyntax;
+
+            var config = scope.GetServerConfiguration();
+            Debug.Assert(config != null);
+
+            config.AddClientInterface(node.SyntaxTree, Templates
+                .ConcurrentClassJs
+                .Render(new
+                {
+                    Name = "Name",
+                    ConstructorArguments = "ConstructorArguments",
+                    Methods = "Methods"
+                }));
+        }
+
+        //td: concurrent should offer this somehow
+        static class ConcurrentClass
+        {
+            public static void Visit(ClassDeclarationSyntax @class,
+                Action<SyntaxToken, TypeSyntax, IEnumerable<ParameterSyntax>> methods = null,
+                Action<SyntaxToken, TypeSyntax, ExpressionSyntax> fields = null,
+                Action<IEnumerable<ArgumentSyntax>> constructors = null)
+            {
+                var publicMembers = @class
+                    .DescendantNodes()
+                    .OfType<MemberDeclarationSyntax>()
+                    .Where(member => Roslyn.IsVisible(member));
+
+                foreach (var member in publicMembers)
+                {
+                    if (member is MethodDeclarationSyntax && methods != null)
+                    {
+                        var method = member as MethodDeclarationSyntax;
+
+                        //since we generate multiple methods
+                        if (methods != null
+                            && method
+                                .AttributeLists
+                                .Any(attrList => attrList
+                                    .Attributes
+                                    .Any(attr => attr.Name.ToString() == "Concurrent")))
+                        {
+                            methods(method.Identifier, method.ReturnType, method.ParameterList.Parameters);
+                        }
+                    }
+                    else if (member is FieldDeclarationSyntax && fields != null)
+                    {
+                        var declaration = (member as FieldDeclarationSyntax)
+                            .Declaration;
+
+                        var variable = declaration
+                            .Variables
+                            .Single();
+
+                        fields(variable.Identifier, declaration.Type, variable.Initializer.Value);
+                    }
+                    else if (member is PropertyDeclarationSyntax && fields != null)
+                    {
+                        var property = member as PropertyDeclarationSyntax;
+                        fields(property.Identifier, property.Type, null);
+                    }
+                    else if (member is ConstructorDeclarationSyntax && constructors != null)
+                    {
+                        var property = member as PropertyDeclarationSyntax;
+                        fields(property.Identifier, property.Type, null);
+                    }
+                }
+            }
         }
     }
 }

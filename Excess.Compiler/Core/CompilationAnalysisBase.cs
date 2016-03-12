@@ -44,7 +44,14 @@ namespace Excess.Compiler.Core
         protected List<ICompilationMatch<TToken, TNode, TModel>> _matchers = new List<ICompilationMatch<TToken, TNode, TModel>>();
         ICompilationMatch<TToken, TNode, TModel> ICompilationAnalysis<TToken, TNode, TModel>.match<T>(Func<T, TModel, Scope, bool> matcher) 
         {
-            var result = new CompilationMatch<TToken, TNode, TModel>(this, (node, model, scope) => matcher((T)node, model, scope));
+            var result = new CompilationMatch<TToken, TNode, TModel>(this, (node, model, scope) =>
+            {
+                if (node is T)
+                    return matcher((T)node, model, scope);
+
+                return false;
+            });
+
             _matchers.Add(result);
             return result;
         }

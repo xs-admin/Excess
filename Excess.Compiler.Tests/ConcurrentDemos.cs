@@ -4,11 +4,8 @@ using Microsoft.CodeAnalysis;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 
 namespace Excess.Compiler.Tests
 {
@@ -19,8 +16,7 @@ namespace Excess.Compiler.Tests
         public void DiningPhilosophers()
         {
             var errors = null as IEnumerable<Diagnostic>;
-            var node = TestRuntime
-                .Concurrent
+            var node = ConcurrentMock
                 .Build(@"
                 concurrent class philosopher 
                 {
@@ -101,8 +97,8 @@ namespace Excess.Compiler.Tests
                 "Spinoza",
             };
 
-            var chopsticks = names.Select(n =>
-                node.Spawn("chopstick"))
+            var chopsticks = names.Select(n => node
+                .Spawn("chopstick"))
                 .ToArray();
 
             var phCount = names.Length;
@@ -118,7 +114,20 @@ namespace Excess.Compiler.Tests
             node.Stop();
             node.WaitForCompletion();
 
-            Assert.AreEqual(150, console.items().Length);
+            var items = console
+                .items()
+                .GroupBy(item =>
+                {
+                    var key = 0;
+                    foreach (var name in names)
+                    {
+                        if (item.Contains(name))
+                            return key;
+                    }
+
+                    Assert.IsTrue(false);
+                    return -1;
+                });
         }
 
 
@@ -126,8 +135,7 @@ namespace Excess.Compiler.Tests
         public void Barbers()
         {
             var errors = null as IEnumerable<Diagnostic>;
-            var node = TestRuntime
-                .Concurrent
+            var node = ConcurrentMock
                 .Build(@"
                 concurrent class barbershop
                 {
@@ -215,8 +223,7 @@ namespace Excess.Compiler.Tests
             for (int i = 1; i <= clients; i++)
             {
                 Thread.Sleep((int)(3000 * rand.NextDouble()));
-                TestRuntime
-                    .Concurrent
+                ConcurrentMock
                     .SendAsync(shop, "visit", i);
             }
 
@@ -238,119 +245,28 @@ namespace Excess.Compiler.Tests
             string text = null;
 
             tree = compiler.ApplySemanticalPass(@"
-                concurrent class Chameneo
+                concurrent class ring_item
                 {
-                    public enum Color
+                    int _idx;
+                    public ring_item(int idx)
                     {
-                        blue,
-                        red,    
-                        yellow,    
+                        _idx = idx;
                     }
+                    
+                    public ring_item Next {get; set;}
 
-                    public Color Colour {get; private set;}
-                    public int Meetings {get; private set;}
-                    public int MeetingsWithSelf {get; private set;}
-                    public Broker MeetingPlace {get; private set;}
-
-                    public Chameneo(Broker meetingPlace, int color)
-                    : this(meetingPlace, (Color)color)
+                    static int ITERATIONS = 50*1000*1000;
+                    public void token(int value)
                     {
-                    }
-
-                    public Chameneo(Broker meetingPlace, Color color)
-                    {
-                        MeetingPlace = meetingPlace;
-                        Colour = color;
-                        Meetings = 0;
-                        MeetingsWithSelf = 0;
-                    }
-    
-                    void main() 
-	                {
-                        for(;;)
+                        console.write(value);
+                        if (value >= ITERATIONS)
                         {
-                            MeetingPlace.request(this);
-                            await meet;
-                        }
-	                }
-	                
-                    public void meet(Chameneo other, Color color)
-                    {
-                        Colour = compliment(Colour, color);
-                        Meetings++;
-                        if (other == this)
-                            MeetingsWithSelf++;
-                    }                    
-
-                    public void print()
-                    {
-                        console.write($""{Colour}, {Meetings}, {MeetingsWithSelf}"");
-                    }                    
-
-                    private static Color compliment(Color c1, Color c2)
-                    {
-                        switch (c1)
-                        {
-                            case Color.blue:
-                                switch (c2)
-                                {
-                                    case Color.blue: return Color.blue;
-                                    case Color.red: return Color.yellow;
-                                    case Color.yellow: return Color.red;
-                                    default: break;
-                                }
-                                break;
-                            case Color.red:
-                                switch (c2)
-                                {
-                                    case Color.blue: return Color.yellow;
-                                    case Color.red: return Color.red;
-                                    case Color.yellow: return Color.blue;
-                                    default: break;
-                                }
-                                break;
-                            case Color.yellow:
-                                switch (c2)
-                                {
-                                    case Color.blue: return Color.red;
-                                    case Color.red: return Color.blue;
-                                    case Color.yellow: return Color.yellow;
-                                    default: break;
-                                }
-                                break;
-                        }
-                        throw new Exception();
-                    }
-
-                }
-
-                concurrent class Broker
-                {
-                    int _meetings = 0;
-                    public Broker(int meetings)
-                    {
-                        _meetings = meetings;
-                    }
-
-                    Chameneo _first = null;
-                    public void request(Chameneo creature)
-                    {
-                        if (_first != null)
-                        {
-                            //perform meeting
-                            var firstColor = _first.Colour;
-                            _first.meet(creature, creature.Colour);
-                            creature.meet(_first, firstColor);
-                            
-                            //prepare for next
-                            _first = null;
-                            _meetings--;
-                            if (_meetings == 0)
-                                Node.Stop();
+                            console.write(_idx);
+                            Node.Stop();
                         }
                         else
-                            _first = creature;
-                    }
+                            Next.token(value + 1);
+                    }                    
                 }", out text);
 
             Assert.IsNotNull(text);

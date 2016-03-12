@@ -68,6 +68,10 @@
       <Project>{4be92f98-4415-4118-9a57-e1e2b3cbb1a5}</Project>
       <Name>Runtime</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Middleware\Middleware.csproj">
+      <Project>{ed3d63d8-7c35-4f77-8430-7bc6bbfe56b9}</Project>
+      <Name>Middleware</Name>
+    </ProjectReference>
     <ProjectReference Include="..\Startup\Startup.csproj">
       <Project>{f30d6658-ea1a-4117-88ca-5b96af6303aa}</Project>
       <Name>Startup</Name>

@@ -10,20 +10,22 @@ namespace Excess.Compiler.Core
     public abstract class CompilerBase<TToken, TNode, TModel> : ICompiler<TToken, TNode, TModel>,
                                                                 IDocumentInjector<TToken, TNode, TModel>
     {
-        protected ILexicalAnalysis<TToken, TNode, TModel>  _lexical;
-        protected ISyntaxAnalysis<TToken, TNode, TModel>   _syntax;
-        protected ISemanticAnalysis<TToken, TNode, TModel> _semantics;
-        protected IInstanceAnalisys<TNode>                 _instance;     
-        protected ICompilerEnvironment                     _environment;
-        protected CompilerStage                            _stage  = CompilerStage.Started;
-        protected IDocument<TToken, TNode, TModel>         _document;
-        protected Scope                                    _scope;
+        protected ILexicalAnalysis<TToken, TNode, TModel>     _lexical;
+        protected ISyntaxAnalysis<TToken, TNode, TModel>      _syntax;
+        protected ISemanticAnalysis<TToken, TNode, TModel>    _semantics;
+        protected IInstanceAnalisys<TNode>                    _instance;     
+        protected ICompilerEnvironment                        _environment;
+        protected ICompilationAnalysis<TToken, TNode, TModel> _compilation;
+        protected CompilerStage                               _stage  = CompilerStage.Started;
+        protected IDocument<TToken, TNode, TModel>            _document;
+        protected Scope                                       _scope;
 
         public CompilerBase(ILexicalAnalysis<TToken, TNode, TModel> lexical, 
                             ISyntaxAnalysis<TToken, TNode, TModel> syntax, 
                             ISemanticAnalysis<TToken, TNode, TModel> semantics,
                             ICompilerEnvironment environment,
                             IInstanceAnalisys<TNode> instance,
+                            ICompilationAnalysis<TToken, TNode, TModel> compilation,
                             Scope scope)
         {
             _lexical  = lexical;
@@ -31,7 +33,7 @@ namespace Excess.Compiler.Core
             _semantics = semantics;
             _environment = environment;
             _instance = instance;
-
+            _compilation = compilation;
             _scope = new Scope(scope); 
         }
 
@@ -60,6 +62,11 @@ namespace Excess.Compiler.Core
         public ICompilerEnvironment Environment()
         {
             return _environment;
+        }
+
+        public ICompilationAnalysis<TToken, TNode, TModel> Compilation()
+        {
+            return _compilation;
         }
 
         public void apply(IDocument<TToken, TNode, TModel> document)

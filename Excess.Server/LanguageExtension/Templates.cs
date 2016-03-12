@@ -3,6 +3,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace LanguageExtension
 {
+    using Excess.Compiler.Razor;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
     public static class Templates
@@ -17,6 +18,8 @@ namespace LanguageExtension
                 public void Start(IInstantiator instantiator)
                 {
                 }
+
+                private bool __ConfigClass__ = true;
             }");
 
         public static Template NodeMethod = Template.Parse(@"
@@ -27,16 +30,16 @@ namespace LanguageExtension
         public static Template HttpServer = Template.ParseStatement(@"
             Startup.HttpServer.Start(
                 url: __0, 
-                threads: __1
-                classes: instantiator.ConcurrentClasses(),
-                instances: instantiator.ConcurrentInstances(except: __2));");
+                threads: __1,
+                classes: instantiator.GetConcurrentClasses(),
+                instances: instantiator.GetConcurrentInstances(except: __2));");
 
         public static Template NodeServer = Template.ParseStatement(@"
             Startup._0.Start(
                 url: __1, 
-                threads: __2
-                classes: instantiator.ConcurrentClasses(),
-                instances: instantiator.ConcurrentInstances(only: __3));");
+                threads: __2,
+                classes: instantiator.GetConcurrentClasses(),
+                instances: instantiator.GetConcurrentInstances(only: __3));");
 
         public static Template NodeConnection = Template.ParseExpression("new _0(__1)");
         
@@ -50,7 +53,14 @@ namespace LanguageExtension
             .ParseExpression("new IConcurrentNode[] {}")
             .Get<ArrayCreationExpressionSyntax>();
 
-        public static StatementSyntax CreateInstantiator = CSharp
-            .ParseStatement("instantiator = instantiator ?? new AssemblyInstantiator(this.GetType().Assembly);");
+        public static StatementSyntax CreateInstantiator = CSharp.ParseStatement(@"
+            instantiator = instantiator ?? new AssemblyInstantiator(this.GetType().Assembly);");
+
+        public static RazorTemplate ConcurrentClassJs = RazorTemplate.Parse(@"
+            function @Model.Name (@Model.ConstructorArguments)
+            {
+                @Model.Methods
+            }");
+
     }
 }

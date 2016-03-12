@@ -34,8 +34,8 @@ namespace Excess.Compiler.Roslyn
 
     public class Compilation
     {
-        ICompilationAnalysis<SyntaxToken, SyntaxNode, SemanticModel> _analysis;
-        public Compilation(IPersistentStorage storage, ICompilationAnalysis<SyntaxToken, SyntaxNode, SemanticModel> analysis)
+        CompilationAnalysis _analysis;
+        public Compilation(IPersistentStorage storage, CompilationAnalysis analysis)
         {
             _environment = createEnvironment(storage);
             _scope.set<ICompilerEnvironment>(_environment);
@@ -43,6 +43,13 @@ namespace Excess.Compiler.Roslyn
         }
 
         public string OutputFile { get; set; }
+        public CompilationAnalysis Analysis
+        {
+            get
+            {
+                return _analysis;
+            }
+        }
 
         public void setPath(dynamic path)
         {
@@ -77,6 +84,7 @@ namespace Excess.Compiler.Roslyn
         List<CompilationDocument> _documents = new List<CompilationDocument>();
 
         Scope _scope = new Scope(null);
+        public Scope Scope { get { return _scope; } }
 
         public bool hasDocument(string id)
         {
@@ -115,7 +123,9 @@ namespace Excess.Compiler.Roslyn
             var hash = 0;
             if (string.IsNullOrEmpty(ext))
             {
-                compiler = new RoslynCompiler(_environment, _scope);
+                compiler = new RoslynCompiler(_environment, 
+                    scope : _scope,
+                    compilation: _analysis);
                 injector.apply(compiler);
             }
             else if (ext == ".cs")
@@ -425,7 +435,7 @@ namespace Excess.Compiler.Roslyn
                 return null;
 
             if (_analysis != null)
-                performAnalysis((CompilationAnalysis)_analysis);
+                performAnalysis(_analysis);
 
             using (var stream = new MemoryStream())
             {
