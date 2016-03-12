@@ -9,106 +9,64 @@ using System.Threading.Tasks;
 
 namespace SomeNS
 {
-    [Concurrent]
-    class HelloService : ConcurrentObject
+
+function HelloService
+{
+    this.Hello = function (who)
     {
-        public string Hello(string what)
-        {
-            return Hello(what, default(CancellationToken)).Result;
-        }
+        var deferred = $q.defer();
 
-        private IEnumerable<Expression> __concurrentHello(string what, CancellationToken __cancellation, Action<object> __success, Action<Exception> __failure)
+        $http.post('/e4f3a060-e014-497f-8811-ad13358154fc/Hello',
         {
+            who: who,
+        })
+        .success(function(response))
+        {
+            deferred.resolve(new HelloModel(
             {
-                __dispatch("Hello");
-                if (__success != null)
-                    __success("Hello " + what);
-                yield break;
-            }
-        }
+                Greeting = response.Greeting,
+                Times = response.Times,
+                Goodbye = new GoodbyeService({
+                    Name = response.Goodbye.Name,
+            });,
+        }););
+        })
+                .failure(function(ex))
+                {
+            deferred.reject(ex);
+        });
 
-        public Task<string> Hello(string what, CancellationToken cancellation)
-        {
-            var completion = new TaskCompletionSource<string>();
-            Action<object> __success = (__res) => completion.SetResult((string)__res);
-            Action<Exception> __failure = (__ex) => completion.SetException(__ex);
-            var __cancellation = cancellation;
-            __enter(() => __advance(__concurrentHello(what, __cancellation, __success, __failure).GetEnumerator()), __failure);
-            return completion.Task;
-        }
-
-        public void Hello(string what, CancellationToken cancellation, Action<object> success, Action<Exception> failure)
-        {
-            var __success = success;
-            var __failure = failure;
-            var __cancellation = cancellation;
-            __enter(() => __advance(__concurrentHello(what, __cancellation, __success, __failure).GetEnumerator()), failure);
-        }
+                return deferred.promise;
     }
 
-    [Concurrent]
-    class GoodbyeService : ConcurrentObject
-    {
-        public string Goodbye(string what)
-        {
-            return Goodbye(what, default(CancellationToken)).Result;
-        }
+}
 
-        private IEnumerable<Expression> __concurrentGoodbye(string what, CancellationToken __cancellation, Action<object> __success, Action<Exception> __failure)
-        {
+function GoodbyeService
+{
+                
+            this.Name = "GoodbyeService";
+
+            this.Goodbye = function (what)
             {
-                __dispatch("Goodbye");
-                if (__success != null)
-                    __success("Goodbye " + what);
-                yield break;
-            }
-        }
+        var deferred = $q.defer();
 
-        public Task<string> Goodbye(string what, CancellationToken cancellation)
-        {
-            var completion = new TaskCompletionSource<string>();
-            Action<object> __success = (__res) => completion.SetResult((string)__res);
-            Action<Exception> __failure = (__ex) => completion.SetException(__ex);
-            var __cancellation = cancellation;
-            __enter(() => __advance(__concurrentGoodbye(what, __cancellation, __success, __failure).GetEnumerator()), __failure);
-            return completion.Task;
-        }
+                $http.post('/9421b080-b3b0-41a2-b4c0-c05374468407/Goodbye',
+                {
+        what: what,
 
-        public void Goodbye(string what, CancellationToken cancellation, Action<object> success, Action<Exception> failure)
-        {
-            var __success = success;
-            var __failure = failure;
-            var __cancellation = cancellation;
-            __enter(() => __advance(__concurrentGoodbye(what, __cancellation, __success, __failure).GetEnumerator()), failure);
-        }
+                })
+                .success(function(response))
+                {
+            deferred.resolve(response);
+        })
+                .failure(function(ex))
+                {
+            deferred.reject(ex);
+        });
+
+        return deferred.promise;
     }
 
-    namespace Servers
-    {
-        public class Default
-        {
-            public void Deploy()
-            {
-            }
+}
 
-            public void Start(IInstantiator instantiator)
-            {
-                instantiator = instantiator ?? new AssemblyInstantiator(this.GetType().Assembly);
-                Startup.HttpServer.Start(url: "http://localhost:1080", threads: 8, classes: instantiator.GetConcurrentClasses(), instances: instantiator.GetConcurrentInstances(except: new Type[] { typeof(HelloService), typeof(GoodbyeService) }));
-            }
-
-            private bool __ConfigClass__ = true;
-            public void node1(IInstantiator instantiator)
-            {
-                instantiator = instantiator ?? new AssemblyInstantiator(this.GetType().Assembly);
-                Startup.NetMQ_RequestResponseServer.Start(url: "http://localhost:1081", threads: 8, classes: instantiator.GetConcurrentClasses(), instances: instantiator.GetConcurrentInstances(only: new Type[] { typeof(HelloService) }));
-            }
-
-            public void node2(IInstantiator instantiator)
-            {
-                instantiator = instantiator ?? new AssemblyInstantiator(this.GetType().Assembly);
-                Startup.NetMQ_RequestResponseServer.Start(url: "http://localhost:1082", threads: 8, classes: instantiator.GetConcurrentClasses(), instances: instantiator.GetConcurrentInstances(only: new Type[] { typeof(GoodbyeService) }));
-            }
-        }
-    }
 }

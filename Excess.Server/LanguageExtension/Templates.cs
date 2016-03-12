@@ -18,8 +18,6 @@ namespace LanguageExtension
                 public void Start(IInstantiator instantiator)
                 {
                 }
-
-                private bool __ConfigClass__ = true;
             }");
 
         public static Template NodeMethod = Template.Parse(@"

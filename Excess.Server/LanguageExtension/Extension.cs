@@ -314,10 +314,10 @@ namespace LanguageExtension
                 return false;
 
             return @class
-                .DescendantNodes()
-                .OfType<MethodDeclarationSyntax>()
-                .Where(method => method.Identifier.ToString() == "__singleton")
-                .Any();
+                .AttributeLists
+                .Any(attrList => attrList
+                    .Attributes
+                    .Any(attr => attr.Name.ToString() == "ConcurrentSingleton"));
         }
 
         private static void jsConcurrentObject(SyntaxNode arg1, SemanticModel arg2, Scope arg3)
@@ -366,7 +366,7 @@ namespace LanguageExtension
                                 Arguments = argumentsFromParameters(parameters),
                                 Data = objectFromParameters(parameters),
                                 Url = $"/{Guid.NewGuid()}/{name.ToString()}", //td: !!! persistent ids
-                                Response = "",
+                                Response = calculateResponse(type, model),
                             }));
                     },
                     fields: (name, type, value) =>
@@ -388,6 +388,13 @@ namespace LanguageExtension
                     Arguments = constructorArguments,
                     Body = body.ToString()
                 }));
+        }
+
+        private static string calculateResponse(TypeSyntax type, SemanticModel model)
+        {
+            var typeSymbol = model.GetSymbolInfo(type).Symbol as ITypeSymbol;
+            Debug.Assert(typeSymbol != null);
+            return ResponseVisitor.Get(typeSymbol, "response");
         }
 
         private static string valueString(ExpressionSyntax value, TypeSyntax type, SemanticModel model)

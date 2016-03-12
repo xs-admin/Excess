@@ -88,10 +88,63 @@ namespace Tests
                 }
             }";
 
+            var errorList = new List<string>();
+            var compilation = Mock.Build(Source, errors: errorList);
+            
+            Assert.IsFalse(errorList.Any());
+
+            var serverConfig = compilation.Scope.get<IServerConfiguration>();
+            Assert.IsNotNull(serverConfig);
+
+            var clientCode = serverConfig.GetClientInterface();
+
+            Assert.IsTrue(
+                clientCode.Contains("function HelloService()")
+                && clientCode.Contains("function GoodbyeService()")
+                && clientCode.Contains("Hello = function (what)")
+                && clientCode.Contains("Goodbye = function (what)"));
+        }
+
+        [TestMethod]
+        public void WithComplexTypes()
+        {
+            //setup
+            const string Source = @"
+            struct HelloModel
+            {
+                public string Greeting;                
+                public int Times;
+                public GoodbyeService Goodbye;
+            }
+
+            concurrent class HelloService
+            {
+                int _times = 0;
+                public HelloModel Hello(string who)
+                {
+                    return new HelloModel
+                    {
+                        Greeting = ""greetings, "" + who,
+                        Times = _times++,
+                        Goodbye = spawn<GoodbyeService>()
+                    };
+                }
+            }
+
+            concurrent class GoodbyeService
+            {
+                public string Name = ""GoodbyeService""; 
+
+                public string Goodbye(string what)
+                {
+                    return ""Goodbye "" + what;
+                }
+            }";
+
             var storage = new MockStorage();
             var errors = new List<string>();
             var compilation = Mock.Build(Source, storage, errors);
-            
+
             Assert.IsFalse(errors.Any());
 
             var serverConfig = compilation.Scope.get<IServerConfiguration>();
