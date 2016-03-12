@@ -87,7 +87,10 @@ namespace Excess.Extensions.Concurrent
                                     .Union(
                                         taskArgs))));
 
-                        ctx.Replace(member, method
+                        ctx.Replace(method, method
+                            .AddAttributeLists(CSharp.AttributeList(CSharp.SeparatedList(new[] {CSharp
+                                .Attribute(CSharp
+                                    .ParseName("Concurrent"))})))
                             .WithBody(CSharp.Block()
                                 .WithStatements(CSharp.List(new[] {
                                     isVoid

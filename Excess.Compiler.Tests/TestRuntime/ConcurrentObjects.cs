@@ -11,12 +11,12 @@ namespace Excess.Compiler.Tests.TestRuntime
     using System.Threading;
     using Spawner = Func<object[], ConcurrentObject>;
 
-    [System.AttributeUsage(AttributeTargets.Class)]
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
     public class Concurrent : Attribute
     {
     }
 
-    [System.AttributeUsage(AttributeTargets.Class)]
+    [AttributeUsage(AttributeTargets.Class)]
     public class ConcurrentSingleton : Attribute
     {
     }

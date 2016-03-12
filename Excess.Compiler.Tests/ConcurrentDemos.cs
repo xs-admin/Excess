@@ -123,6 +123,8 @@ namespace Excess.Compiler.Tests
                     {
                         if (item.Contains(name))
                             return key;
+
+                        key++;
                     }
 
                     Assert.IsTrue(false);

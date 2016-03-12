@@ -15,19 +15,21 @@ namespace LanguageExtension
     using ExcessCompilation = ICompilationAnalysis<SyntaxToken, SyntaxNode, SemanticModel>;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
     using Roslyn = RoslynCompiler;
+    using System.Text;
 
     public class Extension
     {
-        public static void Apply(ExcessCompiler compiler)
+        public static void Apply(ExcessCompiler compiler, bool withCompilation = true)
         {
             compiler.Syntax()
                 .extension("server", ExtensionKind.Type, CompileServer);
 
-            compiler.Compilation()
-                .match<ClassDeclarationSyntax>(isConcurrentClass)
-                    .then(jsConcurrentClass)
-                .match<ClassDeclarationSyntax>(isConcurrentObject)
-                    .then(jsConcurrentObject);
+            if (withCompilation)
+                compiler.Compilation()
+                    .match<ClassDeclarationSyntax>(isConcurrentClass)
+                        .then(jsConcurrentClass)
+                    .match<ClassDeclarationSyntax>(isConcurrentObject)
+                        .then(jsConcurrentObject);
         }
 
         //server information
@@ -342,14 +344,80 @@ namespace LanguageExtension
             var config = scope.GetServerConfiguration();
             Debug.Assert(config != null);
 
+            var body = new StringBuilder();
+            var constructorArguments = string.Empty;
+            var constructorFound = false;
+            ConcurrentClass
+                .Visit(@class,
+                    constructors: parameters =>
+                    {
+                        Debug.Assert(!constructorFound);
+                        constructorFound = true;
+
+                        constructorArguments = argumentsFromParameters(parameters);
+                    }, 
+                    methods: (name, type, parameters) =>
+                    {
+                        body.AppendLine(Templates
+                            .jsMethod
+                            .Render(new
+                            {
+                                Name = name.ToString(),
+                                Arguments = argumentsFromParameters(parameters),
+                                Data = objectFromParameters(parameters),
+                                Url = $"/{Guid.NewGuid()}/{name.ToString()}", //td: !!! persistent ids
+                                Response = "",
+                            }));
+                    },
+                    fields: (name, type, value) =>
+                    {
+                        body.AppendLine(Templates
+                            .jsProperty
+                            .Render(new
+                            {
+                                Name = name.ToString(),
+                                Value = valueString(value, type, model) 
+                            }));
+                    });
+
             config.AddClientInterface(node.SyntaxTree, Templates
-                .ConcurrentClassJs
+                .jsConcurrentClass
                 .Render(new
                 {
-                    Name = "Name",
-                    ConstructorArguments = "ConstructorArguments",
-                    Methods = "Methods"
+                    Name = @class.Identifier.ToString(),
+                    Arguments = constructorArguments,
+                    Body = body.ToString()
                 }));
+        }
+
+        private static string valueString(ExpressionSyntax value, TypeSyntax type, SemanticModel model)
+        {
+            if (value != null)
+                return value.ToString();
+
+            return "null"; //td: use the model
+        }
+
+        private static string objectFromParameters(IEnumerable<ParameterSyntax> parameters)
+        {
+            var result = new StringBuilder();
+            foreach (var parameter in parameters)
+            {
+                var identifier = parameter.Identifier.ToString();
+                result.AppendLine($"{identifier} : {identifier},");
+            }
+
+            return result.ToString();
+        }
+
+        private static string argumentsFromParameters(IEnumerable<ParameterSyntax> parameters)
+        {
+            return CSharp
+                .ArgumentList(CSharp.SeparatedList(
+                    parameters
+                    .Select(parameter => CSharp.Argument(CSharp.
+                        IdentifierName(parameter.Identifier)))))
+                .ToString();
         }
 
         //td: concurrent should offer this somehow
@@ -358,7 +426,7 @@ namespace LanguageExtension
             public static void Visit(ClassDeclarationSyntax @class,
                 Action<SyntaxToken, TypeSyntax, IEnumerable<ParameterSyntax>> methods = null,
                 Action<SyntaxToken, TypeSyntax, ExpressionSyntax> fields = null,
-                Action<IEnumerable<ArgumentSyntax>> constructors = null)
+                Action<IEnumerable<ParameterSyntax>> constructors = null)
             {
                 var publicMembers = @class
                     .DescendantNodes()
@@ -399,10 +467,11 @@ namespace LanguageExtension
                         fields(property.Identifier, property.Type, null);
                     }
                     else if (member is ConstructorDeclarationSyntax && constructors != null)
-                    {
-                        var property = member as PropertyDeclarationSyntax;
-                        fields(property.Identifier, property.Type, null);
-                    }
+                        constructors((member as ConstructorDeclarationSyntax)
+                            .ParameterList
+                            .Parameters);
+                    else
+                        Debug.Assert(false); //td:
                 }
             }
         }

@@ -56,11 +56,36 @@ namespace LanguageExtension
         public static StatementSyntax CreateInstantiator = CSharp.ParseStatement(@"
             instantiator = instantiator ?? new AssemblyInstantiator(this.GetType().Assembly);");
 
-        public static RazorTemplate ConcurrentClassJs = RazorTemplate.Parse(@"
-            function @Model.Name (@Model.ConstructorArguments)
+        public static RazorTemplate jsConcurrentClass = RazorTemplate.Parse(@"
+            function @Model.Name @Model.Arguments
             {
-                @Model.Methods
+                @Model.Body
             }");
+
+        public static RazorTemplate jsMethod = RazorTemplate.Parse(@"
+            this.@Model.Name = function @Model.Arguments
+            {
+                var deferred = $q.defer();
+
+                $http.post('@Model.Url', 
+                {
+                    @Model.Data
+                })
+                .success(function(response))
+                {
+                    deferred.resolve(@Model.Response);
+                })
+                .failure(function(ex))
+                {
+                    deferred.reject(ex);
+                });
+
+                return deferred.promise;
+            }");
+
+        public static RazorTemplate jsProperty = RazorTemplate.Parse(@"
+            this.@Model.Name = @Model.Value;");
+        
 
     }
 }

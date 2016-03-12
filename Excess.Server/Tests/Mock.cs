@@ -1,22 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Reflection;
+using System.Linq;
+using Owin;
 using Microsoft.Owin.Testing;
 using Microsoft.CodeAnalysis;
+using Excess.Compiler;
+using Excess.Compiler.Roslyn;
 using Excess.Compiler.Core;
 using Excess.Concurrent.Runtime;
 using Middleware;
+using Startup;
 
 namespace Tests
 {
-    using Excess.Compiler;
-    using Excess.Compiler.Roslyn;
-    using LanguageExtension;
-    using Owin;
-    using Startup;
-    using System.Linq;
     using Spawner = Func<object[], ConcurrentObject>;
+    using ServerExtension = LanguageExtension.Extension;
+    using ConcurrentExtension = Excess.Extensions.Concurrent.Extension;
+    using Compilation = Excess.Compiler.Roslyn.Compilation;
 
     public static class Mock
     {
@@ -26,7 +27,8 @@ namespace Tests
                 environment: null,
                 compilation: new CompilationAnalysis());
 
-            Extension.Apply(compiler);
+            ServerExtension.Apply(compiler);
+            ConcurrentExtension.Apply(compiler);
             return compiler.ApplySemanticalPass(code, out output);
         }
 

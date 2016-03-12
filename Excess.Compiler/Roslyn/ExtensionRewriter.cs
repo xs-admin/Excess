@@ -169,7 +169,7 @@ namespace Excess.Compiler.Roslyn
 
         private SyntacticalExtension<SyntaxNode> typeExtension(IncompleteMemberSyntax node)
         {
-            throw new NotImplementedException(); 
+            return null;
         }
 
         public override SyntaxNode VisitExpressionStatement(ExpressionStatementSyntax node)

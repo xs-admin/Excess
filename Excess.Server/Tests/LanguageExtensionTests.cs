@@ -2,11 +2,8 @@
 using LanguageExtension;
 using Microsoft.CodeAnalysis;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Tests
 {
@@ -108,5 +105,56 @@ namespace Tests
                 && clientCode.Contains("Hello = function (what)")
                 && clientCode.Contains("Goodbye = function (what)"));
         }
+
+        [TestMethod]
+        public void DebugPrint()
+        {
+            string text;
+            Mock.Compile(@"
+            concurrent class HelloService
+            {
+                public string Hello(string what)
+                {
+                    return ""Hello "" + what;
+                }
+            }
+
+            concurrent class GoodbyeService
+            {
+                public string Goodbye(string what)
+                {
+                    return ""Goodbye "" + what;
+                }
+            }
+
+            namespace Servers
+            {
+                server Default()
+                {
+                    Url = ""http://localhost:1080"";
+
+                    Node node1 = new NetMQ.RequestResponse
+                    {
+                        Url = ""http://localhost:1081"",
+                        Hosts = new []
+                        {
+                            HelloService
+                        }
+                    };
+
+                    Node node2 = new NetMQ.RequestResponse
+                    {
+                        Url = ""http://localhost:1082"",
+                        Hosts = new []
+                        {
+                            GoodbyeService
+                        }
+                    };
+                }
+            }", out text);
+
+            Assert.IsNotNull(text);
+        }
+
     }
 }

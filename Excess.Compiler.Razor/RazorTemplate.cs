@@ -6,9 +6,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Net;
 
 namespace Excess.Compiler.Razor
 {
+    using System.IO;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
     internal enum TemplateKind
@@ -88,7 +90,8 @@ namespace Excess.Compiler.Razor
 
         public string Render(object model)
         {
-            return Engine.Razor.Run(_key, null, (object)model);
+            var result = Engine.Razor.Run(_key, null, (object)model);
+            return WebUtility.HtmlDecode(result);
         }
 
         public SyntaxNode Get(object model)

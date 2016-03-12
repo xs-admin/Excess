@@ -41,6 +41,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Attributes.cs" />
     <Compile Include="ConcurrentObject.cs" />
     <Compile Include="Expression.cs" />
     <Compile Include="Instantiator.cs" />
