@@ -164,16 +164,31 @@ namespace Tests
         {
             string text;
             Mock.Compile(@"
-            concurrent class HelloService
+            struct HelloModel
             {
-                public string Hello(string what)
+                public string Greeting;                
+                public int Times;
+                public GoodbyeService Goodbye;
+            }
+
+            concurrent object HelloService
+            {
+                int _times = 0;
+                public HelloModel Hello(string who)
                 {
-                    return ""Hello "" + what;
+                    return new HelloModel
+                    {
+                        Greeting = ""greetings, "" + who,
+                        Times = _times++,
+                        Goodbye = spawn<GoodbyeService>()
+                    };
                 }
             }
 
             concurrent class GoodbyeService
             {
+                public string Name = ""GoodbyeService""; 
+
                 public string Goodbye(string what)
                 {
                     return ""Goodbye "" + what;
@@ -188,7 +203,7 @@ namespace Tests
 
                     Node node1 = new NetMQ.RequestResponse
                     {
-                        Url = ""http://localhost:1081"",
+                        Url = ""tcp://localhost:1081"",
                         Hosts = new []
                         {
                             HelloService
@@ -197,7 +212,7 @@ namespace Tests
 
                     Node node2 = new NetMQ.RequestResponse
                     {
-                        Url = ""http://localhost:1082"",
+                        Url = ""tcp://localhost:1082"",
                         Hosts = new []
                         {
                             GoodbyeService

@@ -61,13 +61,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Attributes.cs" />
     <Compile Include="Builder.cs" />
     <Compile Include="Concurrent.Server.cs" />
+    <Compile Include="NetMQ\IdentityServer.cs" />
     <Compile Include="NetMQ\RequestResponse.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Concurrent.Owin.cs" />
+    <Compile Include="Identity.Server.cs" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

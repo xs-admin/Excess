@@ -69,6 +69,10 @@ namespace LanguageExtension
                     return data;
             }
 
+            var isCompilationType = type.DeclaringSyntaxReferences.Any();
+            if (!isCompilationType)
+                return data;
+
             var visitor = new ResponseVisitor(data);
             type.Accept(visitor);
 
@@ -94,9 +98,16 @@ namespace LanguageExtension
             _result.Append($"new {symbol.Name} ({{");
             foreach (var member in symbol.GetMembers())
             {
-                member.Accept(this);
+                switch (member.DeclaredAccessibility)
+                {
+                    case Accessibility.Protected:
+                    case Accessibility.Public:
+                    case Accessibility.Internal:
+                        member.Accept(this);
+                        break;
+                }
             }
-            _result.Append("});");
+            _result.Append("})");
         }
 
         private StringBuilder _result = new StringBuilder();
@@ -132,7 +143,9 @@ namespace LanguageExtension
 
         private string currentData()
         {
-            return string.Join(".", _data.Reverse().ToArray());
+            return string.Join(".", _data
+                .Reverse()
+                .ToArray());
         }
     }
 }

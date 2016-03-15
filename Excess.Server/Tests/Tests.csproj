@@ -138,6 +138,7 @@
     <Compile Include="LanguageExtensionTests.cs" />
     <Compile Include="HttpServerTests.cs" />
     <Compile Include="MockStorage.cs" />
+    <Compile Include="NetMQTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Mock.cs" />
   </ItemGroup>

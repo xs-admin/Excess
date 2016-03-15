@@ -7,7 +7,6 @@ using System.Threading;
 using System.Collections.Concurrent;
 
 using Newtonsoft.Json.Linq;
-
 using Excess.Concurrent.Runtime;
 
 namespace Middleware
@@ -25,6 +24,7 @@ namespace Middleware
     {
         void Build(Action<IConcurrentServer, Node> builder);
 
+        bool Has(Guid id);
         void Register(Guid id, ServerFunc func);
         void RegisterClass(Type @class);
         void RegisterClass<T>() where T : ConcurrentObject;
@@ -37,7 +37,7 @@ namespace Middleware
 
     public class ConcurrentServer : IConcurrentServer
     {
-        Node _node = new Node(5); //td: config
+        Node _node = new Node(2, afap : false); //td: !!! config
         public ConcurrentServer()
         {
         }
@@ -60,6 +60,11 @@ namespace Middleware
         }
 
         protected ConcurrentDictionary<Guid, ServerFunc> _funcs = new ConcurrentDictionary<Guid, ServerFunc>();
+        public bool Has(Guid id)
+        {
+            return _funcs.ContainsKey(id);
+        }
+
         public void Register(Guid id, ServerFunc func)
         {
             for (;;)
@@ -102,7 +107,7 @@ namespace Middleware
                     Action<object> __success = (object returnValue) =>
                     {
                         success(JObject
-                            .FromObject(new { result = returnValue }));
+                            .FromObject(new { __res = returnValue }));
                     };
 
                     var arguments = new object[paramCount + 2];
@@ -129,6 +134,8 @@ namespace Middleware
 
         public void RegisterInstance(Guid id, ConcurrentObject @object)
         {
+            _node.Spawn(@object);
+
             var methods = _types[@object.GetType()];
             Register(id, (server, method, args, success) =>
             {

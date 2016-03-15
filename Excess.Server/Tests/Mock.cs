@@ -83,6 +83,48 @@ namespace Tests
             });
         }
 
+        public static TestServer CreateServer(string code, string configuration, Dictionary<string, Guid> singletons)
+        {
+            var errors = new List<Diagnostic>();
+            var classes = new List<Type>();
+            var configurations = new List<Type>();
+            var instances = new Dictionary<Guid, ConcurrentObject>();
+            var node = buildConcurrent(code,
+                errors: errors,
+                classes: classes,
+                configurations: configurations,
+                instances: instances,
+                instanceNames : singletons);
+
+            if (errors.Any())
+                return null;
+
+            var config = configurations
+                .Single(cfg => cfg.Name == configuration);
+
+            return TestServer.Create(app =>
+            {
+                startNodes(config);
+
+                app.UseConcurrent(server =>
+                {
+                    foreach (var @class in classes)
+                        server.RegisterClass(@class);
+
+                    foreach (var instance in instances)
+                        server.RegisterInstance(instance.Key, instance.Value);
+                });
+            });
+        }
+
+        //start a configuration, but just the nodes
+        private static void startNodes(Type config)
+        {
+            var method = config.GetMethod("StartNodes");
+            var instance = Activator.CreateInstance(config);
+            method.Invoke(instance, new object[] { null });
+        }
+
         private static Compilation createCompilation(string text,
             List<Diagnostic> errors = null,
             IPersistentStorage storage = null,
@@ -97,6 +139,7 @@ namespace Tests
                             "System.Threading.Tasks",
                             "System.Diagnostics",})
                         .dependency<ConcurrentObject>("Excess.Concurrent.Runtime")
+                        .dependency<IConcurrentServer>("Middleware")
                         .dependency<HttpServer>("Startup")
                         .dependency<IAppBuilder>("Owin")),
 
@@ -117,8 +160,11 @@ namespace Tests
         }
 
         private static Node buildConcurrent(string text,
-            List<Type> classes = null, 
+            List<Type> classes = null,
+            Dictionary<Guid, ConcurrentObject> instances = null,
+            Dictionary<string, Guid> instanceNames = null,
             List<Diagnostic> errors = null, 
+            List<Type> configurations = null,
             IPersistentStorage storage = null)
         {
             var compilation = createCompilation(text, errors, storage);
@@ -133,13 +179,31 @@ namespace Tests
             }
 
             var exportTypes = new Dictionary<string, Spawner>();
-            var classList = new List<Type>();
             foreach (var type in assembly.GetTypes())
             {
+                //non-concurrent
                 if (type.BaseType != typeof(ConcurrentObject))
+                {
+                    if (configurations != null)
+                        checkForConfiguration(type, configurations);
                     continue;
+                }
 
-                classList.Add(type);
+                //singletons
+                if (instances != null && 
+                    type
+                    .CustomAttributes
+                    .Any(attr => attr.AttributeType.Name == "ConcurrentSingleton"))
+                {
+                    var id = Guid.NewGuid();
+                    instances[id] = (ConcurrentObject)Activator.CreateInstance(type);
+                    if (instanceNames != null)
+                        instanceNames[type.Name] = id;
+                }
+
+                //classes
+                if (classes != null)
+                    classes.Add(type);
 
                 var useParameterLess = type.GetConstructors().Length == 0;
                 if (!useParameterLess)
@@ -162,10 +226,18 @@ namespace Tests
                 };
             }
 
-            classes = classList;
-
             var threads = 1; //td: config
             return new Node(threads, exportTypes);
+        }
+
+        private static void checkForConfiguration(Type type, List<Type> configurations)
+        {
+            if (type
+                .CustomAttributes
+                .Any(attr => attr.AttributeType.Name == "ServerConfiguration"))
+            {
+                configurations.Add(type);
+            }
         }
     }
 }

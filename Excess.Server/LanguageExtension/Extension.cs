@@ -25,11 +25,15 @@ namespace LanguageExtension
                 .extension("server", ExtensionKind.Type, CompileServer);
 
             if (withCompilation)
-                compiler.Compilation()
-                    .match<ClassDeclarationSyntax>(isConcurrentClass)
-                        .then(jsConcurrentClass)
-                    .match<ClassDeclarationSyntax>(isConcurrentObject)
-                        .then(jsConcurrentObject);
+            {
+                var compilation = compiler.Compilation();
+                if (compilation != null)
+                    compilation
+                        .match<ClassDeclarationSyntax>(isConcurrentClass)
+                            .then(jsConcurrentClass)
+                        .match<ClassDeclarationSyntax>(isConcurrentObject)
+                            .then(jsConcurrentObject);
+            }
         }
 
         //server information
@@ -89,6 +93,13 @@ namespace LanguageExtension
                                     .ToArray());
                             case "Start":
                                 return nn.AddBodyStatements(mainServer.StartStatements.ToArray());
+                            case "StartNodes":
+                                return nn.AddBodyStatements(mainServer
+                                    .Nodes
+                                    .Select(serverNode => Templates
+                                        .NodeInvocation
+                                        .Get<StatementSyntax> (serverNode.ServerId))
+                                    .ToArray());
                         }
 
                         throw new NotImplementedException();
@@ -296,7 +307,7 @@ namespace LanguageExtension
             {
                 case "NetMQ.RequestResponse":
                     serverType = "NetMQ_RequestResponseServer";
-                    clientType = "NetMQ_RequestResponseClient";
+                    clientType = "RequestResponseClient";
                     break;
                 default:
                     serverType = null;
@@ -345,47 +356,35 @@ namespace LanguageExtension
             Debug.Assert(config != null);
 
             var body = new StringBuilder();
-            var constructorArguments = string.Empty;
-            var constructorFound = false;
-            ConcurrentClass
-                .Visit(@class,
-                    constructors: parameters =>
-                    {
-                        Debug.Assert(!constructorFound);
-                        constructorFound = true;
-
-                        constructorArguments = argumentsFromParameters(parameters);
-                    }, 
-                    methods: (name, type, parameters) =>
-                    {
-                        body.AppendLine(Templates
-                            .jsMethod
-                            .Render(new
-                            {
-                                Name = name.ToString(),
-                                Arguments = argumentsFromParameters(parameters),
-                                Data = objectFromParameters(parameters),
-                                Url = $"/{Guid.NewGuid()}/{name.ToString()}", //td: !!! persistent ids
-                                Response = calculateResponse(type, model),
-                            }));
-                    },
-                    fields: (name, type, value) =>
-                    {
-                        body.AppendLine(Templates
-                            .jsProperty
-                            .Render(new
-                            {
-                                Name = name.ToString(),
-                                Value = valueString(value, type, model) 
-                            }));
-                    });
+            ConcurrentClass.Visit(@class,
+                methods: (name, type, parameters) =>
+                {
+                    body.AppendLine(Templates
+                        .jsMethod
+                        .Render(new
+                        {
+                            Name = name.ToString(),
+                            Arguments = argumentsFromParameters(parameters),
+                            Data = objectFromParameters(parameters),
+                            Response = calculateResponse(type, model),
+                        }));
+                },
+                fields: (name, type, value) =>
+                {
+                    body.AppendLine(Templates
+                        .jsProperty
+                        .Render(new
+                        {
+                            Name = name.ToString(),
+                            Value = valueString(value, type, model) 
+                        }));
+                });
 
             config.AddClientInterface(node.SyntaxTree, Templates
                 .jsConcurrentClass
                 .Render(new
                 {
                     Name = @class.Identifier.ToString(),
-                    Arguments = constructorArguments,
                     Body = body.ToString()
                 }));
         }

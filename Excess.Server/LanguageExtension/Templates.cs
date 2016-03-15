@@ -9,6 +9,7 @@ namespace LanguageExtension
     public static class Templates
     {
         public static Template ConfigClass = Template.Parse(@"
+            [ServerConfiguration]    
             public class _0
             {
                 public void Deploy()
@@ -17,6 +18,11 @@ namespace LanguageExtension
 
                 public void Start(IInstantiator instantiator)
                 {
+                }
+
+                public void StartNodes(IInstantiator instantiator)
+                {
+                    instantiator = instantiator ?? new AssemblyInstantiator(this.GetType().Assembly);
                 }
             }");
 
@@ -55,9 +61,11 @@ namespace LanguageExtension
             instantiator = instantiator ?? new AssemblyInstantiator(this.GetType().Assembly);");
 
         public static RazorTemplate jsConcurrentClass = RazorTemplate.Parse(@"
-            function @Model.Name @Model.Arguments
+            function @Model.Name (__init)
             {
                 @Model.Body
+
+                this.__ID = __init.__ID;
             }");
 
         public static RazorTemplate jsMethod = RazorTemplate.Parse(@"
@@ -65,15 +73,15 @@ namespace LanguageExtension
             {
                 var deferred = $q.defer();
 
-                $http.post('@Model.Url', 
+                $http.post('/' + __init.__ID + '/@Model.Name', 
                 {
                     @Model.Data
                 })
-                .success(function(response))
+                .success(function(response)
                 {
                     deferred.resolve(@Model.Response);
                 })
-                .failure(function(ex))
+                .failure(function(ex)
                 {
                     deferred.reject(ex);
                 });
@@ -82,8 +90,10 @@ namespace LanguageExtension
             }");
 
         public static RazorTemplate jsProperty = RazorTemplate.Parse(@"
-            this.@Model.Name = @Model.Value;");
-        
+            this.@Model.Name = __init.@Model.Name;");
 
+        public static Template NodeInvocation = Template.ParseStatement(@"
+            _0(instantiator);");
+        
     }
 }

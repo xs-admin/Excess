@@ -104,8 +104,16 @@ namespace Excess.Extensions.Concurrent
                 }
             }
 
-            @class = ctx.Update(@class);
+            //generate unique ids, for shit and giggles
+            @class = @class.AddMembers(
+                Templates
+                    .ClassID
+                    .Get<MemberDeclarationSyntax>(
+                        Roslyn.Quoted(Guid.NewGuid().ToString())),
+                Templates.InstanceID);
 
+            //all compilation has been done, prepare to link
+            @class = ctx.Update(@class);
             var document = scope.GetDocument();
             return document.change(@class, Link(ctx), null);
         }

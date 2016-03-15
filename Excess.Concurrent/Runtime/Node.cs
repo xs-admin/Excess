@@ -14,13 +14,13 @@ namespace Excess.Concurrent.Runtime
     {
         IDictionary<string, Spawner> _types;
         int _threads;
-        public Node(int threads, IDictionary<string, Spawner> types = null)
+        public Node(int threads, IDictionary<string, Spawner> types = null, bool afap = true)
         {
             _threads = threads;
             _types = types;
 
             Debug.Assert(_threads > 0);
-            createThreads(_threads);
+            createThreads(_threads, afap);
         }
 
         public T Spawn<T>(params object[] args) where T : ConcurrentObject, new()
@@ -98,19 +98,12 @@ namespace Excess.Concurrent.Runtime
             _stop.Token.WaitHandle.WaitOne();
         }
 
-        public void Restart()
-        {
-            Debug.Assert(_stop.Token.IsCancellationRequested);
-            _stop = new CancellationTokenSource();
-            createThreads(_threads);
-        }
-
         public void StopCount(int stopCount)
         {
             _stopCount = stopCount;
         }
 
-        private void createThreads(int threads)
+        private void createThreads(int threads, bool asFastAsPossible)
         {
             var cancellation = _stop.Token;
             for (int i = 0; i < threads; i++)
@@ -150,7 +143,9 @@ namespace Excess.Concurrent.Runtime
                     }
                 });
 
-                thread.Priority = ThreadPriority.AboveNormal;
+                if (asFastAsPossible)
+                    thread.Priority = ThreadPriority.AboveNormal;
+
                 thread.Start();
             }
         }

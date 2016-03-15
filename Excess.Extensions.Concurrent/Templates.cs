@@ -216,5 +216,12 @@ namespace Excess.Extensions.Concurrent
         public static ExpressionSyntax CancelationArgument = CSharp.ParseExpression("__cancellation");
         public static StatementSyntax PrivateSignal = CSharp.ParseStatement(
             "throw new InvalidOperationException(\"Cannot call private signals directly\");");
+
+        public static Template ClassID = Template.Parse(@"
+            private static readonly Guid __classID = new Guid(__0);");
+
+        public static FieldDeclarationSyntax InstanceID = Template.Parse(@"
+            protected readonly Guid __ID = Guid.NewGuid();")
+            .Get<FieldDeclarationSyntax>();
     }
 }

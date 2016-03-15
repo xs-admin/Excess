@@ -14,7 +14,7 @@ namespace Tests
         public void Usage()
         {
             //setup
-            const string UsageService = @"
+            const string SourceCode = @"
             concurrent class TestService
             {
                 public string Hello(string what)
@@ -27,7 +27,7 @@ namespace Tests
             string serviceName = "TestService";
 
             //server
-            using (var server = Mock.CreateHttpServer(UsageService, serviceId, serviceName))
+            using (var server = Mock.CreateHttpServer(SourceCode, serviceId, serviceName))
             {
                 HttpResponseMessage response;
 

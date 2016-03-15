@@ -60,13 +60,32 @@ namespace NetMQNode
                             }
 
                             connected();
+
+                            //main loop
                             for (;;)
                             {
                                 var request = queue.Take();
                                 client.SendFrame(request.Payload);
 
                                 var response = client.ReceiveFrameString();
-                                request.Continuation(JObject.Parse(response));
+                                var json = JObject.Parse(response);
+                                request.Continuation(json);
+
+                                //any concurrent object returned must registered in the server
+                                foreach (var objId in json
+                                    .Descendants()
+                                    .OfType<JProperty>()
+                                    .Where(prop => prop.Name == "__ID")
+                                    .Select(prop => (Guid)prop.Value))
+                                {
+                                    if (!server.Has(objId))
+                                        server.Register(objId, (_, method, args, success) =>
+                                            queue.Add(new Request
+                                            {
+                                                Payload = buildCallRequest(objId, method, args),
+                                                Continuation = success,
+                                            }));
+                                }
                             }
                         }
                     }
@@ -105,13 +124,24 @@ namespace NetMQNode
 
     public class RequestResponseServer : ConcurrentServer
     {
+        string _url;
+        public RequestResponseServer(string url)
+        {
+            _url = url;
+        }
+
         public override void Start()
         {
             using (var context = NetMQContext.Create())
             using (var server = context.CreateResponseSocket())
             {
+                server.Bind(_url);
+
+                //connect concurrent, blocking
+                base.Start();
+
                 //loop
-                for(;;)
+                for (;;)
                 {
                     var message = server.ReceiveFrameString();
                     if (message.Any())
