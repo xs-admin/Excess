@@ -52,6 +52,7 @@ namespace LanguageExtension
             public SyntaxToken ServerId { get; private set; }
             public ExpressionSyntax Url { get; set; }
             public ExpressionSyntax Threads { get; set; }
+            public ExpressionSyntax Identity { get; set; }
             public ExpressionSyntax Connection { get; set; }
             public List<ServerModel> Nodes { get; private set; }
             public List<StatementSyntax> DeployStatements { get; private set; }
@@ -152,6 +153,8 @@ namespace LanguageExtension
                             if (value is ObjectCreationExpressionSyntax)
                             {
                                 var nodeServer = new ServerModel(variable.Identifier);
+                                nodeServer.Identity = result.Identity;
+
                                 var objectCreation = value as ObjectCreationExpressionSyntax;
                                 valid = parseNodeStatements(objectCreation, nodeServer);
                                 result.Nodes.Add(nodeServer);
@@ -183,14 +186,6 @@ namespace LanguageExtension
                     SyntaxKind.ArrayInitializerExpression, CSharp.SeparatedList<ExpressionSyntax>(
                     hostedInNodes)));
 
-            //the nodes themselves
-            var serverNodes = Templates
-                .NodeArray
-                .WithInitializer(CSharp.InitializerExpression(
-                    SyntaxKind.ArrayInitializerExpression, CSharp.SeparatedList<ExpressionSyntax>(
-                    result.Nodes
-                        .Select(node => node.Connection))));
-
             //the web server
             result
                 .StartStatements
@@ -203,7 +198,7 @@ namespace LanguageExtension
                             result.Url,
                             result.Threads,
                             hostedInstances,
-                            serverNodes)
+                            result.Identity)
                 });
 
             return true;
@@ -251,7 +246,8 @@ namespace LanguageExtension
                                     serverType,
                                     result.Url,
                                     result.Threads,
-                                    nodeInstances)
+                                    nodeInstances,
+                                    result.Identity)
                         });
                     return true;
                 }
@@ -269,6 +265,9 @@ namespace LanguageExtension
                     break;
                 case "Threads":
                     result.Threads = assignment.Right;
+                    break;
+                case "Identity":
+                    result.Identity = assignment.Right;
                     break;
                 case "Hosts":
                     if (assignment.Right is ImplicitArrayCreationExpressionSyntax)
@@ -305,8 +304,8 @@ namespace LanguageExtension
         {
             switch (type.ToString())
             {
-                case "NetMQ.RequestResponse":
-                    serverType = "NetMQ_RequestResponseServer";
+                case "NetMQ.Node":
+                    serverType = "NetMQNode";
                     clientType = "RequestResponseClient";
                     break;
                 default:

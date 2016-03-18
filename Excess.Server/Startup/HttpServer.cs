@@ -5,6 +5,7 @@ using Owin;
 using Microsoft.Owin.Hosting;
 using Excess.Concurrent.Runtime;
 using Middleware;
+using Middleware.NetMQ;
 
 namespace Startup
 {
@@ -19,7 +20,9 @@ namespace Startup
             }
         }
 
-        public static void Start(string url, 
+        public static void Start(
+            string url,
+            string identityUrl = null,
             int threads = 8,
             IEnumerable<Type> classes = null,
             IEnumerable<KeyValuePair<Guid, ConcurrentObject>> instances = null,
@@ -34,6 +37,11 @@ namespace Startup
                 var concurrentServer = null as IConcurrentServer;
                 app.UseConcurrent(server =>
                 {
+                    var identityServer = new IdentityServer();
+                    if (identityUrl != null)
+                        identityServer.Start(identityUrl);
+
+                    server.Identity = identityServer;
                     concurrentServer = server;
                     if (classes != null)
                     {

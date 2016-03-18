@@ -45,6 +45,7 @@ namespace Middleware.NetMQ
                                     var responseSocket = _remotes[id];
                                     dispatch(id, method, data, response =>
                                     {
+                                        //queue to send
                                         _writeQueue.Add(new WriteRequest
                                         {
                                             Socket = responseSocket,

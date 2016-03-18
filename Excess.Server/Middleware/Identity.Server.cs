@@ -9,6 +9,7 @@ namespace Middleware
     {
         void dispatch(Guid id, string method, string data, Action<string> response);
         void register(Guid id, IdentityFunc func);
+        bool has(Guid id);
     }
 
     public class BaseIdentityServer : IIdentityServer
@@ -30,6 +31,11 @@ namespace Middleware
 
             _storage[id] = func;
             remoteRegister(id);
+        }
+
+        public virtual bool has(Guid id)
+        {
+            return _storage.ContainsKey(id);
         }
 
         protected virtual void remoteDispatch(Guid id, string method, string data, Action<string> response)

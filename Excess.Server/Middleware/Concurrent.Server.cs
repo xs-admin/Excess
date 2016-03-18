@@ -11,7 +11,6 @@ using Excess.Concurrent.Runtime;
 
 namespace Middleware
 {
-    using ServerFunc = Action<IConcurrentServer, string, JObject, Action<JObject>>;
     using MethodFunc = Action<ConcurrentObject, JObject, Action<JObject>>;
 
     public interface IConcurrentNode
@@ -22,10 +21,11 @@ namespace Middleware
 
     public interface IConcurrentServer
     {
+        IIdentityServer Identity { get; set; }
+
         void Build(Action<IConcurrentServer, Node> builder);
 
         bool Has(Guid id);
-        void Register(Guid id, ServerFunc func);
         void RegisterClass(Type @class);
         void RegisterClass<T>() where T : ConcurrentObject;
         void RegisterInstance(Guid id, ConcurrentObject @object);
@@ -38,40 +38,34 @@ namespace Middleware
     public class ConcurrentServer : IConcurrentServer
     {
         Node _node = new Node(2, afap : false); //td: !!! config
-        public ConcurrentServer()
+
+        IIdentityServer _identity;
+        public ConcurrentServer(IIdentityServer identity = null)
         {
+            _identity = identity;
         }
 
-        public Task<bool> Invoke(Guid @object, string method, JObject args, Action<JObject> success)
+        public IIdentityServer Identity { get; set; }
+
+        public Task<bool> Invoke(Guid @object, string method, string data, Action<JObject> success)
         {
-            ServerFunc func;
-            if (_funcs.TryGetValue(@object, out func))
-                return _node.Queue(() => func(this, method, args, success));
-            else
-                throw new InvalidOperationException();
+            return _node.Queue(() => _identity.dispatch(@object, 
+                method, 
+                data, 
+                response => success(JObject.Parse(response)))); //td: too much parsing
         }
 
         //IConcurrentServer
+        public bool Has(Guid id)
+        {
+            return _identity.has(id);
+        }
+
         bool _running = false;
         Exception _startFailed = null;
         public void Build(Action<IConcurrentServer, Node> builder)
         {
             builder(this, _node);
-        }
-
-        protected ConcurrentDictionary<Guid, ServerFunc> _funcs = new ConcurrentDictionary<Guid, ServerFunc>();
-        public bool Has(Guid id)
-        {
-            return _funcs.ContainsKey(id);
-        }
-
-        public void Register(Guid id, ServerFunc func)
-        {
-            for (;;)
-            {
-                if (_funcs.TryAdd(id, func))
-                    break;
-            }
         }
 
         Dictionary<Type, Dictionary<string, MethodFunc>> _types = new Dictionary<Type, Dictionary<string, MethodFunc>>();
@@ -137,10 +131,10 @@ namespace Middleware
             _node.Spawn(@object);
 
             var methods = _types[@object.GetType()];
-            Register(id, (server, method, args, success) =>
+            _identity.register(id, (method, data, success) =>
             {
                 var methodFunc = methods[method];
-                methodFunc(@object, args, success);
+                methodFunc(@object, JObject.Parse(data), response => success(response.ToString()));
             });
         }
 

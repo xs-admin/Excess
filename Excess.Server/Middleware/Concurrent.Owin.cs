@@ -30,13 +30,10 @@ namespace Middleware
                     var response = context.Response;
                     try
                     {
-                        StreamReader reader = new StreamReader(requestBody);
-                        JsonTextReader jsonReader = new JsonTextReader(reader);
-                        JsonSerializer serializer = new JsonSerializer();
-
-                        var args = serializer.Deserialize<JObject>(jsonReader);
-
-                        await _server.Invoke(id, method, args,
+                        StreamReader body = new StreamReader(requestBody);
+                        await _server.Invoke(id, 
+                            method, 
+                            body.ReadToEnd(),
                             json => response.Write(json.ToString()));
                     }
                     catch (Exception ex)

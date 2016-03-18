@@ -39,7 +39,7 @@ namespace Tests
                 }
             }
 
-            concurrent object GoodbyeService
+            concurrent class GoodbyeService
             {
                 public string Name = ""GoodbyeService""; 
 
@@ -54,8 +54,9 @@ namespace Tests
                 server Default()
                 {
                     Url = ""http://localhost:1080"";
+                    Identity = ""tcp://localhost:1079"";
 
-                    Node node1 = new NetMQ.RequestResponse
+                    Node node1 = new NetMQ.Node
                     {
                         Url = ""tcp://localhost:1081"",
                         Hosts = new []
@@ -64,7 +65,7 @@ namespace Tests
                         }
                     };
 
-                    Node node2 = new NetMQ.RequestResponse
+                    Node node2 = new NetMQ.Node
                     {
                         Url = ""tcp://localhost:1082"",
                         Hosts = new []

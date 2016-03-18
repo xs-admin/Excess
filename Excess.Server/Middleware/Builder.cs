@@ -1,9 +1,5 @@
-﻿using Owin;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System;
+using Owin;
 
 namespace Middleware
 {
@@ -14,6 +10,9 @@ namespace Middleware
             var server = new ConcurrentServer();
             if (initialize != null)
                 initialize(server);
+
+            if (server.Identity == null)
+                server.Identity = new BaseIdentityServer();
 
             app.Use<ConcurrentOwinMiddleware>(server);
         }
