@@ -128,14 +128,15 @@ namespace Excess.Extensions.Concurrent.Model
         private ClassDeclarationSyntax addAttribute(ClassDeclarationSyntax @class, string attributeName)
         {
             if (@class.AttributeLists.Any(attrList => attrList
-                            .Attributes
-                            .Any(attr => attr.Name.ToString() == attributeName)))
+                    .Attributes
+                    .Any(attr => attr.Name.ToString() == attributeName)))
                 return @class;
 
             return @class
                 .AddAttributeLists(CSharp.AttributeList(CSharp.SeparatedList(new[] {CSharp
                     .Attribute(CSharp
-                        .ParseName(attributeName))})));
+                        .ParseName(attributeName), 
+                        Templates.GuidAttributeArgument())})));
         }
 
         public bool hasMember(string name)

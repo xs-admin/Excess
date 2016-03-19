@@ -10,56 +10,54 @@ namespace Excess.Concurrent.Runtime
 {
     public interface IInstantiator
     {
+        T Instantiate<T>() where T : ConcurrentObject, new();
+
         IEnumerable<Type> GetConcurrentClasses();
-        IEnumerable<KeyValuePair<Guid, ConcurrentObject>> GetConcurrentInstances(
-            IEnumerable<Type> only = null,
-            IEnumerable<Type> except = null);
+        IEnumerable<KeyValuePair<Guid, ConcurrentObject>> GetConcurrentInstances();
     }
 
-    public class AssemblyInstantiator : IInstantiator
+    public abstract class BaseInstantiator : IInstantiator
     {
-        Assembly _assembly;
-        public AssemblyInstantiator(Assembly assembly)
+        protected Type[] _hostedTypes;
+        protected Type[] _remoteTypes;
+        public BaseInstantiator(IEnumerable<Type> hostedTypes, IEnumerable<Type> remoteTypes)
         {
-            _assembly = assembly;
+            _hostedTypes = hostedTypes != null
+                ? hostedTypes.ToArray()
+                : new Type[] { };
+
+            _remoteTypes = hostedTypes != null
+                ? hostedTypes.ToArray()
+                : new Type[] { };
         }
 
-        List<Type> _types;
-        public IEnumerable<Type> GetConcurrentClasses()
+        public T Instantiate<T>() where T : ConcurrentObject, new ()
         {
-            if (_types == null)
-            {
-                lock(_assembly)
-                {
-                    if (_types == null)
-                    {
-                        _types = new List<Type>();
-                        foreach (var type in _assembly.GetTypes())
-                        {
-                            if (isConcurrent(type))
-                                _types.Add(type);
-                        }
-                    }
-                }
-            }
+            var type = typeof(T);
+            if (_hostedTypes.Contains(type))
+                return new T();
 
-            Debug.Assert(_types != null);
-            return _types;
+            if (_remoteTypes.Contains(type))
+                return (T)createRemote(type);
+
+            var allClasses = GetConcurrentClasses();
+            if (allClasses.Contains(type))
+                return new T();
+
+            return null;
         }
 
-        Dictionary<Guid, ConcurrentObject> _instances;
-        public IEnumerable<KeyValuePair<Guid, ConcurrentObject>> GetConcurrentInstances(
-            IEnumerable<Type> only = null,
-            IEnumerable<Type> except = null)
+        protected Dictionary<Guid, ConcurrentObject> _instances;
+        public IEnumerable<KeyValuePair<Guid, ConcurrentObject>> GetConcurrentInstances()
         {
             if (_instances == null)
             {
-                lock(_assembly)
+                lock (this)
                 {
                     if (_instances == null)
                     {
                         _instances = new Dictionary<Guid, ConcurrentObject>();
-                        foreach (var type in _assembly.GetTypes())
+                        foreach (var type in GetConcurrentClasses())
                         {
                             Guid id;
                             ConcurrentObject concurrentObject;
@@ -70,40 +68,62 @@ namespace Excess.Concurrent.Runtime
                 }
             }
 
-            Debug.Assert(_instances != null);
-            IEnumerable<KeyValuePair<Guid, ConcurrentObject>> result = _instances;
-
-            if (only != null)
-                result = result
-                    .Where(kvp => only != null
-                               || only.Contains(kvp.Value.GetType()));
-
-            if (except != null)
-                result = result
-                    .Where(kvp => except != null
-                               || !except.Contains(kvp.Value.GetType()));
-
-            return result;
+            return _instances;
         }
 
-        private bool isConcurrent(Type type)
+        public abstract IEnumerable<Type> GetConcurrentClasses();
+        protected abstract ConcurrentObject createRemote(Type type);
+
+        protected bool isConcurrent(Type type)
         {
-            return type.GetField("__concurrent__") != null;
+            return type
+                .CustomAttributes
+                .Any(attr => attr.AttributeType.Name == "Concurrent");
         }
 
-        private bool isConcurrentSingleton(Type type, out Guid id, out ConcurrentObject @object)
+        protected bool isConcurrentSingleton(Type type, out Guid id, out ConcurrentObject @object)
         {
             id = Guid.Empty;
             @object = null;
 
-            var method = type.GetMethod("__singleton");
-            if (method == null)
+            var attribute = type
+                .CustomAttributes
+                .Where(attr => attr.AttributeType.Name == "ConcurrentSingleton")
+                .SingleOrDefault();
+
+            if (attribute != null)
                 return false;
 
-            id = Guid.NewGuid(); //td: persistence
-            @object = (ConcurrentObject)method.Invoke(null, new object[] { });
+            var idValue = attribute
+                .NamedArguments
+                .SingleOrDefault(value => value.MemberName == "Id");
 
+            id = idValue != null
+                ? (Guid)idValue.TypedValue.Value
+                : Guid.NewGuid();
+
+            @object = (ConcurrentObject)Activator.CreateInstance(type);
             return @object != null;
+        }
+    }
+
+    public abstract class AssemblyInstantiator : BaseInstantiator
+    {
+        List<Type> _types;
+        public AssemblyInstantiator(Assembly assembly, IEnumerable<Type> hostedTypes, IEnumerable<Type> remoteTypes)
+            : base(hostedTypes, remoteTypes)
+        {
+            _types = new List<Type>();
+            foreach (var type in assembly.GetTypes())
+            {
+                if (isConcurrent(type))
+                    _types.Add(type);
+            }
+        }
+
+        public override IEnumerable<Type> GetConcurrentClasses()
+        {
+            return _types;
         }
     }
 }

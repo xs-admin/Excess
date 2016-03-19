@@ -14,11 +14,23 @@ namespace Excess.Compiler.Tests.TestRuntime
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
     public class Concurrent : Attribute
     {
+        public Guid Id;
+
+        public Concurrent(Guid id)
+        {
+            Id = id;
+        }
     }
 
     [AttributeUsage(AttributeTargets.Class)]
     public class ConcurrentSingleton : Attribute
     {
+        public Guid Id;
+
+        public ConcurrentSingleton(Guid id)
+        {
+            Id = id;
+        }
     }
 
     public interface IInstantiator

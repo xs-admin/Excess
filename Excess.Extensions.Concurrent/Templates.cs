@@ -217,11 +217,31 @@ namespace Excess.Extensions.Concurrent
         public static StatementSyntax PrivateSignal = CSharp.ParseStatement(
             "throw new InvalidOperationException(\"Cannot call private signals directly\");");
 
-        public static Template ClassID = Template.Parse(@"
-            private static readonly Guid __classID = new Guid(__0);");
+        public static AttributeArgumentListSyntax GuidAttributeArgument(Guid? value = null)
+        {
+            Guid guid = value.HasValue
+                ? value.Value
+                : Guid.NewGuid();
 
-        public static FieldDeclarationSyntax InstanceID = Template.Parse(@"
-            protected readonly Guid __ID = Guid.NewGuid();")
-            .Get<FieldDeclarationSyntax>();
+            return CSharp.ParseAttributeArgumentList(
+                $"(Id = new Guid(\"{guid}\"))");
+        }
+
+        public static Template RemoteMethod = Template.Parse(@"
+            public static CreateRemote(IIdentityServer server)
+            {
+                return new _0(server);
+            }");
+
+        public static Template RemoteInternalMethod = Template.ParseStatements(@"
+            _server.dispatch(_id, __0, JObject.FromObject(__1), response => 
+            {
+                var json = JObject.Parse(response);
+                __success(__2);
+            });");
+
+        public static Template RemoteResult = Template.ParseExpression("(__0)json.__res");
+        
+
     }
 }

@@ -104,18 +104,109 @@ namespace Excess.Extensions.Concurrent
                 }
             }
 
-            //generate unique ids, for shit and giggles
-            @class = @class.AddMembers(
-                Templates
-                    .ClassID
-                    .Get<MemberDeclarationSyntax>(
-                        Roslyn.Quoted(Guid.NewGuid().ToString())),
-                Templates.InstanceID);
-
             //all compilation has been done, prepare to link
             @class = ctx.Update(@class);
+
+            //add a remote type, to be used with an identity server  
+            //td: make it abstract (regarding serialization) and configurable (not needed)
+            var remoteMethod = null as MethodDeclarationSyntax;
+            var remoteType = createRemoteType(@class, out remoteMethod);
+            @class = @class.AddMembers(remoteMethod, remoteType);
+
             var document = scope.GetDocument();
             return document.change(@class, Link(ctx), null);
+        }
+
+        private static ClassDeclarationSyntax createRemoteType(ClassDeclarationSyntax @class, out MethodDeclarationSyntax creation)
+        {
+            var typeName = "__remote" + @class.Identifier.ToString();
+
+            creation = Templates
+                .RemoteMethod
+                .Get<MethodDeclarationSyntax>(typeName);
+
+            var result = @class
+                .WithIdentifier(CSharp.ParseToken(typeName))
+                .WithAttributeLists(CSharp.List<AttributeListSyntax>());
+
+            result = result
+                .ReplaceNodes(result
+                    .DescendantNodes()
+                    .OfType<MemberDeclarationSyntax>()
+                    .Where(member =>
+                    {
+                        if (member is MethodDeclarationSyntax)
+                        {
+                            if (Roslyn.IsVisible(member) || isInternalConcurrent(member as MethodDeclarationSyntax))
+                                return true;
+                        }
+                        else if (member is ConstructorDeclarationSyntax)
+                        {
+                            throw new NotImplementedException(); //td: remote creation
+                        }
+
+                        return false;
+                    }), 
+                    (on, nn) => 
+                    {
+                        var method = nn as MethodDeclarationSyntax;
+                        if (isInternalConcurrent(method))
+                            return createRemoteMethod(method);
+
+                        return nn;
+                    });
+
+            return result;
+        }
+
+        private static bool isInternalConcurrent(MethodDeclarationSyntax method)
+        {
+            return method
+                .Identifier
+                .ToString()
+                .StartsWith("__concurrent");
+        }
+
+        private static MethodDeclarationSyntax createRemoteMethod(MethodDeclarationSyntax method)
+        {
+            var original = method
+                .Parent
+                .DescendantNodes()
+                .OfType<MethodDeclarationSyntax>()
+                .Where(m => 
+                    method.Identifier.ToString() == "__concurrent" + m.Identifier.ToString() 
+                    && m.AttributeLists
+                        .Any(attrList => attrList
+                            .Attributes
+                            .Any(attr => attr.Name.ToString() == "Concurrent")))
+                .Single();
+
+            var args = CSharp
+                .AnonymousObjectCreationExpression(CSharp.SeparatedList(method
+                    .ParameterList
+                    .Parameters
+                    .Select(parameter =>
+                    {
+                        var identifierName = CSharp.IdentifierName(parameter.Identifier);
+                        return CSharp.AnonymousObjectMemberDeclarator(
+                            CSharp.NameEquals(identifierName),
+                            identifierName);
+                    })));
+
+            var value = original
+                .ReturnType.ToString() == "void"
+                ? Roslyn.@null
+                : Templates
+                    .RemoteResult
+                    .Get<ExpressionSyntax>(original.ReturnType);
+
+            return method
+                .WithBody(Templates
+                    .RemoteInternalMethod
+                    .Get<BlockSyntax>(
+                        Roslyn.Quoted(method.Identifier.ToString()),
+                        args,
+                        value));
         }
 
         private static Func<SyntaxNode, SyntaxNode, SemanticModel, Scope, SyntaxNode> Link(Class ctx)
