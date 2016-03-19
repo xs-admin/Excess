@@ -187,8 +187,6 @@ namespace Tests
 
             public concurrent class GoodbyeService
             {
-                public string Name = ""GoodbyeService""; 
-
                 public string Goodbye(string what)
                 {
                     return ""Goodbye "" + what;

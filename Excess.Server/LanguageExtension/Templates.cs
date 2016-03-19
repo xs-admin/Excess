@@ -20,7 +20,7 @@ namespace LanguageExtension
                 {
                 }
 
-                public void StartNodes(IInstantiator instantiator)
+                public void StartNodes()
                 {
                 }
             }");
@@ -58,7 +58,8 @@ namespace LanguageExtension
             instantiator = instantiator 
                 ?? new ReferenceInstantiator(this.GetType().Assembly, 
                         hostedTypes: __0, 
-                        remoteTypes: __1);");
+                        remoteTypes: __1,
+                        dispatch: __2);");
 
         public static RazorTemplate jsConcurrentClass = RazorTemplate.Parse(@"
             function @Model.Name (__init)
@@ -93,7 +94,7 @@ namespace LanguageExtension
             this.@Model.Name = __init.@Model.Name;");
 
         public static Template NodeInvocation = Template.ParseStatement(@"
-            _0(instantiator);");
+            _0(null);");
         
     }
 }

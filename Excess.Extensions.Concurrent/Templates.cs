@@ -232,27 +232,49 @@ namespace Excess.Extensions.Concurrent
         }
 
         public static Template RemoteMethod = Template.Parse(@"
-            public static _1 CreateRemote(Action<string, Action<string>> dispatch)
+            public static _1 CreateRemote(
+                Action<Guid, string, string, Action<string>> dispatch,
+                Func<object, string> serialize,
+                Func<string, object> deserialize)
             {
-                var result = new _0();
-                result.Dispatch = dispatch;
-                return result;
+                return new _0
+                {
+                    Dispatch = dispatch,
+                    Serialize = serialize,
+                    Deserialize = deserialize
+                };
             }");
 
+        public static PropertyDeclarationSyntax RemoteId = Template
+            .Parse("public Guid Id {get; set;}")
+            .Get<PropertyDeclarationSyntax>();
+
         public static PropertyDeclarationSyntax RemoteDispatch = Template
-            .Parse("public Action<string, Action<string>> Dispatch {get; set;}")
+            .Parse("public Action<Guid, string, string, Action<string>> Dispatch {get; set;}")
+            .Get<PropertyDeclarationSyntax>();
+
+        public static PropertyDeclarationSyntax RemoteSerialize = Template
+            .Parse("public Func<object, string> Serialize {get; set;}")
+            .Get<PropertyDeclarationSyntax>();
+
+        public static PropertyDeclarationSyntax RemoteDeserialize = Template
+            .Parse("public Func<string, object> Deserialize {get; set;}")
             .Get<PropertyDeclarationSyntax>();
 
         public static Template RemoteInternalMethod = Template.ParseStatements(@"
-            _server.dispatch(_id, __0, JObject.FromObject(__1), response => 
+            var __expr = new Expression();
+            Dispatch(Id, __0, Serialize(__1), __response => 
             {
-                var json = JObject.Parse(response);
-                __success(__2);
+                var __res = Deserialize(__response);
+                if (__res is Exception)
+                    __failure(__res as Exception);
+                else 
+                    __success(__2);
             });
 
-            yield break;");
+            yield return __expr;");
 
-        public static Template RemoteResult = Template.ParseExpression("(__0)json.__res");
+        public static Template RemoteResult = Template.ParseExpression("(__0)__res");
 
         public static Template Interface = Template.Parse(@"
             public interface _0

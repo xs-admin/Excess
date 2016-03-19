@@ -186,7 +186,11 @@ namespace Excess.Extensions.Concurrent
 
             var result = @class
                 .WithIdentifier(CSharp.ParseToken(typeName))
-                .WithAttributeLists(CSharp.List<AttributeListSyntax>());
+                .WithAttributeLists(CSharp.List<AttributeListSyntax>())
+                .WithMembers(CSharp.List<MemberDeclarationSyntax>(
+                    @class
+                    .DescendantNodes()
+                    .OfType<MethodDeclarationSyntax>()));
 
             result = result
                 .ReplaceNodes(
@@ -200,7 +204,11 @@ namespace Excess.Extensions.Concurrent
 
                         return nn;
                     })
-                .AddMembers(Templates.RemoteDispatch);
+                .AddMembers(
+                    Templates.RemoteId,
+                    Templates.RemoteDispatch,
+                    Templates.RemoteSerialize,
+                    Templates.RemoteDeserialize);
 
             return result;
         }
@@ -250,7 +258,7 @@ namespace Excess.Extensions.Concurrent
                 .WithBody(Templates
                     .RemoteInternalMethod
                     .Get<BlockSyntax>(
-                        Roslyn.Quoted(method.Identifier.ToString()),
+                        Roslyn.Quoted(original.Identifier.ToString()),
                         args,
                         value));
         }

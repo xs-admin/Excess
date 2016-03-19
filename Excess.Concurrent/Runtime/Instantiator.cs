@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -132,10 +133,15 @@ namespace Excess.Concurrent.Runtime
 
     public class ReferenceInstantiator : AssemblyInstantiator
     {
-        public ReferenceInstantiator(Assembly assembly, IEnumerable<Type> hostedTypes, IEnumerable<Type> remoteTypes)
-            : base(assembly, hostedTypes, remoteTypes)
+        public ReferenceInstantiator(Assembly assembly, 
+            IEnumerable<Type> hostedTypes, 
+            IEnumerable<Type> remoteTypes,
+            Action<Guid, string, string, Action<string>> dispatch) : base(assembly, hostedTypes, remoteTypes)
         {
+            Dispatch = dispatch;
         }
+
+        public Action<Guid, string, string, Action<string>> Dispatch { get; set; }
 
         protected override ConcurrentObject createRemote(Type type)
         {
@@ -143,7 +149,24 @@ namespace Excess.Concurrent.Runtime
             if (method == null)
                 throw new InvalidCastException();
 
-            return (ConcurrentObject)method.Invoke(null, new object[] { null });
+            Debug.Assert(Dispatch != null);
+            return (ConcurrentObject)method.Invoke(null, new object[] {
+                Dispatch,
+                (Func<dynamic, string>)Serialize,
+                (Func<string, dynamic>)Deserialize,
+            });
+        }
+
+        private static string Serialize(dynamic obj)
+        {
+            return JObject
+                .FromObject(obj)
+                .ToString();
+        }
+
+        private static dynamic Deserialize(string text)
+        {
+            return JObject.Parse(text);
         }
     }
 }

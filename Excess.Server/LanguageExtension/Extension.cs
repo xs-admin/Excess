@@ -194,7 +194,10 @@ namespace LanguageExtension
                 {
                     Templates
                         .CreateInstantiator
-                        .Get<StatementSyntax>(Roslyn.@null, hostedInstances),
+                        .Get<StatementSyntax>(
+                            Roslyn.@null, 
+                            hostedInstances,
+                            Roslyn.@null),
                     Templates
                         .HttpServer
                         .Get<StatementSyntax>(
@@ -242,7 +245,10 @@ namespace LanguageExtension
                         {
                             Templates
                                 .CreateInstantiator
-                                .Get<StatementSyntax>(nodeInstances, Roslyn.@null),
+                                .Get<StatementSyntax>(
+                                    nodeInstances, 
+                                    Roslyn.@null,
+                                    Roslyn.@null),
                             Templates
                                 .NodeServer
                                 .Get<StatementSyntax>(
