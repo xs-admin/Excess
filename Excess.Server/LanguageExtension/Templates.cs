@@ -22,7 +22,6 @@ namespace LanguageExtension
 
                 public void StartNodes(IInstantiator instantiator)
                 {
-                    instantiator = instantiator ?? new AssemblyInstantiator(this.GetType().Assembly);
                 }
             }");
 
@@ -34,18 +33,18 @@ namespace LanguageExtension
         public static Template HttpServer = Template.ParseStatement(@"
             Startup.HttpServer.Start(
                 url: __0, 
-                identityUrl: __3,
-                threads: __1,
+                identityUrl: __1,
+                threads: __2,
                 classes: instantiator.GetConcurrentClasses(),
-                instances: instantiator.GetConcurrentInstances(except: __2));");
+                instances: instantiator.GetConcurrentInstances());");
 
         public static Template NodeServer = Template.ParseStatement(@"
             Startup._0.Start(
                 url: __1, 
-                identityUrl: __4,
-                threads: __2,
+                identityUrl: __2,
+                threads: __3,
                 classes: instantiator.GetConcurrentClasses(),
-                instances: instantiator.GetConcurrentInstances(only: __3));");
+                instances: instantiator.GetConcurrentInstances());");
 
         public static Template NodeConnection = Template.ParseExpression("new _0(__1)");
         
@@ -55,8 +54,11 @@ namespace LanguageExtension
             .ParseExpression("new Type[] {}")
             .Get<ArrayCreationExpressionSyntax>();
 
-        public static StatementSyntax CreateInstantiator = CSharp.ParseStatement(@"
-            instantiator = instantiator ?? new AssemblyInstantiator(this.GetType().Assembly);");
+        public static Template CreateInstantiator = Template.ParseStatement(@"
+            instantiator = instantiator 
+                ?? new ReferenceInstantiator(this.GetType().Assembly, 
+                        hostedTypes: __0, 
+                        remoteTypes: __1);");
 
         public static RazorTemplate jsConcurrentClass = RazorTemplate.Parse(@"
             function @Model.Name (__init)

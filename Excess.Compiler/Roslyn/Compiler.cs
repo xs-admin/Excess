@@ -82,7 +82,7 @@ namespace Excess.Compiler.Roslyn
         public SyntaxNode MarkTree(SyntaxNode node)
         {
             //td: optimize?
-            return node.ReplaceNodes(node.DescendantNodes(), (oldNode, newNode) =>
+            return node.ReplaceNodes(node.DescendantNodesAndSelf(), (oldNode, newNode) =>
             {
                 return MarkNode(newNode);
             });
@@ -316,10 +316,14 @@ namespace Excess.Compiler.Roslyn
         {
             return (node, scope) =>
             {
-                Debug.Assert(node is TypeDeclarationSyntax);
-
                 if (node is ClassDeclarationSyntax)
                     return (node as ClassDeclarationSyntax).AddMembers(member);
+
+                if (node is InterfaceDeclarationSyntax)
+                    return (node as InterfaceDeclarationSyntax).AddMembers(member);
+
+                if (node is CompilationUnitSyntax)
+                    return (node as CompilationUnitSyntax).AddMembers(member);
 
                 Debug.Assert(false); //td: case
                 return node;                        

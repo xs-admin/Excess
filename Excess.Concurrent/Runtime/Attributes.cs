@@ -17,9 +17,9 @@ namespace Excess.Concurrent.Runtime
     {
         public string id;
 
-        public ConcurrentSingleton(string id_)
+        public ConcurrentSingleton(string id)
         {
-            id = id_;
+            this.id = id;
         }
     }
 }

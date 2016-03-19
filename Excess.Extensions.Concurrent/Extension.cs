@@ -107,8 +107,13 @@ namespace Excess.Extensions.Concurrent
                 }
             }
 
-            //all compilation has been done, prepare to link
+            //all concurrent compilation has been done
             @class = ctx.Update(@class);
+
+            //add our default interface to the parent context
+            //td: config
+            var document = scope.GetDocument();
+            document.change(node.Parent, Roslyn.AddMember(CreateInterface(@class)));
 
             //add a remote type, to be used with an identity server  
             //td: make it abstract (regarding serialization) and configurable (not needed)
@@ -116,9 +121,15 @@ namespace Excess.Extensions.Concurrent
             var remoteType = createRemoteType(@class, out remoteMethod);
             @class = @class.AddMembers(remoteMethod, remoteType);
 
-            var document = scope.GetDocument();
-            document.change(@class.Parent, Roslyn.AddMember(CreateInterface(@class)));
             return document.change(@class, Link(ctx), null);
+        }
+
+        private static IEnumerable<MemberDeclarationSyntax> getConcurrentMethod(ClassDeclarationSyntax @class)
+        {
+            return @class
+                .DescendantNodes()
+                .OfType<MethodDeclarationSyntax>()
+                .Where(method => isInternalConcurrent(method));
         }
 
         private static IEnumerable<MemberDeclarationSyntax> getConcurrentInterface(ClassDeclarationSyntax @class)
@@ -128,10 +139,11 @@ namespace Excess.Extensions.Concurrent
                 .OfType<MemberDeclarationSyntax>()
                 .Where(member =>
                 {
-                    if (member is MethodDeclarationSyntax)
+                    if (member is MethodDeclarationSyntax && Roslyn.IsVisible(member))
                     {
-                        if (Roslyn.IsVisible(member) || isInternalConcurrent(member as MethodDeclarationSyntax))
-                            return true;
+                        return !(member as MethodDeclarationSyntax)
+                            .Modifiers
+                            .Any(modifier => modifier.Kind() == SyntaxKind.StaticKeyword);
                     }
                     else if (member is ConstructorDeclarationSyntax)
                     {
@@ -144,10 +156,12 @@ namespace Excess.Extensions.Concurrent
 
         private static MemberDeclarationSyntax CreateInterface(ClassDeclarationSyntax @class)
         {
+            var concurrentInterface = getConcurrentInterface(@class);
+
             return Templates
                 .Interface
                 .Get<InterfaceDeclarationSyntax>("I" + @class.Identifier.ToString())
-                .AddMembers(getConcurrentInterface(@class)
+                .AddMembers(concurrentInterface
                     .Select(method => interfaceMethod(method as MethodDeclarationSyntax))
                     .ToArray());
         }
@@ -156,7 +170,9 @@ namespace Excess.Extensions.Concurrent
         {
             return method
                 .WithAttributeLists(CSharp.List<AttributeListSyntax>())
-                .WithBody(null);
+                .WithModifiers(CSharp.TokenList())
+                .WithBody(null)
+                .WithSemicolonToken(CSharp.ParseToken(";"));
         }
 
         private static ClassDeclarationSyntax createRemoteType(ClassDeclarationSyntax @class, out MethodDeclarationSyntax creation)
@@ -173,7 +189,9 @@ namespace Excess.Extensions.Concurrent
                 .WithAttributeLists(CSharp.List<AttributeListSyntax>());
 
             result = result
-                .ReplaceNodes(getConcurrentInterface(@class), 
+                .ReplaceNodes(
+                    getConcurrentInterface(result)
+                        .Union(getConcurrentMethod(result)), 
                     (on, nn) => 
                     {
                         var method = nn as MethodDeclarationSyntax;
@@ -181,7 +199,8 @@ namespace Excess.Extensions.Concurrent
                             return createRemoteMethod(method);
 
                         return nn;
-                    });
+                    })
+                .AddMembers(Templates.RemoteDispatch);
 
             return result;
         }

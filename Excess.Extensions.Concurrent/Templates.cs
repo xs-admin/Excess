@@ -224,20 +224,24 @@ namespace Excess.Extensions.Concurrent
                 : Guid.NewGuid();
 
             var colon = optional
-                ? ":"
-                : "=";
+                ? "="
+                : ":";
 
             return CSharp.ParseAttributeArgumentList(
-                $"(Id {colon} \"{guid}\")");
+                $"(id {colon} \"{guid}\")");
         }
 
         public static Template RemoteMethod = Template.Parse(@"
-            public static _1 CreateRemote(IIdentityServer server)
+            public static _1 CreateRemote(Action<string, Action<string>> dispatch)
             {
                 var result = new _0();
-                result.Identity = server;
+                result.Dispatch = dispatch;
                 return result;
             }");
+
+        public static PropertyDeclarationSyntax RemoteDispatch = Template
+            .Parse("public Action<string, Action<string>> Dispatch {get; set;}")
+            .Get<PropertyDeclarationSyntax>();
 
         public static Template RemoteInternalMethod = Template.ParseStatements(@"
             _server.dispatch(_id, __0, JObject.FromObject(__1), response => 

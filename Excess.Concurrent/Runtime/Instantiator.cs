@@ -59,6 +59,9 @@ namespace Excess.Concurrent.Runtime
                         _instances = new Dictionary<Guid, ConcurrentObject>();
                         foreach (var type in GetConcurrentClasses())
                         {
+                            if (!_hostedTypes.Contains(type))
+                                continue;
+
                             Guid id;
                             ConcurrentObject concurrentObject;
                             if (isConcurrentSingleton(type, out id, out concurrentObject))
@@ -72,7 +75,7 @@ namespace Excess.Concurrent.Runtime
         }
 
         public abstract IEnumerable<Type> GetConcurrentClasses();
-        protected abstract ConcurrentObject createRemote(Type type);
+        protected abstract ConcurrentObject createRemote(Type type); 
 
         protected bool isConcurrent(Type type)
         {
@@ -124,6 +127,23 @@ namespace Excess.Concurrent.Runtime
         public override IEnumerable<Type> GetConcurrentClasses()
         {
             return _types;
+        }
+    }
+
+    public class ReferenceInstantiator : AssemblyInstantiator
+    {
+        public ReferenceInstantiator(Assembly assembly, IEnumerable<Type> hostedTypes, IEnumerable<Type> remoteTypes)
+            : base(assembly, hostedTypes, remoteTypes)
+        {
+        }
+
+        protected override ConcurrentObject createRemote(Type type)
+        {
+            var method = type.GetMethod("CreateRemote", BindingFlags.Static);
+            if (method == null)
+                throw new InvalidCastException();
+
+            return (ConcurrentObject)method.Invoke(null, new object[] { null });
         }
     }
 }

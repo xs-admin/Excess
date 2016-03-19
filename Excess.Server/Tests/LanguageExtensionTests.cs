@@ -164,14 +164,14 @@ namespace Tests
         {
             string text;
             Mock.Compile(@"
-            struct HelloModel
+            public struct HelloModel
             {
                 public string Greeting;                
                 public int Times;
                 public GoodbyeService Goodbye;
             }
 
-            concurrent object HelloService
+            public concurrent object HelloService
             {
                 int _times = 0;
                 public HelloModel Hello(string who)
@@ -185,7 +185,7 @@ namespace Tests
                 }
             }
 
-            concurrent class GoodbyeService
+            public concurrent class GoodbyeService
             {
                 public string Name = ""GoodbyeService""; 
 

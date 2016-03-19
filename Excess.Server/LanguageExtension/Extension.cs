@@ -183,22 +183,24 @@ namespace LanguageExtension
             var hostedInstances = Templates
                 .TypeArray
                 .WithInitializer(CSharp.InitializerExpression(
-                    SyntaxKind.ArrayInitializerExpression, CSharp.SeparatedList<ExpressionSyntax>(
-                    hostedInNodes)));
+                    SyntaxKind.ArrayInitializerExpression, CSharp
+                    .SeparatedList<ExpressionSyntax>(
+                        hostedInNodes)));
 
             //the web server
             result
                 .StartStatements
                 .AddRange(new StatementSyntax[]
                 {
-                    Templates.CreateInstantiator,
+                    Templates
+                        .CreateInstantiator
+                        .Get<StatementSyntax>(Roslyn.@null, hostedInstances),
                     Templates
                         .HttpServer
                         .Get<StatementSyntax>(
                             result.Url,
-                            result.Threads,
-                            hostedInstances,
-                            result.Identity)
+                            result.Identity,
+                            result.Threads)
                 });
 
             return true;
@@ -239,15 +241,15 @@ namespace LanguageExtension
                         .AddRange(new StatementSyntax[]
                         {
                             Templates
-                                .CreateInstantiator,
+                                .CreateInstantiator
+                                .Get<StatementSyntax>(nodeInstances, Roslyn.@null),
                             Templates
                                 .NodeServer
                                 .Get<StatementSyntax>(
                                     serverType,
                                     result.Url,
-                                    result.Threads,
-                                    nodeInstances,
-                                    result.Identity)
+                                    result.Identity,
+                                    result.Threads)
                         });
                     return true;
                 }

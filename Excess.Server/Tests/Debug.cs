@@ -10,16 +10,16 @@ using System.Threading.Tasks;
 
 namespace SomeNS
 {
-    struct HelloModel
+    public struct HelloModel
     {
         public string Greeting;
         public int Times;
         public GoodbyeService Goodbye;
     }
 
-    [Concurrent(Id: "4886818c-73ee-4583-9338-ed549c209197")]
-    [ConcurrentSingleton(Id = "56ddbe95-e567-4410-9efa-84cce9e2f864")]
-    class HelloService : ConcurrentObject, IHelloService
+    [Concurrent(id = "0e189d19-7d7f-4c0b-8189-f40d9db579f0")]
+    [ConcurrentSingleton(id: "a57a767a-ea2a-413f-be74-146eeb6aa453")]
+    public class HelloService : ConcurrentObject, IHelloService
     {
         int _times = 0;
         [Concurrent]
@@ -56,12 +56,14 @@ namespace SomeNS
             __enter(() => __advance(__concurrentHello(who, __cancellation, __success, __failure).GetEnumerator()), failure);
         }
 
-        public static I__remoteHelloService CreateRemote(IIdentityServer server)
+        public static IHelloService CreateRemote(Action<string, Action<string>> dispatch)
         {
-            return new __remoteHelloService(server);
+            var result = new __remoteHelloService();
+            result.Dispatch = dispatch;
+            return result;
         }
 
-        class __remoteHelloService : ConcurrentObject
+        public class __remoteHelloService : ConcurrentObject, IHelloService
         {
             int _times = 0;
             [Concurrent]
@@ -87,6 +89,7 @@ namespace SomeNS
                 }
 
                 );
+                yield break;
             }
 
             public Task<HelloModel> Hello(string who, CancellationToken cancellation)
@@ -106,11 +109,17 @@ namespace SomeNS
                 var __cancellation = cancellation;
                 __enter(() => __advance(__concurrentHello(who, __cancellation, __success, __failure).GetEnumerator()), failure);
             }
+
+            public Action<string, Action<string>> Dispatch
+            {
+                get;
+                set;
+            }
         }
     }
 
-    [Concurrent(Id: "a05dce9d-a0c5-4248-9970-9551f099b48b")]
-    class GoodbyeService : ConcurrentObject
+    [Concurrent(id = "9b975cc9-e498-42e0-a888-1f46f09772cb")]
+    public class GoodbyeService : ConcurrentObject, IGoodbyeService
     {
         public string Name = "GoodbyeService";
         [Concurrent]
@@ -147,12 +156,14 @@ namespace SomeNS
             __enter(() => __advance(__concurrentGoodbye(what, __cancellation, __success, __failure).GetEnumerator()), failure);
         }
 
-        public static IGoodbyeService CreateRemote(IIdentityServer server)
+        public static IGoodbyeService CreateRemote(Action<string, Action<string>> dispatch)
         {
-            return new __remoteGoodbyeService(server);
+            var result = new __remoteGoodbyeService();
+            result.Dispatch = dispatch;
+            return result;
         }
 
-        class __remoteGoodbyeService : ConcurrentObject
+        public class __remoteGoodbyeService : ConcurrentObject, IGoodbyeService
         {
             public string Name = "GoodbyeService";
             [Concurrent]
@@ -178,6 +189,7 @@ namespace SomeNS
                 }
 
                 );
+                yield break;
             }
 
             public Task<string> Goodbye(string what, CancellationToken cancellation)
@@ -197,6 +209,12 @@ namespace SomeNS
                 var __cancellation = cancellation;
                 __enter(() => __advance(__concurrentGoodbye(what, __cancellation, __success, __failure).GetEnumerator()), failure);
             }
+
+            public Action<string, Action<string>> Dispatch
+            {
+                get;
+                set;
+            }
         }
     }
 
@@ -211,28 +229,41 @@ namespace SomeNS
 
             public void Start(IInstantiator instantiator)
             {
-                instantiator = instantiator ?? new AssemblyInstantiator(this.GetType().Assembly);
-                Startup.HttpServer.Start(url: "http://localhost:1080", identityUrl: "tcp://localhost:1079", threads: 8, classes: instantiator.GetConcurrentClasses(), instances: instantiator.GetConcurrentInstances(except: new Type[] { typeof(HelloService), typeof(GoodbyeService) }));
+                instantiator = instantiator ?? new ReferenceInstantiator(this.GetType().Assembly, hostedTypes: null, remoteTypes: new Type[] { typeof(HelloService), typeof(GoodbyeService) });
+                Startup.HttpServer.Start(url: "http://localhost:1080", identityUrl: "tcp://localhost:1079", threads: 8, classes: instantiator.GetConcurrentClasses(), instances: instantiator.GetConcurrentInstances());
             }
 
             public void StartNodes(IInstantiator instantiator)
             {
-                instantiator = instantiator ?? new AssemblyInstantiator(this.GetType().Assembly);
                 node1(instantiator);
                 node2(instantiator);
             }
 
             public void node1(IInstantiator instantiator)
             {
-                instantiator = instantiator ?? new AssemblyInstantiator(this.GetType().Assembly);
-                Startup.NetMQNode.Start(url: "tcp://localhost:1081", identityUrl: "tcp://localhost:1079", threads: 8, classes: instantiator.GetConcurrentClasses(), instances: instantiator.GetConcurrentInstances(only: new Type[] { typeof(HelloService) }));
+                instantiator = instantiator ?? new ReferenceInstantiator(this.GetType().Assembly, hostedTypes: new Type[] { typeof(HelloService) }, remoteTypes: null);
+                Startup.NetMQNode.Start(url: "tcp://localhost:1081", identityUrl: "tcp://localhost:1079", threads: 8, classes: instantiator.GetConcurrentClasses(), instances: instantiator.GetConcurrentInstances());
             }
 
             public void node2(IInstantiator instantiator)
             {
-                instantiator = instantiator ?? new AssemblyInstantiator(this.GetType().Assembly);
-                Startup.NetMQNode.Start(url: "tcp://localhost:1082", identityUrl: "tcp://localhost:1079", threads: 8, classes: instantiator.GetConcurrentClasses(), instances: instantiator.GetConcurrentInstances(only: new Type[] { typeof(GoodbyeService) }));
+                instantiator = instantiator ?? new ReferenceInstantiator(this.GetType().Assembly, hostedTypes: new Type[] { typeof(GoodbyeService) }, remoteTypes: null);
+                Startup.NetMQNode.Start(url: "tcp://localhost:1082", identityUrl: "tcp://localhost:1079", threads: 8, classes: instantiator.GetConcurrentClasses(), instances: instantiator.GetConcurrentInstances());
             }
         }
+    }
+
+    public interface IHelloService
+    {
+        HelloModel Hello(string who);
+        Task<HelloModel> Hello(string who, CancellationToken cancellation);
+        void Hello(string who, CancellationToken cancellation, Action<object> success, Action<Exception> failure);
+    }
+
+    public interface IGoodbyeService
+    {
+        string Goodbye(string what);
+        Task<string> Goodbye(string what, CancellationToken cancellation);
+        void Goodbye(string what, CancellationToken cancellation, Action<object> success, Action<Exception> failure);
     }
 }
