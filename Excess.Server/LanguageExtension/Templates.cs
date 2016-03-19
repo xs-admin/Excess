@@ -35,16 +35,14 @@ namespace LanguageExtension
                 url: __0, 
                 identityUrl: __1,
                 threads: __2,
-                classes: instantiator.GetConcurrentClasses(),
-                instances: instantiator.GetConcurrentInstances());");
+                instantiator: instantiator);");
 
         public static Template NodeServer = Template.ParseStatement(@"
             Startup._0.Start(
                 url: __1, 
                 identityUrl: __2,
                 threads: __3,
-                classes: instantiator.GetConcurrentClasses(),
-                instances: instantiator.GetConcurrentInstances());");
+                instantiator: instantiator);");
 
         public static Template NodeConnection = Template.ParseExpression("new _0(__1)");
         

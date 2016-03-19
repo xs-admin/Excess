@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using NetMQ;
 using System.Collections.Concurrent;
+using Excess.Concurrent.Runtime;
 
 namespace Middleware.NetMQ
 {
@@ -11,7 +12,7 @@ namespace Middleware.NetMQ
 
         int _connected = 0;
         ConcurrentDictionary<Guid, Action<string>> _awaiting = new ConcurrentDictionary<Guid, Action<string>>();
-        public void Start(string inputUrl, string outputUrl)
+        public void Start(string inputUrl, string outputUrl, ReferenceInstantiator instantiator)
         {
             Task.Run(() =>
             {
@@ -75,6 +76,8 @@ namespace Middleware.NetMQ
                     }
                 }
             });
+
+            instantiator.Dispatch = remoteDispatch;
         }
 
         class WriteRequest

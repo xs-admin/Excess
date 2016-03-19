@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using Middleware;
+﻿using Middleware;
 using Middleware.NetMQ;
 using Excess.Concurrent.Runtime;
 
@@ -12,25 +9,26 @@ namespace Startup
         public static void Start(
             string url,
             string identityUrl,
-            int threads = 2,
-            IEnumerable<Type> classes = null,
-            IEnumerable<KeyValuePair<Guid, ConcurrentObject>> instances = null)
+            IInstantiator instantiator,
+            int threads = 2)
         {
             var identity = new IdentityClient();
             var server = new ConcurrentServer(identity);
+            var classes = instantiator.GetConcurrentClasses();
             if (classes != null)
             {
                 foreach (var @class in classes)
                     server.RegisterClass(@class);
             }
 
+            var instances = instantiator.GetConcurrentInstances();
             if (instances != null)
             {
                 foreach (var instance in instances)
                     server.RegisterInstance(instance.Key, instance.Value);
             }
 
-            identity.Start(url, identityUrl);
+            identity.Start(url, identityUrl, (ReferenceInstantiator)instantiator);
         }
     }
 }

@@ -23,9 +23,8 @@ namespace Startup
         public static void Start(
             string url,
             string identityUrl = null,
+            IInstantiator instantiator = null,
             int threads = 8,
-            IEnumerable<Type> classes = null,
-            IEnumerable<KeyValuePair<Guid, ConcurrentObject>> instances = null,
             Action<IAppBuilder> onInit = null,
             bool useStaticFiles = true)
         {
@@ -43,6 +42,9 @@ namespace Startup
 
                     server.Identity = identityServer;
                     concurrentServer = server;
+
+                    var classes = instantiator.GetConcurrentClasses();
+                    var instances = instantiator.GetConcurrentInstances();
                     if (classes != null)
                     {
                         foreach (var @class in classes)

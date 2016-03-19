@@ -26,9 +26,10 @@ namespace xss
             }
 
             //start a http concurrent server
-            Startup.HttpServer.Start(url,
-                classes: concurrentClasses,
-                instances: concurrentInstances);
+            throw new NotImplementedException(); //td: instantiator
+
+            var instantiator = null as ReferenceInstantiator; 
+            Startup.HttpServer.Start(url, instantiator: instantiator);
         }
 
         private static bool parseArguments(string[] args, out string errors, out string url, out IEnumerable<Type> concurrentClasses, out IEnumerable<KeyValuePair<Guid, ConcurrentObject>> concurrentInstances, out IEnumerable<IConcurrentNode> concurrentNodes)
