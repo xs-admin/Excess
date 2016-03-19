@@ -9,17 +9,17 @@ namespace Excess.Concurrent.Runtime
     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
     public class Concurrent : Attribute
     {
-        public Guid Id;
+        public string id;
     }
 
     [AttributeUsage(AttributeTargets.Class)]
     public class ConcurrentSingleton : Attribute
     {
-        public Guid Id;
+        public string id;
 
-        public ConcurrentSingleton(Guid id)
+        public ConcurrentSingleton(string id_)
         {
-            Id = id;
+            id = id_;
         }
     }
 }

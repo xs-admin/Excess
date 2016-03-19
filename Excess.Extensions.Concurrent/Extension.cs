@@ -45,8 +45,11 @@ namespace Excess.Extensions.Concurrent
         {
             Debug.Assert(node is ClassDeclarationSyntax);
             var @class = (node as ClassDeclarationSyntax)
-                .AddBaseListTypes(CSharp.SimpleBaseType(
-                    CSharp.ParseTypeName("ConcurrentObject")));
+                .AddBaseListTypes(
+                    CSharp.SimpleBaseType(CSharp.ParseTypeName(
+                        "ConcurrentObject")),
+                    CSharp.SimpleBaseType(CSharp.ParseTypeName(
+                        "I" + (node as ClassDeclarationSyntax).Identifier.ToString())));
 
             var className = @class.Identifier.ToString();
 
@@ -114,39 +117,63 @@ namespace Excess.Extensions.Concurrent
             @class = @class.AddMembers(remoteMethod, remoteType);
 
             var document = scope.GetDocument();
+            document.change(@class.Parent, Roslyn.AddMember(CreateInterface(@class)));
             return document.change(@class, Link(ctx), null);
+        }
+
+        private static IEnumerable<MemberDeclarationSyntax> getConcurrentInterface(ClassDeclarationSyntax @class)
+        {
+            return @class
+                .DescendantNodes()
+                .OfType<MemberDeclarationSyntax>()
+                .Where(member =>
+                {
+                    if (member is MethodDeclarationSyntax)
+                    {
+                        if (Roslyn.IsVisible(member) || isInternalConcurrent(member as MethodDeclarationSyntax))
+                            return true;
+                    }
+                    else if (member is ConstructorDeclarationSyntax)
+                    {
+                        throw new NotImplementedException(); //td: remote creation
+                    }
+
+                    return false;
+                });
+        }
+
+        private static MemberDeclarationSyntax CreateInterface(ClassDeclarationSyntax @class)
+        {
+            return Templates
+                .Interface
+                .Get<InterfaceDeclarationSyntax>("I" + @class.Identifier.ToString())
+                .AddMembers(getConcurrentInterface(@class)
+                    .Select(method => interfaceMethod(method as MethodDeclarationSyntax))
+                    .ToArray());
+        }
+
+        private static MemberDeclarationSyntax interfaceMethod(MethodDeclarationSyntax method)
+        {
+            return method
+                .WithAttributeLists(CSharp.List<AttributeListSyntax>())
+                .WithBody(null);
         }
 
         private static ClassDeclarationSyntax createRemoteType(ClassDeclarationSyntax @class, out MethodDeclarationSyntax creation)
         {
-            var typeName = "__remote" + @class.Identifier.ToString();
+            var originalName = @class.Identifier.ToString();
+            var typeName = "__remote" + originalName;
 
             creation = Templates
                 .RemoteMethod
-                .Get<MethodDeclarationSyntax>(typeName);
+                .Get<MethodDeclarationSyntax>(typeName, "I" + originalName);
 
             var result = @class
                 .WithIdentifier(CSharp.ParseToken(typeName))
                 .WithAttributeLists(CSharp.List<AttributeListSyntax>());
 
             result = result
-                .ReplaceNodes(result
-                    .DescendantNodes()
-                    .OfType<MemberDeclarationSyntax>()
-                    .Where(member =>
-                    {
-                        if (member is MethodDeclarationSyntax)
-                        {
-                            if (Roslyn.IsVisible(member) || isInternalConcurrent(member as MethodDeclarationSyntax))
-                                return true;
-                        }
-                        else if (member is ConstructorDeclarationSyntax)
-                        {
-                            throw new NotImplementedException(); //td: remote creation
-                        }
-
-                        return false;
-                    }), 
+                .ReplaceNodes(getConcurrentInterface(@class), 
                     (on, nn) => 
                     {
                         var method = nn as MethodDeclarationSyntax;

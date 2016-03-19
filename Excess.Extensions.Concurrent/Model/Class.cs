@@ -117,15 +117,15 @@ namespace Excess.Extensions.Concurrent.Model
             _replace.Clear();
 
             //add markers
-            result = addAttribute(result, "Concurrent");
+            result = addAttribute(result, "Concurrent", true);
 
             if (IsSingleton)
-                result = addAttribute(result, "ConcurrentSingleton");
+                result = addAttribute(result, "ConcurrentSingleton", false);
 
             return result;
         }
 
-        private ClassDeclarationSyntax addAttribute(ClassDeclarationSyntax @class, string attributeName)
+        private ClassDeclarationSyntax addAttribute(ClassDeclarationSyntax @class, string attributeName, bool optional)
         {
             if (@class.AttributeLists.Any(attrList => attrList
                     .Attributes
@@ -135,8 +135,9 @@ namespace Excess.Extensions.Concurrent.Model
             return @class
                 .AddAttributeLists(CSharp.AttributeList(CSharp.SeparatedList(new[] {CSharp
                     .Attribute(CSharp
-                        .ParseName(attributeName), 
-                        Templates.GuidAttributeArgument())})));
+                        .ParseName(attributeName), optional
+                            ? Templates.GuidAttributeArgument(optional: true)
+                            : Templates.GuidAttributeArgument(optional: false))})));
         }
 
         public bool hasMember(string name)

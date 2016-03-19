@@ -217,20 +217,26 @@ namespace Excess.Extensions.Concurrent
         public static StatementSyntax PrivateSignal = CSharp.ParseStatement(
             "throw new InvalidOperationException(\"Cannot call private signals directly\");");
 
-        public static AttributeArgumentListSyntax GuidAttributeArgument(Guid? value = null)
+        public static AttributeArgumentListSyntax GuidAttributeArgument(bool optional, Guid? value = null)
         {
             Guid guid = value.HasValue
                 ? value.Value
                 : Guid.NewGuid();
 
+            var colon = optional
+                ? ":"
+                : "=";
+
             return CSharp.ParseAttributeArgumentList(
-                $"(Id = new Guid(\"{guid}\"))");
+                $"(Id {colon} \"{guid}\")");
         }
 
         public static Template RemoteMethod = Template.Parse(@"
-            public static CreateRemote(IIdentityServer server)
+            public static _1 CreateRemote(IIdentityServer server)
             {
-                return new _0(server);
+                var result = new _0();
+                result.Identity = server;
+                return result;
             }");
 
         public static Template RemoteInternalMethod = Template.ParseStatements(@"
@@ -238,10 +244,15 @@ namespace Excess.Extensions.Concurrent
             {
                 var json = JObject.Parse(response);
                 __success(__2);
-            });");
+            });
+
+            yield break;");
 
         public static Template RemoteResult = Template.ParseExpression("(__0)json.__res");
-        
 
+        public static Template Interface = Template.Parse(@"
+            public interface _0
+            {
+            }");
     }
 }

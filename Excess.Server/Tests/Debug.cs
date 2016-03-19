@@ -17,9 +17,9 @@ namespace SomeNS
         public GoodbyeService Goodbye;
     }
 
-    [Concurrent(Id = new Guid("e9a414f1-e073-482b-b171-0127ce672592"))]
-    [ConcurrentSingleton(Id = new Guid("aaffba6f-c953-4951-9f10-5077e23cd695"))]
-    class HelloService : ConcurrentObject
+    [Concurrent(Id: "4886818c-73ee-4583-9338-ed549c209197")]
+    [ConcurrentSingleton(Id = "56ddbe95-e567-4410-9efa-84cce9e2f864")]
+    class HelloService : ConcurrentObject, IHelloService
     {
         int _times = 0;
         [Concurrent]
@@ -56,7 +56,7 @@ namespace SomeNS
             __enter(() => __advance(__concurrentHello(who, __cancellation, __success, __failure).GetEnumerator()), failure);
         }
 
-        public static CreateRemote(IIdentityServer server)
+        public static I__remoteHelloService CreateRemote(IIdentityServer server)
         {
             return new __remoteHelloService(server);
         }
@@ -109,7 +109,7 @@ namespace SomeNS
         }
     }
 
-    [Concurrent(Id = new Guid("fc7534f5-403d-45a4-a6cd-2f1a11bb6313"))]
+    [Concurrent(Id: "a05dce9d-a0c5-4248-9970-9551f099b48b")]
     class GoodbyeService : ConcurrentObject
     {
         public string Name = "GoodbyeService";
@@ -147,7 +147,7 @@ namespace SomeNS
             __enter(() => __advance(__concurrentGoodbye(what, __cancellation, __success, __failure).GetEnumerator()), failure);
         }
 
-        public static CreateRemote(IIdentityServer server)
+        public static IGoodbyeService CreateRemote(IIdentityServer server)
         {
             return new __remoteGoodbyeService(server);
         }
