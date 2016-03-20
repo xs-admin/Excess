@@ -18,6 +18,7 @@ namespace Tests
     using ServerExtension = LanguageExtension.Extension;
     using ConcurrentExtension = Excess.Extensions.Concurrent.Extension;
     using Compilation = Excess.Compiler.Roslyn.Compilation;
+    using Middleware.NetMQ;
 
     public static class Mock
     {
@@ -56,26 +57,21 @@ namespace Tests
 
         public static TestServer CreateHttpServer(string code, params KeyValuePair<Guid, string>[] services)
         {
-            List<Type> classes = new List<Type>();
-            var node = buildConcurrent(code, classes : classes);
-
-            var instances = new Dictionary<Guid, ConcurrentObject>();
-            foreach (var service in services)
-            {
-                var instance = node.Spawn(service.Value);
-                instances[service.Key] = instance;
-            }
+            Assembly assembly;
+            var node = buildConcurrent(code, out assembly);
 
             return TestServer.Create(app =>
             {
                 app.UseConcurrent(server =>
                 {
-                    foreach (var @class in classes)
+                    server.Instantiator = new ReferenceInstantiator(assembly, null, null, null);
+
+                    foreach (var @class in server.Instantiator.GetConcurrentClasses())
                     {
                         server.RegisterClass(@class);
                     }
 
-                    foreach (var instance in instances)
+                    foreach (var instance in server.Instantiator.GetConcurrentInstances())
                     {
                         server.RegisterInstance(instance.Key, instance.Value);
                     }
@@ -83,18 +79,15 @@ namespace Tests
             });
         }
 
-        public static TestServer CreateServer(string code, string configuration, Dictionary<string, Guid> singletons)
+        public static TestServer CreateServer(string code, string configuration, Dictionary<string, Guid> instances)
         {
             var errors = new List<Diagnostic>();
-            var classes = new List<Type>();
             var configurations = new List<Type>();
-            var instances = new Dictionary<Guid, ConcurrentObject>();
+            var assembly = null as Assembly;
             var node = buildConcurrent(code,
+                out assembly,
                 errors: errors,
-                classes: classes,
-                configurations: configurations,
-                instances: instances,
-                instanceNames : singletons);
+                configurations: configurations);
 
             if (errors.Any())
                 return null;
@@ -104,25 +97,48 @@ namespace Tests
 
             return TestServer.Create(app =>
             {
-                startNodes(config);
+                var hostedClasses = new List<Type>();
+                var hostedInstances = new Dictionary<Guid, ConcurrentObject>();
+                startNodes(config, hostedClasses, hostedInstances);
+
+                if (instances != null)
+                {
+                    foreach(var hostedInstance in hostedInstances)
+                        instances[hostedInstance.Value.GetType().Name] = hostedInstance.Key;
+                }
 
                 app.UseConcurrent(server =>
                 {
-                    foreach (var @class in classes)
+                    server.Identity = CreateIdentityServer();
+                    server.Instantiator = new ReferenceInstantiator(assembly, null, hostedClasses, null);
+
+                    foreach (var @class in server.Instantiator.GetConcurrentClasses())
                         server.RegisterClass(@class);
 
-                    foreach (var instance in instances)
+                    foreach (var instance in server.Instantiator.GetConcurrentInstances())
+                    {
+                        if (instances != null)
+                            instances[instance.Value.GetType().Name] = instance.Key;
+
                         server.RegisterInstance(instance.Key, instance.Value);
+                    }
                 });
             });
         }
 
+        public static IIdentityServer CreateIdentityServer()
+        {
+            var identity = new IdentityServer();
+            identity.Start("tcp://localhost:5000");
+            return identity;
+        }
+
         //start a configuration, but just the nodes
-        private static void startNodes(Type config)
+        private static void startNodes(Type config, IList<Type> hostedTypes, IDictionary<Guid, ConcurrentObject> hostedInstances)
         {
             var method = config.GetMethod("StartNodes");
             var instance = Activator.CreateInstance(config);
-            method.Invoke(instance, new object[] { null });
+            method.Invoke(instance, new object[] { hostedTypes, hostedInstances });
         }
 
         private static Compilation createCompilation(string text,
@@ -160,16 +176,14 @@ namespace Tests
         }
 
         private static Node buildConcurrent(string text,
-            List<Type> classes = null,
-            Dictionary<Guid, ConcurrentObject> instances = null,
-            Dictionary<string, Guid> instanceNames = null,
+            out Assembly assembly,
             List<Diagnostic> errors = null, 
             List<Type> configurations = null,
             IPersistentStorage storage = null)
         {
             var compilation = createCompilation(text, errors, storage);
+            assembly = compilation.build();
 
-            Assembly assembly = compilation.build();
             if (assembly == null)
             {
                 if (errors != null)
@@ -178,56 +192,14 @@ namespace Tests
                 return null;
             }
 
-            var exportTypes = new Dictionary<string, Spawner>();
             foreach (var type in assembly.GetTypes())
             {
-                //non-concurrent
-                if (type.BaseType != typeof(ConcurrentObject))
-                {
-                    if (configurations != null)
-                        checkForConfiguration(type, configurations);
-                    continue;
-                }
-
-                //singletons
-                if (instances != null && 
-                    type
-                    .CustomAttributes
-                    .Any(attr => attr.AttributeType.Name == "ConcurrentSingleton"))
-                {
-                    var id = Guid.NewGuid();
-                    instances[id] = (ConcurrentObject)Activator.CreateInstance(type);
-                    if (instanceNames != null)
-                        instanceNames[type.Name] = id;
-                }
-
-                //classes
-                if (classes != null)
-                    classes.Add(type);
-
-                var useParameterLess = type.GetConstructors().Length == 0;
-                if (!useParameterLess)
-                    useParameterLess = type.GetConstructor(new Type[] { }) != null;
-
-                var typeName = type.ToString();
-                exportTypes[typeName] = (args) =>
-                {
-                    if (useParameterLess)
-                        return (ConcurrentObject)Activator.CreateInstance(type);
-
-                    var ctor = type.GetConstructor(args
-                        .Select(arg => arg.GetType())
-                        .ToArray());
-
-                    if (ctor != null)
-                        return (ConcurrentObject)ctor.Invoke(args);
-
-                    throw new InvalidOperationException("unable to find a constructor");
-                };
+                if (type.BaseType != typeof(ConcurrentObject) && configurations != null)
+                    checkForConfiguration(type, configurations);
             }
 
-            var threads = 1; //td: config
-            return new Node(threads, exportTypes);
+            var threads = 2; //td: config
+            return new Node(threads);
         }
 
         private static void checkForConfiguration(Type type, List<Type> configurations)

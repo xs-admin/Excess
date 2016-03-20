@@ -20,14 +20,20 @@ namespace LanguageExtension
                 {
                 }
 
-                public void StartNodes()
+                public void StartNodes(IList<Type> managedTypes, IDictionary<Guid, ConcurrentObject> managedInstances)
                 {
                 }
             }");
 
         public static Template NodeMethod = Template.Parse(@"
-            public void _0(IInstantiator instantiator)
+            public void _0(IInstantiator instantiator, IList<Type> managedTypes, IDictionary<Guid, ConcurrentObject> managedInstances)
             {
+                var hostedTypes = __1;
+                if (managedTypes != null)
+                {
+                    foreach (var hostedType in hostedTypes)
+                        managedTypes.Add(hostedType);
+                }
             }");
 
         public static Template HttpServer = Template.ParseStatement(@"
@@ -92,7 +98,15 @@ namespace LanguageExtension
             this.@Model.Name = __init.@Model.Name;");
 
         public static Template NodeInvocation = Template.ParseStatement(@"
-            _0(null);");
+            _0(null, managedTypes, managedInstances);");
+
+        public static StatementSyntax CollectInstances = CSharp.ParseStatement(@"
+            if (managedInstances != null)
+            {
+                foreach (var hostedInstance in instantiator.GetConcurrentInstances())
+                    managedInstances[hostedInstance.Key] = hostedInstance.Value;
+            }");
         
+
     }
 }

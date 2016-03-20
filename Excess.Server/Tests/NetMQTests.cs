@@ -18,14 +18,14 @@ namespace Tests
         {
             //setup
             const string SourceCode = @"
-            struct HelloModel
+            public struct HelloModel
             {
                 public string Greeting;                
                 public int Times;
                 public GoodbyeService Goodbye;
             }
 
-            concurrent object HelloService
+            public concurrent object HelloService
             {
                 int _times = 0;
                 public HelloModel Hello(string who)
@@ -39,10 +39,8 @@ namespace Tests
                 }
             }
 
-            concurrent class GoodbyeService
+            public concurrent class GoodbyeService
             {
-                public string Name = ""GoodbyeService""; 
-
                 public string Goodbye(string what)
                 {
                     return ""Goodbye "" + what;
@@ -76,32 +74,67 @@ namespace Tests
                 }
             }";
 
-            var Services = new Dictionary<string, Guid>();
-            using (var server = Mock.CreateServer(SourceCode, "Default", Services))
+            var services = new Dictionary<string, Guid>();
+            using (var server = Mock.CreateServer(SourceCode, "Default", services))
             {
+                HttpResponseMessage response;
+
                 //make sure it compiles and such
                 Assert.IsNotNull(server);
-
-                HttpResponseMessage response;
 
                 //the server should delegate to the NetMQ services
                 response = server
                     .HttpClient
-                    .GetAsync("/" + Services["HelloService"] + "/Hello")
+                    .PostAsync(
+                        "/" + services["HelloService"] + "/Hello",
+                        new StringContent(JObject
+                            .FromObject(new
+                            {
+                                who = "world"
+                            }).ToString()))
                     .Result;
 
                 Assert.AreEqual(response.StatusCode, HttpStatusCode.OK);
 
-                var json = JObject.Parse(response
+                var greeting = JObject.Parse(response
                     .Content
                     .ReadAsStringAsync()
-                    .Result);
-
-                Assert.IsTrue(json
+                    .Result)
                     .Descendants()
                     .OfType<JProperty>()
-                    .Any(prop => 
-                        prop.Name == "Times"));
+                    .SingleOrDefault(prop =>
+                        prop.Name == "Greeting");
+
+                Assert.IsNotNull(greeting);
+                Assert.IsNotNull(greeting.Value.ToString() == "greetings, world");
+
+                //call again, still should be processed correctly
+                response = server
+                    .HttpClient
+                    .PostAsync(
+                        "/" + services["HelloService"] + "/Hello",
+                        new StringContent(JObject
+                            .FromObject(new
+                            {
+                                who = "ma"
+                            }).ToString()))
+                    .Result;
+
+                Assert.AreEqual(response.StatusCode, HttpStatusCode.OK);
+
+                //must have incremented the times
+                var times = JObject.Parse(response
+                    .Content
+                    .ReadAsStringAsync()
+                    .Result)
+                    .Descendants()
+                    .OfType<JProperty>()
+                    .SingleOrDefault(prop =>
+                        prop.Name == "Times");
+
+                Assert.IsNotNull(times);
+                Assert.IsNotNull(times.Value.ToString() == "1");
+
             }
         }
     }

@@ -3,21 +3,19 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Excess.Concurrent.Runtime
 {
-    using System.Linq;
-    using System.Threading.Tasks;
-    using Spawner = Func<object[], ConcurrentObject>;
-
     public class Node
     {
-        IDictionary<string, Spawner> _types;
         int _threads;
-        public Node(int threads, IDictionary<string, Spawner> types = null, bool afap = true)
+        IInstantiator _instatiator;
+        public Node(int threads, IInstantiator instatiator = null, bool afap = true)
         {
             _threads = threads;
-            _types = types;
+            _instatiator = instatiator;
 
             Debug.Assert(_threads > 0);
             createThreads(_threads, afap);
@@ -47,11 +45,11 @@ namespace Excess.Concurrent.Runtime
 
         public ConcurrentObject Spawn(string type, params object[] args)
         {
-            var caller = null as Func<object[], ConcurrentObject>;
-            if (!_types.TryGetValue(type, out caller))
-                throw new InvalidOperationException(type + " is not defined");
+            if (_instatiator == null)
+                throw new InvalidOperationException("cannot create");
 
-            var result = caller(args);
+            var result = _instatiator.Instantiate(type, args);
+
             result.startRunning(this, args);
             return result;
         }

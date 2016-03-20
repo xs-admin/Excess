@@ -106,17 +106,31 @@ namespace LanguageExtension
                         throw new NotImplementedException();
                     });
 
-            //add a method per node which will be invoked when starting each node 
+            //add a method per node which will be invoked when starting
             configurationClass = configurationClass
                 .AddMembers(mainServer
                     .Nodes
-                    .Select(serverNode => Templates
-                        .NodeMethod
-                        .Get<MethodDeclarationSyntax>(serverNode.ServerId)
-                        .AddBodyStatements(serverNode
-                            .StartStatements
-                            .ToArray()))
+                    .Select(serverNode =>
+                    {
+                        var hostedTypes = Templates
+                            .TypeArray
+                            .WithInitializer(CSharp.InitializerExpression(
+                                SyntaxKind.ArrayInitializerExpression, CSharp.SeparatedList<ExpressionSyntax>(
+                                serverNode
+                                    .HostedClasses
+                                    .Select(type => CSharp.TypeOfExpression(type)))));
+
+                        return Templates
+                            .NodeMethod
+                            .Get<MethodDeclarationSyntax>(
+                                serverNode.ServerId,
+                                hostedTypes)
+                            .AddBodyStatements(serverNode
+                                .StartStatements
+                                .ToArray());
+                    })
                     .ToArray());
+
 
             //apply changes
             var document = scope.GetDocument();
@@ -222,14 +236,6 @@ namespace LanguageExtension
 
             if (valid)
             {
-                var nodeInstances = Templates
-                    .TypeArray
-                    .WithInitializer(CSharp.InitializerExpression(
-                        SyntaxKind.ArrayInitializerExpression, CSharp.SeparatedList<ExpressionSyntax>(
-                        result
-                            .HostedClasses
-                            .Select(type => CSharp.TypeOfExpression(type)))));
-
                 string serverType;
                 string clientType;
                 if (getNodeTypes(creation.Type, out serverType, out clientType))
@@ -246,9 +252,11 @@ namespace LanguageExtension
                             Templates
                                 .CreateInstantiator
                                 .Get<StatementSyntax>(
-                                    nodeInstances, 
+                                    CSharp.IdentifierName("hostedTypes"), 
                                     Roslyn.@null,
                                     Roslyn.@null),
+                            Templates
+                                .CollectInstances,
                             Templates
                                 .NodeServer
                                 .Get<StatementSyntax>(

@@ -22,6 +22,7 @@ namespace Middleware
     public interface IConcurrentServer
     {
         IIdentityServer Identity { get; set; }
+        IInstantiator Instantiator { get; set; }
 
         void Build(Action<IConcurrentServer, Node> builder);
 
@@ -45,10 +46,17 @@ namespace Middleware
             _identity = identity;
         }
 
-        public IIdentityServer Identity { get; set; }
+        public IIdentityServer Identity
+        {
+            get { return _identity; }
+            set { _identity = value; }
+        }
+
+        public IInstantiator Instantiator { get; set; }
 
         public Task<bool> Invoke(Guid @object, string method, string data, Action<JObject> success)
         {
+
             return _node.Queue(() => _identity.dispatch(@object, 
                 method, 
                 data, 
@@ -85,7 +93,7 @@ namespace Middleware
                 var parameters = method
                     .GetParameters();
 
-                var paramCount = parameters.Length - 2;
+                var paramCount = parameters.Length - 3;
                 var paramNames = parameters
                     .Take(paramCount)
                     .Select(param => param.Name)
@@ -104,15 +112,17 @@ namespace Middleware
                             .FromObject(new { __res = returnValue }));
                     };
 
-                    var arguments = new object[paramCount + 2];
+                    var arguments = new object[paramCount + 3];
                     for (int i = 0; i < paramCount; i++)
                     {
                         var property = args.Property(paramNames[i]);
+
                         arguments[i] = property.Value.ToObject(paramTypes[i]);
                     }
 
-                    arguments[paramCount] = __success;
-                    arguments[paramCount + 1] = null as Action<Exception>;
+                    arguments[paramCount] = default(CancellationToken);
+                    arguments[paramCount + 1] = __success;
+                    arguments[paramCount + 2] = null as Action<Exception>;
 
                     method.Invoke(@object, arguments);
                 };

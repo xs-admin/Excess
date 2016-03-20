@@ -11,7 +11,8 @@ namespace Excess.Concurrent.Runtime
 {
     public interface IInstantiator
     {
-        T Instantiate<T>() where T : ConcurrentObject, new();
+        T Instantiate<T>(params object[] args) where T : ConcurrentObject, new();
+        ConcurrentObject Instantiate(string type, object[] args);
 
         IEnumerable<Type> GetConcurrentClasses();
         IEnumerable<KeyValuePair<Guid, ConcurrentObject>> GetConcurrentInstances();
@@ -32,7 +33,7 @@ namespace Excess.Concurrent.Runtime
                 : new Type[] { };
         }
 
-        public T Instantiate<T>() where T : ConcurrentObject, new ()
+        public T Instantiate<T>(params object[] args) where T : ConcurrentObject, new ()
         {
             var type = typeof(T);
             if (_hostedTypes.Contains(type))
@@ -46,6 +47,11 @@ namespace Excess.Concurrent.Runtime
                 return new T();
 
             return null;
+        }
+
+        public virtual ConcurrentObject Instantiate(string type, object[] args)
+        {
+            throw new NotImplementedException();
         }
 
         protected Dictionary<Guid, ConcurrentObject> _instances;
@@ -64,9 +70,11 @@ namespace Excess.Concurrent.Runtime
                                 continue;
 
                             Guid id;
-                            ConcurrentObject concurrentObject;
-                            if (isConcurrentSingleton(type, out id, out concurrentObject))
-                                _instances[id] = concurrentObject;
+                            if (isConcurrentSingleton(type, out id))
+                            {
+                                var @object = (ConcurrentObject)Activator.CreateInstance(type);
+                                _instances[id] = @object;
+                            }
                         }
                     }
                 }
@@ -85,29 +93,20 @@ namespace Excess.Concurrent.Runtime
                 .Any(attr => attr.AttributeType.Name == "Concurrent");
         }
 
-        protected bool isConcurrentSingleton(Type type, out Guid id, out ConcurrentObject @object)
+        protected bool isConcurrentSingleton(Type type, out Guid id)
         {
             id = Guid.Empty;
-            @object = null;
 
             var attribute = type
                 .CustomAttributes
                 .Where(attr => attr.AttributeType.Name == "ConcurrentSingleton")
                 .SingleOrDefault();
 
-            if (attribute != null)
+            if (attribute == null || attribute.ConstructorArguments.Count != 1)
                 return false;
 
-            var idValue = attribute
-                .NamedArguments
-                .SingleOrDefault(value => value.MemberName == "Id");
-
-            id = idValue != null
-                ? (Guid)idValue.TypedValue.Value
-                : Guid.NewGuid();
-
-            @object = (ConcurrentObject)Activator.CreateInstance(type);
-            return @object != null;
+            id = Guid.Parse((string)attribute.ConstructorArguments[0].Value);
+            return true;
         }
     }
 
