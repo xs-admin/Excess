@@ -17,8 +17,8 @@ namespace SomeNS
         public GoodbyeService Goodbye;
     }
 
-    [Concurrent(id = "15f8d943-d8e4-411a-b1cb-3c1585c70567")]
-    [ConcurrentSingleton(id: "3452b4f5-c481-4426-b55d-ee219dad4a86")]
+    [Concurrent(id = "abd4557b-1e5a-4fa2-b7f1-bb56cf0a7343")]
+    [ConcurrentSingleton(id: "e007a9df-f49e-41a9-bbca-ab9d60b2cddb")]
     public class HelloService : ConcurrentObject, IHelloService
     {
         int _times = 0;
@@ -135,9 +135,11 @@ namespace SomeNS
                 set;
             }
         }
+
+        public readonly Guid __ID = Guid.NewGuid();
     }
 
-    [Concurrent(id = "5b251e24-4e52-46dd-b8c0-5d133a4f4b65")]
+    [Concurrent(id = "3d891aee-d601-4521-b41c-b4db1bf9977e")]
     public class GoodbyeService : ConcurrentObject, IGoodbyeService
     {
         [Concurrent]
@@ -253,6 +255,8 @@ namespace SomeNS
                 set;
             }
         }
+
+        public readonly Guid __ID = Guid.NewGuid();
     }
 
     namespace Servers
@@ -270,10 +274,11 @@ namespace SomeNS
                 Startup.HttpServer.Start(url: "http://localhost:1080", identityUrl: "tcp://localhost:1079", threads: 8, instantiator: instantiator);
             }
 
-            public void StartNodes(IList<Type> managedTypes, IDictionary<Guid, ConcurrentObject> managedInstances)
+            public int StartNodes(IList<Type> managedTypes, IDictionary<Guid, ConcurrentObject> managedInstances)
             {
                 node1(null, managedTypes, managedInstances);
                 node2(null, managedTypes, managedInstances);
+                return 2;
             }
 
             public void node1(IInstantiator instantiator, IList<Type> managedTypes, IDictionary<Guid, ConcurrentObject> managedInstances)
@@ -283,12 +288,6 @@ namespace SomeNS
                 {
                     foreach (var hostedType in hostedTypes)
                         managedTypes.Add(hostedType);
-                }
-
-                if (managedInstances != null)
-                {
-                    foreach (var hostedInstance in instantiator.GetConcurrentInstances())
-                        managedInstances[hostedInstance.Key] = hostedInstance.Value;
                 }
 
                 instantiator = instantiator ?? new ReferenceInstantiator(this.GetType().Assembly, hostedTypes: hostedTypes, remoteTypes: null, dispatch: null);
@@ -308,12 +307,6 @@ namespace SomeNS
                 {
                     foreach (var hostedType in hostedTypes)
                         managedTypes.Add(hostedType);
-                }
-
-                if (managedInstances != null)
-                {
-                    foreach (var hostedInstance in instantiator.GetConcurrentInstances())
-                        managedInstances[hostedInstance.Key] = hostedInstance.Value;
                 }
 
                 instantiator = instantiator ?? new ReferenceInstantiator(this.GetType().Assembly, hostedTypes: hostedTypes, remoteTypes: null, dispatch: null);

@@ -19,6 +19,9 @@ namespace Tests
     using ConcurrentExtension = Excess.Extensions.Concurrent.Extension;
     using Compilation = Excess.Compiler.Roslyn.Compilation;
     using Middleware.NetMQ;
+    using System.Threading;
+    using System.Net.Http;
+    using Newtonsoft.Json.Linq;
 
     public static class Mock
     {
@@ -99,7 +102,7 @@ namespace Tests
             {
                 var hostedClasses = new List<Type>();
                 var hostedInstances = new Dictionary<Guid, ConcurrentObject>();
-                startNodes(config, hostedClasses, hostedInstances);
+                var nodeCount = startNodes(config, hostedClasses, hostedInstances);
 
                 if (instances != null)
                 {
@@ -109,7 +112,7 @@ namespace Tests
 
                 app.UseConcurrent(server =>
                 {
-                    server.Identity = CreateIdentityServer();
+                    server.Identity = CreateIdentityServer(nodeCount);
                     server.Instantiator = new ReferenceInstantiator(assembly, null, hostedClasses, null);
 
                     foreach (var @class in server.Instantiator.GetConcurrentClasses())
@@ -126,19 +129,42 @@ namespace Tests
             });
         }
 
-        public static IIdentityServer CreateIdentityServer()
+        public static dynamic ParseResponse(HttpResponseMessage response)
+        {
+            var result = JObject.Parse(response
+                .Content
+                .ReadAsStringAsync()
+                .Result);
+
+            return result
+                .Property("__res")
+                .Value;
+        }
+
+        public static IIdentityServer CreateIdentityServer(int clients)
         {
             var identity = new IdentityServer();
-            identity.Start("tcp://localhost:5000");
+            var failure = null as Exception;
+            var waiter = new ManualResetEvent(false);
+            identity.Start("tcp://localhost:5000", clients, ex =>
+            {
+                failure = ex;
+                waiter.Set();
+            });
+
+            waiter.WaitOne();
+            if (failure != null)
+                throw failure;
+
             return identity;
         }
 
         //start a configuration, but just the nodes
-        private static void startNodes(Type config, IList<Type> hostedTypes, IDictionary<Guid, ConcurrentObject> hostedInstances)
+        private static int startNodes(Type config, IList<Type> hostedTypes, IDictionary<Guid, ConcurrentObject> hostedInstances)
         {
             var method = config.GetMethod("StartNodes");
             var instance = Activator.CreateInstance(config);
-            method.Invoke(instance, new object[] { hostedTypes, hostedInstances });
+            return (int)method.Invoke(instance, new object[] { hostedTypes, hostedInstances });
         }
 
         private static Compilation createCompilation(string text,

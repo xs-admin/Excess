@@ -16,8 +16,7 @@ namespace xss
             var url = null as string;
             var concurrentClasses = null as IEnumerable<Type>;
             var concurrentInstances = null as IEnumerable<KeyValuePair<Guid, ConcurrentObject>>;
-            var concurrentNodes = null as IEnumerable<IConcurrentNode>;
-            if (!parseArguments(args, out errors, out url, out concurrentClasses, out concurrentInstances, out concurrentNodes))
+            if (!parseArguments(args, out errors, out url, out concurrentClasses, out concurrentInstances))
             {
                 Console.Write(errors);
                 return;
@@ -30,15 +29,13 @@ namespace xss
             Startup.HttpServer.Start(url, instantiator: instantiator);
         }
 
-        private static bool parseArguments(string[] args, out string errors, out string url, out IEnumerable<Type> concurrentClasses, out IEnumerable<KeyValuePair<Guid, ConcurrentObject>> concurrentInstances, out IEnumerable<IConcurrentNode> concurrentNodes)
+        private static bool parseArguments(string[] args, out string errors, out string url, out IEnumerable<Type> concurrentClasses, out IEnumerable<KeyValuePair<Guid, ConcurrentObject>> concurrentInstances)
         {
             errors = null;
             url = null;
             concurrentClasses = null;
             concurrentInstances = null;
-            concurrentNodes = null; //td: nodes
             var directory = Environment.CurrentDirectory;
-
 
             switch (args.Length)
             {

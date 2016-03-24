@@ -1,6 +1,7 @@
 ﻿using Middleware;
 using Middleware.NetMQ;
 using Excess.Concurrent.Runtime;
+using System;
 
 namespace Startup
 {
@@ -10,9 +11,10 @@ namespace Startup
             string url,
             string identityUrl,
             IInstantiator instantiator,
-            int threads = 2)
+            int threads = 2,
+            Action<Exception> started = null)
         {
-            var identity = new IdentityClient();
+            var identity = new IdentityClient(url);
             var server = new ConcurrentServer(identity);
             var classes = instantiator.GetConcurrentClasses();
             if (classes != null)
@@ -28,7 +30,8 @@ namespace Startup
                     server.RegisterInstance(instance.Key, instance.Value);
             }
 
-            identity.Start(url, identityUrl, (ReferenceInstantiator)instantiator);
+            server.StartListening();
+            identity.Start(url, identityUrl, (ReferenceInstantiator)instantiator, started);
         }
     }
 }

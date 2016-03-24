@@ -95,12 +95,18 @@ namespace LanguageExtension
                             case "Start":
                                 return nn.AddBodyStatements(mainServer.StartStatements.ToArray());
                             case "StartNodes":
-                                return nn.AddBodyStatements(mainServer
+                                return nn.AddBodyStatements(
+                                    mainServer
                                     .Nodes
                                     .Select(serverNode => Templates
                                         .NodeInvocation
-                                        .Get<StatementSyntax> (serverNode.ServerId))
-                                    .ToArray());
+                                        .Get<StatementSyntax>(serverNode.ServerId))
+                                    .Union(new StatementSyntax[]
+                                    {
+                                        CSharp.ReturnStatement(CSharp.ParseExpression(mainServer
+                                            .Nodes
+                                            .Count.ToString()))
+                                    }).ToArray());
                         }
 
                         throw new NotImplementedException();

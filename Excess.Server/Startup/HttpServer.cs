@@ -6,6 +6,7 @@ using Microsoft.Owin.Hosting;
 using Excess.Concurrent.Runtime;
 using Middleware;
 using Middleware.NetMQ;
+using System.Threading;
 
 namespace Startup
 {
@@ -26,7 +27,8 @@ namespace Startup
             IInstantiator instantiator = null,
             int threads = 8,
             Action<IAppBuilder> onInit = null,
-            bool useStaticFiles = true)
+            bool useStaticFiles = true,
+            int waitForClients = 0)
         {
             using (WebApp.Start(url, (app) =>
             {
@@ -36,9 +38,16 @@ namespace Startup
                 var concurrentServer = null as IConcurrentServer;
                 app.UseConcurrent(server =>
                 {
+                    var failure = null as Exception;
+                    var waiter = new ManualResetEvent(false);
+
                     var identityServer = new IdentityServer();
                     if (identityUrl != null)
-                        identityServer.Start(identityUrl);
+                        identityServer.Start(identityUrl, waitForClients, exception =>
+                        {
+                            failure = exception;
+                            waiter.Set();
+                        });
 
                     server.Identity = identityServer;
                     concurrentServer = server;
@@ -56,13 +65,15 @@ namespace Startup
                         foreach (var instance in instances)
                             server.RegisterInstance(instance.Key, instance.Value);
                     }
+
+                    waiter.WaitOne();
+                    if (failure != null)
+                        throw failure;
                 });
 
                 Debug.Assert(concurrentServer != null);
                 if (onInit != null)
                     onInit(app);
-
-                concurrentServer.Start();
             }))
             {
                 Console.WriteLine("Press Enter to quit."); //td: lol

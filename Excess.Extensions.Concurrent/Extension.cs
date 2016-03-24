@@ -107,11 +107,10 @@ namespace Excess.Extensions.Concurrent
                 }
             }
 
-            //all concurrent compilation has been done
+            //all concurrent compilation has been done, produce 
             @class = ctx.Update(@class);
 
-            //add our default interface to the parent context
-            //td: config
+            //generate the interface
             var document = scope.GetDocument();
             document.change(node.Parent, Roslyn.AddMember(CreateInterface(@class)));
 
@@ -119,8 +118,14 @@ namespace Excess.Extensions.Concurrent
             //td: make it abstract (regarding serialization) and configurable (not needed)
             var remoteMethod = null as MethodDeclarationSyntax;
             var remoteType = createRemoteType(@class, out remoteMethod);
-            @class = @class.AddMembers(remoteMethod, remoteType);
+            @class = @class.AddMembers(
+                remoteMethod, 
+                remoteType, 
+                Templates
+                .ObjectId
+                .Get<MemberDeclarationSyntax>());
 
+            //schedule linking
             return document.change(@class, Link(ctx), null);
         }
 

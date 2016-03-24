@@ -4,20 +4,14 @@ using System.Threading.Tasks;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
-using System.Collections.Concurrent;
 
 using Newtonsoft.Json.Linq;
 using Excess.Concurrent.Runtime;
 
 namespace Middleware
 {
+    using System.Diagnostics;
     using MethodFunc = Action<ConcurrentObject, JObject, Action<JObject>>;
-
-    public interface IConcurrentNode
-    {
-        void Connect(IConcurrentServer parent, Action connected, Action<Exception> failure);
-        ConcurrentObject Bind(Guid id);
-    }
 
     public interface IConcurrentServer
     {
@@ -30,10 +24,6 @@ namespace Middleware
         void RegisterClass(Type @class);
         void RegisterClass<T>() where T : ConcurrentObject;
         void RegisterInstance(Guid id, ConcurrentObject @object);
-
-        void RegisterNode(IConcurrentNode node);
-
-        void Start();
     }
 
     public class ConcurrentServer : IConcurrentServer
@@ -54,13 +44,45 @@ namespace Middleware
 
         public IInstantiator Instantiator { get; set; }
 
+        public void StartListening()
+        {
+            Debug.Assert(_node != null && _identity != null);
+
+            _node.AddSpawnListener(@object =>
+            {
+                //td: no need to synch internals, only those leaving the server boundary
+
+                var methods = _types[@object.GetType()];
+                var id = objectId(@object);
+                _identity.register(id, (method, data, success) =>
+                {
+                    var methodFunc = methods[method];
+                    methodFunc(@object, JObject.Parse(data), response => success(response.ToString()));
+                });
+            });
+        }
+
         public Task<bool> Invoke(Guid @object, string method, string data, Action<JObject> success)
         {
-
-            return _node.Queue(() => _identity.dispatch(@object, 
+            var completion = new TaskCompletionSource<bool>();
+            _node.Queue(() => _identity.dispatch(@object, 
                 method, 
                 data, 
-                response => success(JObject.Parse(response)))); //td: too much parsing
+                response =>
+                {
+                    try
+                    {
+                        success(JObject.Parse(response)); //td: too much parsing
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new NotImplementedException("serialize failure to be decoded on the other side");
+                    }
+
+                    completion.SetResult(true); //td: 
+                })); 
+
+            return completion.Task;
         }
 
         //IConcurrentServer
@@ -70,7 +92,6 @@ namespace Middleware
         }
 
         bool _running = false;
-        Exception _startFailed = null;
         public void Build(Action<IConcurrentServer, Node> builder)
         {
             builder(this, _node);
@@ -148,45 +169,6 @@ namespace Middleware
             });
         }
 
-        List<IConcurrentNode> _nodes = new List<IConcurrentNode>();
-        public void RegisterNode(IConcurrentNode node)
-        {
-            _nodes.Add(node);
-        }
-
-        public virtual void Start()
-        {
-            foreach (var node in _nodes)
-            {
-                _node.Queue(null, () => 
-                {
-                    node.Connect(this, () => //success
-                    { 
-                        lock (_nodes)
-                        {
-                            _nodes.Remove(node);
-                        }
-                    },
-                    (ex) => { _startFailed = ex; });
-                },
-                (ex) => { _startFailed = ex; });
-            }
-
-            int timeout = 10; 
-            while (_nodes.Count > 0 && _startFailed != null && timeout > 0)
-            {
-                Thread.Sleep(100); //td: config, meh
-                timeout--;
-            }
-
-            if (_startFailed != null)
-                throw _startFailed;
-
-            _running = _nodes.Count == 0; //all connected
-            if (!_running)
-                throw new InvalidOperationException("timeout");
-        }
-
         private bool isConcurrent(MethodInfo method)
         {
             if (!method.IsPublic)
@@ -200,6 +182,23 @@ namespace Middleware
             return count > 2
                 && parameters[count - 2].ParameterType == typeof(Action<object>)
                 && parameters[count - 1].ParameterType == typeof(Action<Exception>);
+        }
+
+        private Guid objectId(ConcurrentObject @object)
+        {
+            var attribute = @object
+                .GetType()
+                .CustomAttributes
+                .Where(attr => attr.AttributeType.Name == "ConcurrentSingleton")
+                .SingleOrDefault();
+
+            if (attribute != null && attribute.ConstructorArguments.Count == 1)
+                return Guid.Parse((string)attribute.ConstructorArguments[0].Value);
+
+            return (Guid)@object
+                .GetType()
+                .GetField("__ID")
+                .GetValue(@object);
         }
 
     }

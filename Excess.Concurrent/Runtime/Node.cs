@@ -23,15 +23,12 @@ namespace Excess.Concurrent.Runtime
 
         public T Spawn<T>(params object[] args) where T : ConcurrentObject, new()
         {
-            var result = new T();
-            result.startRunning(this, args);
-            return result;
+            return (T)doSpawn(new T(), args);
         }
 
         public T Spawn<T>(T @object, params object[] args) where T : ConcurrentObject
         {
-            @object.startRunning(this, args);
-            return @object;
+            return (T)doSpawn(@object, args);
         }
 
         public Task<bool> Queue(Action what)
@@ -48,15 +45,27 @@ namespace Excess.Concurrent.Runtime
             if (_instatiator == null)
                 throw new InvalidOperationException("cannot create");
 
-            var result = _instatiator.Instantiate(type, args);
-
-            result.startRunning(this, args);
-            return result;
+            return doSpawn(_instatiator.Instantiate(type, args), args);
         }
 
         public void Start(ConcurrentObject @object, params object[] args)
         {
+            doSpawn(@object, args);
+        }
+
+        List<Action<ConcurrentObject>> _listeners = new List<Action<ConcurrentObject>>();
+        public void AddSpawnListener(Action<ConcurrentObject> listener)
+        {
+            _listeners.Add(listener);
+        }
+
+        private ConcurrentObject doSpawn(ConcurrentObject @object, params object[] args)
+        {
             @object.startRunning(this, args);
+            foreach (var listener in _listeners)
+                listener(@object);
+
+            return @object;
         }
 
         private class Event

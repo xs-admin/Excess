@@ -17,10 +17,7 @@ namespace Middleware
         ConcurrentDictionary<Guid, IdentityFunc> _storage = new ConcurrentDictionary<Guid, IdentityFunc>();
         public void dispatch(Guid id, string method, string data, Action<string> response)
         {
-            var func = null as IdentityFunc;
-            if (_storage.TryGetValue(id, out func))
-                func(method, data, response);
-            else 
+            if (!localDispatch(id, method, data, response))
                 remoteDispatch(id, method, data, response);
         }
 
@@ -36,6 +33,16 @@ namespace Middleware
         public virtual bool has(Guid id)
         {
             return _storage.ContainsKey(id);
+        }
+
+        protected virtual bool localDispatch(Guid id, string method, string data, Action<string> response)
+        {
+            var func = null as IdentityFunc;
+            if (!_storage.TryGetValue(id, out func))
+                return false;
+
+            func(method, data, response);
+            return true;
         }
 
         protected virtual void remoteDispatch(Guid id, string method, string data, Action<string> response)

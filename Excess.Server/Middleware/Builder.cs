@@ -15,6 +15,7 @@ namespace Middleware
                 server.Identity = new BaseIdentityServer();
 
             app.Use<ConcurrentOwinMiddleware>(server);
+            server.StartListening();
         }
     }
 }

@@ -20,7 +20,7 @@ namespace LanguageExtension
                 {
                 }
 
-                public void StartNodes(IList<Type> managedTypes, IDictionary<Guid, ConcurrentObject> managedInstances)
+                public int StartNodes(IList<Type> managedTypes, IDictionary<Guid, ConcurrentObject> managedInstances)
                 {
                 }
             }");

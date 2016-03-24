@@ -1,12 +1,8 @@
-﻿using Microsoft.Owin;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Owin;
 
 namespace Middleware
 {
@@ -34,7 +30,7 @@ namespace Middleware
                         await _server.Invoke(id, 
                             method, 
                             body.ReadToEnd(),
-                            json => response.Write(json.ToString()));
+                            json => SendResponse(response, json.ToString()));
                     }
                     catch (Exception ex)
                     {
@@ -46,6 +42,11 @@ namespace Middleware
             }
 
             await Next.Invoke(context);
+        }
+
+        private static void SendResponse(IOwinResponse response, string data)
+        {
+            response.Write(data);
         }
 
         private void errorResponse(IOwinResponse response, Exception ex)

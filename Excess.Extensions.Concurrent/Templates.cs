@@ -280,5 +280,8 @@ namespace Excess.Extensions.Concurrent
             public interface _0
             {
             }");
+
+        public static Template ObjectId = Template.Parse("public readonly Guid __ID = Guid.NewGuid();");
+
     }
 }

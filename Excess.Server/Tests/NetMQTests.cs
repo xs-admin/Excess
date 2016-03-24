@@ -5,8 +5,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Tests
 {
@@ -52,7 +50,7 @@ namespace Tests
                 server Default()
                 {
                     Url = ""http://localhost:1080"";
-                    Identity = ""tcp://localhost:1079"";
+                    Identity = ""tcp://localhost:5000"";
 
                     Node node1 = new NetMQ.Node
                     {
@@ -96,17 +94,12 @@ namespace Tests
 
                 Assert.AreEqual(response.StatusCode, HttpStatusCode.OK);
 
-                var greeting = JObject.Parse(response
-                    .Content
-                    .ReadAsStringAsync()
-                    .Result)
-                    .Descendants()
-                    .OfType<JProperty>()
-                    .SingleOrDefault(prop =>
-                        prop.Name == "Greeting");
+                var json = Mock.ParseResponse(response);
 
-                Assert.IsNotNull(greeting);
-                Assert.IsNotNull(greeting.Value.ToString() == "greetings, world");
+                Assert.IsNotNull(json.Greeting);
+                Assert.AreEqual(json.Greeting.Value.ToString(),"greetings, world");
+
+                var firstGoodbye = json.Goodbye.__ID;
 
                 //call again, still should be processed correctly
                 response = server
@@ -122,19 +115,31 @@ namespace Tests
 
                 Assert.AreEqual(response.StatusCode, HttpStatusCode.OK);
 
+                json = Mock.ParseResponse(response);
+
                 //must have incremented the times
-                var times = JObject.Parse(response
-                    .Content
-                    .ReadAsStringAsync()
-                    .Result)
-                    .Descendants()
-                    .OfType<JProperty>()
-                    .SingleOrDefault(prop =>
-                        prop.Name == "Times");
+                Assert.IsNotNull(json.Times);
+                Assert.AreEqual(json.Times.Value.ToString(), "1");
 
-                Assert.IsNotNull(times);
-                Assert.IsNotNull(times.Value.ToString() == "1");
+                //the goodbye service should be a different each time
+                var secondGoodbye = json.Goodbye.__ID;
 
+                Assert.AreNotEqual(firstGoodbye, secondGoodbye);
+
+                //invoke Goodbye(s)
+                response = server
+                    .HttpClient
+                    .PostAsync(
+                        "/" + firstGoodbye + "/Goodbye",
+                        new StringContent(JObject
+                            .FromObject(new
+                            {
+                                what = "blue sky"
+                            }).ToString()))
+                    .Result;
+
+                json = Mock.ParseResponse(response);
+                Assert.AreEqual(json.Value.ToString(), "Goodbye blue sky");
             }
         }
     }

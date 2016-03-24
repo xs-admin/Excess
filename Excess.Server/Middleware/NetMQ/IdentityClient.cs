@@ -3,16 +3,35 @@ using System.Threading.Tasks;
 using NetMQ;
 using System.Collections.Concurrent;
 using Excess.Concurrent.Runtime;
+using System.Diagnostics;
 
 namespace Middleware.NetMQ
 {
     public class IdentityClient : BaseIdentityServer
     {
+        string _url;
+        public IdentityClient(string url)
+        {
+            _url = url;
+
+            //handshake
+            _writeQueue.Add(new WriteRequest
+            {
+                Id = Guid.Empty,
+                Method = "__registerServer",
+                Data = url
+            });
+        }
+
         public bool Connected { get { return _connected == 2; } }
 
         int _connected = 0;
-        ConcurrentDictionary<Guid, Action<string>> _awaiting = new ConcurrentDictionary<Guid, Action<string>>();
-        public void Start(string inputUrl, string outputUrl, ReferenceInstantiator instantiator)
+        ConcurrentDictionary<Guid, Action<string>> _pending = new ConcurrentDictionary<Guid, Action<string>>();
+        public void Start(
+            string inputUrl, 
+            string outputUrl, 
+            ReferenceInstantiator instantiator,
+            Action<Exception> started = null)
         {
             Task.Run(() =>
             {
@@ -20,29 +39,68 @@ namespace Middleware.NetMQ
                 using (var input = context.CreateDealerSocket())
                 {
                     input.Bind(inputUrl);
-                    _connected++;
+                    notifyConnected(started);
 
-                    var message = new NetMQMessage(expectedFrameCount: 5);
+                    var message = new NetMQMessage(expectedFrameCount: 3);
                     for (;;)
                     {
-                        message = input.ReceiveMultipartMessage();
+                        message = input.ReceiveMultipartMessage(expectedFrameCount: 3);
 
                         try
                         {
-                            var id = Guid.Parse(message
-                                .Pop()
-                                .ConvertToString());
-
+                            //these messages are dual, 
+                            //they could represent a request for execution
+                            //or the return value of an invocation. Either way both keep 
+                            //a requestID.
+                            var id = Guid.Parse(message.Pop().ConvertToString());
                             message.Pop(); //empty frame
+                            var method = message.Pop().ConvertToString();
+                            message.Pop();
+                            var data = message.Pop().ConvertToString();
+                            message.Pop();
+                            var requestId = Guid.Parse(message.Pop().ConvertToString());
 
                             var action = null as Action<string>;
-                            if (_awaiting.TryRemove(id, out action))
+                            if (_pending.TryRemove(requestId, out action))
                             {
-                                var response = message.Pop().ConvertToString();
-                                action(response);
+                                Debug.Assert(id == Guid.Empty && string.IsNullOrEmpty(method)); //return value, no id or method
+
+                                Debug.WriteLine(
+                                    $"Client.ReceiveResponse: {id} ==> {data}");
+
+                                action(data);
+                            }
+                            else
+                            {
+                                Debug.Assert(id != Guid.Empty
+                                    && !string.IsNullOrWhiteSpace(method) 
+                                    && !string.IsNullOrWhiteSpace(data));
+
+                                Debug.WriteLine(
+                                    $"Client.ReceiveRequest: {id} ==> {method}, {data}");
+
+                                bool dispatched = localDispatch(id, method, data, response =>
+                                {
+                                    _writeQueue.Add(new WriteRequest
+                                    {
+                                        ResponseId = requestId,
+                                        Data = response
+                                    });
+                                });
+
+                                if (!dispatched)
+                                    _writeQueue.Add(new WriteRequest
+                                    {
+                                        ResponseId = requestId,
+                                        Data = $"{id} not found"
+                                    }); //td: write functions
                             }
                         }
                         catch
+                        {
+                            //td: log?
+                        }
+                        finally
                         {
                             message.Clear();
                         }
@@ -56,8 +114,9 @@ namespace Middleware.NetMQ
                 using (var output = context.CreateDealerSocket())
                 {
                     output.Connect(outputUrl);
-                    _connected++;
+                    notifyConnected(started);
 
+                    //loop
                     var message = new NetMQMessage(expectedFrameCount: 7);
                     for (;;)
                     {
@@ -66,18 +125,27 @@ namespace Middleware.NetMQ
                         message.Clear(); //td: best way to do this?
                         message.Append(toSend.Id.ToString());
                         message.AppendEmptyFrame();
-                        message.Append(toSend.Method);
+                        message.Append(toSend.Method ?? string.Empty);
                         message.AppendEmptyFrame();
                         message.Append(toSend.Data);
                         message.AppendEmptyFrame();
                         message.Append(toSend.ResponseId.ToString());
 
                         output.SendMultipartMessage(message);
+                        Debug.WriteLine(
+                            $"Client.Send: {toSend.Id} ==> {toSend.Method}, {toSend.Data} => {toSend.ResponseId}");
                     }
                 }
             });
 
             instantiator.Dispatch = remoteDispatch;
+        }
+
+        private void notifyConnected(Action<Exception> started)
+        {
+            _connected++;
+            if (_connected == 2 && started != null)
+                started(null);
         }
 
         class WriteRequest
@@ -100,7 +168,7 @@ namespace Middleware.NetMQ
                 Data = data
             });
 
-            if (!_awaiting.TryAdd(responseId, response))
+            if (!_pending.TryAdd(responseId, response))
                 throw new InvalidOperationException();
         }
 
@@ -108,9 +176,9 @@ namespace Middleware.NetMQ
         {
             _writeQueue.Add(new WriteRequest
             {
-                Id = Guid.Empty,
+                Id = id,
                 Method = "__register",
-                Data = id.ToString()
+                Data = _url
             });
         }
     }
