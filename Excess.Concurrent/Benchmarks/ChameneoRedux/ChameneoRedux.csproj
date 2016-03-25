@@ -53,7 +53,7 @@
     <None Include="ChameneoRedux.xs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Runtime\Runtime.csproj">
+    <ProjectReference Include="..\..\Runtime\Runtime.csproj">
       <Project>{4be92f98-4415-4118-9a57-e1e2b3cbb1a5}</Project>
       <Name>Runtime</Name>
     </ProjectReference>

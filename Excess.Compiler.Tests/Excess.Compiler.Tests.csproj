@@ -130,14 +130,6 @@
       <Project>{a9fc6a37-7e7c-4098-9908-cb2e927b9274}</Project>
       <Name>Excess.Entensions.XS</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Excess.Extensions.Concurrent\Excess.Extensions.Concurrent.csproj">
-      <Project>{99f869f8-7bd4-476a-98ca-27c63e89da93}</Project>
-      <Name>Excess.Extensions.Concurrent</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\Excess.Extensions.R\Excess.Extensions.R.csproj">
-      <Project>{5a14c7ba-9e0b-471d-b9d4-fe08073a9f00}</Project>
-      <Name>Excess.Extensions.R</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />

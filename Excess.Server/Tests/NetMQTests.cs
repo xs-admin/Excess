@@ -85,11 +85,11 @@ namespace Tests
                     .HttpClient
                     .PostAsync(
                         "/" + services["HelloService"] + "/Hello",
-                        new StringContent(JObject
-                            .FromObject(new
-                            {
-                                who = "world"
-                            }).ToString()))
+                        new StringContent(JObject.FromObject(new
+                        {
+                            who = "world"
+                        })
+                        .ToString()))
                     .Result;
 
                 Assert.AreEqual(response.StatusCode, HttpStatusCode.OK);
@@ -106,11 +106,11 @@ namespace Tests
                     .HttpClient
                     .PostAsync(
                         "/" + services["HelloService"] + "/Hello",
-                        new StringContent(JObject
-                            .FromObject(new
-                            {
-                                who = "ma"
-                            }).ToString()))
+                        new StringContent(JObject.FromObject(new
+                        {
+                            who = "ma"
+                        })
+                        .ToString()))
                     .Result;
 
                 Assert.AreEqual(response.StatusCode, HttpStatusCode.OK);
@@ -131,15 +131,29 @@ namespace Tests
                     .HttpClient
                     .PostAsync(
                         "/" + firstGoodbye + "/Goodbye",
-                        new StringContent(JObject
-                            .FromObject(new
-                            {
-                                what = "blue sky"
-                            }).ToString()))
+                        new StringContent(JObject.FromObject(new
+                        {
+                            what = "blue sky"
+                        })
+                        .ToString()))
                     .Result;
 
                 json = Mock.ParseResponse(response);
                 Assert.AreEqual(json.Value.ToString(), "Goodbye blue sky");
+
+                //and the second
+                response = server
+                    .HttpClient
+                    .PostAsync(
+                        "/" + secondGoodbye + "/Goodbye",
+                        new StringContent(JObject.FromObject(new
+                        {
+                            what = "ma"
+                        })
+                        .ToString()))
+                    .Result;
+
+                Assert.AreEqual(response.StatusCode, HttpStatusCode.OK);
             }
         }
     }
