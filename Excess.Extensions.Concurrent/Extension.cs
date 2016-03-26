@@ -13,11 +13,10 @@ namespace Excess.Extensions.Concurrent
 {
     using CSharp = SyntaxFactory;
     using Roslyn = RoslynCompiler;
-    using ExcessCompiler = ICompiler<SyntaxToken, SyntaxNode, SemanticModel>;
 
     public class Extension
     {
-        public static void Apply(ExcessCompiler compiler)
+        public static void Apply(RoslynCompiler compiler)
         {
             var lexical = compiler.Lexical();
             lexical

@@ -14,7 +14,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Excess.Compiler", "Excess.C
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Excess.Compiler.Razor", "Excess.Compiler.Razor\Excess.Compiler.Razor.csproj", "{FF771A02-CF66-4F21-9E04-A87CEBCD7952}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "xsc", "..\Excess.Compiler\xsc\xsc.csproj", "{82F89659-98C0-48FA-95B5-EC380C5C21A1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "xsc", "Excess.Compiler\xsc\xsc.csproj", "{82F89659-98C0-48FA-95B5-EC380C5C21A1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

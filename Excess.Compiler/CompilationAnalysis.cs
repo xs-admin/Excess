@@ -16,5 +16,5 @@ namespace Excess.Compiler
     public interface ICompilationAnalysis<TToken, TNode, TModel>
     {
         ICompilationMatch<TToken, TNode, TModel> match<T>(Func<T, TModel, Scope, bool> matcher) where T : TNode;
-    }
+    } 
 }

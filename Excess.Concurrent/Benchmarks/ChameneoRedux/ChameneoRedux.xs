@@ -1,4 +1,6 @@
-﻿using System;
+﻿using xs.concurrent;
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace ChameneoRedux
 {
-    concurrent class Chameneo
+    public concurrent class Chameneo
     {
         public enum Color
         {
