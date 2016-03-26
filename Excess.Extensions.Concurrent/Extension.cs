@@ -26,6 +26,7 @@ namespace Excess.Extensions.Concurrent
                     .then(lexical.transform()
                         .remove("keyword")
                         .then(CompileClass))
+
                 .match()
                     .token("concurrent", named: "keyword")
                     .token("object", named: "ref")
@@ -109,20 +110,26 @@ namespace Excess.Extensions.Concurrent
             //all concurrent compilation has been done, produce 
             @class = ctx.Update(@class);
 
-            //generate the interface
             var document = scope.GetDocument();
+
+            //generate the interface
+            //td: !!! config
             document.change(node.Parent, Roslyn.AddMember(CreateInterface(@class)));
 
-            //add a remote type, to be used with an identity server  
-            //td: make it abstract (regarding serialization) and configurable (not needed)
-            var remoteMethod = null as MethodDeclarationSyntax;
-            var remoteType = createRemoteType(@class, out remoteMethod);
-            @class = @class.AddMembers(
-                remoteMethod, 
-                remoteType, 
-                Templates
-                .ObjectId
-                .Get<MemberDeclarationSyntax>());
+            if (false)
+            {
+                //td: !!! config
+                //add a remote type, to be used with an identity server  
+                //td: make it abstract (regarding serialization) and configurable (not needed)
+                var remoteMethod = null as MethodDeclarationSyntax;
+                var remoteType = createRemoteType(@class, out remoteMethod);
+                @class = @class.AddMembers(
+                    remoteMethod,
+                    remoteType,
+                    Templates
+                    .ObjectId
+                    .Get<MemberDeclarationSyntax>());
+            }
 
             //schedule linking
             return document.change(@class, Link(ctx), null);
@@ -148,10 +155,6 @@ namespace Excess.Extensions.Concurrent
                         return !(member as MethodDeclarationSyntax)
                             .Modifiers
                             .Any(modifier => modifier.Kind() == SyntaxKind.StaticKeyword);
-                    }
-                    else if (member is ConstructorDeclarationSyntax)
-                    {
-                        throw new NotImplementedException(); //td: remote creation
                     }
 
                     return false;

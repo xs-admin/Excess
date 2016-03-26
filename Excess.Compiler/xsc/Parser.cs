@@ -33,6 +33,7 @@ namespace xsc
 
                                 {toRun}
 
+                                validateFlavors();
                                 if (SolutionFile != null)
                                     buildSolution();
                                 else
@@ -132,7 +133,7 @@ namespace xsc
             { "-solution",   (args, index) => consumeOne(args, index, "SolutionFile = @\"{0}\";") },
             { "-file",       (args, index) => consumeOne(args, index, "Files = new [] {@\"{0}\"};") },
             { "-files",      (args, index) => consumeOne(args, index, "Files = directoryFiles(@\"{0}\");") },
-            { "-extensions", (args, index) => consumeOne(args, index, "Injectors = directoryInjectors(@\"{0}\");") },
+            { "-extensions", (args, index) => consumeOne(args, index, "Extensions = directoryExtensions(@\"{0}\");") },
         };
 
         private static ParseResult consumeOne(string[] args, int index, string template)
@@ -170,11 +171,19 @@ namespace xsc
             while (index < args.Length)
             {
                 var processor = null as Func<string[], int, ParseResult>;
-                if (options.TryGetValue(args[index++], out processor))
+                var arg = args[index++];
+                if (options.TryGetValue(arg, out processor))
                 {
                     var parseResult = processor(args, index);
-                    result.Append(parseResult.Result);
+                    result.AppendLine(parseResult.Result);
                     index += parseResult.Consumed;
+                }
+                else if (arg.StartsWith("-"))
+                {
+                    //unknown arguments will be assumed as extension flavors
+                    var extension = arg.Substring(1).Trim();
+                    var flavor = args[index++];
+                    result.Insert(0, $"Flavors[\"{extension}\"] = \"{flavor}\";\n");
                 }
                 else if (index == 1)
                 {

@@ -14,7 +14,13 @@ namespace xsc
     {
         public IEnumerable<string> Files { get; set; }
         public string SolutionFile { get; set; }
-        public IDictionary<string, Action<RoslynCompiler>> Injectors { get; set; }
+        public IDictionary<string, Action<RoslynCompiler>> Extensions { get; set; }
+        public IDictionary<string, string> Flavors { get; set; }
+
+        public Runner()
+        {
+            Flavors = new Dictionary<string, string>();
+        }
 
         public IEnumerable<string> directoryFiles(string directory = null)
         {
@@ -27,7 +33,7 @@ namespace xsc
                             && !file.Contains("Generated"));
         }
 
-        public IDictionary<string, Action<RoslynCompiler>> directoryInjectors(string directory)
+        public IDictionary<string, Action<RoslynCompiler>> directoryExtensions(string directory)
         {
             var items = Directory.EnumerateFiles(directory, "*", SearchOption.AllDirectories)
                 .Where(file => Path.GetExtension(file) == ".dll"
@@ -53,29 +59,45 @@ namespace xsc
                 .GetTypes()
                 .Where(type => type.Name == "Extension");
 
+            var id = Path
+                .GetFileNameWithoutExtension(dll)
+                .Substring("Excess.Extensions.".Length)
+                .ToLower();
+
+            var flavor = "Apply";
+            if (Flavors.TryGetValue(id, out flavor))
+                Flavors.Remove(id);
+
             var method = null as MethodInfo;
             foreach (var extensionType in extensionTypes)
             {
                 method = extensionType
-                    .GetMethods(BindingFlags.Static)
+                    .GetMethods()
                     .Where(m =>
                     {
+                        if (!m.IsStatic || !m.IsPublic)
+                            return false;
+
                         var parameters = m.GetParameters();
                         return parameters.Length == 1
                             && parameters[0].ParameterType.Name == "RoslynCompiler";
-                    })
-                    .SingleOrDefault();
+                    }).SingleOrDefault();
+
+                if (method != null && method.Name == flavor)
+                    break;
             }
 
             if (method == null)
                 return default(KeyValuePair<string, Action<RoslynCompiler>>);
 
-            var id = Path
-                .GetFileNameWithoutExtension(dll)
-                .Substring("Excess.Extensions.".Length);
-
             return new KeyValuePair<string, Action<RoslynCompiler>>(id,
                 compiler => method.Invoke(null, new object[] { compiler }));
+        }
+
+        public void validateFlavors()
+        {
+            if (Flavors.Any())
+                throw new InvalidProgramException($"invalid argument(s) {string.Join(", ", Flavors.Keys.ToArray())}");
         }
 
         public void buildSolution()
@@ -89,13 +111,13 @@ namespace xsc
         public void buildFiles()
         {
             if (Files == null)
-                throw new InvalidProgramException($"must specify which files to compile");
+                throw new InvalidProgramException("must specify which files to compile");
 
             var actualFiles = Files.ToArray();
             if (actualFiles.Length == 0)
                 throw new InvalidProgramException($"must specify which files to compile");
 
-            var compilation = new ExcessCompilation(null, null);
+            var compilation = new ExcessCompilation(injectors: Extensions);
             foreach (var file in actualFiles)
             {
                 var ext = Path.GetExtension(file);
@@ -110,7 +132,15 @@ namespace xsc
 
             var errors = null as IEnumerable<Diagnostic>;
             var result = compilation.build(out errors);
-
+            if (result != null)
+            {
+                throw new NotImplementedException();
+            }
+            else
+            {
+                foreach (var error in errors)
+                    Console.Error.WriteLine(error.ToString());
+            }
         }
 
     }

@@ -35,16 +35,19 @@ namespace Excess.Compiler.Roslyn
     public class Compilation
     {
         CompilationAnalysis _analysis;
-        Dictionary<string, Action<RoslynCompiler>> _injectors;
+        IDictionary<string, Action<RoslynCompiler>> _injectors;
         public Compilation(
             IPersistentStorage storage = null, 
             CompilationAnalysis analysis = null,
-            Dictionary<string, Action<RoslynCompiler>> injectors = null)
+            IDictionary<string, Action<RoslynCompiler>> injectors = null)
         {
             _environment = createEnvironment(storage);
-            _scope.set<ICompilerEnvironment>(_environment);
             _analysis = analysis;
             _injectors = injectors;
+
+            //setup
+            _scope.set<ICompilerEnvironment>(_environment);
+            _scope.set<ICompilerService<SyntaxToken, SyntaxNode, SemanticModel>>(new CompilerService());
         }
 
         public string OutputFile { get; set; }
@@ -121,7 +124,7 @@ namespace Excess.Compiler.Roslyn
             var document = new RoslynDocument(new Scope(_scope), source, fileName);
 
             var compilerResult = new RoslynCompiler(_scope);
-            var tree = document.SyntaxRoot.SyntaxTree;
+            var tree = CSharpSyntaxTree.ParseText(source);
             var usings = (tree.GetRoot() as CompilationUnitSyntax)
                 ?.Usings
                 .Where(@using =>
@@ -133,14 +136,15 @@ namespace Excess.Compiler.Roslyn
                     usingId = usingId.Substring("xs.".Length);
 
                     var action = null as Action<RoslynCompiler>;
-                    if (!_injectors.TryGetValue(usingId, out action))
+                    if (_injectors.TryGetValue(usingId, out action))
                     {
                         action(compilerResult);
                         return true;
                     }
 
                     return false;
-                });
+                })
+                .ToArray();
 
             compiler = compilerResult;
             return document;
@@ -178,6 +182,10 @@ namespace Excess.Compiler.Roslyn
                 Compiler = compiler,
             };
 
+            //build the document
+            var documentInjector = newDoc.Compiler as IDocumentInjector<SyntaxToken, SyntaxNode, SemanticModel>;
+            documentInjector.apply(newDoc.Document);
+
             _documents.Add(newDoc);
         }
 
@@ -192,7 +200,7 @@ namespace Excess.Compiler.Roslyn
             var compiler = null as RoslynCompiler;
             var tool = null as ICompilationTool;
             var hash = 0;
-            if (string.IsNullOrEmpty(ext) || ext == ".xs")
+            if (string.IsNullOrEmpty(ext))
             {
                 compiler = new RoslynCompiler(_environment, 
                     scope : _scope,
@@ -359,11 +367,12 @@ namespace Excess.Compiler.Roslyn
         public bool compile()
         {
             bool changed;
-            return doCompile(out changed);
+            IEnumerable<Diagnostic> errors;
+            return doCompile(out changed, out errors);
         }
 
         Dictionary<string, SyntaxTree> _trees = new Dictionary<string, SyntaxTree>();
-        private bool doCompile(out bool changed)
+        private bool doCompile(out bool changed, out IEnumerable<Diagnostic> errors)
         {
             changed = false;
             foreach (var doc in _documents)
@@ -410,7 +419,7 @@ namespace Excess.Compiler.Roslyn
                     continue;
 
                 var document = doc.Document;
-                if (document.Stage <= CompilerStage.Syntactical)
+                if (document.Stage <= CompilerStage.Lexical)
                 {
                     changed = true;
 
@@ -433,9 +442,17 @@ namespace Excess.Compiler.Roslyn
                 }
 
                 if (document.hasErrors())
+                {
+                    errors = document
+                        .SyntaxRoot
+                        .GetDiagnostics()
+                        .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+
                     return false;
+                }
             }
 
+            errors = null;
             return true;
         }
 
@@ -463,15 +480,12 @@ namespace Excess.Compiler.Roslyn
 
         CSharpCompilation _compilation;
 
-        public Stream build(out IEnumerable<Diagnostic> errors)
+        public MemoryStream build(out IEnumerable<Diagnostic> errors)
         {
-            throw new NotImplementedException(); //td: 
-        }
+            errors = null;
 
-        public Assembly build()
-        {
             bool needsProcessing;
-            if (!doCompile(out needsProcessing))
+            if (!doCompile(out needsProcessing, out errors))
                 return null;
 
             if (_compilation == null)
@@ -502,27 +516,35 @@ namespace Excess.Compiler.Roslyn
                     var newTree = newRoot.SyntaxTree;
                     if (oldRoot != newRoot)
                     {
-                        _compilation   = _compilation.ReplaceSyntaxTree(oldRoot.SyntaxTree, newTree);
+                        _compilation = _compilation.ReplaceSyntaxTree(oldRoot.SyntaxTree, newTree);
                         _trees[doc.Id] = newTree;
                     }
                 }
             }
 
-            if (_compilation
-                    .GetDiagnostics()
-                    .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
-                    .Any())
+            errors = _compilation
+                .GetDiagnostics()
+                .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error);
+
+            if (errors.Any())
                 return null;
 
             if (_analysis != null)
                 performAnalysis(_analysis);
 
-            using (var stream = new MemoryStream())
-            {
-                var result = _compilation.Emit(stream);
-                if (!result.Success)
-                    return null;
+            var stream = new MemoryStream();
+            var result = _compilation.Emit(stream);
+            if (!result.Success)
+                return null;
 
+            return stream;
+        }
+
+        public Assembly build()
+        {
+            IEnumerable<Diagnostic> errors;
+            using (var stream = build(out errors))
+            {
                 return Assembly.Load(stream.GetBuffer()); 
             }
         }

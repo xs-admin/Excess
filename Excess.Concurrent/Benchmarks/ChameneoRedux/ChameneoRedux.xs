@@ -54,7 +54,7 @@ namespace ChameneoRedux
 
         public void print()
         {
-            console.write($""{Colour}, {Meetings}, {MeetingsWithSelf}"");
+            console.write($"{Colour}, {Meetings}, {MeetingsWithSelf}");
         }                    
 
         private static Color compliment(Color c1, Color c2)

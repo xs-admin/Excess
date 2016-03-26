@@ -325,6 +325,9 @@ namespace Excess.Compiler.Roslyn
                 if (node is CompilationUnitSyntax)
                     return (node as CompilationUnitSyntax).AddMembers(member);
 
+                if (node is NamespaceDeclarationSyntax)
+                    return (node as NamespaceDeclarationSyntax).AddMembers(member);
+
                 Debug.Assert(false); //td: case
                 return node;                        
             };
