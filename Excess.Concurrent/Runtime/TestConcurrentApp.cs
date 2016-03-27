@@ -9,10 +9,17 @@ using System.Threading.Tasks;
 
 namespace Excess.Concurrent.Runtime
 {
+    using FactoryMap = Dictionary<string, Func<IConcurrentApp, object[], IConcurrentObject>>;
+
     public class TestConcurrentApp : BaseConcurrentApp
     {
-        public TestConcurrentApp() : base(null)
+        public TestConcurrentApp(FactoryMap types) : base(types)
         {
+        }
+
+        public override void Stop()
+        {
+            throw new InvalidOperationException("test app is synchronous");
         }
 
         public override void AwaitCompletion()
@@ -42,6 +49,7 @@ namespace Excess.Concurrent.Runtime
                     if (_scheduleCount == 0)
                         throw new InvalidOperationException("test app must not be consumed from elsewhere");
 
+                    //somebody waiting for a scheduled event in time
                     BlockingCollection<Event> blockingQueue = new BlockingCollection<Event>(_queue);
                     @event = blockingQueue.Take();
                 }
@@ -51,8 +59,25 @@ namespace Excess.Concurrent.Runtime
             }
         }
 
-        public override void Stop()
+        //helper methods for Testing
+        Dictionary<string, IConcurrentObject> _singletons = new Dictionary<string, IConcurrentObject>();
+        public bool HasSingleton(string typeName)
         {
+            return _singletons.ContainsKey(typeName);
+        }
+
+        public void AddSingleton(string typeName, IConcurrentObject concurrentObject)
+        {
+            _singletons[typeName] = concurrentObject;
+        }
+
+        public IConcurrentObject GetSingleton(string typeName)
+        {
+            IConcurrentObject result;
+            if (_singletons.TryGetValue(typeName, out result))
+                return result;
+
+            return null;
         }
     }
 }

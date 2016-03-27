@@ -545,8 +545,11 @@ namespace Excess.Compiler.Roslyn
             IEnumerable<Diagnostic> errors;
             using (var stream = build(out errors))
             {
-                return Assembly.Load(stream.GetBuffer()); 
+                if (stream != null)
+                    return Assembly.Load(stream.GetBuffer()); 
             }
+
+            return null;
         }
 
         RoslynEnvironment _environment = null;

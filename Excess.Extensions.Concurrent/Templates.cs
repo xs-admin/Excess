@@ -119,7 +119,7 @@ namespace Excess.Extensions.Concurrent
         public static Template SignalListener = Template.ParseStatement("__listen(__0, __1);");
 
         public static Template EmptySignalMethod = Template.Parse(@"
-            private IEnumerable<Expression> _0(CancellationToken __cancellation, __Action<object> __success, Action<Exception> __failure)
+            private IEnumerable<Expression> _0(CancellationToken __cancellation, Action<object> __success, Action<Exception> __failure)
             {
                 if (__2 && !__awaiting(__1))
                     throw new InvalidOperationException(__1 + "" can not be executed in this state"");
@@ -173,7 +173,7 @@ namespace Excess.Extensions.Concurrent
         public static Template AwaitExpr = Template.ParseStatement("__0 || false;");
 
         public static Template StartObject = Template.Parse(@"
-            protected override void __start(object[] args)
+            protected override void __started()
             {
                 var __enum = __0;
                 __advance(__enum.GetEnumerator());

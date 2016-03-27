@@ -10,12 +10,17 @@ namespace Excess.Concurrent.Runtime.Core
     public class ConcurrentObject : IConcurrentObject
     {
         IConcurrentApp _app; 
-        public virtual void __start(IConcurrentApp app)
+        public void __start(IConcurrentApp app)
         {
             if (_app != null)
                 throw new InvalidOperationException("already running");
 
             _app = app;
+            __started();
+        }
+
+        protected virtual void __started()
+        {
         }
 
         protected T __spawn<T>(params object[] args) where T : ConcurrentObject, new()
