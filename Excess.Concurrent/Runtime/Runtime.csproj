@@ -46,7 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Attributes.cs" />
-    <Compile Include="ConcurrentRuntime.cs" />
+    <Compile Include="Interfaces.cs" />
     <Compile Include="Core\BaseConcurrentApp.cs" />
     <Compile Include="Core\ConcurrentObject.cs" />
     <Compile Include="Core\Expression.cs" />

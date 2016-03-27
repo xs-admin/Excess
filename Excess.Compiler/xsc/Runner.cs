@@ -54,37 +54,41 @@ namespace xsc
 
         private KeyValuePair<string, Action<RoslynCompiler>> loadExtension(string dll)
         {
-            var assembly = Assembly.LoadFile(dll);
-            var extensionTypes = assembly
-                .GetTypes()
-                .Where(type => type.Name == "Extension");
+            var assembly = Assembly.LoadFrom(dll);
 
             var id = Path
                 .GetFileNameWithoutExtension(dll)
                 .Substring("Excess.Extensions.".Length)
                 .ToLower();
 
-            var flavor = "Apply";
-            if (Flavors.TryGetValue(id, out flavor))
-                Flavors.Remove(id);
+            var flavorType = assembly
+                .GetTypes()
+                .Where(type => type.Name == "Flavors")
+                .SingleOrDefault();
 
             var method = null as MethodInfo;
-            foreach (var extensionType in extensionTypes)
+            if (flavorType != null)
             {
-                method = extensionType
-                    .GetMethods()
-                    .Where(m =>
-                    {
-                        if (!m.IsStatic || !m.IsPublic)
-                            return false;
+                string flavor;
+                if (Flavors.TryGetValue(id, out flavor))
+                {
+                    method = getStaticMethod(flavorType, flavor);
+                    if (method == null)
+                        throw new InvalidOperationException($"invalid flavor: {flavor} for {id}");
 
-                        var parameters = m.GetParameters();
-                        return parameters.Length == 1
-                            && parameters[0].ParameterType.Name == "RoslynCompiler";
-                    }).SingleOrDefault();
+                    Flavors.Remove(id);
+                }
+            }
 
-                if (method != null && method.Name == flavor)
-                    break;
+            if (method == null)
+            {
+                var extensionType = assembly
+                    .GetTypes()
+                    .Where(type => type.Name == "Extension")
+                    .SingleOrDefault();
+
+                if (extensionType != null)
+                    method = getStaticMethod(extensionType, "Apply");
             }
 
             if (method == null)
@@ -92,6 +96,21 @@ namespace xsc
 
             return new KeyValuePair<string, Action<RoslynCompiler>>(id,
                 compiler => method.Invoke(null, new object[] { compiler }));
+        }
+
+        private MethodInfo getStaticMethod(Type type, string id)
+        {
+            return type
+                .GetMethods()
+                .Where(m =>
+                {
+                    if (m.Name != id || !m.IsStatic || !m.IsPublic)
+                        return false;
+
+                    var parameters = m.GetParameters();
+                    return parameters.Length == 1
+                        && parameters[0].ParameterType.Name == "RoslynCompiler";
+                }).SingleOrDefault();
         }
 
         public void validateFlavors()

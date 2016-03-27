@@ -8,15 +8,15 @@ using System.Threading.Tasks;
 
 namespace ChameneoRedux
 {
+    public enum Color
+    {
+        blue,
+        red,    
+        yellow,    
+    }
+
     public concurrent class Chameneo
     {
-        public enum Color
-        {
-            blue,
-            red,    
-            yellow,    
-        }
-
         public Color Colour {get; private set;}
         public int Meetings {get; private set;}
         public int MeetingsWithSelf {get; private set;}

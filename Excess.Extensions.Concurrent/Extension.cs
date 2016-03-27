@@ -14,10 +14,19 @@ namespace Excess.Extensions.Concurrent
     using CSharp = SyntaxFactory;
     using Roslyn = RoslynCompiler;
 
+    public class Options
+    {
+        public bool GenerateInterface { get; set; }
+        public bool GenerateRemote { get; set; }
+    }
+
     public class Extension
     {
-        public static void Apply(RoslynCompiler compiler)
+        public static void Apply(RoslynCompiler compiler, Options options = null)
         {
+            if (options == null)
+                options = new Options();
+
             var lexical = compiler.Lexical();
             lexical
                 .match()
@@ -25,7 +34,7 @@ namespace Excess.Extensions.Concurrent
                     .token("class", named: "ref")
                     .then(lexical.transform()
                         .remove("keyword")
-                        .then(CompileClass))
+                        .then(CompileClass(options)))
 
                 .match()
                     .token("concurrent", named: "keyword")
@@ -33,23 +42,28 @@ namespace Excess.Extensions.Concurrent
                     .then(lexical.transform()
                         .remove("keyword")
                         .replace("ref", "class ")
-                        .then(CompileObject));
+                        .then(CompileObject(options)));
         }
 
-        private static SyntaxNode CompileClass(SyntaxNode node, Scope scope)
+        private static Func<SyntaxNode, Scope, SyntaxNode> CompileClass(Options options)
         {
-            return Compile(node, scope, false);
+            return (node, scope) => Compile(node, scope, false, options);
         }
 
-        private static SyntaxNode Compile(SyntaxNode node, Scope scope, bool isSingleton)
+        private static SyntaxNode Compile(SyntaxNode node, Scope scope, bool isSingleton, Options options)
         {
             Debug.Assert(node is ClassDeclarationSyntax);
             var @class = (node as ClassDeclarationSyntax)
                 .AddBaseListTypes(
                     CSharp.SimpleBaseType(CSharp.ParseTypeName(
-                        "ConcurrentObject")),
+                        "ConcurrentObject")));
+
+            if (options.GenerateInterface)
+            {
+                @class = @class.AddBaseListTypes(
                     CSharp.SimpleBaseType(CSharp.ParseTypeName(
                         "I" + (node as ClassDeclarationSyntax).Identifier.ToString())));
+            }
 
             var className = @class.Identifier.ToString();
 
@@ -113,14 +127,12 @@ namespace Excess.Extensions.Concurrent
             var document = scope.GetDocument();
 
             //generate the interface
-            //td: !!! config
-            document.change(node.Parent, Roslyn.AddMember(CreateInterface(@class)));
+            if (options.GenerateInterface)
+                document.change(node.Parent, Roslyn.AddMember(CreateInterface(@class)));
 
-            if (false)
+            if (options.GenerateRemote)
             {
-                //td: !!! config
                 //add a remote type, to be used with an identity server  
-                //td: make it abstract (regarding serialization) and configurable (not needed)
                 var remoteMethod = null as MethodDeclarationSyntax;
                 var remoteType = createRemoteType(@class, out remoteMethod);
                 @class = @class.AddMembers(
@@ -222,10 +234,12 @@ namespace Excess.Extensions.Concurrent
 
         private static bool isInternalConcurrent(MethodDeclarationSyntax method)
         {
-            return method
+            var methodName = method
                 .Identifier
-                .ToString()
-                .StartsWith("__concurrent");
+                .ToString();
+
+            return methodName.StartsWith("__concurrent")
+                && methodName != "__concurrentmain";
         }
 
         private static MethodDeclarationSyntax createRemoteMethod(MethodDeclarationSyntax method)
@@ -569,20 +583,23 @@ namespace Excess.Extensions.Concurrent
                         .ParameterList.Parameters))));
         }
 
-        private static SyntaxNode CompileObject(SyntaxNode node, Scope scope)
+        private static Func<SyntaxNode, Scope, SyntaxNode> CompileObject(Options options)
         {
-            var @class = node as ClassDeclarationSyntax;
-            Debug.Assert(@class != null);
-            if (@class
-                .DescendantNodes()
-                .OfType<ConstructorDeclarationSyntax>()
-                .Any())
+            return (node, scope) =>
             {
-                //td: error
-                return node;
-            }
+                var @class = node as ClassDeclarationSyntax;
+                Debug.Assert(@class != null);
+                if (@class
+                    .DescendantNodes()
+                    .OfType<ConstructorDeclarationSyntax>()
+                    .Any())
+                {
+                    //td: error
+                    return node;
+                }
 
-            return Compile(node, scope, true);
+                return Compile(node, scope, true, options);
+            };
         }
     }
 }

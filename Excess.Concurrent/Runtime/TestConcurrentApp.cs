@@ -69,6 +69,7 @@ namespace Excess.Concurrent.Runtime
         public void AddSingleton(string typeName, IConcurrentObject concurrentObject)
         {
             _singletons[typeName] = concurrentObject;
+            spawnObject(concurrentObject);
         }
 
         public IConcurrentObject GetSingleton(string typeName)

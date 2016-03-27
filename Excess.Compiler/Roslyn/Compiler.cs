@@ -155,16 +155,21 @@ namespace Excess.Compiler.Roslyn
             base(new RoslynLexicalAnalysis(), 
                  new RoslynSyntaxAnalysis(),
                  new RoslynSemanticAnalysis(),
-                 environment,
+                 environment ?? scope?.get<ICompilerEnvironment>(),
                  new InstanceAnalisysBase<SyntaxToken, SyntaxNode, SemanticModel>(),
                  compilation,
                  scope)
         {
             _scope.set<ICompilerService<SyntaxToken, SyntaxNode, SemanticModel>>(new CompilerService());
-            _scope.set<ICompilerEnvironment>(environment);
+
+            if (_environment == null)
+            {
+                _environment = new RoslynEnvironment(_scope, null);
+                _scope.set<ICompilerEnvironment>(_environment);
+            }
         }
 
-        public RoslynCompiler(Scope scope) : this(new RoslynEnvironment(scope, null), scope)
+        public RoslynCompiler(Scope scope) : this(null, scope)
         {
         }
 

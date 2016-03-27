@@ -27,7 +27,7 @@ namespace Excess.Concurrent.Runtime.Core
             {
                 var func = null as FactoryFunction;
                 if (_types.TryGetValue(type, out func))
-                    return func(this, args);
+                    return spawnObject(func(this, args)); 
             }
 
             throw new ArgumentException($"{type} can not be created in this app");
@@ -38,7 +38,7 @@ namespace Excess.Concurrent.Runtime.Core
             if (_types != null)
                 return (T)Spawn(typeof(T).Name);
 
-            return new T();
+            return spawnObject(new T());
         }
 
         public virtual T Spawn<T>(params object[] args) where T : IConcurrentObject
@@ -55,7 +55,7 @@ namespace Excess.Concurrent.Runtime.Core
             if (constructor == null)
                 throw new ArgumentException($"{type.Name} can not be created with these arguments");
 
-            return (T)constructor.Invoke(args);
+            return spawnObject((T)constructor.Invoke(args));
         }
 
         public virtual T Spawn<T>(T @object) where T : IConcurrentObject
