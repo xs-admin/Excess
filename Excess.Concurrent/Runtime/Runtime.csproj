@@ -46,15 +46,18 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Attributes.cs" />
-    <Compile Include="ConcurrentObject.cs" />
-    <Compile Include="Expression.cs" />
-    <Compile Include="Instantiator.cs" />
-    <Compile Include="Node.cs" />
+    <Compile Include="ConcurrentRuntime.cs" />
+    <Compile Include="Core\BaseConcurrentApp.cs" />
+    <Compile Include="Core\ConcurrentObject.cs" />
+    <Compile Include="Core\Expression.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TestConcurrentApp.cs" />
+    <Compile Include="ThreadedConcurrentApp.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

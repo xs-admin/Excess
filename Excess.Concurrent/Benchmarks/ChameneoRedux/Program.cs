@@ -13,45 +13,45 @@ namespace ChameneoChameneo.Color.redux
     {
         static void Main(string[] args)
         {
-            var node = new Node(4);
+        //    var node = new Node(4);
 
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
+        //    Stopwatch sw = new Stopwatch();
+        //    sw.Start();
 
-            node.StopCount(2);
+        //    node.StopCount(2);
 
-            var meetings = 6 * 1000 * 1000;
-            var firstRun = Run(node, meetings, new[] {
-                Chameneo.Color.blue,
-                Chameneo.Color.red,
-                Chameneo.Color.yellow });
-            var secondRun = Run(node, meetings, new[] {
-                Chameneo.Color.blue,
-                Chameneo.Color.red,
-                Chameneo.Color.yellow,
-                Chameneo.Color.red,
-                Chameneo.Color.yellow,
-                Chameneo.Color.blue,
-                Chameneo.Color.red,
-                Chameneo.Color.yellow,
-                Chameneo.Color.red,
-                Chameneo.Color.blue });
+        //    var meetings = 6 * 1000 * 1000;
+        //    var firstRun = Run(node, meetings, new[] {
+        //        Chameneo.Color.blue,
+        //        Chameneo.Color.red,
+        //        Chameneo.Color.yellow });
+        //    var secondRun = Run(node, meetings, new[] {
+        //        Chameneo.Color.blue,
+        //        Chameneo.Color.red,
+        //        Chameneo.Color.yellow,
+        //        Chameneo.Color.red,
+        //        Chameneo.Color.yellow,
+        //        Chameneo.Color.blue,
+        //        Chameneo.Color.red,
+        //        Chameneo.Color.yellow,
+        //        Chameneo.Color.red,
+        //        Chameneo.Color.blue });
 
-            node.WaitForCompletion();
+        //    node.WaitForCompletion();
 
-            sw.Stop();
+        //    sw.Stop();
 
-            TimeSpan rt = TimeSpan.FromTicks(sw.ElapsedTicks);
-            Console.WriteLine($"Executed in: {rt.TotalSeconds}");
-            Console.ReadKey();
-        }
+        //    TimeSpan rt = TimeSpan.FromTicks(sw.ElapsedTicks);
+        //    Console.WriteLine($"Executed in: {rt.TotalSeconds}");
+        //    Console.ReadKey();
+        //}
 
-        static IEnumerable<Chameneo> Run(Node node, int meetings, Chameneo.Color[] colors)
-        {
-            var broker = node.Spawn(new Broker(meetings));
-            return colors
-                .Select(color => node.Spawn(new Chameneo(broker, color)))
-                .ToArray();
+        //static IEnumerable<Chameneo> Run(Node node, int meetings, Chameneo.Color[] colors)
+        //{
+        //    var broker = node.Spawn(new Broker(meetings));
+        //    return colors
+        //        .Select(color => node.Spawn(new Chameneo(broker, color)))
+        //        .ToArray();
         }
     }
 }
