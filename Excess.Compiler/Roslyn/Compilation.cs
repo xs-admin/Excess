@@ -35,15 +35,18 @@ namespace Excess.Compiler.Roslyn
     public class Compilation
     {
         CompilationAnalysis _analysis;
-        IDictionary<string, Action<RoslynCompiler>> _injectors;
+        IDictionary<string, Action<RoslynCompiler>> _extensions;
+        bool _executable;
         public Compilation(
             IPersistentStorage storage = null, 
             CompilationAnalysis analysis = null,
-            IDictionary<string, Action<RoslynCompiler>> injectors = null)
+            IDictionary<string, Action<RoslynCompiler>> extensions = null,
+            bool executable = false)
         {
             _environment = createEnvironment(storage);
             _analysis = analysis;
-            _injectors = injectors;
+            _extensions = extensions;
+            _executable = executable;
 
             //setup
             _scope.set<ICompilerEnvironment>(_environment);
@@ -117,7 +120,7 @@ namespace Excess.Compiler.Roslyn
 
         private IDocument<SyntaxToken, SyntaxNode, SemanticModel> loadDocument(string fileName, out RoslynCompiler compiler)
         {
-            if (_injectors == null || !_injectors.Any())
+            if (_extensions == null || !_extensions.Any())
                 throw new InvalidOperationException("no extensions registered, plain c#?");
 
             var source = File.ReadAllText(fileName);
@@ -136,7 +139,7 @@ namespace Excess.Compiler.Roslyn
                     usingId = usingId.Substring("xs.".Length);
 
                     var action = null as Action<RoslynCompiler>;
-                    if (_injectors.TryGetValue(usingId, out action))
+                    if (_extensions.TryGetValue(usingId, out action))
                     {
                         action(compilerResult);
                         return true;
@@ -419,7 +422,7 @@ namespace Excess.Compiler.Roslyn
                     continue;
 
                 var document = doc.Document;
-                if (document.Stage <= CompilerStage.Lexical)
+                if (document.Stage <= CompilerStage.Syntactical)
                 {
                     changed = true;
 
@@ -563,7 +566,9 @@ namespace Excess.Compiler.Roslyn
                 syntaxTrees: _trees.Values
                     .Union(_csharpFiles.Values),
                 references: _environment.GetReferences(),
-                options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+                options: new CSharpCompilationOptions(_executable
+                    ? OutputKind.ConsoleApplication
+                    : OutputKind.DynamicallyLinkedLibrary));
         }
 
         protected virtual RoslynEnvironment createEnvironment(IPersistentStorage storage)

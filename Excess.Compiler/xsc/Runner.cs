@@ -7,6 +7,7 @@ using Excess.Compiler.Roslyn;
 
 namespace xsc
 {
+    using System.Diagnostics;
     using System.Reflection;
     using ExcessCompilation = Excess.Compiler.Roslyn.Compilation;
 
@@ -16,17 +17,20 @@ namespace xsc
         public string SolutionFile { get; set; }
         public IDictionary<string, Action<RoslynCompiler>> Extensions { get; set; }
         public IDictionary<string, string> Flavors { get; set; }
+        public string OutputPath { get; set; }
 
         public Runner()
         {
             Flavors = new Dictionary<string, string>();
         }
 
+        string _directory;
         public IEnumerable<string> directoryFiles(string directory = null)
         {
             if (directory == null)
                 directory = Environment.CurrentDirectory;
 
+            _directory = directory;
             var validExtensions = new[] { ".cs", ".xs" };
             return Directory.EnumerateFiles(directory, "*", SearchOption.AllDirectories)
                 .Where(file => validExtensions.Contains(Path.GetExtension(file))
@@ -136,7 +140,16 @@ namespace xsc
             if (actualFiles.Length == 0)
                 throw new InvalidProgramException($"must specify which files to compile");
 
-            var compilation = new ExcessCompilation(injectors: Extensions);
+            var asExe = actualFiles
+                .Where(path => Path
+                    .GetFileName(path)
+                    .Equals("Program.cs"))
+                .Any(); 
+
+            var compilation = new ExcessCompilation(
+                extensions: Extensions,
+                executable: asExe);
+
             foreach (var file in actualFiles)
             {
                 var ext = Path.GetExtension(file);
@@ -153,7 +166,20 @@ namespace xsc
             var result = compilation.build(out errors);
             if (result != null)
             {
-                throw new NotImplementedException();
+                var outputPath = OutputPath;
+                if (outputPath == null)
+                    outputPath = Path.Combine(
+                        _directory,
+                        Path.GetFileName(_directory));
+
+                if (Path.GetExtension(outputPath) == string.Empty)
+                    outputPath = outputPath + (asExe ? ".exe" : ".dll");
+
+                Debug.Assert(outputPath != null);
+
+                outputPath = Path.GetFullPath(outputPath);
+                File.WriteAllBytes(outputPath, result.GetBuffer());
+                Console.WriteLine($"Successfully built: {outputPath}");
             }
             else
             {

@@ -147,18 +147,19 @@ namespace Excess.Extensions.Concurrent
             return document.change(@class, Link(ctx), null);
         }
 
-        private static IEnumerable<MemberDeclarationSyntax> getConcurrentMethod(ClassDeclarationSyntax @class)
+        private static IEnumerable<MethodDeclarationSyntax> getConcurrentMethods(ClassDeclarationSyntax @class)
         {
             return @class
-                .DescendantNodes()
+                .ChildNodes()
                 .OfType<MethodDeclarationSyntax>()
-                .Where(method => isInternalConcurrent(method));
+                .Where(method => method.Identifier.ToString() != "__concurrentmain"
+                              && isInternalConcurrent(method));
         }
 
         private static IEnumerable<MemberDeclarationSyntax> getConcurrentInterface(ClassDeclarationSyntax @class)
         {
             return @class
-                .DescendantNodes()
+                .ChildNodes()
                 .OfType<MemberDeclarationSyntax>()
                 .Where(member =>
                 {
@@ -203,33 +204,19 @@ namespace Excess.Extensions.Concurrent
                 .RemoteMethod
                 .Get<MethodDeclarationSyntax>(typeName, "I" + originalName);
 
-            var result = @class
+            return @class
                 .WithIdentifier(CSharp.ParseToken(typeName))
                 .WithAttributeLists(CSharp.List<AttributeListSyntax>())
                 .WithMembers(CSharp.List<MemberDeclarationSyntax>(
-                    @class
-                    .DescendantNodes()
-                    .OfType<MethodDeclarationSyntax>()));
-
-            result = result
-                .ReplaceNodes(
-                    getConcurrentInterface(result)
-                        .Union(getConcurrentMethod(result)), 
-                    (on, nn) => 
-                    {
-                        var method = nn as MethodDeclarationSyntax;
-                        if (isInternalConcurrent(method))
-                            return createRemoteMethod(method);
-
-                        return nn;
-                    })
-                .AddMembers(
-                    Templates.RemoteId,
-                    Templates.RemoteDispatch,
-                    Templates.RemoteSerialize,
-                    Templates.RemoteDeserialize);
-
-            return result;
+                    getConcurrentInterface(@class)
+                    .Union(getConcurrentMethods(@class)
+                        .Select(mm => createRemoteMethod(mm)))
+                    .Union(new[] {
+                        Templates.RemoteId,
+                        Templates.RemoteDispatch,
+                        Templates.RemoteSerialize,
+                        Templates.RemoteDeserialize
+                    })));
         }
 
         private static bool isInternalConcurrent(MethodDeclarationSyntax method)
@@ -238,8 +225,7 @@ namespace Excess.Extensions.Concurrent
                 .Identifier
                 .ToString();
 
-            return methodName.StartsWith("__concurrent")
-                && methodName != "__concurrentmain";
+            return methodName.StartsWith("__concurrent");
         }
 
         private static MethodDeclarationSyntax createRemoteMethod(MethodDeclarationSyntax method)

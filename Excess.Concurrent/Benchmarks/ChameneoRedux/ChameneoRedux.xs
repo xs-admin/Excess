@@ -1,11 +1,5 @@
 ﻿using xs.concurrent;
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace ChameneoRedux
 {
     public enum Color
@@ -54,7 +48,7 @@ namespace ChameneoRedux
 
         public void print()
         {
-            console.write($"{Colour}, {Meetings}, {MeetingsWithSelf}");
+            Console.WriteLine($"{Colour}, {Meetings}, {MeetingsWithSelf}");
         }                    
 
         private static Color compliment(Color c1, Color c2)
@@ -94,7 +88,7 @@ namespace ChameneoRedux
 
     }
 
-    concurrent class Broker
+    public concurrent class Broker
     {
         int _meetings = 0;
         public Broker(int meetings)
@@ -116,7 +110,7 @@ namespace ChameneoRedux
                 _first = null;
                 _meetings--;
                 if (_meetings == 0)
-                    Node.Stop();
+                    App.Stop();
             }
             else
                 _first = creature;

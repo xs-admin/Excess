@@ -338,15 +338,15 @@ namespace Concurrent.Tests
             var tree = Mock.Compile(@"
                 namespace ChameneoRedux
                 {
+                    public enum Color
+                    {
+                        blue,
+                        red,    
+                        yellow,    
+                    }
+
                     public concurrent class Chameneo
                     {
-                        public enum Color
-                        {
-                            blue,
-                            red,    
-                            yellow,    
-                        }
-
                         public Color Colour {get; private set;}
                         public int Meetings {get; private set;}
                         public int MeetingsWithSelf {get; private set;}
@@ -384,7 +384,7 @@ namespace Concurrent.Tests
 
                         public void print()
                         {
-                            console.write($""{ Colour}, { Meetings}, { MeetingsWithSelf}"");
+                            Console.WriteLine($""{ Colour}, { Meetings}, { MeetingsWithSelf}"");
                         }
 
                         private static Color compliment(Color c1, Color c2)
@@ -424,7 +424,7 @@ namespace Concurrent.Tests
 
                     }
 
-                    concurrent class Broker
+                    public concurrent class Broker
                     {
                         int _meetings = 0;
                         public Broker(int meetings)
@@ -446,7 +446,7 @@ namespace Concurrent.Tests
                                 _first = null;
                                 _meetings--;
                                 if (_meetings == 0)
-                                    Node.Stop();
+                                    App.Stop();
                             }
                             else
                                 _first = creature;

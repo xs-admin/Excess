@@ -30,7 +30,7 @@ namespace xsc
                             {{
                                 Files = directoryFiles();
                                 SolutionFile = null;
-
+                                
                                 {toRun}
 
                                 validateFlavors();

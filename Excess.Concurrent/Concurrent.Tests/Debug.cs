@@ -9,5 +9,4 @@ using Excess.Concurrent.Runtime.Core;
 
 namespace Concurrent.Tests
 {
-    using Concurrent = Excess.Concurrent.Runtime.Concurrent;
 }

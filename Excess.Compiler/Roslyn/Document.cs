@@ -95,8 +95,8 @@ namespace Excess.Compiler.Roslyn
             if (_errors.Any())
                 return true;
 
-            return _root != null && 
-                   _root
+            return _root != null 
+                && _root
                         .GetDiagnostics()
                         .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
                         .Any();
@@ -216,6 +216,13 @@ namespace Excess.Compiler.Roslyn
                         (on, nn) => nn.AddMembers(additionalTypes.ToArray()));
                 }   
             }
+
+            //remove any xs usings
+            _root = _root.RemoveNodes(_root.
+                DescendantNodes()
+                .OfType<UsingDirectiveSyntax>()
+                .Where(@using => @using.Name.ToString().StartsWith("xs.")),
+                SyntaxRemoveOptions.KeepEndOfLine);
         }
     }
 }

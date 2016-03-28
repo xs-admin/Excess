@@ -19,6 +19,8 @@ namespace Excess.Concurrent.Runtime.Core
             __started();
         }
 
+        public IConcurrentApp App { get { return _app; } }
+
         protected virtual void __started()
         {
         }

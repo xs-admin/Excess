@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Excess.Concurrent.Runtime
+namespace Excess.Concurrent.Runtime.Core
 {
     public class Expression
     {
