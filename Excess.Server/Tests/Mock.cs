@@ -11,17 +11,16 @@ using Excess.Compiler.Core;
 using Excess.Concurrent.Runtime;
 using Middleware;
 using Startup;
+using System.Threading;
+using System.Net.Http;
+using Newtonsoft.Json.Linq;
 
 namespace Tests
 {
-    using Spawner = Func<object[], ConcurrentObject>;
+    using Spawner = Func<object[], IConcurrentObject>;
     using ServerExtension = LanguageExtension.Extension;
     using ConcurrentExtension = Excess.Extensions.Concurrent.Extension;
     using Compilation = Excess.Compiler.Roslyn.Compilation;
-    using Middleware.NetMQ;
-    using System.Threading;
-    using System.Net.Http;
-    using Newtonsoft.Json.Linq;
 
     public static class Mock
     {
@@ -65,19 +64,20 @@ namespace Tests
 
             return TestServer.Create(app =>
             {
-                app.UseConcurrent(server =>
+                app.UseExcess(server =>
                 {
-                    server.Instantiator = new ReferenceInstantiator(assembly, null, null, null);
+                    throw new NotImplementedException(); //td:
+                    //server.Instantiator = new ReferenceInstantiator(assembly, null, null, null);
 
-                    foreach (var @class in server.Instantiator.GetConcurrentClasses())
-                    {
-                        server.RegisterClass(@class);
-                    }
+                    //foreach (var @class in server.Instantiator.GetConcurrentClasses())
+                    //{
+                    //    server.RegisterClass(@class);
+                    //}
 
-                    foreach (var instance in server.Instantiator.GetConcurrentInstances())
-                    {
-                        server.RegisterInstance(instance.Key, instance.Value);
-                    }
+                    //foreach (var instance in server.Instantiator.GetConcurrentInstances())
+                    //{
+                    //    server.RegisterInstance(instance.Key, instance.Value);
+                    //}
                 });
             });
         }
@@ -101,7 +101,7 @@ namespace Tests
             return TestServer.Create(app =>
             {
                 var hostedClasses = new List<Type>();
-                var hostedInstances = new Dictionary<Guid, ConcurrentObject>();
+                var hostedInstances = new Dictionary<Guid, IConcurrentObject>();
                 var nodeCount = startNodes(config, hostedClasses, hostedInstances);
 
                 if (instances != null)
@@ -110,21 +110,22 @@ namespace Tests
                         instances[hostedInstance.Value.GetType().Name] = hostedInstance.Key;
                 }
 
-                app.UseConcurrent(server =>
+                app.UseExcess(server =>
                 {
-                    server.Identity = CreateIdentityServer(nodeCount);
-                    server.Instantiator = new ReferenceInstantiator(assembly, null, hostedClasses, null);
+                    throw new NotImplementedException();
+                    //server.Identity = CreateIdentityServer(nodeCount);
+                    //server.Instantiator = new ReferenceInstantiator(assembly, null, hostedClasses, null);
 
-                    foreach (var @class in server.Instantiator.GetConcurrentClasses())
-                        server.RegisterClass(@class);
+                    //foreach (var @class in server.Instantiator.GetConcurrentClasses())
+                    //    server.RegisterClass(@class);
 
-                    foreach (var instance in server.Instantiator.GetConcurrentInstances())
-                    {
-                        if (instances != null)
-                            instances[instance.Value.GetType().Name] = instance.Key;
+                    //foreach (var instance in server.Instantiator.GetConcurrentInstances())
+                    //{
+                    //    if (instances != null)
+                    //        instances[instance.Value.GetType().Name] = instance.Key;
 
-                        server.RegisterInstance(instance.Key, instance.Value);
-                    }
+                    //    server.RegisterInstance(instance.Key, instance.Value);
+                    //}
                 });
             });
         }
@@ -141,26 +142,8 @@ namespace Tests
                 .Value;
         }
 
-        public static IIdentityServer CreateIdentityServer(int clients)
-        {
-            var identity = new IdentityServer();
-            var failure = null as Exception;
-            var waiter = new ManualResetEvent(false);
-            identity.Start("tcp://localhost:5000", clients, ex =>
-            {
-                failure = ex;
-                waiter.Set();
-            });
-
-            waiter.WaitOne();
-            if (failure != null)
-                throw failure;
-
-            return identity;
-        }
-
         //start a configuration, but just the nodes
-        private static int startNodes(Type config, IList<Type> hostedTypes, IDictionary<Guid, ConcurrentObject> hostedInstances)
+        private static int startNodes(Type config, IList<Type> hostedTypes, IDictionary<Guid, IConcurrentObject> hostedInstances)
         {
             var method = config.GetMethod("StartNodes");
             var instance = Activator.CreateInstance(config);
@@ -180,8 +163,8 @@ namespace Tests
                             "System.Threading",
                             "System.Threading.Tasks",
                             "System.Diagnostics",})
-                        .dependency<ConcurrentObject>("Excess.Concurrent.Runtime")
-                        .dependency<IConcurrentServer>("Middleware")
+                        .dependency<IConcurrentObject>("Excess.Concurrent.Runtime")
+                        .dependency<ExcessOwinMiddleware>("Middleware")
                         .dependency<HttpServer>("Startup")
                         .dependency<IAppBuilder>("Owin")),
 
@@ -189,7 +172,7 @@ namespace Tests
                     .Extensions
                     .Concurrent
                     .Extension
-                        .Apply(compiler)),
+                        .Apply((RoslynCompiler)compiler)),
 
                 new DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel>(compiler => LanguageExtension
                     .Extension
@@ -201,7 +184,7 @@ namespace Tests
             return compilation;
         }
 
-        private static Node buildConcurrent(string text,
+        private static IConcurrentApp buildConcurrent(string text,
             out Assembly assembly,
             List<Diagnostic> errors = null, 
             List<Type> configurations = null,
@@ -220,12 +203,12 @@ namespace Tests
 
             foreach (var type in assembly.GetTypes())
             {
-                if (type.BaseType != typeof(ConcurrentObject) && configurations != null)
+                if (type.BaseType != typeof(IConcurrentObject) && configurations != null)
                     checkForConfiguration(type, configurations);
             }
 
-            var threads = 2; //td: config
-            return new Node(threads);
+            throw new NotImplementedException(); //td: load types from assembly
+            return new TestConcurrentApp(null);
         }
 
         private static void checkForConfiguration(Type type, List<Type> configurations)

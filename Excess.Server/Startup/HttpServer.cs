@@ -1,59 +1,58 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 using System.Diagnostics;
+using System.Collections.Generic;
 using Owin;
 using Microsoft.Owin.Hosting;
-using Excess.Concurrent.Runtime;
 using Middleware;
-using Middleware.NetMQ;
-using System.Threading;
+using Excess.Concurrent.Runtime;
 
 namespace Startup
 {
     public class HttpServer
     {
-        public static void Start<T>(string baseUrl)
-        {
-            using (WebApp.Start<T>(baseUrl))
-            {
-                Console.WriteLine("Press Enter to quit.");
-                Console.ReadKey();
-            }
-        }
-
         public static void Start(
             string url,
             string identityUrl = null,
-            IInstantiator instantiator = null,
-            int threads = 8,
-            Action<IAppBuilder> onInit = null,
+            int threads = 4,
             bool useStaticFiles = true,
-            int waitForClients = 0)
+            IEnumerable<Action<Action<Exception>>> connections = null,
+            IEnumerable<Type> classes = null,
+            IEnumerable<KeyValuePair<Guid, IConcurrentObject>> instances = null)
         {
             using (WebApp.Start(url, (app) =>
             {
                 if (useStaticFiles)
                     app.UseStaticFiles();
 
-                var concurrentServer = null as IConcurrentServer;
-                app.UseConcurrent(server =>
+                var distributed = null as IDistributedApp;
+                app.UseExcess(server =>
                 {
-                    var failure = null as Exception;
-                    var waiter = new ManualResetEvent(false);
-
-                    var identityServer = new IdentityServer();
-                    if (identityUrl != null)
-                        identityServer.Start(identityUrl, waitForClients, exception =>
+                    distributed = server;
+                    if (connections != null && connections.Any())
+                    {
+                        var errors = new List<Exception>();
+                        var waiter = new ManualResetEvent(false);
+                        var count = connections.Count();
+                        foreach (var connection in connections)
                         {
-                            failure = exception;
-                            waiter.Set();
-                        });
+                            connection(ex =>
+                            {
+                                if (ex != null)
+                                    errors.Add(ex);
 
-                    server.Identity = identityServer;
-                    concurrentServer = server;
+                                count--;
+                                if (count <= 0)
+                                    waiter.Set();
+                            });
+                        }
 
-                    var classes = instantiator.GetConcurrentClasses();
-                    var instances = instantiator.GetConcurrentInstances();
+                        waiter.WaitOne(); //td: timeout
+                        if (errors.Any())
+                            throw new AggregateException("cannot connect", errors);
+                    }
+
                     if (classes != null)
                     {
                         foreach (var @class in classes)
@@ -65,18 +64,9 @@ namespace Startup
                         foreach (var instance in instances)
                             server.RegisterInstance(instance.Key, instance.Value);
                     }
-
-                    waiter.WaitOne();
-                    if (failure != null)
-                        throw failure;
                 });
-
-                Debug.Assert(concurrentServer != null);
-                if (onInit != null)
-                    onInit(app);
             }))
             {
-                Console.WriteLine("Press Enter to quit."); //td: lol
                 Console.ReadKey();
             }
         }

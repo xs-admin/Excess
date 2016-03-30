@@ -41,9 +41,7 @@ namespace Excess.Concurrent.Runtime.Core
         public override void Schedule(IConcurrentObject who, Action what, Action<Exception> failure, TimeSpan when)
         {
             Task.Delay(when, _stop.Token)
-                .Wait();
-
-            Schedule(who, what, failure);
+                .ContinueWith(task => Schedule(who, what, failure));
         }
 
         protected ThreadPriority _priority = ThreadPriority.Normal;

@@ -1,21 +1,19 @@
 ﻿using System;
 using Owin;
+using Excess.Concurrent.Runtime;
 
 namespace Middleware
 {
     public static class BuilderExtensions
     {
-        public static void UseConcurrent(this IAppBuilder app, Action<IConcurrentServer> initialize = null)
+        public static void UseExcess(this IAppBuilder app, Action<IDistributedApp> initializer = null)
         {
-            var server = new ConcurrentServer();
-            if (initialize != null)
-                initialize(server);
+            var server = new DistributedConcurrentApp();
+            if (initializer != null)
+                initializer(server);
 
-            if (server.Identity == null)
-                server.Identity = new BaseIdentityServer();
-
-            app.Use<ConcurrentOwinMiddleware>(server);
-            server.StartListening();
+            app.Use<ExcessOwinMiddleware>(server);
+            server.Start();
         }
     }
 }

@@ -3,13 +3,14 @@ using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Owin;
+using Excess.Concurrent.Runtime;
 
 namespace Middleware
 {
-    class ConcurrentOwinMiddleware : OwinMiddleware
+    public class ExcessOwinMiddleware : OwinMiddleware
     {
-        ConcurrentServer _server;
-        public ConcurrentOwinMiddleware(OwinMiddleware next, ConcurrentServer server) : base(next)
+        DistributedConcurrentApp _server;
+        public ExcessOwinMiddleware(OwinMiddleware next, DistributedConcurrentApp server) : base(next)
         {
             _server = server;
         }
@@ -26,15 +27,20 @@ namespace Middleware
                     var response = context.Response;
                     try
                     {
-                        StreamReader body = new StreamReader(requestBody);
-                        await _server.Invoke(id, 
-                            method, 
-                            body.ReadToEnd(),
-                            json => SendResponse(response, json.ToString()));
+                        var body = new StreamReader(requestBody);
+                        var data = await body.ReadToEndAsync();
+                        _server.Receive(new DistributedAppMessage
+                        {
+                            Id = id,
+                            Method = method,
+                            Data = data,
+                            Success = responseData => SendResponse(response, responseData),
+                            Failure = ex => SendError(response, ex),
+                        });
                     }
                     catch (Exception ex)
                     {
-                        errorResponse(response, ex);
+                        SendError(response, ex);
                     }
 
                     return;
@@ -49,7 +55,7 @@ namespace Middleware
             response.Write(data);
         }
 
-        private void errorResponse(IOwinResponse response, Exception ex)
+        private void SendError(IOwinResponse response, Exception ex)
         {
             response.StatusCode = 500;
             response.ReasonPhrase = ex.Message;

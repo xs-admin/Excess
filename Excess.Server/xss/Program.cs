@@ -15,7 +15,7 @@ namespace xss
             var errors = null as string;
             var url = null as string;
             var concurrentClasses = null as IEnumerable<Type>;
-            var concurrentInstances = null as IEnumerable<KeyValuePair<Guid, ConcurrentObject>>;
+            var concurrentInstances = null as IEnumerable<KeyValuePair<Guid, IConcurrentObject>>;
             if (!parseArguments(args, out errors, out url, out concurrentClasses, out concurrentInstances))
             {
                 Console.Write(errors);
@@ -23,13 +23,10 @@ namespace xss
             }
 
             //start a http concurrent server
-            throw new NotImplementedException(); //td: instantiator
-
-            var instantiator = null as ReferenceInstantiator; 
-            Startup.HttpServer.Start(url, instantiator: instantiator);
+            throw new NotImplementedException(); //td: 
         }
 
-        private static bool parseArguments(string[] args, out string errors, out string url, out IEnumerable<Type> concurrentClasses, out IEnumerable<KeyValuePair<Guid, ConcurrentObject>> concurrentInstances)
+        private static bool parseArguments(string[] args, out string errors, out string url, out IEnumerable<Type> concurrentClasses, out IEnumerable<KeyValuePair<Guid, IConcurrentObject>> concurrentInstances)
         {
             errors = null;
             url = null;
@@ -56,7 +53,7 @@ namespace xss
             return errors != null;
         }
 
-        private static void concurrentAssemblies(string filePath, out string errors, out IEnumerable<Type> concurrentClasses, out IEnumerable<KeyValuePair<Guid, ConcurrentObject>> concurrentInstances)
+        private static void concurrentAssemblies(string filePath, out string errors, out IEnumerable<Type> concurrentClasses, out IEnumerable<KeyValuePair<Guid, IConcurrentObject>> concurrentInstances)
         {
             var assemblies = Directory
                 .EnumerateFiles(filePath)
@@ -64,7 +61,7 @@ namespace xss
 
             var found = false;
             var classes = new List<Type>();
-            var instances = new Dictionary<Guid, ConcurrentObject>();
+            var instances = new Dictionary<Guid, IConcurrentObject>();
             foreach (var assembly in assemblies)
             {
                 foreach (var type in assembly.GetTypes())
@@ -85,7 +82,7 @@ namespace xss
             concurrentInstances = instances;
         }
 
-        private static bool isConcurrent(Type type, Dictionary<Guid, ConcurrentObject> instances)
+        private static bool isConcurrent(Type type, Dictionary<Guid, IConcurrentObject> instances)
         {
             if (type.BaseType == null || type.BaseType.Name != "ConcurrentObject")
                 return false;

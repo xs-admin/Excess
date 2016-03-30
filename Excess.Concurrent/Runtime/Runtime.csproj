@@ -46,6 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Attributes.cs" />
+    <Compile Include="DistributedConcurrentApp.cs" />
     <Compile Include="Interfaces.cs" />
     <Compile Include="Core\BaseConcurrentApp.cs" />
     <Compile Include="Core\ConcurrentObject.cs" />

@@ -12,7 +12,7 @@ namespace Excess.Concurrent.Runtime.Core
 
     public abstract class BaseConcurrentApp : IConcurrentApp
     {
-        FactoryMap _types;
+        protected FactoryMap _types;
         public BaseConcurrentApp(FactoryMap types)
         {
             _types = types;
