@@ -8,130 +8,116 @@ using NetMQ;
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using NetMQ.Sockets;
+using System.Linq;
 
 namespace Startup
 {
-    public static class NetMQNode
+    public static class NetMQFunctions
     {
-        public static void Start(
-            string localServer,
-            string remoteServer,
-            int threads = 2,
-            IEnumerable<Type> classes = null,
-            IEnumerable<KeyValuePair<Guid, IConcurrentObject>> instances = null)
+        public static void StartServer(IDistributedApp app, string url, int expectedClients = 0, Action<Exception> connected = null)
         {
-            var app = new DistributedConcurrentApp();
-            if (classes != null)
+            Task.Run(() =>
             {
-                foreach (var @class in classes)
-                    app.RegisterClass(@class);
-            }
+                using (var context = NetMQContext.Create())
+                using (var input = context.CreateDealerSocket())
+                {
+                    Dictionary<string, DealerSocket> clients = null;
+                    try
+                    {
+                        input.Bind(url);
 
-            if (instances != null)
-            {
-                foreach (var instance in instances)
-                    app.RegisterInstance(instance.Key, instance.Value);
-            }
+                        if (expectedClients > 0)
+                        {
+                            clients = new Dictionary<string, DealerSocket>();
+                            awaitClients(input, expectedClients, clients, context);
+                        }
 
+                        connected(null);
+                    }
+                    catch (Exception ex)
+                    {
+                        connected(ex);
+                        return;
+                    }
 
-            app.Connect = ConnectMQ(app, localServer, remoteServer);
-            app.Start();
+                    //loop
+                    var message = new NetMQMessage(expectedFrameCount: 7);
+                    var appMessage = new DistributedAppMessage();
+                    for (;;)
+                    {
+                        message = input.ReceiveMultipartMessage(expectedFrameCount: 7);
+
+                        try
+                        {
+                            if (!readMessage(message, appMessage))
+                                continue;
+
+                            app.Receive(appMessage);
+                        }
+                        catch
+                        {
+                            //td: log?
+                        }
+                        finally
+                        {
+                            message.Clear();
+                        }
+                    }
+                }
+            });
         }
 
-        private static Func<IDistributedApp, Exception> ConnectMQ(DistributedConcurrentApp app, string localServer, string remoteServer)
+        public static void StartClient(IDistributedApp app, string url, Action<Exception> connected)
         {
-            return _ =>
+            var writeQueue = new BlockingCollection<DistributedAppMessage>();
+            app.Send = msg => writeQueue.Add(msg);
+
+            Task.Run(() =>
             {
-                var waiter = new ManualResetEvent(false);
-                var errors = new List<Exception>();
-                int waitFor = 2;
-
-                Task.Run(() =>
+                using (var context = NetMQContext.Create())
+                using (var output = context.CreateDealerSocket())
                 {
-                    using (var context = NetMQContext.Create())
-                    using (var input = context.CreateDealerSocket())
+                    try
                     {
-                        try
-                        {
-                            input.Bind(localServer);
-                        }
-                        catch (Exception ex)
-                        {
-                            lock(errors)
-                            {
-                                errors.Add(ex);
-                            }
-                        }
-
-                        if (--waitFor == 0)
-                            waiter.Set();
-
-                        var message = new NetMQMessage(expectedFrameCount: 7);
-                        var appMessage = new DistributedAppMessage();
-                        
-                        //loop
-                        for (;;)
-                        {
-                            message = input.ReceiveMultipartMessage(expectedFrameCount: 7);
-
-                            try
-                            {
-                                if (!readMessage(message, appMessage))
-                                    continue;
-
-                                app.Receive(appMessage);
-                            }
-                            catch
-                            {
-                                //td: log?
-                            }
-                            finally
-                            {
-                                message.Clear();
-                            }
-                        }
+                        output.Connect(url);
                     }
-                });
+                    catch (Exception ex)
+                    {
+                        connected(ex);
+                        return;
+                    }
 
-                Task.Run(() =>
+                    //loop
+                    for (;;)
+                    {
+                        var toSend = writeQueue.Take();
+                        writeMessage(output, toSend);
+
+                        Debug.WriteLine(
+                            $"Client.Send: {toSend.Id} ==> {toSend.Method}, {toSend.Data} => {toSend.RequestId}");
+                    }
+                }
+            });
+        }
+
+        private static void awaitClients(DealerSocket input, int clients, Dictionary<string, DealerSocket> result, NetMQContext context)
+        {
+            while (result.Count <  clients)
+            {
+                var clientCmd = input.ReceiveFrameString();
+                switch (clientCmd)
                 {
-                    using (var context = NetMQContext.Create())
-                    using (var output = context.CreateDealerSocket())
-                    {
-                        try
-                        {
-                            output.Connect(remoteServer);
-                        }
-                        catch (Exception ex)
-                        {
-                            lock (errors)
-                            {
-                                errors.Add(ex);
-                            }
-                        }
+                    case "hi":
+                        var clientUrl = input.ReceiveFrameString();
+                        var dealer = context.CreateDealerSocket();
+                        dealer.Connect(clientUrl);
 
-                        var writeQueue = new BlockingCollection<DistributedAppMessage>();
-                        app.Send = msg => writeQueue.Add(msg);
-
-                        if (--waitFor == 0)
-                            waiter.Set();
-
-                        //loop
-                        for (;;)
-                        {
-                            writeMessage(output, writeQueue.Take());
-                            var toSend = writeQueue.Take();
-
-
-                            Debug.WriteLine(
-                                $"Client.Send: {toSend.Id} ==> {toSend.Method}, {toSend.Data} => {toSend.RequestId}");
-                        }
-                    }
-                });
-
-                waiter.WaitOne();
-                return null;
-            };
+                        result[clientUrl] = dealer;
+                        break;
+                    default:
+                        throw new ArgumentException(clientCmd);
+                }
+            }
         }
 
         private static bool readMessage(NetMQMessage message, DistributedAppMessage appMessage)
@@ -164,6 +150,57 @@ namespace Startup
             output.SendFrame(appMessage.Data, more: true);
             output.SendFrameEmpty(more: true);
             output.SendFrame(appMessage.RequestId.ToString());
+        }
+    }
+
+    public static class NetMQNode
+    {
+        public static void Start(
+            string localServer,
+            string remoteServer,
+            int threads = 2,
+            IEnumerable<Type> classes = null,
+            IEnumerable<KeyValuePair<Guid, IConcurrentObject>> instances = null)
+        {
+            var app = new DistributedConcurrentApp();
+            if (classes != null)
+            {
+                foreach (var @class in classes)
+                    app.RegisterClass(@class);
+            }
+
+            if (instances != null)
+            {
+                foreach (var instance in instances)
+                    app.RegisterInstance(instance.Key, instance.Value);
+            }
+
+            app.Connect = _ =>
+            {
+                var waiter = new ManualResetEvent(false);
+                var errors = new List<Exception>();
+                int waitFor = 2;
+
+                NetMQFunctions.StartServer(app, localServer, 
+                    connected: ex =>
+                    {
+                        if (ex != null) errors.Add(ex);
+                        if (--waitFor == 0) waiter.Set();
+                    });
+
+                NetMQFunctions.StartClient(app, remoteServer, ex =>
+                {
+                    if (ex != null) errors.Add(ex);
+                    if (--waitFor == 0) waiter.Set();
+                });
+
+                waiter.WaitOne();
+                return errors.Any()
+                    ? new AggregateException(errors)
+                    : null;
+            };
+
+            app.Start();
         }
     }
 }

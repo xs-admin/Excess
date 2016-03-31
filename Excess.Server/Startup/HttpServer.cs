@@ -17,7 +17,7 @@ namespace Startup
             string identityUrl = null,
             int threads = 4,
             bool useStaticFiles = true,
-            IEnumerable<Action<Action<Exception>>> connections = null,
+            int nodes = 0,
             IEnumerable<Type> classes = null,
             IEnumerable<KeyValuePair<Guid, IConcurrentObject>> instances = null)
         {
@@ -30,29 +30,8 @@ namespace Startup
                 app.UseExcess(server =>
                 {
                     distributed = server;
-                    if (connections != null && connections.Any())
-                    {
-                        var errors = new List<Exception>();
-                        var waiter = new ManualResetEvent(false);
-                        var count = connections.Count();
-                        foreach (var connection in connections)
-                        {
-                            connection(ex =>
-                            {
-                                if (ex != null)
-                                    errors.Add(ex);
 
-                                count--;
-                                if (count <= 0)
-                                    waiter.Set();
-                            });
-                        }
-
-                        waiter.WaitOne(); //td: timeout
-                        if (errors.Any())
-                            throw new AggregateException("cannot connect", errors);
-                    }
-
+                    //setup
                     if (classes != null)
                     {
                         foreach (var @class in classes)
@@ -63,6 +42,25 @@ namespace Startup
                     {
                         foreach (var instance in instances)
                             server.RegisterInstance(instance.Key, instance.Value);
+                    }
+
+                    if (nodes > 0)
+                    {
+                        //start the identity server if we have any nodes
+                        var error = null as Exception;
+                        var waiter = new ManualResetEvent(false);
+
+                        NetMQFunctions.StartServer(server, identityUrl, 
+                            expectedClients: nodes,
+                            connected: ex => 
+                            {
+                                error = ex;
+                                waiter.Set();
+                            });
+
+                        waiter.WaitOne(); //td: timeout
+                        if (error != null)
+                            throw error;
                     }
                 });
             }))
