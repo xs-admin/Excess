@@ -17,10 +17,10 @@ using Newtonsoft.Json.Linq;
 
 namespace Tests
 {
-    using Spawner = Func<object[], IConcurrentObject>;
     using ServerExtension = LanguageExtension.Extension;
     using ConcurrentExtension = Excess.Extensions.Concurrent.Extension;
     using Compilation = Excess.Compiler.Roslyn.Compilation;
+    using FactoryMethod = Func<IConcurrentApp, object[], IConcurrentObject>;
 
     public static class Mock
     {
@@ -54,41 +54,31 @@ namespace Tests
 
         public static TestServer CreateHttpServer(string code, Guid instanceId, string instanceClass)
         {
-            return CreateHttpServer(code, new KeyValuePair<Guid, string>(instanceId, instanceClass));
-        }
-
-        public static TestServer CreateHttpServer(string code, params KeyValuePair<Guid, string>[] services)
-        {
-            Assembly assembly;
-            var node = buildConcurrent(code, out assembly);
-
-            return TestServer.Create(app =>
+            return CreateHttpServer(code, new Dictionary<string, Guid>()
             {
-                app.UseExcess(server =>
-                {
-                    throw new NotImplementedException(); //td:
-                    //server.Instantiator = new ReferenceInstantiator(assembly, null, null, null);
-
-                    //foreach (var @class in server.Instantiator.GetConcurrentClasses())
-                    //{
-                    //    server.RegisterClass(@class);
-                    //}
-
-                    //foreach (var instance in server.Instantiator.GetConcurrentInstances())
-                    //{
-                    //    server.RegisterInstance(instance.Key, instance.Value);
-                    //}
-                });
+                { instanceClass, instanceId } 
             });
         }
 
-        public static TestServer CreateServer(string code, string configuration, Dictionary<string, Guid> instances)
+        public static TestServer CreateHttpServer(string code, IDictionary<string, Guid> instances)
+        {
+            var errors = new List<Diagnostic>();
+            var assembly = buildServer(code, errors: errors);
+            if (errors.Any())
+                return null;
+
+            var app = appFromAssembly(assembly, instances);
+            return TestServer.Create(appBuilder =>
+            {
+                appBuilder.UseExcess(app);
+            });
+        }
+
+        public static TestServer CreateServer(string code, string configuration, IDictionary<string, Guid> instances)
         {
             var errors = new List<Diagnostic>();
             var configurations = new List<Type>();
-            var assembly = null as Assembly;
-            var node = buildConcurrent(code,
-                out assembly,
+            var assembly = buildServer(code,
                 errors: errors,
                 configurations: configurations);
 
@@ -100,34 +90,28 @@ namespace Tests
 
             return TestServer.Create(app =>
             {
-                var hostedClasses = new List<Type>();
-                var hostedInstances = new Dictionary<Guid, IConcurrentObject>();
-                var nodeCount = startNodes(config, hostedClasses, hostedInstances);
-
-                if (instances != null)
-                {
-                    foreach(var hostedInstance in hostedInstances)
-                        instances[hostedInstance.Value.GetType().Name] = hostedInstance.Key;
-                }
-
-                app.UseExcess(server =>
-                {
-                    throw new NotImplementedException();
-                    //server.Identity = CreateIdentityServer(nodeCount);
-                    //server.Instantiator = new ReferenceInstantiator(assembly, null, hostedClasses, null);
-
-                    //foreach (var @class in server.Instantiator.GetConcurrentClasses())
-                    //    server.RegisterClass(@class);
-
-                    //foreach (var instance in server.Instantiator.GetConcurrentInstances())
-                    //{
-                    //    if (instances != null)
-                    //        instances[instance.Value.GetType().Name] = instance.Key;
-
-                    //    server.RegisterInstance(instance.Key, instance.Value);
-                    //}
-                });
+                app.UseExcess(appFromAssembly(assembly, instances));
             });
+        }
+
+        private static IDistributedApp appFromAssembly(Assembly assembly, IDictionary<string, Guid> instances)
+        {
+            var types = new Dictionary<string, FactoryMethod>();
+            var app = new TestDistributedApp(types);
+
+            foreach (var type in assembly.GetTypes())
+            {
+                if (type.BaseType != typeof(IConcurrentObject))
+                    continue;
+
+                Guid id;
+                if (instances != null && instances.TryGetValue(type.Name, out id))
+                    app.RegisterInstance(id, (IConcurrentObject)Activator.CreateInstance(type));
+                else
+                    app.RegisterClass(type);
+            }
+
+            return app;
         }
 
         public static dynamic ParseResponse(HttpResponseMessage response)
@@ -184,15 +168,13 @@ namespace Tests
             return compilation;
         }
 
-        private static IConcurrentApp buildConcurrent(string text,
-            out Assembly assembly,
+        private static Assembly buildServer(string text,
             List<Diagnostic> errors = null, 
             List<Type> configurations = null,
             IPersistentStorage storage = null)
         {
             var compilation = createCompilation(text, errors, storage);
-            assembly = compilation.build();
-
+            var assembly = compilation.build();
             if (assembly == null)
             {
                 if (errors != null)
@@ -207,8 +189,7 @@ namespace Tests
                     checkForConfiguration(type, configurations);
             }
 
-            throw new NotImplementedException(); //td: load types from assembly
-            return new TestConcurrentApp(null);
+            return assembly;
         }
 
         private static void checkForConfiguration(Type type, List<Type> configurations)

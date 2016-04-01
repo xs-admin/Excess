@@ -160,19 +160,26 @@ namespace Startup
             string remoteServer,
             int threads = 2,
             IEnumerable<Type> classes = null,
-            IEnumerable<KeyValuePair<Guid, IConcurrentObject>> instances = null)
+            IDictionary<Guid, IConcurrentObject> managedInstances = null)
         {
             var app = new DistributedConcurrentApp();
             if (classes != null)
             {
                 foreach (var @class in classes)
-                    app.RegisterClass(@class);
-            }
+                {
+                    Guid id;
+                    IConcurrentObject @object;
 
-            if (instances != null)
-            {
-                foreach (var instance in instances)
-                    app.RegisterInstance(instance.Key, instance.Value);
+                    if (isConcurrentSingleton(@class, out id, out @object))
+                    {
+                        if (managedInstances != null)
+                            managedInstances[id] = @object;
+
+                        app.RegisterInstance(id, @object);
+                    }
+                    else
+                        app.RegisterClass(@class);
+                }
             }
 
             app.Connect = _ =>
@@ -201,6 +208,24 @@ namespace Startup
             };
 
             app.Start();
+        }
+
+        private static bool isConcurrentSingleton(Type type, out Guid id, out IConcurrentObject @object)
+        {
+            var attribute = type
+                .CustomAttributes
+                .Where(attr => attr.AttributeType.Name == "ConcurrentSingleton")
+                .SingleOrDefault();
+
+            if (attribute != null && attribute.ConstructorArguments.Count == 1)
+            {
+                id = Guid.Parse((string)attribute.ConstructorArguments[0].Value);
+                @object = (IConcurrentObject)Activator.CreateInstance(type);
+            }
+
+            id = Guid.Empty;
+            @object = null;
+            return false;
         }
     }
 }

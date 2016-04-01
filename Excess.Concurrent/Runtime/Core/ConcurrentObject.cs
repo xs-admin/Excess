@@ -25,7 +25,7 @@ namespace Excess.Concurrent.Runtime.Core
         {
         }
 
-        protected T __spawn<T>(params object[] args) where T : ConcurrentObject, new()
+        protected T spawn<T>(params object[] args) where T : ConcurrentObject, new()
         {
             return _app.Spawn<T>(args);
         }

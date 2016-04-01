@@ -16,17 +16,17 @@ namespace LanguageExtension
                 {
                 }
 
-                public void Start(IInstantiator instantiator)
+                public void Start()
                 {
                 }
 
-                public int StartNodes(IList<Type> managedTypes, IDictionary<Guid, ConcurrentObject> managedInstances)
+                public int StartNodes(IList<Type> managedTypes, IDictionary<Guid, IConcurrentObject> managedInstances)
                 {
                 }
             }");
 
         public static Template NodeMethod = Template.Parse(@"
-            public void _0(IInstantiator instantiator, IList<Type> managedTypes, IDictionary<Guid, ConcurrentObject> managedInstances)
+            public void _0(IList<Type> managedTypes, IDictionary<Guid, IConcurrentObject> managedInstances)
             {
                 var hostedTypes = __1;
                 if (managedTypes != null)
@@ -40,15 +40,14 @@ namespace LanguageExtension
             Startup.HttpServer.Start(
                 url: __0, 
                 identityUrl: __1,
-                threads: __2,
-                instantiator: instantiator);");
+                threads: __2);");
 
         public static Template NodeServer = Template.ParseStatement(@"
             Startup._0.Start(
-                url: __1, 
-                identityUrl: __2,
+                localServer: __1, 
+                remoteServer: __2,
                 threads: __3,
-                instantiator: instantiator);");
+                classes: hostedTypes);");
 
         public static Template NodeConnection = Template.ParseExpression("new _0(__1)");
         
@@ -57,13 +56,6 @@ namespace LanguageExtension
         public static ArrayCreationExpressionSyntax TypeArray = Template
             .ParseExpression("new Type[] {}")
             .Get<ArrayCreationExpressionSyntax>();
-
-        public static Template CreateInstantiator = Template.ParseStatement(@"
-            instantiator = instantiator 
-                ?? new ReferenceInstantiator(this.GetType().Assembly, 
-                        hostedTypes: __0, 
-                        remoteTypes: __1,
-                        dispatch: __2);");
 
         public static RazorTemplate jsConcurrentClass = RazorTemplate.Parse(@"
             function @Model.Name (__init)
@@ -98,15 +90,6 @@ namespace LanguageExtension
             this.@Model.Name = __init.@Model.Name;");
 
         public static Template NodeInvocation = Template.ParseStatement(@"
-            _0(null, managedTypes, managedInstances);");
-
-        public static StatementSyntax CollectInstances = CSharp.ParseStatement(@"
-            if (managedInstances != null)
-            {
-                foreach (var hostedInstance in instantiator.GetConcurrentInstances())
-                    managedInstances[hostedInstance.Key] = hostedInstance.Value;
-            }");
-        
-
+            _0(managedTypes, managedInstances);");
     }
 }

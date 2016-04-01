@@ -213,12 +213,6 @@ namespace LanguageExtension
                 .AddRange(new StatementSyntax[]
                 {
                     Templates
-                        .CreateInstantiator
-                        .Get<StatementSyntax>(
-                            Roslyn.@null, 
-                            hostedInstances,
-                            Roslyn.@null),
-                    Templates
                         .HttpServer
                         .Get<StatementSyntax>(
                             result.Url,
@@ -255,14 +249,6 @@ namespace LanguageExtension
                         .StartStatements
                         .AddRange(new StatementSyntax[]
                         {
-                            Templates
-                                .CreateInstantiator
-                                .Get<StatementSyntax>(
-                                    CSharp.IdentifierName("hostedTypes"), 
-                                    Roslyn.@null,
-                                    Roslyn.@null),
-                            Templates
-                                .CollectInstances,
                             Templates
                                 .NodeServer
                                 .Get<StatementSyntax>(

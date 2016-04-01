@@ -1,11 +1,8 @@
-﻿using Excess.Concurrent.Runtime.Core;
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
+using Excess.Concurrent.Runtime.Core;
 
 namespace Excess.Concurrent.Runtime
 {
@@ -79,6 +76,49 @@ namespace Excess.Concurrent.Runtime
                 return result;
 
             return null;
+        }
+    }
+
+    public class TestDistributedApp : TestConcurrentApp, IDistributedApp
+    {
+        IDictionary<Guid, IConcurrentObject> _objects;
+        public TestDistributedApp(FactoryMap types, IDictionary<Guid, IConcurrentObject> objects = null) : base(types)
+        {
+            _objects = objects ?? new Dictionary<Guid, IConcurrentObject>();
+        }
+
+        public Func<IDistributedApp, Exception> Connect { set { throw new NotImplementedException(); }}
+        public Action<DistributedAppMessage> Receive { get { throw new NotImplementedException(); }}
+        public Action<DistributedAppMessage> Send { set { throw new NotImplementedException(); }}
+
+        public bool HasObject(Guid id)
+        {
+            return _objects.ContainsKey(id);
+        }
+
+        public void RegisterClass(Type type)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void RegisterClass<T>() where T : IConcurrentObject
+        {
+            throw new NotImplementedException();
+        }
+
+        public void RegisterInstance(Guid id, IConcurrentObject @object)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void RegisterRemoteClass(Type type)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IDistributedApp WithInitializer(Action<IDistributedApp> initializer)
+        {
+            throw new NotImplementedException();
         }
     }
 }

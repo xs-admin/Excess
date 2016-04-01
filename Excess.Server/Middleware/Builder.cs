@@ -15,5 +15,10 @@ namespace Middleware
             app.Use<ExcessOwinMiddleware>(server);
             server.Start();
         }
+
+        public static void UseExcess(this IAppBuilder app, IDistributedApp concurrentApp)
+        {
+            app.Use<ExcessOwinMiddleware>(concurrentApp);
+        }
     }
 }
