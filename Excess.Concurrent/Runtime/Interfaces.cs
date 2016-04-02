@@ -14,7 +14,7 @@ namespace Excess.Concurrent.Runtime
     {
         T Spawn<T>() where T : IConcurrentObject, new();
         T Spawn<T>(params object[] args) where T : IConcurrentObject;
-        T Spawn<T>(T @object) where T : IConcurrentObject;
+        void Spawn(IConcurrentObject @object);
         IConcurrentObject Spawn(string type, params object[] args);
 
         void Start();
@@ -23,5 +23,9 @@ namespace Excess.Concurrent.Runtime
 
         void Schedule(IConcurrentObject who, Action what, Action<Exception> failure);
         void Schedule(IConcurrentObject who, Action what, Action<Exception> failure, TimeSpan when);
+
+        void RegisterClass(Type type);
+        void RegisterClass<T>() where T : IConcurrentObject;
+        void RegisterRemoteClass(Type type);
     }
 }

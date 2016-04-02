@@ -9,8 +9,8 @@ namespace Middleware
 {
     public class ExcessOwinMiddleware : OwinMiddleware
     {
-        DistributedConcurrentApp _server;
-        public ExcessOwinMiddleware(OwinMiddleware next, DistributedConcurrentApp server) : base(next)
+        IDistributedApp _server;
+        public ExcessOwinMiddleware(OwinMiddleware next, IDistributedApp server) : base(next)
         {
             _server = server;
         }
@@ -29,18 +29,21 @@ namespace Middleware
                     {
                         var body = new StreamReader(requestBody);
                         var data = await body.ReadToEndAsync();
+                        var completion = new TaskCompletionSource<bool>();
                         _server.Receive(new DistributedAppMessage
                         {
                             Id = id,
                             Method = method,
                             Data = data,
-                            Success = responseData => SendResponse(response, responseData),
-                            Failure = ex => SendError(response, ex),
+                            Success = responseData => SendResponse(response, responseData, completion),
+                            Failure = ex => SendError(response, ex, completion),
                         });
+
+                        await completion.Task;
                     }
                     catch (Exception ex)
                     {
-                        SendError(response, ex);
+                        SendError(response, ex, null);
                     }
 
                     return;
@@ -50,16 +53,22 @@ namespace Middleware
             await Next.Invoke(context);
         }
 
-        private static void SendResponse(IOwinResponse response, string data)
+        private static void SendResponse(IOwinResponse response, string data, TaskCompletionSource<bool> waiter)
         {
             response.Write(data);
+
+            if (waiter != null)
+                waiter.SetResult(true);
         }
 
-        private void SendError(IOwinResponse response, Exception ex)
+        private void SendError(IOwinResponse response, Exception ex, TaskCompletionSource<bool> waiter)
         {
             response.StatusCode = 500;
             response.ReasonPhrase = ex.Message;
             response.Write(string.Empty);
+
+            if (waiter != null)
+                waiter.SetResult(false);
         }
 
         private static bool TryParsePath(string value, out Guid id, out string method)

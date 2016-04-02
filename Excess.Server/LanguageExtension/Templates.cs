@@ -37,13 +37,13 @@ namespace LanguageExtension
             }");
 
         public static Template HttpServer = Template.ParseStatement(@"
-            Startup.HttpServer.Start(
+            HttpServer.Start(
                 url: __0, 
                 identityUrl: __1,
                 threads: __2);");
 
         public static Template NodeServer = Template.ParseStatement(@"
-            Startup._0.Start(
+            _0.Start(
                 localServer: __1, 
                 remoteServer: __2,
                 threads: __3,

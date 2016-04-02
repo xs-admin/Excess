@@ -99,9 +99,9 @@ namespace Tests
             var clientCode = serverConfig.GetClientInterface();
 
             Assert.IsTrue(
-                clientCode.Contains("function HelloService()")
-                && clientCode.Contains("function GoodbyeService()")
-                && clientCode.Contains("Hello = function (what)")
+                clientCode.Contains("function HelloService (__init)")
+                && clientCode.Contains("function GoodbyeService (__init)")
+                && clientCode.Contains("Hello = function (who)")
                 && clientCode.Contains("Goodbye = function (what)"));
         }
 
@@ -153,9 +153,9 @@ namespace Tests
             var clientCode = serverConfig.GetClientInterface();
 
             Assert.IsTrue(
-                clientCode.Contains("function HelloService()")
-                && clientCode.Contains("function GoodbyeService()")
-                && clientCode.Contains("Hello = function (what)")
+                clientCode.Contains("function HelloService (__init)")
+                && clientCode.Contains("function GoodbyeService (__init)")
+                && clientCode.Contains("Hello = function (who)")
                 && clientCode.Contains("Goodbye = function (what)"));
         }
 
@@ -198,7 +198,7 @@ namespace Tests
                 server Default()
                 {
                     Url = ""http://localhost:1080"";
-                    Identity = ""tcp://localhost:1079"";
+                    Identity = ""tcp://localhost:5000"";
 
                     Node node1 = new NetMQ.Node
                     {

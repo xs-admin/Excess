@@ -160,10 +160,6 @@
       <Project>{ed3d63d8-7c35-4f77-8430-7bc6bbfe56b9}</Project>
       <Name>Middleware</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Startup\Startup.csproj">
-      <Project>{f30d6658-ea1a-4117-88ca-5b96af6303aa}</Project>
-      <Name>Startup</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.1.1.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.Analyzers.dll" />

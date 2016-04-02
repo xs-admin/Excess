@@ -11,13 +11,20 @@ using Excess.Extensions.Concurrent.Model;
 
 namespace Excess.Extensions.Concurrent
 {
+    using Excess.Concurrent.Runtime;
     using CSharp = SyntaxFactory;
     using Roslyn = RoslynCompiler;
 
     public class Options
     {
+        public Options()
+        {
+            GenerateID = true; //td: tidy up
+        }
+
         public bool GenerateInterface { get; set; }
         public bool GenerateRemote { get; set; }
+        public bool GenerateID { get; set; }
     }
 
     public class Extension
@@ -43,6 +50,14 @@ namespace Excess.Extensions.Concurrent
                         .remove("keyword")
                         .replace("ref", "class ")
                         .then(CompileObject(options)));
+
+            compiler.Environment()
+                .dependency(new[]
+                {
+                    "System.Threading",
+                    "System.Threading.Tasks",
+                })
+                .dependency<ConcurrentObject>("Excess.Concurrent.Runtime");
         }
 
         private static Func<SyntaxNode, Scope, SyntaxNode> CompileClass(Options options)
@@ -137,11 +152,13 @@ namespace Excess.Extensions.Concurrent
                 var remoteType = createRemoteType(@class, out remoteMethod);
                 @class = @class.AddMembers(
                     remoteMethod,
-                    remoteType,
-                    Templates
+                    remoteType);
+            }
+
+            if (options.GenerateID)
+                @class = @class.AddMembers(Templates
                     .ObjectId
                     .Get<MemberDeclarationSyntax>());
-            }
 
             //schedule linking
             return document.change(@class, Link(ctx), null);

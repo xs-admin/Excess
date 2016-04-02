@@ -72,10 +72,6 @@
       <Project>{ed3d63d8-7c35-4f77-8430-7bc6bbfe56b9}</Project>
       <Name>Middleware</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Startup\Startup.csproj">
-      <Project>{f30d6658-ea1a-4117-88ca-5b96af6303aa}</Project>
-      <Name>Startup</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

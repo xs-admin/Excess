@@ -10,8 +10,6 @@ using Excess.Compiler.Roslyn;
 using Excess.Compiler.Core;
 using Excess.Concurrent.Runtime;
 using Middleware;
-using Startup;
-using System.Threading;
 using System.Net.Http;
 using Newtonsoft.Json.Linq;
 
@@ -67,7 +65,7 @@ namespace Tests
             if (errors.Any())
                 return null;
 
-            var app = appFromAssembly(assembly, instances);
+            var app = appFromAssembly(assembly, userInstances: instances);
             return TestServer.Create(appBuilder =>
             {
                 appBuilder.UseExcess(app);
@@ -88,27 +86,42 @@ namespace Tests
             var config = configurations
                 .Single(cfg => cfg.Name == configuration);
 
-            return TestServer.Create(app =>
+            var app = appFromAssembly(assembly, allInstances: instances);
+            return TestServer.Create(builder =>
             {
-                app.UseExcess(appFromAssembly(assembly, instances));
+                builder.UseExcess(app);
             });
         }
 
-        private static IDistributedApp appFromAssembly(Assembly assembly, IDictionary<string, Guid> instances)
+        private static IDistributedApp appFromAssembly(Assembly assembly, 
+            IDictionary<string, Guid> userInstances = null,
+            IDictionary<string, Guid> allInstances = null)
         {
             var types = new Dictionary<string, FactoryMethod>();
-            var app = new TestDistributedApp(types);
+            var concurrentApp = new TestConcurrentApp(types);
+            var app = new DistributedApp(concurrentApp);
 
             foreach (var type in assembly.GetTypes())
             {
-                if (type.BaseType != typeof(IConcurrentObject))
+                if (type.BaseType != typeof(ConcurrentObject))
                     continue;
 
+                app.RegisterClass(type);
+
                 Guid id;
-                if (instances != null && instances.TryGetValue(type.Name, out id))
+                if (userInstances != null)
+                {
+                    if (userInstances.TryGetValue(type.Name, out id))
+                        app.RegisterInstance(id, (IConcurrentObject)Activator.CreateInstance(type));
+                }
+                else if (type.IsConcurrentSingleton(out id))
+                {
+                    var instance = (IConcurrentObject)Activator.CreateInstance(type);
                     app.RegisterInstance(id, (IConcurrentObject)Activator.CreateInstance(type));
-                else
-                    app.RegisterClass(type);
+
+                    if (allInstances != null)
+                        allInstances[type.Name] = id;
+                }
             }
 
             return app;
@@ -143,13 +156,7 @@ namespace Tests
             {
                 new DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel>(compiler => compiler
                     .Environment()
-                        .dependency(new[] {
-                            "System.Threading",
-                            "System.Threading.Tasks",
-                            "System.Diagnostics",})
-                        .dependency<IConcurrentObject>("Excess.Concurrent.Runtime")
                         .dependency<ExcessOwinMiddleware>("Middleware")
-                        .dependency<HttpServer>("Startup")
                         .dependency<IAppBuilder>("Owin")),
 
                 new DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel>(compiler => Excess

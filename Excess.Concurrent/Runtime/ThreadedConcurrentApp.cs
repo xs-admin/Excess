@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Excess.Concurrent.Runtime.Core
+namespace Excess.Concurrent.Runtime
 {
     using FactoryFunction = Func<IConcurrentApp, object[], IConcurrentObject>;
     using FactoryMap = Dictionary<string, Func<IConcurrentApp, object[], IConcurrentObject>>;

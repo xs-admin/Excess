@@ -1,13 +1,10 @@
-﻿using Excess.Compiler.Roslyn;
-using Excess.Extensions.Concurrent.Model;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Collections.Generic;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Excess.Compiler.Roslyn;
+using Excess.Extensions.Concurrent.Model;
 
 namespace Excess.Extensions.Concurrent
 {

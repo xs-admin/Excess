@@ -4,21 +4,49 @@ using Excess.Concurrent.Runtime;
 
 namespace Middleware
 {
+    public class AppSettings
+    {
+        public AppSettings()
+        {
+            Threads = 4;
+            BlockUntilNextEvent = true;
+        }
+
+        public int Threads { get; set; }
+        public bool BlockUntilNextEvent { get; set; }
+    }
+
     public static class BuilderExtensions
     {
-        public static void UseExcess(this IAppBuilder app, Action<IDistributedApp> initializer = null)
+        public static void UseExcess(this IAppBuilder app, 
+            Action<AppSettings> initializeSettings = null,
+            Action<IDistributedApp> initializeApp = null)
         {
-            var server = new DistributedConcurrentApp();
-            if (initializer != null)
-                initializer(server);
+            var settings = new AppSettings();
+            if (initializeSettings != null)
+                initializeSettings(settings);
+
+            var server = new DistributedApp(new ThreadedConcurrentApp(
+                types: null,
+                threadCount: settings.Threads,
+                blockUntilNextEvent: settings.BlockUntilNextEvent));
+
+            if (initializeApp != null)
+                initializeApp(server);
 
             app.Use<ExcessOwinMiddleware>(server);
             server.Start();
         }
 
-        public static void UseExcess(this IAppBuilder app, IDistributedApp concurrentApp)
+        public static void UseExcess(this IAppBuilder builder, IDistributedApp app)
         {
-            app.Use<ExcessOwinMiddleware>(concurrentApp);
+            builder.Use<ExcessOwinMiddleware>(app);
+        }
+
+        public static void UseExcess(this IAppBuilder builder, IConcurrentApp app)
+        {
+            var server = new DistributedApp(app);
+            builder.Use<ExcessOwinMiddleware>(server);
         }
     }
 }

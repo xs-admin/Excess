@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Diagnostics;
+using System.Collections.Generic;
 
-namespace Excess.Concurrent.Runtime.Core
+namespace Excess.Concurrent.Runtime
 {
     public class Expression
     {

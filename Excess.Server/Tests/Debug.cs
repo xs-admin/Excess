@@ -1,12 +1,9 @@
-﻿using Excess.Concurrent.Runtime;
-using Excess.Concurrent.Runtime.Core;
-using Middleware;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Collections.Generic;
+using Excess.Concurrent.Runtime;
+using Middleware;
 
 namespace SomeNS
 {
@@ -17,8 +14,8 @@ namespace SomeNS
         public GoodbyeService Goodbye;
     }
 
-    [Concurrent(id = "c2b308a7-50e7-42ae-bcc3-8adaab507793")]
-    [ConcurrentSingleton(id: "12e48bfc-bb85-4e80-b836-21e91a44506a")]
+    [Concurrent(id = "56f2dbcc-7498-4d73-b65c-fe64fdcabdca")]
+    [ConcurrentSingleton(id: "09978878-85e6-40a7-830e-67ade1726624")]
     public class HelloService : ConcurrentObject
     {
         int _times = 0;
@@ -57,7 +54,7 @@ namespace SomeNS
         }
     }
 
-    [Concurrent(id = "c22a4f27-4efc-4de5-bd32-daf3aeb02b0d")]
+    [Concurrent(id = "3db48ef8-d998-4d7f-8828-16d301da5583")]
     public class GoodbyeService : ConcurrentObject
     {
         [Concurrent]
@@ -106,7 +103,7 @@ namespace SomeNS
 
             public void Start()
             {
-                Startup.HttpServer.Start(url: "http://localhost:1080", identityUrl: "tcp://localhost:1079", threads: 8);
+                HttpServer.Start(url: "http://localhost:1080", identityUrl: "tcp://localhost:1079", threads: 8);
             }
 
             public int StartNodes(IList<Type> managedTypes, IDictionary<Guid, IConcurrentObject> managedInstances)
@@ -125,7 +122,7 @@ namespace SomeNS
                         managedTypes.Add(hostedType);
                 }
 
-                Startup.NetMQNode.Start(localServer: "tcp://localhost:1081", remoteServer: "tcp://localhost:1079", threads: 8, classes: hostedTypes);
+                NetMQNode.Start(localServer: "tcp://localhost:1081", remoteServer: "tcp://localhost:1079", threads: 8, classes: hostedTypes);
             }
 
             public void node2(IList<Type> managedTypes, IDictionary<Guid, IConcurrentObject> managedInstances)
@@ -137,7 +134,7 @@ namespace SomeNS
                         managedTypes.Add(hostedType);
                 }
 
-                Startup.NetMQNode.Start(localServer: "tcp://localhost:1082", remoteServer: "tcp://localhost:1079", threads: 8, classes: hostedTypes);
+                NetMQNode.Start(localServer: "tcp://localhost:1082", remoteServer: "tcp://localhost:1079", threads: 8, classes: hostedTypes);
             }
         }
     }

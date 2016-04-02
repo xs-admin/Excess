@@ -1,10 +1,5 @@
 ﻿using Excess.Compiler.Roslyn;
-using Excess.Concurrent.Runtime.Core;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Excess.Concurrent.Runtime;
 
 namespace Excess.Extensions.Concurrent
 {
@@ -22,18 +17,6 @@ namespace Excess.Extensions.Concurrent
                 GenerateInterface = true,
                 GenerateRemote = true,
             });
-
-            compiler.Environment()
-                .dependency(new[]
-                {
-                    "System.Threading",
-                    "System.Threading.Tasks",
-                })
-                .dependency<ConcurrentObject>(new string[]
-                {
-                    "Excess.Concurrent.Runtime",
-                    "Excess.Concurrent.Runtime.Core",
-                });
         }
     }
 }

@@ -59,15 +59,16 @@ namespace Tests
                 Assert.AreEqual(response.StatusCode, HttpStatusCode.OK);
 
                 //the result should come in json format
-                var json = JObject.Parse(response
+                var responseContents = response
                     .Content
                     .ReadAsStringAsync()
-                    .Result);
+                    .Result;
 
-                Assert.IsNotNull(json);
+                //must be valid json
+                var json = JObject.Parse(responseContents);
 
                 //should say "Hello world"
-                Assert.AreEqual(json.Property("result").Value, "Hello world");
+                Assert.AreEqual(json.Property("__res").Value, "Hello world");
             }
         }
     }
