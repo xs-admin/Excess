@@ -32,16 +32,31 @@ namespace Tests
                     {
                         Greeting = ""greetings, "" + who,
                         Times = _times++,
-                        Goodbye = spawn<GoodbyeService>()
+                        Goodbye = spawn<GoodbyeService>(who)
                     };
                 }
             }
 
             public concurrent class GoodbyeService
             {
+                string _who;
+                public GoodbyeService(string who)
+                {
+                    _who = who;
+                }
+
                 public string Goodbye(string what)
                 {
-                    return ""Goodbye "" + what;
+                    return $""Goodbye {what}, goodbye {_who}"";
+                }
+            }
+
+            public concurrent object ProcessingService
+            {
+                public string Process(string what, GoodbyeService unGreeter)
+                {
+                    string goodbyeText = await unGreeter.Goodbye(what);
+                    return what + "" then "" + goodbyeText;
                 }
             }
 
@@ -66,7 +81,7 @@ namespace Tests
                         Url = ""tcp://localhost:1082"",
                         Hosts = new []
                         {
-                            GoodbyeService
+                            ProcessingService
                         }
                     };
                 }
@@ -139,7 +154,7 @@ namespace Tests
                     .Result;
 
                 json = Mock.ParseResponse(response);
-                Assert.AreEqual(json.Value.ToString(), "Goodbye blue sky");
+                Assert.AreEqual(json.Value.ToString(), "Goodbye blue sky, goodbye world");
 
                 //and the second
                 response = server
@@ -148,12 +163,13 @@ namespace Tests
                         "/" + secondGoodbye + "/Goodbye",
                         new StringContent(JObject.FromObject(new
                         {
-                            what = "ma"
+                            what = "max"
                         })
                         .ToString()))
                     .Result;
 
-                Assert.AreEqual(response.StatusCode, HttpStatusCode.OK);
+                json = Mock.ParseResponse(response);
+                Assert.AreEqual(json.Value.ToString(), "Goodbye max, goodbye ma");
             }
         }
     }

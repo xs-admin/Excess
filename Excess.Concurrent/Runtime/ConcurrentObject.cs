@@ -17,13 +17,13 @@ namespace Excess.Concurrent.Runtime
             __started();
         }
 
-        public IConcurrentApp App { get { return _app; } }
+        protected IConcurrentApp App { get { return _app; } }
 
         protected virtual void __started()
         {
         }
 
-        protected T spawn<T>(params object[] args) where T : ConcurrentObject, new()
+        protected T spawn<T>(params object[] args) where T : ConcurrentObject
         {
             return _app.Spawn<T>(args);
         }

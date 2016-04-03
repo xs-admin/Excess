@@ -31,25 +31,34 @@ namespace Middleware
         //instance management
         bool HasInstance(Guid id);
         void RegisterInstance(Guid id, IConcurrentObject @object);
+        void RemoteInstance(Guid id, Action<DistributedAppMessage> send);
+        IEnumerable<Guid> Instances();
 
         //distributed functions
         Func<IDistributedApp, Exception> Connect { set; }
         Action<DistributedAppMessage> Receive { get; }
         Action<DistributedAppMessage> Send { set; }
+        Action<string, DistributedAppMessage> SendToClient { set; }
+
+        //lifetime
+        void Start();
+        void Stop();
+        void AwaitCompletion();
     }
 
     public class DistributedApp : IDistributedApp
     {
         IConcurrentApp _concurrent;
-        public DistributedApp(IConcurrentApp concurrent)
+        string _iid;
+        public DistributedApp(IConcurrentApp concurrent, string iid = "")
         {
             _concurrent = concurrent;
+            _iid = iid;
         }
 
         public IConcurrentApp ConcurrentApp { get { return _concurrent; } }
 
         ConcurrentDictionary<Guid, IConcurrentObject> _objects = new ConcurrentDictionary<Guid, IConcurrentObject>();
-
         public bool HasInstance(Guid id)
         {
             return _objects.ContainsKey(id);
@@ -61,8 +70,22 @@ namespace Middleware
             _objects[id] = @object;
         }
 
+        ConcurrentDictionary<Guid, Action<DistributedAppMessage>> _remotes = new ConcurrentDictionary<Guid, Action<DistributedAppMessage>>();
+        public void RemoteInstance(Guid id, Action<DistributedAppMessage> send)
+        {
+            _remotes[id] = send;
+        }
+
+        public IEnumerable<Guid> Instances()
+        {
+            return _objects
+                .Select(kvp => kvp.Key)
+                .ToArray();
+        }
+
         public Func<IDistributedApp, Exception> Connect { private get; set; }
         public Action<DistributedAppMessage> Send { private get; set; }
+        public Action<string, DistributedAppMessage> SendToClient { private get; set; }
         public Action<DistributedAppMessage> Receive { get { return incomingMessage; } }
 
         public void Start()
@@ -72,7 +95,18 @@ namespace Middleware
             if (exception != null)
                 throw exception;
 
+            ConcurrentApp.AddSpawnListener(onSpawn);
             ConcurrentApp.Start();
+        }
+
+        public void Stop()
+        {
+            ConcurrentApp.Stop();
+        }
+
+        public void AwaitCompletion()
+        {
+            ConcurrentApp.AwaitCompletion();
         }
 
         Dictionary<Type, Dictionary<string, MethodFunc>> _methods = new Dictionary<Type, Dictionary<string, MethodFunc>>();
@@ -127,13 +161,14 @@ namespace Middleware
             RegisterClass(typeof(T));
         }
 
-        ConcurrentDictionary<Guid, Action> _requests = new ConcurrentDictionary<Guid, Action>();
+        ConcurrentDictionary<Guid, Action<DistributedAppMessage>> _requests = new ConcurrentDictionary<Guid, Action<DistributedAppMessage>>();
         private void incomingMessage(DistributedAppMessage msg)
         {
             try
             {
                 var @object = null as IConcurrentObject;
-                var @continue = null as Action;
+                var @continue = null as Action<DistributedAppMessage>;
+                var @remote = null as Action<DistributedAppMessage>;
                 if (_objects.TryGetValue(msg.Id, out @object))
                 {
                     var methods = null as Dictionary<string, MethodFunc>;
@@ -144,7 +179,7 @@ namespace Middleware
                     if (!methods.TryGetValue(msg.Method, out method))
                         throw new ArgumentException("method");
 
-                    var json = JObject.Parse(msg.Data); 
+                    var json = JObject.Parse(msg.Data);
                     if (json == null)
                         throw new ArgumentException("args");
 
@@ -154,8 +189,19 @@ namespace Middleware
                             ex => sendFailure(msg, ex)),
                         ex => sendFailure(msg, ex));
                 }
+                else if (_remotes.TryGetValue(msg.Id, out @remote))
+                {
+                    Debug.Assert(msg.RequestId == Guid.Empty);
+
+                    msg.RequestId = Guid.NewGuid();
+                    _requests[msg.RequestId] = __res => msg.Success(__res.Data); //td: failure
+
+                    @remote(msg);
+                }
                 else if (_requests.TryRemove(msg.RequestId, out @continue))
-                    @continue();
+                    @continue(msg);
+                else if (msg.Id == Guid.Empty && msg.RequestId == Guid.Empty)
+                    internalCommand(msg.Method, msg.Data);
                 else
                     throw new ArgumentException("id");
             }
@@ -163,6 +209,22 @@ namespace Middleware
             {
                 sendFailure(msg, ex);
             }
+        }
+
+        private void internalCommand(string method, string data)
+        {
+            switch (method)
+            {
+                case "__instance":
+                    var instanceInfo = JObject.Parse(data) as dynamic;
+                    var id = Guid.Parse((string)instanceInfo.__ID);
+                    var iid = (string)instanceInfo.__IID;
+
+                    RemoteInstance(id, msg => SendToClient(iid, msg));
+                    break;
+            }
+
+            throw new ArgumentException("method");
         }
 
         private void sendResponse(DistributedAppMessage msg, object response)
@@ -196,7 +258,7 @@ namespace Middleware
             }
         }
 
-        private void outgoingMessage(Guid id, string method, string data, Guid requestId, Action continuation = null)
+        private void outgoingMessage(Guid id, string method, string data, Guid requestId, Action<DistributedAppMessage> continuation = null)
         {
             if (continuation != null)
             {
@@ -230,6 +292,14 @@ namespace Middleware
             return count > 2
                 && parameters[count - 2].ParameterType == typeof(Action<object>)
                 && parameters[count - 1].ParameterType == typeof(Action<Exception>);
+        }
+
+        private void onSpawn(Guid id, IConcurrentObject @object)
+        {
+            _objects[id] = @object;
+
+            if (Send != null)
+                outgoingMessage(Guid.Empty, "__instance", $"{{\"__ID\" : \"{id}\", \"__IID\" : \"{_iid}\"}}", Guid.Empty);
         }
     }
 }

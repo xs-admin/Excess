@@ -38,15 +38,15 @@ namespace Middleware
             server.Start();
         }
 
-        public static void UseExcess(this IAppBuilder builder, IDistributedApp app)
-        {
-            builder.Use<ExcessOwinMiddleware>(app);
-        }
-
         public static void UseExcess(this IAppBuilder builder, IConcurrentApp app)
         {
-            var server = new DistributedApp(app);
+            UseExcess(builder, new DistributedApp(app));
+        }
+
+        public static void UseExcess(this IAppBuilder builder, IDistributedApp server)
+        {
             builder.Use<ExcessOwinMiddleware>(server);
+            server.Start();
         }
     }
 }

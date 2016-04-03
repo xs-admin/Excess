@@ -1,12 +1,11 @@
 ﻿using System;
 using System.Linq;
+using System.Reflection;
 using System.Collections.Generic;
 using System.Collections.Concurrent;
 
 namespace Excess.Concurrent.Runtime
 {
-    using System.Reflection;
-    using System.Threading;
     using FactoryFunction = Func<IConcurrentApp, object[], IConcurrentObject>;
     using FactoryMap = Dictionary<string, Func<IConcurrentApp, object[], IConcurrentObject>>;
     using MethodFunc = Action<IConcurrentObject, object[], Action<object>, Action<Exception>>;
@@ -22,16 +21,16 @@ namespace Excess.Concurrent.Runtime
         //type management
         //caution: _types is expected to be immutable after Start()
         //it is also, by default, null. subclasses can decide to opt out or in.
-        public virtual IConcurrentObject Spawn(string type, params object[] args)
+        public virtual IConcurrentObject Spawn(string typeName, params object[] args)
         {
             if (_types != null)
             {
                 var func = null as FactoryFunction;
-                if (_types.TryGetValue(type, out func))
+                if (_types.TryGetValue(typeName, out func))
                     return spawnObject(func(this, args)); 
             }
 
-            throw new ArgumentException($"{type} can not be created in this app");
+            throw new ArgumentException($"{typeName} can not be created in this app");
         }
 
         public virtual T Spawn<T>() where T : IConcurrentObject, new()
@@ -45,7 +44,7 @@ namespace Excess.Concurrent.Runtime
         public virtual T Spawn<T>(params object[] args) where T : IConcurrentObject
         {
             var type = typeof(T);
-            if (_types != null)
+            if (_types != null && _types.ContainsKey(type.Name))
                 return (T)Spawn(type.Name, args);
 
             var constructor = type
@@ -61,11 +60,19 @@ namespace Excess.Concurrent.Runtime
 
         public virtual void Spawn(IConcurrentObject @object)
         {
-            var type = @object.GetType();
-            if (_types != null && !_types.ContainsKey(type.Name))
-                throw new ArgumentException($"{type.Name} is not registered to run in ths app");
+            //td: consider the policies based on the type list
+            //var type = @object.GetType();
+            //if (_types != null && !_types.ContainsKey(type.Name))
+            //    throw new ArgumentException($"{type.Name} is not registered to run in ths app");
 
             spawnObject(@object);
+        }
+
+        List<Action<Guid, IConcurrentObject>> _spawnListeners = new List<Action<Guid, IConcurrentObject>>();
+        public void AddSpawnListener(Action<Guid, IConcurrentObject> listener)
+        {
+            notWhileRunning();
+            _spawnListeners.Add(listener);
         }
 
         public abstract void Stop();
@@ -79,6 +86,7 @@ namespace Excess.Concurrent.Runtime
                 What = what,
                 Failure = failure,
             });
+
         }
 
         public abstract void Schedule(IConcurrentObject who, Action what, Action<Exception> failure, TimeSpan when);
@@ -91,7 +99,33 @@ namespace Excess.Concurrent.Runtime
                 return default(T);
 
             ourObject.__start(this);
+
+            //notify, if any
+            if (_spawnListeners.Any())
+            {
+                var id = getUniqueId(ourObject);
+                foreach (var listener in _spawnListeners)
+                {
+                    try
+                    {
+                        listener(id, @object);
+                    }
+                    catch
+                    {
+                    }
+                }
+            }
+
             return @object;
+        }
+
+        protected virtual Guid getUniqueId(ConcurrentObject @object)
+        {
+            var idField = @object.GetType().GetField("__ID");
+            if (idField != null)
+                return (Guid)idField.GetValue(@object);
+
+            return Guid.NewGuid();
         }
 
         protected bool _running = false;

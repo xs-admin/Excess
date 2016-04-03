@@ -19,6 +19,9 @@ namespace Tests
     using ConcurrentExtension = Excess.Extensions.Concurrent.Extension;
     using Compilation = Excess.Compiler.Roslyn.Compilation;
     using FactoryMethod = Func<IConcurrentApp, object[], IConcurrentObject>;
+    using System.Threading;
+    using System.Threading.Tasks;
+    using System.Diagnostics;
 
     public static class Mock
     {
@@ -86,16 +89,56 @@ namespace Tests
             var config = configurations
                 .Single(cfg => cfg.Name == configuration);
 
-            var app = appFromAssembly(assembly, allInstances: instances);
-            return TestServer.Create(builder =>
+            var remoteTypes = null as IEnumerable<Type>;
+            var clients = 0;
+            var startNodes = false;
+            if (config != null)
             {
-                builder.UseExcess(app);
-            });
+                remoteTypes = (IEnumerable<Type>)config
+                    .GetMethod("RemoteTypes")
+                    .Invoke(null, new object[] { });
+
+                clients = (int)config
+                    .GetMethod("NodeCount")
+                    .Invoke(null, new object[] { });
+
+                startNodes = clients > 0;
+            }
+
+            var classes = new List<Type>();
+            var app = appFromAssembly(assembly, 
+                allInstances: instances, 
+                remoteTypes: remoteTypes, 
+                commonClasses: classes);
+
+            app.Connect = _ =>
+            {
+                if (startNodes)
+                    Task.Run(() => config
+                        .GetMethod("StartNodes")
+                        .Invoke(null, new object[] { classes }));
+
+                var waiter = new ManualResetEvent(false);
+                var error = null as Exception;
+                NetMQFunctions.StartServer(app, "tcp://localhost:5000", clients,
+                    connected: ex =>
+                    {
+                        error = ex;
+                        waiter.Set();
+                    });
+
+                waiter.WaitOne();
+                return error;
+            };
+
+            return TestServer.Create(builder => builder.UseExcess(app));
         }
 
         private static IDistributedApp appFromAssembly(Assembly assembly, 
             IDictionary<string, Guid> userInstances = null,
-            IDictionary<string, Guid> allInstances = null)
+            IDictionary<string, Guid> allInstances = null,
+            IEnumerable<Type> remoteTypes = null,
+            IList<Type> commonClasses = null)
         {
             var types = new Dictionary<string, FactoryMethod>();
             var concurrentApp = new TestConcurrentApp(types);
@@ -106,9 +149,17 @@ namespace Tests
                 if (type.BaseType != typeof(ConcurrentObject))
                     continue;
 
+                Guid id;
+                if (remoteTypes != null && remoteTypes.Contains(type))
+                {
+                    if (allInstances != null && type.IsConcurrentSingleton(out id))
+                        allInstances[type.Name] = id;
+                    continue;
+                }
+
+                commonClasses.Add(type);
                 app.RegisterClass(type);
 
-                Guid id;
                 if (userInstances != null)
                 {
                     if (userInstances.TryGetValue(type.Name, out id))
@@ -129,22 +180,17 @@ namespace Tests
 
         public static dynamic ParseResponse(HttpResponseMessage response)
         {
-            var result = JObject.Parse(response
+            var json = JObject.Parse(response
                 .Content
                 .ReadAsStringAsync()
-                .Result);
+                .Result) as dynamic;
 
-            return result
-                .Property("__res")
+            if (json.__res != null)
+                return json.__res;
+
+            return json
+                .Property("__ex")
                 .Value;
-        }
-
-        //start a configuration, but just the nodes
-        private static int startNodes(Type config, IList<Type> hostedTypes, IDictionary<Guid, IConcurrentObject> hostedInstances)
-        {
-            var method = config.GetMethod("StartNodes");
-            var instance = Activator.CreateInstance(config);
-            return (int)method.Invoke(instance, new object[] { hostedTypes, hostedInstances });
         }
 
         private static Compilation createCompilation(string text,

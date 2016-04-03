@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Excess.Concurrent.Runtime
 {
@@ -16,6 +12,8 @@ namespace Excess.Concurrent.Runtime
         T Spawn<T>(params object[] args) where T : IConcurrentObject;
         void Spawn(IConcurrentObject @object);
         IConcurrentObject Spawn(string type, params object[] args);
+
+        void AddSpawnListener(Action<Guid, IConcurrentObject> listener);
 
         void Start();
         void Stop();

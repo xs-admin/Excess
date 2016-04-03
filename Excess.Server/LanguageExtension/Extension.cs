@@ -101,12 +101,27 @@ namespace LanguageExtension
                                     .Select(serverNode => Templates
                                         .NodeInvocation
                                         .Get<StatementSyntax>(serverNode.ServerId))
-                                    .Union(new StatementSyntax[]
-                                    {
-                                        CSharp.ReturnStatement(CSharp.ParseExpression(mainServer
+                                    .ToArray());
+                            case "RemoteTypes":
+                                var initializer = Templates
+                                    .RemoteTypes
+                                    .DescendantNodes()
+                                    .OfType<InitializerExpressionSyntax>()
+                                    .Single();
+
+                                return nn.AddBodyStatements(Templates
+                                    .RemoteTypes
+                                    .ReplaceNode(
+                                        initializer,
+                                        initializer.AddExpressions(mainServer
                                             .Nodes
-                                            .Count.ToString()))
-                                    }).ToArray());
+                                            .SelectMany(serverNode => serverNode.HostedClasses)
+                                            .Select(type => CSharp.TypeOfExpression(type))
+                                            .ToArray())));
+                            case "NodeCount":
+                                return nn.AddBodyStatements(CSharp
+                                    .ReturnStatement(CSharp.ParseExpression(
+                                        mainServer.Nodes.Count.ToString())));
                         }
 
                         throw new NotImplementedException();
@@ -236,15 +251,9 @@ namespace LanguageExtension
 
             if (valid)
             {
-                string serverType;
-                string clientType;
-                if (getNodeTypes(creation.Type, out serverType, out clientType))
+                var serverType = getNodeServer(creation.Type);
+                if (serverType != null)
                 {
-                    //RequestResponseClient
-                    result.Connection = Templates
-                        .NodeConnection
-                        .Get<ExpressionSyntax>(clientType, result.Url);
-
                     result
                         .StartStatements
                         .AddRange(new StatementSyntax[]
@@ -308,21 +317,14 @@ namespace LanguageExtension
             return true;
         }
 
-        private static bool getNodeTypes(TypeSyntax type, out string serverType, out string clientType)
+        private static string getNodeServer(TypeSyntax type)
         {
             switch (type.ToString())
             {
-                case "NetMQ.Node":
-                    serverType = "NetMQNode";
-                    clientType = "RequestResponseClient";
-                    break;
-                default:
-                    serverType = null;
-                    clientType = null;
-                    return false;
+                case "NetMQ.Node": return "NetMQNode";
             }
 
-            return true;
+            throw new ArgumentException("type");
         }
 
         //generation

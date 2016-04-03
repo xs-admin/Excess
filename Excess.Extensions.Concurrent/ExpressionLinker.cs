@@ -395,8 +395,12 @@ namespace Excess.Extensions.Concurrent
                 .SingleOrDefault();
 
             if (successFunc != null)
+            {
+                var bodyStatement = (successFunc.Body as StatementSyntax)
+                    ?? CSharp.ExpressionStatement((ExpressionSyntax)successFunc.Body);
+
                 return right.ReplaceNode(successFunc, successFunc
-                    .WithBody(CSharp.Block( new[] {
+                    .WithBody(CSharp.Block(new[] {
                         Templates
                             .ExpressionAssigment
                             .Get<StatementSyntax>(assignment.Left, leftType) }
@@ -404,8 +408,9 @@ namespace Excess.Extensions.Concurrent
                             ? (successFunc.Body as BlockSyntax)
                                 .Statements
                                 .AsEnumerable()
-                            : new[] { successFunc.Body as StatementSyntax })
+                            : new[] { bodyStatement })
                         .ToArray())));
+            }
 
             //else, we need to substitute the actual Right expr by 
             //an assignment.

@@ -61,7 +61,6 @@ namespace Excess.Concurrent.Runtime
 
         public override void Start()
         {
-            throw new InvalidOperationException("test app is synchronous");
         }
 
         //helper methods for Testing

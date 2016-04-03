@@ -18,7 +18,6 @@ namespace Concurrent.Tests
     using System.Threading;
     using System.Threading.Tasks;
     using System.Diagnostics;
-    using Excess.Concurrent.Runtime.Core;
 
     public static class Mock
     {

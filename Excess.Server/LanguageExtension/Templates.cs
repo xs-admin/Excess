@@ -12,28 +12,31 @@ namespace LanguageExtension
             [ServerConfiguration]    
             public class _0
             {
-                public void Deploy()
+                public static void Deploy()
                 {
                 }
 
-                public void Start()
+                public static void Start()
                 {
                 }
 
-                public int StartNodes(IList<Type> managedTypes, IDictionary<Guid, IConcurrentObject> managedInstances)
+                public static void StartNodes(IEnumerable<Type> commonClasses)
+                {
+                }
+
+                public static int NodeCount()
+                {
+                }
+
+                public static IEnumerable<Type> RemoteTypes()
                 {
                 }
             }");
 
         public static Template NodeMethod = Template.Parse(@"
-            public void _0(IList<Type> managedTypes, IDictionary<Guid, IConcurrentObject> managedInstances)
+            public static void _0(IEnumerable<Type> commonClasses)
             {
-                var hostedTypes = __1;
-                if (managedTypes != null)
-                {
-                    foreach (var hostedType in hostedTypes)
-                        managedTypes.Add(hostedType);
-                }
+                var hostedTypes = commonClasses.Union(__1);
             }");
 
         public static Template HttpServer = Template.ParseStatement(@"
@@ -48,9 +51,6 @@ namespace LanguageExtension
                 remoteServer: __2,
                 threads: __3,
                 classes: hostedTypes);");
-
-        public static Template NodeConnection = Template.ParseExpression("new _0(__1)");
-        
 
         public static ExpressionSyntax DefaultThreads = CSharp.ParseExpression("8");
         public static ArrayCreationExpressionSyntax TypeArray = Template
@@ -90,6 +90,9 @@ namespace LanguageExtension
             this.@Model.Name = __init.@Model.Name;");
 
         public static Template NodeInvocation = Template.ParseStatement(@"
-            _0(managedTypes, managedInstances);");
+            _0(commonClasses);");
+
+        public static StatementSyntax RemoteTypes = CSharp.ParseStatement(@"
+            return new Type[] {};");
     }
 }

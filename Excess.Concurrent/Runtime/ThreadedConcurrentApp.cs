@@ -14,11 +14,13 @@ namespace Excess.Concurrent.Runtime
     public class ThreadedConcurrentApp : BaseConcurrentApp
     {
         int _threadCount;
-        bool _blockUntilNextEvent;
+        ManualResetEvent _blockUntilNextEvent;
         public ThreadedConcurrentApp(FactoryMap types, int threadCount = 1, bool blockUntilNextEvent = true) : base(types)
         {
             _threadCount = threadCount;
-            _blockUntilNextEvent = blockUntilNextEvent;
+
+            if (blockUntilNextEvent)
+                _blockUntilNextEvent = new ManualResetEvent(false);
         }
 
         IEnumerable<Thread> _threads;
@@ -36,6 +38,15 @@ namespace Excess.Concurrent.Runtime
         public override void AwaitCompletion()
         {
             _stop.Token.WaitHandle.WaitOne();
+        }
+
+
+        public override void Schedule(IConcurrentObject who, Action what, Action<Exception> failure)
+        {
+            base.Schedule(who, what, failure);
+            if (_blockUntilNextEvent != null)
+                _blockUntilNextEvent.Set();
+
         }
 
         public override void Schedule(IConcurrentObject who, Action what, Action<Exception> failure, TimeSpan when)
@@ -62,10 +73,16 @@ namespace Excess.Concurrent.Runtime
                             break;
 
                         if (message == null)
-                            message = onEmptyQueue();
-
-                        if (message == null)
+                        {
+                            if (_blockUntilNextEvent != null)
+                            {
+                                _blockUntilNextEvent.WaitOne();
+                                _blockUntilNextEvent.Reset();
+                            }
+                            else
+                                Thread.Sleep(0);
                             continue;
+                        }
 
                         if (message.Who != null)
                         {
@@ -98,18 +115,6 @@ namespace Excess.Concurrent.Runtime
             }
 
             return result;
-        }
-
-        protected virtual Event onEmptyQueue()
-        {
-            if (_blockUntilNextEvent)
-            {
-                BlockingCollection<Event> blockingQueue = new BlockingCollection<Event>(_queue);
-                return blockingQueue.Take(_stop.Token);
-            }
-
-            Thread.Sleep(0); //?
-            return null;
         }
     }
 }
