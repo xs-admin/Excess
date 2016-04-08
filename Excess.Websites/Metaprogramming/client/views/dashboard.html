@@ -1,0 +1,151 @@
+<div class="page page-dashboard">
+
+
+    <div class="row">
+       <!-- Stats -->
+        <div class="col-lg-3 col-xsm-6">
+            <div class="panel panel-box">
+                <div class="panel-top">
+                    <span class="ti-stats-up color-success"></span>
+                </div>
+                <div class="panel-info">
+                    <span data-translate="GROWTH"></span>
+                </div>
+                <div class="panel-bottom bg-light">
+                    <span>36 <span class="size-h4">%</span></span>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-xsm-6">
+            <div class="panel panel-box">
+                <div class="panel-top">
+                    <i class="ti-user color-info"></i>
+                </div>
+                <div class="panel-info">
+                    <span data-translate="NEW_USERS"></span>
+                </div>
+                <div class="panel-bottom bg-light">
+                    <span>22 <span class="size-h4">%</span></span>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-xsm-6">
+            <div class="panel panel-box">
+                <div class="panel-top">
+                    <i class="ti-money color-warning"></i>
+                </div>
+                <div class="panel-info">
+                    <span data-translate="PROFIT"></span>
+                </div>
+                <div class="panel-bottom bg-light">
+                    <span>37 <span class="size-h4">k</span></span>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-xsm-6">
+            <div class="panel panel-box">
+                <div class="panel-top">
+                    <i class="ti-shopping-cart color-danger"></i>
+                </div>
+                <div class="panel-info">
+                    <span data-translate="SALES"></span>
+                </div>
+                <div class="panel-bottom bg-light">
+                    <span>21 <span class="size-h4">k</span></span>
+                </div>
+            </div>
+        </div>
+        <!-- end stats -->          
+    </div>
+
+
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="panel panel-default">
+                <div class="panel-body" data-ng-controller="flotChartCtrl">
+                    <div data-flot-chart
+                         data-data="barChart1.data"
+                         data-options="barChart1.options"
+                         style="width: 100%; height: 350px;"
+                         ></div>
+                </div>
+            </div>                
+        </div>
+        <div class="col-lg-6">
+            <div class="panel panel-default">
+                <div class="panel-body" data-ng-controller="flotChartCtrl">
+                    <div data-flot-chart
+                         data-data="donutChart2.data"
+                         data-options="donutChart2.options"
+                         style="width: 100%; height: 350px;"
+                         ></div>
+                </div>
+            </div>             
+        </div>
+    </div>
+
+    <div class="panel panel-default">
+        <div class="panel-body table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Project</th>
+                        <th>Status</th>
+                        <th>Manager</th>
+                        <th>Progress</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td><span class="color-success"><i class="fa fa-level-up"></i></span> TWLT</td>
+                        <td><span class="label label-info">Pending</span></td>
+                        <td>Amery Lee</td>
+                        <td><progressbar class="progressbar-xs no-margin" value="55"></progressbar></td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td><span class="color-success"><i class="fa fa-level-up"></i></span> A16Z</td>
+                        <td><span class="label label-primary">Due</span></td>
+                        <td>Romayne Carlyn</td>
+                        <td><progressbar class="progressbar-xs no-margin" value="34" type="success"></progressbar></td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td><span class="color-warning"><i class="fa fa-level-down"></i></span> DARK</td>
+                        <td><span class="label label-success">Due</span></td>
+                        <td>Marybeth Joanna</td>
+                        <td><progressbar class="progressbar-xs no-margin" value="68" type="info"></progressbar></td>
+                    </tr>
+                    <tr>
+                        <td>4</td>
+                        <td><span class="color-info"><i class="fa fa-level-up"></i></span> Q300</td>
+                        <td><span class="label label-danger">Blocked</span></td>
+                        <td>Jonah Benny</td>
+                        <td><progressbar class="progressbar-xs no-margin" value="52" type="warning"></progressbar></td>
+                    </tr>
+                    <tr>
+                        <td>5</td>
+                        <td><span class="color-danger"><i class="fa fa-level-down"></i></span> RVNG</td>
+                        <td><span class="label label-warning">Suspended</span></td>
+                        <td>Daly Royle</td>
+                        <td><progressbar class="progressbar-xs no-margin" value="77" type="danger"></progressbar></td>
+                    </tr>
+                    <tr>
+                        <td>6</td>
+                        <td><span class="color-info"><i class="fa fa-level-down"></i></span> FDSA</td>
+                        <td><span class="label label-info">Suspended</span></td>
+                        <td>Jane Swift</td>
+                        <td><progressbar class="progressbar-xs no-margin" value="55" type="success"></progressbar></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+
+
+
+</div>
+  

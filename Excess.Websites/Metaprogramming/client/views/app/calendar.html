@@ -1,0 +1,20 @@
+<div class="page page-calendar" ng-controller="calendarCtrl">
+
+    <section>
+        <button type="button" class="btn btn-primary" ng-click="addEvent()">Add Event</button>
+        <div class="btn-toolbar pull-right">
+            <div class="btn-group">
+                <button class="btn btn-default" ng-click="changeView('agendaDay')">Day</button>
+                <button class="btn btn-default" ng-click="changeView('agendaWeek')">Week</button>
+                <button class="btn btn-default" ng-click="changeView('month')">Month</button>
+            </div>
+        </div>
+        <div class="divider"></div>
+        <div ng-model="eventSources" calendar="myCalendar1" config="uiConfig.calendar" ui-calendar="uiConfig.calendar"></div>
+
+        <div class="callout callout-info" ng-show="alertMessage != undefined && alertMessage != ''">
+            <span>{{alertMessage}}</span>
+        </div>
+    </section>
+
+</div>

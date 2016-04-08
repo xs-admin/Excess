@@ -1,7 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Reflection;
 using System.Linq;
+using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.Net.Http;
 using Owin;
 using Microsoft.Owin.Testing;
 using Microsoft.CodeAnalysis;
@@ -10,7 +13,6 @@ using Excess.Compiler.Roslyn;
 using Excess.Compiler.Core;
 using Excess.Concurrent.Runtime;
 using Middleware;
-using System.Net.Http;
 using Newtonsoft.Json.Linq;
 
 namespace Tests
@@ -19,9 +21,6 @@ namespace Tests
     using ConcurrentExtension = Excess.Extensions.Concurrent.Extension;
     using Compilation = Excess.Compiler.Roslyn.Compilation;
     using FactoryMethod = Func<IConcurrentApp, object[], IConcurrentObject>;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using System.Diagnostics;
 
     public static class Mock
     {

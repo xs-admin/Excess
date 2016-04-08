@@ -36,7 +36,7 @@
         $rootScope.homeHelp = function () {
             var homeHelpTopics = [
                 { caption: 'Usage', visible: true,  image: '/Content/images/home-usage.png',   helpText: '' },
-                { caption: 'Test driving the platform', visible: false, image: '/Content/images/home-options.png', helpText: 'It compiler whatever mofifications you make, too.' },
+                { caption: 'Test driving the platform', visible: false, image: '/Content/images/home-options.png', helpText: 'It compiles whatever changes you make, too.' },
                 { caption: 'Can I write compilers here?', visible: false, image: '', helpText: 'Yes.' },
                 {
                     caption: 'What kind of projects can I create?', visible: false, image: '',

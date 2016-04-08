@@ -1,7 +1,8 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
+using System.Text;
+using System.Diagnostics;
+using System.Collections.Generic;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis;
@@ -12,10 +13,8 @@ using Excess.Compiler.Roslyn;
 namespace LanguageExtension
 {
     using ExcessCompiler = ICompiler<SyntaxToken, SyntaxNode, SemanticModel>;
-    using ExcessCompilation = ICompilationAnalysis<SyntaxToken, SyntaxNode, SemanticModel>;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
     using Roslyn = RoslynCompiler;
-    using System.Text;
 
     public class Extension
     {

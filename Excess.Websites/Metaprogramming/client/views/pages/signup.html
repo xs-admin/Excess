@@ -1,0 +1,72 @@
+<div class="page-signup" ng-controller="authCtrl">
+
+    <div class="auth-container">
+        <div class="signin-header">
+            <section class="logo text-center">
+                <h1><a href="#/">{{main.brand}}</a></h1>
+            </section>
+        </div>
+
+        <div class="signup-body">
+            <div class="form-container">
+
+                <section>
+                    <form class="form-horizontal text-center">
+                        <div class="form-info">
+                            <div class="form-group">
+                                <div class="input-group input-group-first">
+                                    <span class="input-group-addon">
+                                        <span class="ti-user"></span>
+                                    </span>
+                                    <input  type="text"
+                                            class="form-control input-lg"
+                                            placeholder="Username"
+                                            >
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="input-group">
+                                    <span class="input-group-addon">
+                                        <span class="ti-email"></span>
+                                    </span>
+                                    <input type="email"
+                                           class="form-control input-lg"
+                                           placeholder="Email"
+                                           >
+                                </div>
+                            </div>
+                            <div class="form-group form-group-last">
+                                <div class="input-group">
+                                    <span class="input-group-addon">
+                                        <span class="ti-lock"></span>
+                                    </span>
+                                    <input type="password"
+                                           class="form-control input-lg"
+                                           placeholder="Password"
+                                           >
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <div class="form-submit">
+                            <div class="form-group">
+                                <p class="text-muted text-small">By clicking on signup, you agree to <a href="javascript:;"><i>terms</i></a> and <a href="javascript:;"><i>privacy policy</i></a></p>
+                                <button type="submit"
+                                        class="btn btn-primary btn-block btn-lg"
+                                        ng-click="signup()">Sign up</button>
+                            </div>
+                        </div>
+ 
+                    </form>
+                </section>
+
+                <div class="divider"></div>
+                <section class="additional-info">
+                    <p class="text-right"><a href="#/pages/signin" >Log in now</a></p>
+                </section>
+
+            </div>
+        </div>
+    </div>
+</div>
