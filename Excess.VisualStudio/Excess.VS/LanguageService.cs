@@ -1,25 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-using Microsoft.VisualStudio;
+using System.Diagnostics;
+using System.Collections.Generic;
+using System.Collections.Immutable;
 using Microsoft.VisualStudio.Package;
 using Microsoft.VisualStudio.TextManager.Interop;
-using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.LanguageServices;
-using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.Text;
-using Microsoft.VisualStudio.Settings;
-using Microsoft.VisualStudio.Shell.Settings;
-using Excess.Compiler;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Diagnostics;
 using Excess.Compiler.Roslyn;
 using Excess.Entensions.XS;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using System.Diagnostics;
-using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Excess.VS
 {
@@ -127,10 +118,7 @@ namespace Excess.VS
                 throw new NotImplementedException();
             }
 
-            private bool isExtension(UsingDirectiveSyntax @using)
-            {
-                throw new NotImplementedException();
-            }
+            private bool isExtension(UsingDirectiveSyntax @using) => @using.Name.ToString().StartsWith("xs.");
         }
 
         Dictionary<ProjectId, ProjectCache> _projects = new Dictionary<ProjectId, ProjectCache>();
@@ -146,7 +134,11 @@ namespace Excess.VS
             var compilationUnit = CSharp.ParseCompilationUnit(text);
             var extensions = new List<UsingDirectiveSyntax>(compilationUnit.Usings);
             var compiler = cache.GetCompiler(document.ProjectId, document, extensions);
-            var result = new RoslynDocument(compiler.Scope, compilationUnit);
+            var result = new RoslynDocument(
+                compiler.Scope, 
+                compilationUnit
+                    .RemoveNodes(extensions, SyntaxRemoveOptions.KeepEndOfLine));
+
             result.Mapper = new MappingService();
             compiler.apply(result);
             return result;

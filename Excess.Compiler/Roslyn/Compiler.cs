@@ -143,6 +143,8 @@ namespace Excess.Compiler.Roslyn
             return node.GetAnnotatedNodes(RoslynCompiler.NodeIdAnnotation + xsId).FirstOrDefault();
         }
 
+        public IEnumerable<SyntaxToken> NodeTokens(SyntaxNode node) => node.DescendantTokens();
+
         public int GetOffset(SyntaxToken token)
         {
             return token.SpanStart;

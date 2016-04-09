@@ -37,12 +37,11 @@ namespace Excess.VS
             _document = service.CreateExcessDocument(GetText(), _id);
             _document.applyChanges(CompilerStage.Syntactical);
 
-            _document.SyntaxRoot = _document.SyntaxRoot.NormalizeWhitespace(elasticTrivia: true); //td: optimize
-            if (!saveCodeBehind(_document.SyntaxRoot))
-                return; //td: error?
-
             if (!_document.HasSemanticalChanges())
-                return;
+            {
+                saveCodeBehind(_document); //td: check error
+                return; 
+            }
 
             var doc = _workspace.CurrentSolution.GetDocument(_id);
             var semanticRoot = doc.GetSyntaxRootAsync().Result;
@@ -53,13 +52,15 @@ namespace Excess.VS
             _document.Model = model;
             _document.applyChanges(CompilerStage.Semantical);
 
-            saveCodeBehind(_document.SyntaxRoot);
-
+            saveCodeBehind(_document); //td: check error
             base.BeginParse();
         }
 
-        private bool saveCodeBehind(SyntaxNode node)
+        private bool saveCodeBehind(RoslynDocument doc)
         {
+            doc.SyntaxRoot = doc.SyntaxRoot
+                .NormalizeWhitespace(elasticTrivia: true); //td: optimize
+
             var solution = _workspace.CurrentSolution.WithDocumentSyntaxRoot(_id, _document.SyntaxRoot);
             return _workspace.TryApplyChanges(solution);
         }

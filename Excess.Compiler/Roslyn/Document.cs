@@ -22,13 +22,13 @@ namespace Excess.Compiler.Roslyn
         }
 
         string _documentID;
-        public RoslynDocument(Scope scope, string text, string id = null) : base(scope)
+        public RoslynDocument(Scope scope, string text, string id = null) : this(scope)
         {
             Text = text;
             _documentID = id;
         }
 
-        public RoslynDocument(Scope scope, SyntaxNode root, string id = null) : base(scope)
+        public RoslynDocument(Scope scope, SyntaxNode root, string id = null) : this(scope)
         {
             setRoot(root);
             _documentID = id;

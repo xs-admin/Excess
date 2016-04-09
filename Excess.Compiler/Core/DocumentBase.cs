@@ -254,10 +254,11 @@ namespace Excess.Compiler.Core
 
         protected virtual void applyLexical()
         {
-            Debug.Assert(_root == null);
-
             //apply the lexical pass
-            var tokens = _compiler.ParseTokens(_text);
+            var tokens = _root == null
+                ? _compiler.ParseTokens(_text)
+                : _compiler.NodeTokens(_root);
+
             foreach (var lexical in _lexical)
                 tokens = lexical(tokens, new Scope(_scope));
 

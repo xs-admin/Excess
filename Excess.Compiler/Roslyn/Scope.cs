@@ -46,7 +46,7 @@ namespace Excess.Compiler.Roslyn
         {
             var types = scope.find<List<TypeDeclarationSyntax>>("__additionalTypes");
             if (types == null)
-                throw new InvalidOperationException("document scope not initialized");
+                return null;
 
             return types;
         }

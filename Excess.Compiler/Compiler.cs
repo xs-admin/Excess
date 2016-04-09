@@ -74,12 +74,13 @@ namespace Excess.Compiler
         int GetExcessId(TToken token);
         int GetExcessId(TNode node);
         bool isIdentifier(TToken token);
+        int GetOffset(TToken token);
 
         IEnumerable<TToken> ParseTokens(string text);
         TNode Parse(string text);
         IEnumerable<TToken> MarkTokens(IEnumerable<TToken> tokens, out int xsId);
         IEnumerable<TNode> Find(TNode node, IEnumerable<string> xsIds);
         TNode Find(TNode node, SourceSpan value);
-        int GetOffset(TToken token);
+        IEnumerable<TToken> NodeTokens(TNode node);
     }
 }
