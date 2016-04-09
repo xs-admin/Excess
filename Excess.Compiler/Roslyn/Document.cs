@@ -25,9 +25,12 @@ namespace Excess.Compiler.Roslyn
         public RoslynDocument(Scope scope, string text, string id = null) : base(scope)
         {
             Text = text;
-            _scope.set<IDocument<SyntaxToken, SyntaxNode, SemanticModel>>(this);
-            _scope.InitDocumentScope();
+            _documentID = id;
+        }
 
+        public RoslynDocument(Scope scope, SyntaxNode root, string id = null) : base(scope)
+        {
+            setRoot(root);
             _documentID = id;
         }
 

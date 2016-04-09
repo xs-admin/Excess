@@ -17,9 +17,14 @@ using Microsoft.VisualStudio.Shell.Settings;
 using Excess.Compiler;
 using Excess.Compiler.Roslyn;
 using Excess.Entensions.XS;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using System.Diagnostics;
+using Microsoft.CodeAnalysis.Diagnostics;
 
 namespace Excess.VS
 {
+    using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
+
     class ExcessLanguageService : LanguageService
     {
         VisualStudioWorkspace _workspace;
@@ -36,19 +41,112 @@ namespace Excess.VS
             }
         }
 
-
-        Dictionary<ProjectId, RoslynCompiler> _projects = new Dictionary<ProjectId, RoslynCompiler>();
-        public RoslynDocument CreateExcessDocument(string text, DocumentId document)
+        class ProjectCache
         {
-            RoslynCompiler compiler;
-            if (!_projects.TryGetValue(document.ProjectId, out compiler))
+            VisualStudioWorkspace _workspace;
+            public ProjectCache(VisualStudioWorkspace workspace)
             {
-                compiler = new RoslynCompiler();
-                XSLang.Apply(compiler);
-                _projects[document.ProjectId] = compiler;
+                _workspace = workspace;
             }
 
-            var result = new RoslynDocument(compiler.Scope, text);
+            Project _project;
+            Dictionary<long, RoslynCompiler> _cache = new Dictionary<long, RoslynCompiler>();
+            Dictionary<string, Action<RoslynCompiler>> _extensions = new Dictionary<string, Action<RoslynCompiler>>();
+
+
+            public RoslynCompiler GetCompiler(
+                ProjectId projectId, 
+                DocumentId documentId, 
+                ICollection<UsingDirectiveSyntax> extensions)
+            {
+                var project = _workspace.CurrentSolution.GetProject(projectId);
+                if (_project != project)
+                {
+                    _project = project;
+                    updateExtensions();
+                }
+
+                //get an unique id 
+                var extensionNames = extensions
+                    .Where(@using => isExtension(@using))
+                    .Select(@using => @using.Name.ToString());
+
+                var hashCode = 0;
+                foreach (var extension in extensionNames)
+                    hashCode += extension.GetHashCode();
+
+                //test the cache for some combination of extensions
+                var result = null as RoslynCompiler;
+                if (_cache.TryGetValue(hashCode, out result))
+                    return result;
+
+                result = new RoslynCompiler();
+                XSLang.Apply(result);
+
+                foreach (var extension in extensions.ToArray())
+                {
+                    var extensionName = extension.Name.ToString();
+                    var extensionFunc = null as Action<RoslynCompiler>;
+                    if (_extensions.TryGetValue(extensionName, out extensionFunc))
+                        extensionFunc(result);
+                    else
+                        extensions.Remove(extension);
+                }
+
+                return result;
+            }
+
+            private void updateExtensions()
+            {
+                Debug.Assert(_project != null);
+
+                var newDict = new Dictionary<string, Action<RoslynCompiler>>();
+                foreach (var reference in _project.AnalyzerReferences)
+                {
+                    string name;
+                    if (isExtension(reference, out name))
+                    {
+                        var function = null as Action<RoslynCompiler>;
+                        if (!_extensions.TryGetValue(name, out function))
+                            function = loadReference(reference);
+
+                        newDict[name] = function;
+                    }
+                }
+
+                _extensions = newDict;
+            }
+
+            private Action<RoslynCompiler> loadReference(AnalyzerReference reference)
+            {
+                throw new NotImplementedException();
+            }
+
+            private bool isExtension(AnalyzerReference reference, out string name)
+            {
+                throw new NotImplementedException();
+            }
+
+            private bool isExtension(UsingDirectiveSyntax @using)
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        Dictionary<ProjectId, ProjectCache> _projects = new Dictionary<ProjectId, ProjectCache>();
+        public RoslynDocument CreateExcessDocument(string text, DocumentId document)
+        {
+            ProjectCache cache;
+            if (!_projects.TryGetValue(document.ProjectId, out cache))
+            {
+                cache = new ProjectCache(_workspace);
+                _projects[document.ProjectId] = cache;
+            }
+
+            var compilationUnit = CSharp.ParseCompilationUnit(text);
+            var extensions = new List<UsingDirectiveSyntax>(compilationUnit.Usings);
+            var compiler = cache.GetCompiler(document.ProjectId, document, extensions);
+            var result = new RoslynDocument(compiler.Scope, compilationUnit);
             result.Mapper = new MappingService();
             compiler.apply(result);
             return result;
@@ -56,7 +154,7 @@ namespace Excess.VS
 
         public override string GetFormatFilterList()
         {
-            throw new NotImplementedException();
+            return "XS files (*.xs)\n*.xs\n";
         }
 
         private LanguagePreferences _preferences;
