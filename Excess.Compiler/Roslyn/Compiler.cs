@@ -773,6 +773,9 @@ namespace Excess.Compiler.Roslyn
 
         public static TypeSyntax GetReturnType(BlockSyntax code, SemanticModel model)
         {
+            if (code == null)
+                return @void;
+
             ControlFlowAnalysis cfa = model.AnalyzeControlFlow(code);
             if (!cfa.ReturnStatements.Any())
                 return @void;

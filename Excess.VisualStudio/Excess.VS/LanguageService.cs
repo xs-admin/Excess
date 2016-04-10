@@ -16,6 +16,18 @@ namespace Excess.VS
 {
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
+    internal static class XSKeywords            
+    {
+        public static string[] Values = new[]
+        {
+            "function",
+            "method",
+            "property",
+            "on",
+        };
+    }
+
+
     class ExcessLanguageService : LanguageService
     {
         VisualStudioWorkspace _workspace;
@@ -42,8 +54,9 @@ namespace Excess.VS
 
             Project _project;
             Dictionary<long, RoslynCompiler> _cache = new Dictionary<long, RoslynCompiler>();
-            Dictionary<string, Action<RoslynCompiler>> _extensions = new Dictionary<string, Action<RoslynCompiler>>();
-
+            Dictionary<long, IEnumerable<string>> _keywordCache = new Dictionary<long, IEnumerable<string>>();
+            Dictionary<DocumentId, long> _documentExtensions = new Dictionary<DocumentId, long>();
+            Dictionary<string, Action<RoslynCompiler, IList<string>>> _extensions = new Dictionary<string, Action<RoslynCompiler, IList<string>>>();
 
             public RoslynCompiler GetCompiler(
                 ProjectId projectId, 
@@ -62,7 +75,7 @@ namespace Excess.VS
                     .Where(@using => isExtension(@using))
                     .Select(@using => @using.Name.ToString());
 
-                var hashCode = 0;
+                long hashCode = 0;
                 foreach (var extension in extensionNames)
                     hashCode += extension.GetHashCode();
 
@@ -74,15 +87,32 @@ namespace Excess.VS
                 result = new RoslynCompiler();
                 XSLang.Apply(result);
 
+                var keywords = new List<string>();
                 foreach (var extension in extensions.ToArray())
                 {
                     var extensionName = extension.Name.ToString();
-                    var extensionFunc = null as Action<RoslynCompiler>;
+                    var extensionFunc = null as Action<RoslynCompiler, IList<string>>;
                     if (_extensions.TryGetValue(extensionName, out extensionFunc))
-                        extensionFunc(result);
+                        extensionFunc(result, keywords);
                     else
                         extensions.Remove(extension);
                 }
+
+                _cache[hashCode] = result;
+                _keywordCache[hashCode] = keywords;
+                return result;
+            }
+
+            public IEnumerable<string> Keywords(DocumentId documentId)
+            {
+                long iid;
+                if (!_documentExtensions.TryGetValue(documentId, out iid))
+                    return null;
+
+                IEnumerable<string> result = XSKeywords.Values;
+                IEnumerable<string> cache;
+                if (_keywordCache.TryGetValue(iid, out cache))
+                    result = result.Union(cache);
 
                 return result;
             }
@@ -91,13 +121,13 @@ namespace Excess.VS
             {
                 Debug.Assert(_project != null);
 
-                var newDict = new Dictionary<string, Action<RoslynCompiler>>();
+                var newDict = new Dictionary<string, Action<RoslynCompiler, IList<string>>>();
                 foreach (var reference in _project.AnalyzerReferences)
                 {
                     string name;
                     if (isExtension(reference, out name))
                     {
-                        var function = null as Action<RoslynCompiler>;
+                        var function = null as Action<RoslynCompiler, IList<string>>;
                         if (!_extensions.TryGetValue(name, out function))
                             function = loadReference(reference);
 
@@ -108,7 +138,7 @@ namespace Excess.VS
                 _extensions = newDict;
             }
 
-            private Action<RoslynCompiler> loadReference(AnalyzerReference reference)
+            private Action<RoslynCompiler, IList<string>> loadReference(AnalyzerReference reference)
             {
                 throw new NotImplementedException();
             }
@@ -119,6 +149,7 @@ namespace Excess.VS
             }
 
             private bool isExtension(UsingDirectiveSyntax @using) => @using.Name.ToString().StartsWith("xs.");
+
         }
 
         Dictionary<ProjectId, ProjectCache> _projects = new Dictionary<ProjectId, ProjectCache>();
@@ -153,19 +184,29 @@ namespace Excess.VS
         public override LanguagePreferences GetLanguagePreferences()
         {
             if (_preferences == null)
-                _preferences = new LanguagePreferences(
-                    this.Site,
-                    typeof(ExcessLanguageService).GUID,
-                    this.Name);
+                _preferences = new LanguagePreferences(Site, typeof(ExcessLanguageService).GUID, Name);
 
             return _preferences;
         }
 
+        Dictionary<DocumentId, Scanner> _scannerCache = new Dictionary<DocumentId, Scanner>();
         Scanner _scanner;
         public override IScanner GetScanner(IVsTextLines buffer)
         {
-            if (_scanner == null)
-                _scanner = new Scanner(buffer);
+            var documentId = GetDocumentId(buffer);
+            if (documentId != null)
+            {
+                var result = null as Scanner;
+                if (_scannerCache.TryGetValue(documentId, out result))
+                    return result;
+
+                var scanner = new Scanner(XSKeywords.Values);
+                _scannerCache[documentId] = scanner;
+                return scanner;
+            }
+
+            if (_scanner == null) //td: ?
+                _scanner = new Scanner(XSKeywords.Values);
 
             return _scanner;
         }
@@ -177,11 +218,32 @@ namespace Excess.VS
 
         public override Source CreateSource(IVsTextLines buffer)
         {
-            var filePath = FilePathUtilities.GetFilePath(buffer) + ".cs";
-            ImmutableArray<DocumentId> documents = _workspace.CurrentSolution.GetDocumentIdsWithFilePath(filePath);
+            var scanner = GetScanner(buffer) as Scanner;
+            Debug.Assert(scanner != null);
+            Debug.Assert(scanner.Keywords == XSKeywords.Values);
 
-            var documentId = documents[0];
-            return new ExcessSource(this, buffer, new Colorizer(this, buffer, GetScanner(buffer)), _workspace, documentId);
+            var documentId = GetDocumentId(buffer);
+            scanner.Keywords = GetKeywords(documentId);
+            return new ExcessSource(this, buffer, new Colorizer(this, buffer, scanner), _workspace, documentId);
+        }
+
+        private IEnumerable<string> GetKeywords(DocumentId documentId)
+        {
+            var project = null as ProjectCache;
+            if (_projects.TryGetValue(documentId.ProjectId, out project))
+                return project.Keywords(documentId);
+
+            return XSKeywords.Values;
+        }
+
+        private DocumentId GetDocumentId(IVsTextLines buffer)
+        {
+            var filePath = FilePathUtilities.GetFilePath(buffer) + ".cs";
+            var documents = _workspace
+                .CurrentSolution
+                .GetDocumentIdsWithFilePath(filePath);
+
+            return documents.Single();
         }
     }
 }

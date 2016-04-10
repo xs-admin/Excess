@@ -57,7 +57,11 @@ namespace Excess.Compiler.Roslyn
 
         public SyntaxNode SemanticalMap(SyntaxNode node)
         {
-            return _map[node];
+            SyntaxNode result;
+            if (_map.TryGetValue(node, out result))
+                return result;
+
+            return node;
         }
 
         public SyntaxNode SemanticalMap(SourceSpan src)

@@ -14,13 +14,19 @@ namespace Excess.VS
 
     class Scanner : IScanner
     {
-        private IVsTextBuffer _buffer;
         string _source;
-        private IEnumerator<SyntaxToken> _tokens;
+        IEnumerator<SyntaxToken> _tokens;
+        IEnumerable<string> _keywords;
 
-        public Scanner(IVsTextBuffer buffer)
+        public Scanner(IEnumerable<string> keywords)
         {
-            _buffer = buffer;
+            _keywords = keywords;
+        }
+
+        public IEnumerable<string> Keywords
+        {
+            get { return _keywords; }
+            set { _keywords = value; }
         }
 
         bool IScanner.ScanTokenAndProvideInfoAboutIt(TokenInfo tokenInfo, ref int state)
@@ -227,8 +233,16 @@ namespace Excess.VS
                     break;
 
                 case SyntaxKind.IdentifierToken:
-                    tokenInfo.Type = TokenType.Identifier;
-                    tokenInfo.Color = TokenColor.Identifier;
+                    if (_keywords != null && _keywords.Contains(token.ValueText))
+                    {
+                        tokenInfo.Type = TokenType.Keyword;
+                        tokenInfo.Color = TokenColor.Keyword;
+                    }
+                    else
+                    {
+                        tokenInfo.Type = TokenType.Identifier;
+                        tokenInfo.Color = TokenColor.Identifier;
+                    }
                     break;
 
                 case SyntaxKind.StringLiteralToken:
