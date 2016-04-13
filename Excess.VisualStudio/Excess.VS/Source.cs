@@ -37,22 +37,23 @@ namespace Excess.VS
             _document = service.CreateExcessDocument(GetText(), _id);
             _document.applyChanges(CompilerStage.Syntactical);
 
-            if (!_document.HasSemanticalChanges())
+            //td: check saving error
+            saveCodeBehind(_document);
+
+            if (_document.HasSemanticalChanges())
             {
-                saveCodeBehind(_document); //td: check error
-                return; 
+                var doc = _workspace.CurrentSolution.GetDocument(_id);
+                var semanticRoot = doc.GetSyntaxRootAsync().Result;
+
+                _document.Mapper.SemanticalChange(_document.SyntaxRoot, semanticRoot);
+
+                var model = doc.GetSemanticModelAsync().Result;
+                _document.Model = model;
+                _document.applyChanges(CompilerStage.Semantical);
+
+                saveCodeBehind(_document); 
             }
 
-            var doc = _workspace.CurrentSolution.GetDocument(_id);
-            var semanticRoot = doc.GetSyntaxRootAsync().Result;
-
-            _document.Mapper.SemanticalChange(_document.SyntaxRoot, semanticRoot);
-
-            var model = doc.GetSemanticModelAsync().Result;
-            _document.Model = model;
-            _document.applyChanges(CompilerStage.Semantical);
-
-            saveCodeBehind(_document); //td: check error
             base.BeginParse();
         }
 

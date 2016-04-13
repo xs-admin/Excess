@@ -26,7 +26,8 @@ namespace Excess.Entensions.XS
             Members     .Apply(compiler);
             Events      .Apply(compiler);
             TypeDef     .Apply(compiler);
-            Arrays      .Apply(compiler);  
+            Arrays      .Apply(compiler);
+            Match       .Apply(compiler);
         }
 
         public static Injector Create()

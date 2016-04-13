@@ -94,9 +94,11 @@ namespace Excess.Entensions.XS
 
         private static SyntaxNode ReturnType(SyntaxNode node, SyntaxNode newNode, SemanticModel model, Scope scope)
         {
-            var method = (MethodDeclarationSyntax)node;
-            var type = RoslynCompiler.GetReturnType(method.Body, model);
+            var method = node as MethodDeclarationSyntax;
+            if (method == null)
+                return node;
 
+            var type = RoslynCompiler.GetReturnType(method.Body, model);
             return (newNode as MethodDeclarationSyntax)
                 .WithReturnType(type);
         }

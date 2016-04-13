@@ -44,8 +44,14 @@ namespace Excess.Compiler.Roslyn
                 {
                     if (handler.ErrorId == id)
                     {
-                        var node = root.FindNode(error.Location.SourceSpan);
-                        handler.Handler(node, model, scope);
+                        try
+                        {
+                            var node = root.FindNode(error.Location.SourceSpan);
+                            handler.Handler(node, model, scope);
+                        }
+                        catch
+                        {
+                        }
                     }
                 }
             }

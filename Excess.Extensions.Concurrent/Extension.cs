@@ -29,6 +29,11 @@ namespace Excess.Extensions.Concurrent
 
     public class Extension
     {
+        public static IEnumerable<string> GetKeywords()
+        {
+            return new[] { "concurrent" };
+        }
+
         public static void Apply(RoslynCompiler compiler, Options options = null)
         {
             if (options == null)
@@ -291,13 +296,17 @@ namespace Excess.Extensions.Concurrent
         {
             return (oldNode, newNode, model, scope) =>
             {
-                Debug.Assert(newNode is ClassDeclarationSyntax);
-                var @class = new ExpressionLinker(ctx, model)
-                    .Visit(newNode);
+                if (newNode is ClassDeclarationSyntax)
+                {
+                    var @class = new ExpressionLinker(ctx, model)
+                        .Visit(newNode);
 
-                Debug.Assert(@class != null);
-                Debug.Assert(@class is ClassDeclarationSyntax);
-                return ctx.Update(@class as ClassDeclarationSyntax);
+                    Debug.Assert(@class != null);
+                    Debug.Assert(@class is ClassDeclarationSyntax);
+                    return ctx.Update(@class as ClassDeclarationSyntax);
+                }
+
+                return newNode;
             };
         }
 

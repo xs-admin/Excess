@@ -11,6 +11,11 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
 using Excess.Compiler.Roslyn;
 using Excess.Entensions.XS;
+using Microsoft.VisualStudio.ComponentModelHost;
+using NuGet;
+using NuGet.VisualStudio;
+using System.IO;
+using System.Reflection;
 
 namespace Excess.VS
 {
@@ -24,9 +29,11 @@ namespace Excess.VS
             "method",
             "property",
             "on",
+            "match",
+            "constructor",
+            "var",
         };
     }
-
 
     class ExcessLanguageService : LanguageService
     {
@@ -47,28 +54,55 @@ namespace Excess.VS
         class ProjectCache
         {
             VisualStudioWorkspace _workspace;
-            public ProjectCache(VisualStudioWorkspace workspace)
+            string _path;
+            public ProjectCache(VisualStudioWorkspace workspace, ProjectId projectId, IVsPackageInstallerServices nuget, IVsPackageInstallerEvents nugetEvents)
             {
+                var project = workspace.CurrentSolution.GetProject(projectId);
+
                 _workspace = workspace;
+                _path = Path.GetDirectoryName(project.FilePath);
+
+                registerPackages(nuget.GetInstalledPackages());
+                nugetEvents.PackageInstalled += nugetEventsPackageInstalled;
             }
 
-            Project _project;
+            private void registerPackages(IEnumerable<IVsPackageMetadata> packages)
+            {
+                foreach (var package in packages)
+                    addExtension(package);
+            }
+
+            private void nugetEventsPackageInstalled(IVsPackageMetadata package)
+            {
+                addExtension(package);
+            }
+
+            private void addExtension(IVsPackageMetadata package)
+            {
+                //td: determine if the package is installed in this project
+                if (!package.Id.StartsWith("Excess.Extensions."))
+                    return;
+
+                var name = package
+                    .Id
+                    .Substring("Excess.Extensions.".Length)
+                    .ToLower();
+
+                var extensionPath = Path.Combine(package.InstallPath, $"tools\\{package.Id}.dll");
+                if (!File.Exists(extensionPath))
+                    return;
+
+                _extensions[name] = loadReference(extensionPath, name);
+            }
+
             Dictionary<long, RoslynCompiler> _cache = new Dictionary<long, RoslynCompiler>();
             Dictionary<long, IEnumerable<string>> _keywordCache = new Dictionary<long, IEnumerable<string>>();
             Dictionary<DocumentId, long> _documentExtensions = new Dictionary<DocumentId, long>();
             Dictionary<string, Action<RoslynCompiler, IList<string>>> _extensions = new Dictionary<string, Action<RoslynCompiler, IList<string>>>();
 
-            public RoslynCompiler GetCompiler(
-                ProjectId projectId, 
-                DocumentId documentId, 
-                ICollection<UsingDirectiveSyntax> extensions)
+            public RoslynCompiler GetCompiler(DocumentId documentId, ICollection<UsingDirectiveSyntax> extensions, out IEnumerable<string> keywords)
             {
-                var project = _workspace.CurrentSolution.GetProject(projectId);
-                if (_project != project)
-                {
-                    _project = project;
-                    updateExtensions();
-                }
+                keywords = null;
 
                 //get an unique id 
                 var extensionNames = extensions
@@ -82,22 +116,36 @@ namespace Excess.VS
                 //test the cache for some combination of extensions
                 var result = null as RoslynCompiler;
                 if (_cache.TryGetValue(hashCode, out result))
+                {
+                    keywords = _keywordCache[hashCode];
                     return result;
+                }
 
                 result = new RoslynCompiler();
                 XSLang.Apply(result);
 
-                var keywords = new List<string>();
+                var keywordList = new List<string>();
                 foreach (var extension in extensions.ToArray())
                 {
-                    var extensionName = extension.Name.ToString();
-                    var extensionFunc = null as Action<RoslynCompiler, IList<string>>;
-                    if (_extensions.TryGetValue(extensionName, out extensionFunc))
-                        extensionFunc(result, keywords);
-                    else
-                        extensions.Remove(extension);
+                    if (isExtension(extension))
+                    {
+                        var extensionName = extension
+                            .Name
+                            .ToString()
+                            .Substring("xs.".Length);
+
+                        var extensionFunc = null as Action<RoslynCompiler, IList<string>>;
+                        if (_extensions.TryGetValue(extensionName, out extensionFunc))
+                        {
+                            extensionFunc(result, keywordList);
+                            continue;
+                        }
+                    }
+
+                    extensions.Remove(extension);
                 }
 
+                keywords = keywordList;
                 _cache[hashCode] = result;
                 _keywordCache[hashCode] = keywords;
                 return result;
@@ -117,35 +165,61 @@ namespace Excess.VS
                 return result;
             }
 
-            private void updateExtensions()
+            private Action<RoslynCompiler, IList<string>> loadReference(string filePath, string name)
             {
-                Debug.Assert(_project != null);
+                var assembly = Assembly.LoadFrom(filePath);
 
-                var newDict = new Dictionary<string, Action<RoslynCompiler, IList<string>>>();
-                foreach (var reference in _project.AnalyzerReferences)
+                var extensionType = assembly
+                    .GetTypes()
+                    .Where(type => type.Name == "Extension")
+                    .SingleOrDefault();
+                var flavorsType = assembly
+                    .GetTypes()
+                    .Where(type => type.Name == "Flavors")
+                    .SingleOrDefault();
+
+                var items = name.Split('.');
+                var result = null as Action<RoslynCompiler, IList<string>>;
+                switch (items.Length)
                 {
-                    string name;
-                    if (isExtension(reference, out name))
-                    {
-                        var function = null as Action<RoslynCompiler, IList<string>>;
-                        if (!_extensions.TryGetValue(name, out function))
-                            function = loadReference(reference);
-
-                        newDict[name] = function;
-                    }
+                    case 1:
+                        if (flavorsType != null)
+                            result = loadExtension(flavorsType, "Default", extensionType);
+                        
+                         if (result == null && extensionType != null)
+                            result = loadExtension(extensionType, "Apply", extensionType);
+                        break;
+                    case 2:
+                        if (flavorsType != null)
+                            result = loadExtension(flavorsType, items[1], extensionType);
+                        break;
+                    default:
+                        throw new ArgumentException(name);
                 }
 
-                _extensions = newDict;
+                return result;
             }
 
-            private Action<RoslynCompiler, IList<string>> loadReference(AnalyzerReference reference)
+            private Action<RoslynCompiler, IList<string>> loadExtension(Type type, string methodName, Type extensionType)
             {
-                throw new NotImplementedException();
-            }
+                var method = type.GetMethod(methodName);
+                if (method == null)
+                    return null;
 
-            private bool isExtension(AnalyzerReference reference, out string name)
-            {
-                throw new NotImplementedException();
+                var keywordMethod = extensionType != null
+                    ? extensionType.GetMethod("GetKeywords")
+                    : null;
+
+                return (compiler, keywords) =>
+                {
+                    method.Invoke(null, new object[] { compiler });
+
+                    if (keywordMethod != null)
+                    {
+                        var extKeywords = (IEnumerable<string>)keywordMethod.Invoke(null, new object[] {});
+                        keywords.AddRange(extKeywords);
+                    }
+                };
             }
 
             private bool isExtension(UsingDirectiveSyntax @using) => @using.Name.ToString().StartsWith("xs.");
@@ -158,21 +232,45 @@ namespace Excess.VS
             ProjectCache cache;
             if (!_projects.TryGetValue(document.ProjectId, out cache))
             {
-                cache = new ProjectCache(_workspace);
+                ensureNuget();
+
+                cache = new ProjectCache(_workspace, document.ProjectId, _nuget, _nugetEvents);
                 _projects[document.ProjectId] = cache;
             }
 
+            //td: we need the using list in order to deduct the extensions
+            //however, we don't need to parse the whole document.
+            //We must optimize this (maybe a custom using parser?)
             var compilationUnit = CSharp.ParseCompilationUnit(text);
             var extensions = new List<UsingDirectiveSyntax>(compilationUnit.Usings);
-            var compiler = cache.GetCompiler(document.ProjectId, document, extensions);
-            var result = new RoslynDocument(
-                compiler.Scope, 
-                compilationUnit
-                    .RemoveNodes(extensions, SyntaxRemoveOptions.KeepEndOfLine));
+            var keywords = null as IEnumerable<string>;
+            var compiler = cache.GetCompiler(document, extensions, out keywords);
 
+            //build a new document
+            var result = new RoslynDocument(compiler.Scope, text);
             result.Mapper = new MappingService();
             compiler.apply(result);
+
+            var scanner = null as Scanner;
+            if (keywords != null && keywords.Any()  && _scannerCache.TryGetValue(document, out scanner))
+                scanner.Keywords = XSKeywords.Values.Union(keywords);
+
             return result;
+        }
+
+        IVsPackageInstallerServices _nuget;
+        IVsPackageInstallerEvents _nugetEvents;
+        private void ensureNuget()
+        {
+            if (_nuget == null)
+            {
+                var componentModel = (IComponentModel)GetService(typeof(SComponentModel));
+                _nuget = componentModel.GetService<IVsPackageInstallerServices>();
+                _nugetEvents = componentModel.GetService<IVsPackageInstallerEvents>();
+            }
+
+            if (_nuget == null || _nugetEvents == null)
+                throw new InvalidOperationException("nuget");
         }
 
         public override string GetFormatFilterList()
@@ -190,25 +288,19 @@ namespace Excess.VS
         }
 
         Dictionary<DocumentId, Scanner> _scannerCache = new Dictionary<DocumentId, Scanner>();
-        Scanner _scanner;
         public override IScanner GetScanner(IVsTextLines buffer)
         {
             var documentId = GetDocumentId(buffer);
-            if (documentId != null)
-            {
-                var result = null as Scanner;
-                if (_scannerCache.TryGetValue(documentId, out result))
-                    return result;
+            if (documentId == null)
+                throw new ArgumentException("buffer");
 
-                var scanner = new Scanner(XSKeywords.Values);
-                _scannerCache[documentId] = scanner;
-                return scanner;
-            }
+            var result = null as Scanner;
+            if (_scannerCache.TryGetValue(documentId, out result))
+                return result;
 
-            if (_scanner == null) //td: ?
-                _scanner = new Scanner(XSKeywords.Values);
-
-            return _scanner;
+            var scanner = new Scanner(XSKeywords.Values);
+            _scannerCache[documentId] = scanner;
+            return scanner;
         }
 
         public override AuthoringScope ParseSource(ParseRequest req)

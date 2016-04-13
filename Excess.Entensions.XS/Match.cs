@@ -65,22 +65,32 @@ namespace Excess.Entensions.XS
                 }
             }
 
-            //convert cases to ifs
-            Debug.Assert(cases.Count == statements.Count);
-            var last = cases.Count - 1;
-            IfStatementSyntax result = CSharp.IfStatement(cases[last], statements[last]);
-
-            if (defaultStatement != null)
-                result = result.WithElse(CSharp.ElseClause(defaultStatement));
-
-
-            for (int i = last - 1; i >= 0; i--)
+            if (cases.Count != statements.Count)
             {
-                result = CSharp.IfStatement(cases[i], statements[i])
-                    .WithElse(CSharp.ElseClause(result));
+                scope.AddError("match01", "malformed match", node);
+                return node;
             }
 
-            return result;
+            //convert cases to ifs
+            var last = cases.Count - 1;
+            if (last >= 0)
+            {
+                IfStatementSyntax result = CSharp.IfStatement(cases[last], statements[last]);
+
+                if (defaultStatement != null)
+                    result = result.WithElse(CSharp.ElseClause(defaultStatement));
+
+
+                for (int i = last - 1; i >= 0; i--)
+                {
+                    result = CSharp.IfStatement(cases[i], statements[i])
+                        .WithElse(CSharp.ElseClause(result));
+                }
+
+                return result;
+            }
+            else
+                return switchExpr;
         }
 
         private static StatementSyntax caseStatement(SyntaxList<StatementSyntax> statements)
