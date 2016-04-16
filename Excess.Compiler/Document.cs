@@ -28,7 +28,7 @@ namespace Excess.Compiler
         TNode SyntaxRoot { get; set; }
         TModel Model { get; set; }
         Scope Scope { get; }
-        IMappingService<TNode> Mapper { get; set; }
+        IMappingService<TToken, TNode> Mapper { get; set; }
     }
 
     public interface IDocumentInjector<TToken, TNode, TModel>
@@ -53,7 +53,7 @@ namespace Excess.Compiler
         public int Length { get; internal set; }
     }
 
-    public interface IMappingService<TNode>
+    public interface IMappingService<TToken, TNode>
     {
         TNode LexicalTree { get; set; }
         TNode SyntacticalTree { get; set; }
@@ -65,5 +65,9 @@ namespace Excess.Compiler
         TNode SemanticalMap(SourceSpan src);
         TNode SemanticalMap(TNode node);
         SourceSpan SourceMap(TNode node);
+
+        TToken Transform(TToken token);
+        string MapLines(TNode node, string fileName);
+        TNode AppyMappings(TNode root, Dictionary<int, string> mappings);
     }
 }

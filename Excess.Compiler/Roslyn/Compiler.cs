@@ -1,21 +1,27 @@
-﻿using Excess.Compiler.Core;
-using Microsoft.CodeAnalysis;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Diagnostics;
+using System.Collections.Generic;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Text;
+using Excess.Compiler.Core;
 
 namespace Excess.Compiler.Roslyn
 {
-    using Microsoft.CodeAnalysis.CSharp;
-    using Microsoft.CodeAnalysis.CSharp.Syntax;
-    using Microsoft.CodeAnalysis.Text;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
     public class CompilerService : ICompilerService<SyntaxToken, SyntaxNode, SemanticModel>
     {
+        public string TokenToString(SyntaxToken token, out string xsId, out string mappingId)
+        {
+            xsId = RoslynCompiler.TokenMark(token);
+            mappingId = RoslynCompiler.TokenMapping(token);
+            return token.ToFullString();
+        }
+
         public string TokenToString(SyntaxToken token, out string xsId)
         {
             xsId = RoslynCompiler.TokenMark(token);
@@ -144,6 +150,15 @@ namespace Excess.Compiler.Roslyn
         }
 
         public IEnumerable<SyntaxToken> NodeTokens(SyntaxNode node) => node.DescendantTokens();
+        public int TokenOffset(SyntaxToken token)
+        {
+            if (!token.HasLeadingTrivia)
+                return 0;
+
+            return token
+                .LeadingTrivia
+                .Sum(trivia => trivia.Span.Length);
+        }
 
         public int GetOffset(SyntaxToken token)
         {
@@ -465,7 +480,7 @@ namespace Excess.Compiler.Roslyn
         {
             var annotation = node
                 .GetAnnotations(NodeIdAnnotation)
-                    .FirstOrDefault();
+                .FirstOrDefault();
 
             if (annotation != null)
                 return annotation.Data;
@@ -489,6 +504,15 @@ namespace Excess.Compiler.Roslyn
             return null;
         }
 
+        public static string TokenMapping(SyntaxToken token)
+        {
+            var annotation = token.GetAnnotations("xs").FirstOrDefault();
+            if (annotation != null)
+                return annotation.Data;
+
+            return null;
+        }
+        
         public static SyntaxToken MarkToken(SyntaxToken token, string mark, object value)
         {
             var result = value == null ? new SyntaxAnnotation(mark) :

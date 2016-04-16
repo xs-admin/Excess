@@ -1,21 +1,19 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Diagnostics;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using Microsoft.VisualStudio.Package;
 using Microsoft.VisualStudio.TextManager.Interop;
 using Microsoft.VisualStudio.LanguageServices;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Diagnostics;
-using Excess.Compiler.Roslyn;
-using Excess.Entensions.XS;
 using Microsoft.VisualStudio.ComponentModelHost;
 using NuGet;
 using NuGet.VisualStudio;
-using System.IO;
-using System.Reflection;
+using Excess.Compiler.Roslyn;
+using Excess.Entensions.XS;
 
 namespace Excess.VS
 {

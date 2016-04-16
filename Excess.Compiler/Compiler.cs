@@ -62,6 +62,7 @@ namespace Excess.Compiler
 
     public interface ICompilerService<TToken, TNode, TModel>
     {
+        string TokenToString(TToken token, out string xsId, out string mappingId);
         string TokenToString(TToken token, out string xsId);
         string TokenToString(TToken token, out int xsId);
         string TokenToString(TToken token);
@@ -82,5 +83,6 @@ namespace Excess.Compiler
         IEnumerable<TNode> Find(TNode node, IEnumerable<string> xsIds);
         TNode Find(TNode node, SourceSpan value);
         IEnumerable<TToken> NodeTokens(TNode node);
+        int TokenOffset(TToken token);
     }
 }

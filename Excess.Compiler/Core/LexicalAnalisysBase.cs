@@ -529,7 +529,7 @@ namespace Excess.Compiler.Core
 
         public void apply(IDocument<TToken, TNode, TModel> document)
         {
-            document.change(LexicalPass);
+            document.change(LexicalPass(document.Mapper));
 
             if (_normalizeStatements != null || _normalizeMembers != null || _normalizeTypes != null)
                 document.change(normalize, "normalize");
@@ -542,10 +542,16 @@ namespace Excess.Compiler.Core
 
         protected abstract TNode normalize(TNode node, Scope scope);
 
-        private IEnumerable<TToken> LexicalPass(IEnumerable<TToken> tokens, Scope scope)
+        private Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>> LexicalPass(IMappingService<TToken, TNode> mapper)
         {
-            var allTokens = tokens.ToArray();
-            return TransformSpan(allTokens, new TokenSpan(0, allTokens.Length), scope);
+            return (tokens, scope) =>
+            {
+                if (mapper != null)
+                    tokens = tokens.Select(token => mapper.Transform(token));
+
+                var allTokens = tokens.ToArray();
+                return TransformSpan(allTokens, new TokenSpan(0, allTokens.Length), scope);
+            };
         }
 
         private class MatchInfo

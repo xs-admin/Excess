@@ -27,7 +27,7 @@ namespace Excess.Compiler.Core
         public TNode SyntaxRoot { get { return getRoot(); } set { setRoot(value); } }
         public TModel Model { get; set; }
         public Scope Scope { get { return _scope; } }
-        public IMappingService<TNode> Mapper { get; set; }
+        public IMappingService<TToken, TNode> Mapper { get; set; }
 
         protected abstract TNode getRoot();
         protected abstract void setRoot(TNode node);
@@ -280,13 +280,15 @@ namespace Excess.Compiler.Core
 
         private TNode calculateNewText(IEnumerable<TToken> tokens, Dictionary<string, SourceSpan> annotations, out string modifiedText)
         {
-            //td: !! mapping info
             StringBuilder newText = new StringBuilder();
             string currId = null;
+            bool hasMappings = Mapper != null;
+            Dictionary<int, string> mappings = hasMappings? new Dictionary<int, string>() : null;
             foreach (var token in tokens)
             {
                 string excessId;
-                string toInsert = _compiler.TokenToString(token, out excessId);
+                string mappingId;
+                string toInsert = _compiler.TokenToString(token, out excessId, out mappingId);
 
                 //store the actual position in the transformed stream of any tokens pending processing
                 if (excessId != currId)
@@ -305,6 +307,9 @@ namespace Excess.Compiler.Core
                 else
                     currId = null;
 
+                if (mappings != null && mappingId != null)
+                    mappings.Add(newText.Length + _compiler.TokenOffset(token), mappingId);
+
                 newText.Append(toInsert);
             }
 
@@ -314,9 +319,9 @@ namespace Excess.Compiler.Core
 
             //assign ids to the nodes found
             root = _compiler.MarkTree(root);
-            _original = root;
 
-            processAnnotations(root, annotations);
+            root = processAnnotations(root, annotations, mappings);
+            _original = root;
 
             //allow for preprocessing of the original 
             notifyOriginal(modifiedText);
@@ -334,7 +339,7 @@ namespace Excess.Compiler.Core
             return root;
         }
 
-        private void processAnnotations(TNode root, Dictionary<string, SourceSpan> annotations)
+        private TNode processAnnotations(TNode root, Dictionary<string, SourceSpan> annotations, Dictionary<int, string> mappings)
         {
             foreach (var annotation in annotations)
             {
@@ -352,6 +357,14 @@ namespace Excess.Compiler.Core
                     }
                 }
             }
+
+            if (mappings != null)
+            {
+                //when mapping, we mark every token as to recover the original positions
+                return Mapper.AppyMappings(root, mappings);
+            }
+
+            return root;
         }
 
         protected virtual void notifyOriginal(string newText)

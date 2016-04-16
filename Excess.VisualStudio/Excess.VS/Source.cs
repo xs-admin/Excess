@@ -1,16 +1,13 @@
-﻿using Excess.Compiler;
-using Excess.Compiler.Roslyn;
+﻿using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
 using Microsoft.VisualStudio.LanguageServices;
 using Microsoft.VisualStudio.Package;
 using Microsoft.VisualStudio.TextManager.Interop;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Excess.Compiler;
+using Excess.Compiler.Roslyn;
+using System.IO;
 
 namespace Excess.VS
 {
@@ -33,12 +30,12 @@ namespace Excess.VS
                 //td: cancel 
             }
 
-            ExcessLanguageService service = (ExcessLanguageService)this.LanguageService;
+            var service = (ExcessLanguageService)LanguageService;
             _document = service.CreateExcessDocument(GetText(), _id);
             _document.applyChanges(CompilerStage.Syntactical);
 
-            //td: check saving error
-            saveCodeBehind(_document);
+            //td: check saving error & SemanticalChanges
+            saveCodeBehind(_document, false);
 
             if (_document.HasSemanticalChanges())
             {
@@ -50,19 +47,30 @@ namespace Excess.VS
                 var model = doc.GetSemanticModelAsync().Result;
                 _document.Model = model;
                 _document.applyChanges(CompilerStage.Semantical);
-
-                saveCodeBehind(_document); 
             }
 
+            saveCodeBehind(_document, true);
             base.BeginParse();
         }
 
-        private bool saveCodeBehind(RoslynDocument doc)
+        private bool saveCodeBehind(RoslynDocument doc, bool mapLines)
         {
             doc.SyntaxRoot = doc.SyntaxRoot
                 .NormalizeWhitespace(elasticTrivia: true); //td: optimize
 
-            var solution = _workspace.CurrentSolution.WithDocumentSyntaxRoot(_id, _document.SyntaxRoot);
+            var solution = _workspace.CurrentSolution;
+            if (mapLines)
+            {
+                var mapper = doc.Mapper; 
+                var vsDocument = solution.GetDocument(_id);
+                var filePath = vsDocument?.FilePath;
+
+                solution = solution.WithDocumentText(_id, SourceText.From(doc.Mapper
+                    .MapLines(doc.SyntaxRoot, filePath)));
+            }
+            else
+                solution = solution.WithDocumentSyntaxRoot(_id, _document.SyntaxRoot);
+
             return _workspace.TryApplyChanges(solution);
         }
 

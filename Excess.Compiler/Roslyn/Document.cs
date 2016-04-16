@@ -137,6 +137,7 @@ namespace Excess.Compiler.Roslyn
             Debug.Assert(Model != null);
 
             var nodes = new Dictionary<SyntaxNode, Func<SyntaxNode, SyntaxNode, SemanticModel, Scope, SyntaxNode>>();
+
             foreach (var transformer in transformers)
             {
                 SyntaxNode tNode = node
@@ -144,15 +145,8 @@ namespace Excess.Compiler.Roslyn
                     .First();
 
                 Debug.Assert(tNode != null); //td: cases
-
-                if (Mapper != null)
-                    tNode = Mapper.SemanticalMap(tNode);
-
                 nodes[tNode] = transformer.Value;
             }
-
-            if (Mapper != null)
-                node = Mapper.SemanticalMap(node);
 
             IEnumerable<SyntaxNode> toReplace = nodes.Keys;
             return node.ReplaceNodes(toReplace, (oldNode, newNode) =>
@@ -160,8 +154,10 @@ namespace Excess.Compiler.Roslyn
                 Func<SyntaxNode, SyntaxNode, SemanticModel, Scope, SyntaxNode> handler;
                 if (nodes.TryGetValue(oldNode, out handler))
                 {
-                    var result = handler(oldNode, newNode, Model, _scope);
-                    return result;
+                    if (Mapper != null)
+                        oldNode = Mapper.SemanticalMap(oldNode);
+
+                    return handler(oldNode, newNode, Model, _scope);
                 }
 
                 return newNode;
