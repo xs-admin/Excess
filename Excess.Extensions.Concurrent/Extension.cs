@@ -8,10 +8,10 @@ using Microsoft.CodeAnalysis.CSharp;
 using Excess.Compiler;
 using Excess.Compiler.Roslyn;
 using Excess.Extensions.Concurrent.Model;
+using Excess.Concurrent.Runtime;
 
 namespace Excess.Extensions.Concurrent
 {
-    using Excess.Concurrent.Runtime;
     using CSharp = SyntaxFactory;
     using Roslyn = RoslynCompiler;
 
@@ -21,19 +21,24 @@ namespace Excess.Extensions.Concurrent
         {
             GenerateID = true; //td: tidy up
             BlockUntilNextEvent = true;
+            ThreadCount = 4;
+            GenerateAppConstructor = true;
         }
 
+        public int ThreadCount { get; set; }
         public bool BlockUntilNextEvent { get; set; }
+        public bool AsFastAsPossible { get; set; }
         public bool GenerateInterface { get; set; }
         public bool GenerateRemote { get; set; }
         public bool GenerateID { get; set; }
+        public bool GenerateAppConstructor { get; internal set; }
     }
 
     public class Extension
     {
         public static IEnumerable<string> GetKeywords()
         {
-            return new[] { "concurrent" };
+            return new[] { "concurrent", "spawn" };
         }
 
         public static void Apply(RoslynCompiler compiler, Options options = null)
@@ -56,7 +61,16 @@ namespace Excess.Extensions.Concurrent
                     .then(lexical.transform()
                         .remove("keyword")
                         .replace("ref", "class ")
-                        .then(CompileObject(options)));
+                        .then(CompileObject(options)))
+
+                .match()
+                    .token("concurrent", named: "keyword")
+                    .token("app", named: "ref")
+                    .token("{")
+                    .then(lexical.transform()
+                        .replace("keyword", "class ")
+                        .replace("ref", "__app")
+                        .then(CompileApp(options)));
 
             compiler.Environment()
                 .dependency(new[]
@@ -612,6 +626,72 @@ namespace Excess.Extensions.Concurrent
 
                 return Compile(node, scope, true, options);
             };
+        }
+
+        private static Func<SyntaxNode, Scope, SyntaxNode> CompileApp(Options options)
+        {
+            var compileObject = CompileObject(options);
+            return (node, scope) =>
+            {
+                var result = (ClassDeclarationSyntax)node;
+                var main = result
+                    .DescendantNodes()
+                    .OfType<MethodDeclarationSyntax>()
+                    .Where(method => method.Identifier.ToString() == "main")
+                    .SingleOrDefault();
+
+                if (main != null)
+                    result = result.ReplaceNode(main, CompileAppMain(main, options));
+                else
+                    Debug.Assert(false, "concurrent app must have main"); //td: error
+
+                //convert to concurrent object
+                result = (ClassDeclarationSyntax)compileObject(result, scope);
+
+                //add a way for this app to run, stop and await completion
+                var runner = null as Func<BlockSyntax, MemberDeclarationSyntax>;
+                if (options.GenerateAppConstructor)
+                    runner = body => Templates.AppConstructor.WithBody(body);
+                else
+                    runner = body => Templates.AppRun.WithBody(body); 
+
+                return result.AddMembers(
+                    runner(Templates.AppThreaded
+                        .Get<BlockSyntax>(
+                            Roslyn.Constant(options.ThreadCount),
+                            Roslyn.Constant(options.BlockUntilNextEvent),
+                            options.AsFastAsPossible
+                                ? Templates.HighPriority
+                                : Templates.NormalPriority)),
+                    Templates.AppStop,
+                    Templates.AppAwait);
+            };
+        }
+
+        private static MethodDeclarationSyntax CompileAppMain(MethodDeclarationSyntax main, Options options)
+        {
+            foreach (var parameter in main.ParameterList.Parameters)
+            {
+                if (parameter.Default != null)
+                {
+                    switch (parameter.Identifier.ToString())
+                    {
+                        case "threads":
+                            var value = parameter
+                                ?.Default
+                                .Value;
+
+                            Debug.Assert(value != null); //td: error
+                            options.ThreadCount = int.Parse(value.ToString());
+                            break;
+                    }
+                }
+            }
+
+            return main
+                .WithParameterList(Templates.AppMainParameters)
+                .WithBody(main.Body
+                    .AddStatements(CSharp.ReturnStatement()));
         }
     }
 }

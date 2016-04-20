@@ -284,5 +284,39 @@ namespace Excess.Extensions.Concurrent
 
         public static Template ObjectId = Template.Parse("public readonly Guid __ID = Guid.NewGuid();");
 
+        public static Template AppThreaded = Template.ParseStatements(@"
+                var app = new ThreadedConcurrentApp(
+                    threadCount: __0,
+                    blockUntilNextEvent: __1,
+                    priority: __2);
+
+                app.Start();
+                app.Spawn(new __app());
+
+                __app.Await = () => app.AwaitCompletion(); 
+                __app.Stop = () => app.Stop(); 
+            }");
+
+        public static ConstructorDeclarationSyntax AppConstructor = Template.Parse(@"
+            static __app()
+            {
+            }").Get<ConstructorDeclarationSyntax>();
+
+        public static MethodDeclarationSyntax AppRun = Template.Parse(@"
+            public static void Run()
+            {
+            }").Get<MethodDeclarationSyntax>();
+
+
+        public static PropertyDeclarationSyntax AppStop = Template.Parse("public static Action Stop {get; private set;}")
+            .Get<PropertyDeclarationSyntax>();
+
+        public static PropertyDeclarationSyntax AppAwait = Template.Parse("public static Action Await {get; private set;}")
+            .Get<PropertyDeclarationSyntax>();
+
+        public static ExpressionSyntax HighPriority = CSharp.ParseExpression("ThreadPriority.Highest");
+        public static ExpressionSyntax NormalPriority = CSharp.ParseExpression("ThreadPriority.Normal");
+
+        public static ParameterListSyntax AppMainParameters = CSharp.ParseParameterList("(object[] args)");
     }
 }
