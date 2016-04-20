@@ -30,10 +30,10 @@ namespace xsc
                             {{
                                 Files = directoryFiles();
                                 SolutionFile = null;
+                                Transpile = false;
                                 
                                 {toRun}
 
-                                validateFlavors();
                                 if (SolutionFile != null)
                                     buildSolution();
                                 else
@@ -134,6 +134,7 @@ namespace xsc
             { "-file",       (args, index) => consumeOne(args, index, "Files = new [] {@\"{0}\"};") },
             { "-files",      (args, index) => consumeOne(args, index, "Files = directoryFiles(@\"{0}\");") },
             { "-extensions", (args, index) => consumeOne(args, index, "Extensions = directoryExtensions(@\"{0}\");") },
+            { "-transpile",  (args, index) => addLine("Transpile = true;") },
         };
 
         private static ParseResult consumeOne(string[] args, int index, string template)
@@ -142,6 +143,15 @@ namespace xsc
             {
                 Result = string.Format(template, args[index]),
                 Consumed = 1
+            };
+        }
+
+        private static ParseResult addLine(string line)
+        {
+            return new ParseResult
+            {
+                Result = line,
+                Consumed = 0
             };
         }
 

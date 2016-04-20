@@ -55,19 +55,13 @@ namespace Excess.Compiler
 
     public interface IMappingService<TToken, TNode>
     {
-        TNode LexicalTree { get; set; }
-        TNode SyntacticalTree { get; set; }
-        TNode SemanticalTree { get; set; }
+        TToken Map(TToken token);
+        void   Map(TNode node, TNode to);
+        TNode  NodeAt(TNode node);
+        TNode  NodeAt(TNode root, int line, int column);
+        TToken TokenAt(TNode root, int line, int column);
 
-        void LexicalChange(SourceSpan oldSpan, int newLength);
-        void SemanticalChange(TNode oldNode, TNode newNode);
-
-        TNode SemanticalMap(SourceSpan src);
-        TNode SemanticalMap(TNode node);
-        SourceSpan SourceMap(TNode node);
-
-        TToken Transform(TToken token);
-        string MapLines(TNode node, string fileName);
         TNode AppyMappings(TNode root, Dictionary<int, string> mappings);
+        string RenderMapping(TNode node, string fileName);
     }
 }

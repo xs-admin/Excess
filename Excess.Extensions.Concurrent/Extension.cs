@@ -20,8 +20,10 @@ namespace Excess.Extensions.Concurrent
         public Options()
         {
             GenerateID = true; //td: tidy up
+            BlockUntilNextEvent = true;
         }
 
+        public bool BlockUntilNextEvent { get; set; }
         public bool GenerateInterface { get; set; }
         public bool GenerateRemote { get; set; }
         public bool GenerateID { get; set; }
@@ -186,11 +188,9 @@ namespace Excess.Extensions.Concurrent
                 .Where(member =>
                 {
                     if (member is MethodDeclarationSyntax && Roslyn.IsVisible(member))
-                    {
                         return !(member as MethodDeclarationSyntax)
                             .Modifiers
                             .Any(modifier => modifier.Kind() == SyntaxKind.StaticKeyword);
-                    }
 
                     return false;
                 });

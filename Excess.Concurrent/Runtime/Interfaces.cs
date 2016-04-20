@@ -10,6 +10,7 @@ namespace Excess.Concurrent.Runtime
     {
         T Spawn<T>() where T : IConcurrentObject, new();
         T Spawn<T>(params object[] args) where T : IConcurrentObject;
+        T Spawn<T>(T t) where T : IConcurrentObject;
         void Spawn(IConcurrentObject @object);
         IConcurrentObject Spawn(string type, params object[] args);
 

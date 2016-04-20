@@ -547,7 +547,7 @@ namespace Excess.Compiler.Core
             return (tokens, scope) =>
             {
                 if (mapper != null)
-                    tokens = tokens.Select(token => mapper.Transform(token));
+                    tokens = tokens.Select(token => mapper.Map(token));
 
                 var allTokens = tokens.ToArray();
                 return TransformSpan(allTokens, new TokenSpan(0, allTokens.Length), scope);

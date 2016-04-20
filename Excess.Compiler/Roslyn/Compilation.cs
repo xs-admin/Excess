@@ -93,6 +93,21 @@ namespace Excess.Compiler.Roslyn
         }
 
         List<CompilationDocument> _documents = new List<CompilationDocument>();
+        public IEnumerable<IDocument<SyntaxToken, SyntaxNode, SemanticModel>> Documents()
+        {
+            return _documents
+                .Where(doc => doc.Document != null)
+                .Select(doc => doc.Document);
+        }
+
+        public string DocumentFileName(IDocument<SyntaxToken, SyntaxNode, SemanticModel> document)
+        {
+            var internalDoc = _documents
+                .Where(doc => doc.Document == document)
+                .SingleOrDefault();
+
+            return internalDoc?.Id;
+        }
 
         Scope _scope = new Scope(null);
         public Scope Scope { get { return _scope; } }

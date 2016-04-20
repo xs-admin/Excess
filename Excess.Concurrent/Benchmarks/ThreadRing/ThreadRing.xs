@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using xs.concurrent;
 
 namespace ThreadRing
 {
@@ -20,8 +16,8 @@ namespace ThreadRing
         {
             if (value == 0)
             {
-                console.write(_idx);
-                Node.Stop();
+                Console.WriteLine(_idx);
+                App.Stop();
             }
             else
                 Next.token(value - 1);

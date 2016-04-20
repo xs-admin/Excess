@@ -2,24 +2,12 @@
 
 namespace ChameneoRedux
 {
-    public enum Color
-    {
-        blue,
-        red,    
-        yellow,    
-    }
-
     public concurrent class Chameneo
     {
         public Color Colour {get; private set;}
         public int Meetings {get; private set;}
         public int MeetingsWithSelf {get; private set;}
         public Broker MeetingPlace {get; private set;}
-
-        public Chameneo(Broker meetingPlace, int color)
-        : this(meetingPlace, (Color)color)
-        {
-        }
 
         public Chameneo(Broker meetingPlace, Color color)
         {
@@ -31,61 +19,22 @@ namespace ChameneoRedux
     
         void main() 
 	    {
-            for(;;)
+            while(!MeetingPlace.Finished)
             {
                 MeetingPlace.request(this);
                 await meet;
             }
+
+			MeetingPlace.stop();
 	    }
 	                
         public void meet(Chameneo other, Color color)
         {
-            Colour = compliment(Colour, color);
+            Colour = ColorUtils.Compliment(Colour, color);
             Meetings++;
             if (other == this)
                 MeetingsWithSelf++;
         }                    
-
-        public void print()
-        {
-            Console.WriteLine($"{Colour}, {Meetings}, {MeetingsWithSelf}");
-        }                    
-
-        private static Color compliment(Color c1, Color c2)
-        {
-            switch (c1)
-            {
-                case Color.blue:
-                    switch (c2)
-                    {
-                        case Color.blue: return Color.blue;
-                        case Color.red: return Color.yellow;
-                        case Color.yellow: return Color.red;
-                        default: break;
-                    }
-                    break;
-                case Color.red:
-                    switch (c2)
-                    {
-                        case Color.blue: return Color.yellow;
-                        case Color.red: return Color.red;
-                        case Color.yellow: return Color.blue;
-                        default: break;
-                    }
-                    break;
-                case Color.yellow:
-                    switch (c2)
-                    {
-                        case Color.blue: return Color.red;
-                        case Color.red: return Color.blue;
-                        case Color.yellow: return Color.yellow;
-                        default: break;
-                    }
-                    break;
-            }
-            throw new Exception();
-        }
-
     }
 
     public concurrent class Broker
@@ -96,9 +45,14 @@ namespace ChameneoRedux
             _meetings = meetings;
         }
 
+		public bool Finished {get; private set;}
+
         Chameneo _first = null;
         public void request(Chameneo creature)
         {
+            if (_meetings == 0)
+				return;
+
             if (_first != null)
             {
                 //perform meeting
@@ -110,10 +64,20 @@ namespace ChameneoRedux
                 _first = null;
                 _meetings--;
                 if (_meetings == 0)
-                    App.Stop();
+                    Finished = true;
             }
             else
                 _first = creature;
         }
+
+		bool _stopped = false;
+		public void stop()
+		{
+			if (!_stopped)
+			{
+				_stopped = true;
+				App.Stop();
+			}
+		}
     }
 }

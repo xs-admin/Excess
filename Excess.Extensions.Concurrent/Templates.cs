@@ -172,11 +172,12 @@ namespace Excess.Extensions.Concurrent
 
         public static Template AwaitExpr = Template.ParseStatement("__0 || false;");
 
+        //td: on failure: notify app and perhaps kill the object
         public static Template StartObject = Template.Parse(@"
             protected override void __started()
             {
                 var __enum = __0;
-                __advance(__enum.GetEnumerator());
+                __enter(() => __advance(__enum.GetEnumerator()), null);
             }");
 
         public static Template ConcurrentMain = Template.ParseExpression("__concurrentmain()");

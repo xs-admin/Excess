@@ -155,7 +155,7 @@ namespace Excess.Compiler.Roslyn
                 if (nodes.TryGetValue(oldNode, out handler))
                 {
                     if (Mapper != null)
-                        oldNode = Mapper.SemanticalMap(oldNode);
+                        oldNode = Mapper.NodeAt(oldNode);
 
                     return handler(oldNode, newNode, Model, _scope);
                 }

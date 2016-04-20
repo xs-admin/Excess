@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Diagnostics;
+using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Excess.Compiler.Roslyn;
 
 namespace xsc
 {
-    using System.Diagnostics;
-    using System.Reflection;
     using ExcessCompilation = Excess.Compiler.Roslyn.Compilation;
 
     public class Runner
@@ -18,6 +18,7 @@ namespace xsc
         public IDictionary<string, Action<RoslynCompiler>> Extensions { get; set; }
         public IDictionary<string, string> Flavors { get; set; }
         public string OutputPath { get; set; }
+        public bool Transpile { get; set; }
 
         public Runner()
         {
@@ -82,6 +83,8 @@ namespace xsc
 
                     Flavors.Remove(id);
                 }
+                else
+                    throw new InvalidOperationException($"invalid flavor: {flavor} for {id}");
             }
 
             if (method == null)
@@ -117,12 +120,6 @@ namespace xsc
                 }).SingleOrDefault();
         }
 
-        public void validateFlavors()
-        {
-            if (Flavors.Any())
-                throw new InvalidProgramException($"invalid argument(s) {string.Join(", ", Flavors.Keys.ToArray())}");
-        }
-
         public void buildSolution()
         {
             if (SolutionFile == null || !File.Exists(SolutionFile))
@@ -144,7 +141,13 @@ namespace xsc
                 .Where(path => Path
                     .GetFileName(path)
                     .Equals("Program.cs"))
-                .Any(); 
+                .Any();
+
+            if (Extensions == null)
+            {
+                var exePath = Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+                Extensions = directoryExtensions(exePath);
+            }
 
             var compilation = new ExcessCompilation(
                 extensions: Extensions,
@@ -152,6 +155,9 @@ namespace xsc
 
             foreach (var file in actualFiles)
             {
+                if (file.EndsWith(".xs.cs"))
+                    continue;
+
                 var ext = Path.GetExtension(file);
                 switch (ext)
                 {
@@ -166,20 +172,34 @@ namespace xsc
             var result = compilation.build(out errors);
             if (result != null)
             {
-                var outputPath = OutputPath;
-                if (outputPath == null)
-                    outputPath = Path.Combine(
-                        _directory,
-                        Path.GetFileName(_directory));
+                if (Transpile)
+                {
+                    foreach (var document in compilation.Documents())
+                    {
+                        var filename = compilation.DocumentFileName(document) + ".cs";
+                        Console.WriteLine($"Generated: {filename}");
 
-                if (Path.GetExtension(outputPath) == string.Empty)
-                    outputPath = outputPath + (asExe ? ".exe" : ".dll");
+                        var text = document.SyntaxRoot.NormalizeWhitespace().ToFullString();
+                        File.WriteAllText(filename, text);
+                    }
+                }
+                else
+                {
+                    var outputPath = OutputPath;
+                    if (outputPath == null)
+                        outputPath = Path.Combine(
+                            _directory,
+                            Path.GetFileName(_directory));
 
-                Debug.Assert(outputPath != null);
+                    if (Path.GetExtension(outputPath) == string.Empty)
+                        outputPath = outputPath + (asExe ? ".exe" : ".dll");
 
-                outputPath = Path.GetFullPath(outputPath);
-                File.WriteAllBytes(outputPath, result.GetBuffer());
-                Console.WriteLine($"Successfully built: {outputPath}");
+                    Debug.Assert(outputPath != null);
+
+                    outputPath = Path.GetFullPath(outputPath);
+                    File.WriteAllBytes(outputPath, result.GetBuffer());
+                    Console.WriteLine($"Successfully built: {outputPath}");
+                }
             }
             else
             {
@@ -187,6 +207,5 @@ namespace xsc
                     Console.Error.WriteLine(error.ToString());
             }
         }
-
     }
 }

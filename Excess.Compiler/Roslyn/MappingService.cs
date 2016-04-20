@@ -1,45 +1,18 @@
 ﻿using System;
 using System.Linq;
 using System.Text;
-using Microsoft.CodeAnalysis;
+using System.Diagnostics;
 using System.Collections.Generic;
-using Microsoft.CodeAnalysis.Text;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Excess.Compiler.Roslyn
 {
-    using Microsoft.CodeAnalysis.CSharp;
-    using System.Diagnostics;
-    using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
-
     public class MappingService : IMappingService<SyntaxToken, SyntaxNode>
     {
-        public SyntaxNode LexicalTree     { get; set; }
-        public SyntaxNode SyntacticalTree { get; set; }
-        public SyntaxNode SemanticalTree  { get; set; }
-
-        struct Change
-        {
-            public int Original;
-            public int Modified;
-            public bool isChange;
-        }
-
-        List<Change> _changes = new List<Change>();
-        int _currOriginal = 0;
-        public void LexicalChange(SourceSpan oldSpan, int newLength)
-        {
-            _changes.Add(new Change
-            {
-                Original = oldSpan.Start - _currOriginal,
-                Modified = oldSpan.Start - _currOriginal,
-                isChange = false
-            });
-
-            _changes.Add(new Change { Original = oldSpan.Length, Modified = newLength, isChange = true });
-        }
-
         Dictionary<SyntaxNode, SyntaxNode> _map = new Dictionary<SyntaxNode, SyntaxNode>();
-        public void SemanticalChange(SyntaxNode oldNode, SyntaxNode newNode)
+        public void Map(SyntaxNode oldNode, SyntaxNode newNode)
         {
             _map[oldNode] = newNode;
 
@@ -58,7 +31,7 @@ namespace Excess.Compiler.Roslyn
             }
         }
 
-        public SyntaxNode SemanticalMap(SyntaxNode node)
+        public SyntaxNode NodeAt(SyntaxNode node)
         {
             SyntaxNode result;
             if (_map.TryGetValue(node, out result))
@@ -67,35 +40,41 @@ namespace Excess.Compiler.Roslyn
             return node;
         }
 
-        public SyntaxNode SemanticalMap(SourceSpan src)
+        public SyntaxNode NodeAt(SyntaxNode root, int line, int column)
         {
-            if (LexicalTree == null)
-                throw new InvalidOperationException("LexicalTree");
+            var lineString = line.ToString();
+            var lineDirective = root
+                .DescendantTrivia()
+                .OfType<LineDirectiveTriviaSyntax>()
+                .Where(ld => ld.Line.Text == lineString)
+                .FirstOrDefault();
 
-            if (SyntacticalTree == null)
-                throw new InvalidOperationException("SyntacticalTree");
-
-            TextSpan lexSpan = mapSource(src);
-            if (lexSpan == null)
+            if (lineDirective == null)
                 return null;
 
-            SyntaxNode node = LexicalTree.FindNode(lexSpan, getInnermostNodeForTie : true);
-            if (node == null)
-                return null;
+            return lineDirective.Parent;
+        }
 
-            node = mapLexical(node);
-            if (node == null)
-                return null;
+        public SyntaxToken TokenAt(SyntaxNode root, int line, int column)
+        {
+            var lineString = line.ToString();
+            var lineDirective = root
+                .DescendantTrivia()
+                .OfType<LineDirectiveTriviaSyntax>()
+                .Where(ld => ld.Line.Text == lineString)
+                .FirstOrDefault();
 
-            if (SemanticalTree != null)
-                return _map[node];
+            if (lineDirective == null || lineDirective.Parent == null)
+                return default(SyntaxToken);
 
-            return node;
+            return lineDirective
+                .GetLastToken()
+                .GetNextToken();
         }
 
         Dictionary<int, int> _originalTokens = new Dictionary<int, int>(); //id -> line
         int _line = 1;
-        public SyntaxToken Transform(SyntaxToken token)
+        public SyntaxToken Map(SyntaxToken token)
         {
             if (token.HasLeadingTrivia && token.LeadingTrivia.Any(trivia => trivia.IsKind(SyntaxKind.EndOfLineTrivia)))
                 _line++;
@@ -109,7 +88,7 @@ namespace Excess.Compiler.Roslyn
             return token.WithAdditionalAnnotations(new SyntaxAnnotation("xs", idx.ToString()));
         }
 
-        public string MapLines(SyntaxNode node, string fileName)
+        public string RenderMapping(SyntaxNode node, string fileName)
         {
             var result = new StringBuilder($"#line 1 \"{fileName}\"{Environment.NewLine}");
             var line = new StringBuilder();
@@ -129,10 +108,10 @@ namespace Excess.Compiler.Roslyn
                 {
                     if (original != lineNumber)
                     {
-                        if (lineNumber > 1)
+                        if (original > 1)
                         {
                             if (lineChanged != lineNumber)
-                                result.AppendLine(); //more than one original line on a generated line
+                                AppendCurrent(result, line, true); //more than one original line on a generated line
 
                             result.AppendLine($"#line {original}");
                             AppendCurrent(result, line, false);
@@ -177,22 +156,6 @@ namespace Excess.Compiler.Roslyn
                         return nt.WithAdditionalAnnotations(new SyntaxAnnotation("xs", annotation));
                     return nt;
                 });
-                
-        }
-
-        private SyntaxNode mapLexical(SyntaxNode node)
-        {
-            throw new NotImplementedException();
-        }
-
-        private TextSpan mapSource(SourceSpan src)
-        {
-            throw new NotImplementedException();
-        }
-
-        public SourceSpan SourceMap(SyntaxNode node)
-        {
-            throw new NotImplementedException();
         }
     }
 }

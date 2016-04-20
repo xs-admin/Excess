@@ -384,7 +384,7 @@ namespace Concurrent.Tests
 
                         public void print()
                         {
-                            Console.WriteLine($""{ Colour}, { Meetings}, { MeetingsWithSelf}"");
+                            Console.WriteLine($""{Colour}, {Meetings}, {MeetingsWithSelf}"");
                         }
 
                         private static Color compliment(Color c1, Color c2)
@@ -446,7 +446,7 @@ namespace Concurrent.Tests
                                 _first = null;
                                 _meetings--;
                                 if (_meetings == 0)
-                                    App.Stop();
+                                    throw new OperationCanceledException();
                             }
                             else
                                 _first = creature;

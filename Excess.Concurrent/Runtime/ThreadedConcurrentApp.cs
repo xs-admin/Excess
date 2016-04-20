@@ -14,11 +14,17 @@ namespace Excess.Concurrent.Runtime
     public class ThreadedConcurrentApp : BaseConcurrentApp
     {
         int _threadCount;
+        int _stopCount;
         ManualResetEvent _blockUntilNextEvent;
-        public ThreadedConcurrentApp(FactoryMap types, int threadCount = 1, bool blockUntilNextEvent = true) : base(types)
+        public ThreadedConcurrentApp(FactoryMap types = null, 
+            int threadCount = 1, 
+            bool blockUntilNextEvent = true,
+            ThreadPriority priority = ThreadPriority.Normal,
+            int stopCount = 1) : base(types)
         {
             _threadCount = threadCount;
-
+            _priority = priority;
+            _stopCount = stopCount;
             if (blockUntilNextEvent)
                 _blockUntilNextEvent = new ManualResetEvent(false);
         }
@@ -32,11 +38,12 @@ namespace Excess.Concurrent.Runtime
         CancellationTokenSource _stop = new CancellationTokenSource();
         public override void Stop()
         {
-            _stop.Cancel();
+            if (--_stopCount == 0)
+                _stop.Cancel();
         }
 
         public override void AwaitCompletion()
-        {
+        { 
             _stop.Token.WaitHandle.WaitOne();
         }
 
@@ -102,8 +109,7 @@ namespace Excess.Concurrent.Runtime
                             }
                             catch (Exception ex)
                             {
-                                if (message.Failure != null)
-                                    message.Failure(ex);
+                                message.Failure?.Invoke(ex);
                             }
                         }
                     }

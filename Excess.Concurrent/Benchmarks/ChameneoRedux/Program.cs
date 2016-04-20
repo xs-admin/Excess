@@ -1,57 +1,156 @@
-﻿using ChameneoRedux;
-using Excess.Concurrent.Runtime;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using System.Threading;
+using Excess.Concurrent.Runtime;
 
-namespace ChameneoChameneo.Color.redux
+namespace ChameneoRedux
 {
+    public enum Color
+    {
+        blue,
+        red,
+        yellow,
+    }
+
+    public class PrintUtils
+    {
+        public static void PrintColors()
+        {
+            printCompliment(Color.blue, Color.blue);
+            printCompliment(Color.blue, Color.red);
+            printCompliment(Color.blue, Color.yellow);
+            printCompliment(Color.red, Color.blue);
+            printCompliment(Color.red, Color.red);
+            printCompliment(Color.red, Color.yellow);
+            printCompliment(Color.yellow, Color.blue);
+            printCompliment(Color.yellow, Color.red);
+            printCompliment(Color.yellow, Color.yellow);
+        }
+
+        public static void PrintRun(Color[] colors, IEnumerable<Chameneo> creatures)
+        {
+            for (int i = 0; i < colors.Length; i++)
+                Console.Write(" " + colors[i]);
+
+            Console.WriteLine();
+
+            var total = 0;
+            foreach (var creature in creatures)
+            {
+                Console.WriteLine($"{creature.Meetings} {getNumber(creature.MeetingsWithSelf)}");
+                total += creature.Meetings;
+            }
+
+            Console.WriteLine(getNumber(total));
+        }
+
+        private static void printCompliment(Color c1, Color c2)
+        {
+            Console.WriteLine(c1 + " + " + c2 + " -> " + ColorUtils.Compliment(c1, c2));
+        }
+
+        private static String[] NUMBERS = { "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine" };
+
+        private static String getNumber(int n)
+        {
+            StringBuilder sb = new StringBuilder();
+            String nStr = n.ToString();
+            for (int i = 0; i < nStr.Length; i++)
+            {
+                sb.Append(" ");
+                sb.Append(NUMBERS[(int)Char.GetNumericValue(nStr[i])]);
+            }
+
+            return sb.ToString();
+        }
+    }
+
+    public class ColorUtils
+    {
+        public static Color Compliment(Color c1, Color c2)
+        {
+            switch (c1)
+            {
+                case Color.blue:
+                    switch (c2)
+                    {
+                        case Color.blue: return Color.blue;
+                        case Color.red: return Color.yellow;
+                        case Color.yellow: return Color.red;
+                        default: break;
+                    }
+                    break;
+                case Color.red:
+                    switch (c2)
+                    {
+                        case Color.blue: return Color.yellow;
+                        case Color.red: return Color.red;
+                        case Color.yellow: return Color.blue;
+                        default: break;
+                    }
+                    break;
+                case Color.yellow:
+                    switch (c2)
+                    {
+                        case Color.blue: return Color.red;
+                        case Color.red: return Color.blue;
+                        case Color.yellow: return Color.yellow;
+                        default: break;
+                    }
+                    break;
+            }
+            throw new Exception();
+        }
+    }
+
     class Program
     {
         static void Main(string[] args)
         {
-        //    var node = new Node(4);
+            var app = new ThreadedConcurrentApp(
+                threadCount: 4,
+                blockUntilNextEvent: false, 
+                priority: ThreadPriority.Highest,
+                stopCount: 2);
+            app.Start();
 
-        //    Stopwatch sw = new Stopwatch();
-        //    sw.Start();
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
 
-        //    node.StopCount(2);
+            var meetings = 0;
+            if (args.Length != 1 || !int.TryParse(args[0], out meetings))
+                meetings = 600;
 
-        //    var meetings = 6 * 1000 * 1000;
-        //    var firstRun = Run(node, meetings, new[] {
-        //        Chameneo.Color.blue,
-        //        Chameneo.Color.red,
-        //        Chameneo.Color.yellow });
-        //    var secondRun = Run(node, meetings, new[] {
-        //        Chameneo.Color.blue,
-        //        Chameneo.Color.red,
-        //        Chameneo.Color.yellow,
-        //        Chameneo.Color.red,
-        //        Chameneo.Color.yellow,
-        //        Chameneo.Color.blue,
-        //        Chameneo.Color.red,
-        //        Chameneo.Color.yellow,
-        //        Chameneo.Color.red,
-        //        Chameneo.Color.blue });
+            var firstRunColors = new[] { Color.blue, Color.red, Color.yellow };
+            var firstRun = Run(app, meetings, firstRunColors);
 
-        //    node.WaitForCompletion();
+            var secondRunColors = new[] { Color.blue, Color.red, Color.yellow, Color.red, Color.yellow, Color.blue, Color.red, Color.yellow, Color.red, Color.blue };
+            var secondRun = Run(app, meetings, secondRunColors);
 
-        //    sw.Stop();
+            app.AwaitCompletion();
+            sw.Stop();
 
-        //    TimeSpan rt = TimeSpan.FromTicks(sw.ElapsedTicks);
-        //    Console.WriteLine($"Executed in: {rt.TotalSeconds}");
-        //    Console.ReadKey();
-        //}
+            PrintUtils.PrintColors();
+            Console.WriteLine();
+            PrintUtils.PrintRun(firstRunColors, firstRun);
+            Console.WriteLine();
+            PrintUtils.PrintRun(secondRunColors, secondRun);
 
-        //static IEnumerable<Chameneo> Run(Node node, int meetings, Chameneo.Color[] colors)
-        //{
-        //    var broker = node.Spawn(new Broker(meetings));
-        //    return colors
-        //        .Select(color => node.Spawn(new Chameneo(broker, color)))
-        //        .ToArray();
+            TimeSpan rt = TimeSpan.FromTicks(sw.ElapsedTicks);
+            Console.WriteLine($"Executed in: {rt.TotalSeconds}");
+            Console.ReadKey();
+        }
+
+        static IEnumerable<Chameneo> Run(IConcurrentApp app, int meetings, Color[] colors)
+        {
+            var id = 0;
+            var broker = app.Spawn(new Broker(meetings));
+            return colors
+                .Select(color => app.Spawn(new Chameneo(broker, color)))
+                .ToArray();
         }
     }
 }

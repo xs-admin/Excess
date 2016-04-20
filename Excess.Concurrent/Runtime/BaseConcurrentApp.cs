@@ -58,6 +58,12 @@ namespace Excess.Concurrent.Runtime
             return spawnObject((T)constructor.Invoke(args));
         }
 
+        public virtual T Spawn<T>(T t) where T : IConcurrentObject
+        {
+            spawnObject(t);
+            return t;
+        }
+
         public virtual void Spawn(IConcurrentObject @object)
         {
             //td: consider the policies based on the type list

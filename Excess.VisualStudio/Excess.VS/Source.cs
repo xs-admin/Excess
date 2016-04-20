@@ -42,7 +42,7 @@ namespace Excess.VS
                 var doc = _workspace.CurrentSolution.GetDocument(_id);
                 var semanticRoot = doc.GetSyntaxRootAsync().Result;
 
-                _document.Mapper.SemanticalChange(_document.SyntaxRoot, semanticRoot);
+                _document.Mapper.Map(_document.SyntaxRoot, semanticRoot);
 
                 var model = doc.GetSemanticModelAsync().Result;
                 _document.Model = model;
@@ -64,9 +64,11 @@ namespace Excess.VS
                 var mapper = doc.Mapper; 
                 var vsDocument = solution.GetDocument(_id);
                 var filePath = vsDocument?.FilePath;
+                if (filePath != null)
+                    filePath = filePath.Remove(filePath.Length - ".cs".Length);
 
                 solution = solution.WithDocumentText(_id, SourceText.From(doc.Mapper
-                    .MapLines(doc.SyntaxRoot, filePath)));
+                    .RenderMapping(doc.SyntaxRoot, filePath)));
             }
             else
                 solution = solution.WithDocumentSyntaxRoot(_id, _document.SyntaxRoot);

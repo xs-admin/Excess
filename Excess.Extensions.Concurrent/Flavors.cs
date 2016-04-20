@@ -10,6 +10,16 @@ namespace Excess.Extensions.Concurrent
             Extension.Apply(compiler);
         }
 
+        public static void Performance(RoslynCompiler compiler)
+        {
+            Extension.Apply(compiler, new Options
+            {
+                
+                GenerateInterface = false,
+                GenerateRemote = false,
+            });
+        }
+
         public static void Distributed(RoslynCompiler compiler)
         {
             Extension.Apply(compiler, new Options
