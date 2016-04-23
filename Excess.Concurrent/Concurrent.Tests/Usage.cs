@@ -542,7 +542,7 @@ namespace Concurrent.Tests
                             throw new Exception();
                         }
                     }
-                }", out text, false, false);
+                }", out text, false, true); //remote!
 
             Assert.IsNotNull(text);
         }

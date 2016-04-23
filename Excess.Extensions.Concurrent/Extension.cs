@@ -116,7 +116,7 @@ namespace Excess.Extensions.Concurrent
                 else if (member is MethodDeclarationSyntax)
                 {
                     var method = member as MethodDeclarationSyntax;
-                    if (compileMethod(method, ctx, scope))
+                    if (compileMethod(method, ctx, scope, options))
                     {
                         var isVoid = method.ReturnType.ToString() == "void";
                         var taskArgs = isVoid
@@ -173,10 +173,8 @@ namespace Excess.Extensions.Concurrent
             {
                 //add a remote type, to be used with an identity server  
                 var remoteMethod = null as MethodDeclarationSyntax;
-                var remoteType = createRemoteType(@class, out remoteMethod);
-                @class = @class.AddMembers(
-                    remoteMethod,
-                    remoteType);
+                createRemoteType(@class, scope, out remoteMethod);
+                @class = @class.AddMembers(remoteMethod);
             }
 
             if (options.GenerateID)
@@ -188,13 +186,44 @@ namespace Excess.Extensions.Concurrent
             return document.change(@class, Link(ctx), null);
         }
 
-        private static IEnumerable<MethodDeclarationSyntax> getConcurrentMethods(ClassDeclarationSyntax @class)
+        private static IEnumerable<MethodDeclarationSyntax> createRemoteMethods(ClassDeclarationSyntax @class)
         {
             return @class
                 .ChildNodes()
                 .OfType<MethodDeclarationSyntax>()
                 .Where(method => method.Identifier.ToString() != "__concurrentmain"
-                              && isInternalConcurrent(method));
+                              && isInternalConcurrent(method))
+                .Select(method => createRemoteMethod(method)); 
+        }
+
+        private static IEnumerable<MemberDeclarationSyntax> createRemoteConstructors(ClassDeclarationSyntax @class, string typeName)
+        {
+            var constructor = @class
+                .ChildNodes()
+                .OfType<ConstructorDeclarationSyntax>()
+                .OrderBy(ctor => ctor.ParameterList.Parameters.Count)
+                .FirstOrDefault();
+
+            var result = CSharp.ConstructorDeclaration(typeName)
+                .AddParameterListParameters(CSharp
+                    .Parameter(CSharp.Identifier("id")).WithType(CSharp.ParseTypeName("Guid")))
+                .WithBody(CSharp.Block(Templates.RemoteIdAssign))
+                .WithModifiers(Roslyn.@public);
+
+            if (constructor != null)
+                result = result.WithInitializer(CSharp.ConstructorInitializer(
+                    SyntaxKind.BaseConstructorInitializer,
+                    CSharp.ArgumentList(CSharp.SeparatedList(
+                        constructor
+                        .ParameterList
+                        .Parameters
+                        .Select(parameter => CSharp.Argument(
+                            CSharp.DefaultExpression(parameter.Type)))))));
+
+            return new MemberDeclarationSyntax[]
+            {
+                result
+            };
         }
 
         private static IEnumerable<MemberDeclarationSyntax> getConcurrentInterface(ClassDeclarationSyntax @class)
@@ -234,32 +263,36 @@ namespace Excess.Extensions.Concurrent
                 .WithSemicolonToken(CSharp.ParseToken(";"));
         }
 
-        private static ClassDeclarationSyntax createRemoteType(ClassDeclarationSyntax @class, out MethodDeclarationSyntax creation)
+        private static void createRemoteType(ClassDeclarationSyntax @class, Scope scope, out MethodDeclarationSyntax creation)
         {
             var originalName = @class.Identifier.ToString();
             var typeName = "__remote" + originalName;
 
             creation = Templates
                 .RemoteMethod
-                .Get<MethodDeclarationSyntax>(typeName, "I" + originalName);
+                .Get<MethodDeclarationSyntax>(typeName, originalName);
 
-            return @class
+            scope.AddType(@class
                 .WithIdentifier(CSharp.ParseToken(typeName))
+                .WithBaseList(CSharp.BaseList(CSharp.SeparatedList(new BaseTypeSyntax[] {
+                    CSharp.SimpleBaseType(CSharp.ParseTypeName(originalName))})))
                 .WithAttributeLists(CSharp.List<AttributeListSyntax>())
-                .WithMembers(CSharp.List<MemberDeclarationSyntax>(
-                    getConcurrentInterface(@class)
-                    .Union(getConcurrentMethods(@class)
-                        .Select(mm => createRemoteMethod(mm)))
-                    .Union(new[] {
+                .WithMembers(CSharp.List(
+                    createRemoteMethods(@class)
+                    .Union(createRemoteConstructors(@class, typeName))
+                    .Union(new MemberDeclarationSyntax[] {
                         Templates.RemoteId,
                         Templates.RemoteDispatch,
                         Templates.RemoteSerialize,
                         Templates.RemoteDeserialize
-                    })));
+                    }))));
         }
 
         private static bool isInternalConcurrent(MethodDeclarationSyntax method)
         {
+            if (!method.Modifiers.Any(modifier => modifier.IsKind(SyntaxKind.ProtectedKeyword)))
+                return false;
+
             var methodName = method
                 .Identifier
                 .ToString();
@@ -269,17 +302,7 @@ namespace Excess.Extensions.Concurrent
 
         private static MethodDeclarationSyntax createRemoteMethod(MethodDeclarationSyntax method)
         {
-            var original = method
-                .Parent
-                .DescendantNodes()
-                .OfType<MethodDeclarationSyntax>()
-                .Where(m => 
-                    method.Identifier.ToString() == "__concurrent" + m.Identifier.ToString() 
-                    && m.AttributeLists
-                        .Any(attrList => attrList
-                            .Attributes
-                            .Any(attr => attr.Name.ToString() == "Concurrent")))
-                .Single();
+            var original = method;
 
             var args = CSharp
                 .AnonymousObjectCreationExpression(CSharp.SeparatedList(method
@@ -301,6 +324,10 @@ namespace Excess.Extensions.Concurrent
                     .Get<ExpressionSyntax>(original.ReturnType);
 
             return method
+                .WithModifiers(CSharp.TokenList())
+                .AddModifiers(
+                    CSharp.Token(SyntaxKind.ProtectedKeyword),
+                    CSharp.Token(SyntaxKind.OverrideKeyword))
                 .WithBody(Templates
                     .RemoteInternalMethod
                     .Get<BlockSyntax>(
@@ -365,7 +392,7 @@ namespace Excess.Extensions.Concurrent
             }
         }
 
-        private static bool compileMethod(MethodDeclarationSyntax methodDeclaration, Class ctx, Scope scope)
+        private static bool compileMethod(MethodDeclarationSyntax methodDeclaration, Class ctx, Scope scope, Options options)
         {
             var method = methodDeclaration;
             var name = method.Identifier.ToString();
@@ -464,7 +491,7 @@ namespace Excess.Extensions.Concurrent
                             Roslyn.Quoted(name),
                             isProtected ? Roslyn.@true : Roslyn.@false));
                 else
-                    concurrentMethod(ctx, method);
+                    concurrentMethod(ctx, method, asVirtual: options.GenerateRemote);
             }
             else if (cc != null)
                 concurrentMethod(ctx, method);
@@ -507,7 +534,7 @@ namespace Excess.Extensions.Concurrent
             return null;
         }
 
-        private static MethodDeclarationSyntax concurrentMethod(Class ctx, MethodDeclarationSyntax method, bool forever = false)
+        private static MethodDeclarationSyntax concurrentMethod(Class ctx, MethodDeclarationSyntax method, bool forever = false, bool asVirtual = false)
         {
             var name = method.Identifier.ToString();
 
@@ -551,6 +578,12 @@ namespace Excess.Extensions.Concurrent
                         .Parameters
                         .ToArray()))
                 .WithBody(body);
+
+            if (asVirtual)
+                result = result
+                    .WithModifiers(CSharp.TokenList(
+                        CSharp.Token(SyntaxKind.ProtectedKeyword),
+                        CSharp.Token(SyntaxKind.VirtualKeyword)));
 
             ctx.AddMember(result);
             return result;

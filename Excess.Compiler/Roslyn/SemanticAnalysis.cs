@@ -36,24 +36,30 @@ namespace Excess.Compiler.Roslyn
 
         private SyntaxNode HandleErrors(SyntaxNode root, SemanticModel model, Scope scope)
         {
-            var errors = model.GetDiagnostics();
-            foreach (var error in errors)
+            try
             {
-                string id = error.Id;
-                foreach (var handler in _errors)
+                var errors = model.GetDiagnostics();
+                foreach (var error in errors)
                 {
-                    if (handler.ErrorId == id)
+                    string id = error.Id;
+                    foreach (var handler in _errors)
                     {
-                        try
+                        if (handler.ErrorId == id)
                         {
-                            var node = root.FindNode(error.Location.SourceSpan);
-                            handler.Handler(node, model, scope);
-                        }
-                        catch
-                        {
+                            try
+                            {
+                                var node = root.FindNode(error.Location.SourceSpan);
+                                handler.Handler(node, model, scope);
+                            }
+                            catch
+                            {
+                            }
                         }
                     }
                 }
+            }
+            catch
+            {
             }
 
             return root; //unmodified

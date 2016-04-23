@@ -235,12 +235,12 @@ namespace Excess.Extensions.Concurrent
         }
 
         public static Template RemoteMethod = Template.Parse(@"
-            public static _1 CreateRemote(
+            public static _1 CreateRemote(Guid id,
                 Action<Guid, string, string, Action<string>> dispatch,
                 Func<object, string> serialize,
                 Func<string, object> deserialize)
             {
-                return new _0
+                return new _0 (id)
                 {
                     Dispatch = dispatch,
                     Serialize = serialize,
@@ -329,5 +329,7 @@ namespace Excess.Extensions.Concurrent
                     __app.Await();
                 }
             }");
+
+        public static StatementSyntax RemoteIdAssign = CSharp.ParseStatement("Id = id;");
     }
 }

@@ -23,7 +23,7 @@ namespace Concurrent.Tests
             yellow,
         }
 
-        [Concurrent(id = "237bd5c2-b368-490f-b349-45e571e9eacf")]
+        [Concurrent(id = "17b9c4d1-02b6-4dbc-9e05-c2c2d7c73f90")]
         public class Chameneo : ConcurrentObject
         {
             public Color Colour
@@ -110,7 +110,7 @@ namespace Concurrent.Tests
                 }
             }
 
-            private IEnumerable<Expression> __concurrentmeet(Chameneo other, Color color, CancellationToken __cancellation, Action<object> __success, Action<Exception> __failure)
+            protected virtual IEnumerable<Expression> __concurrentmeet(Chameneo other, Color color, CancellationToken __cancellation, Action<object> __success, Action<Exception> __failure)
             {
                 Colour = ColorUtils.Compliment(Colour, color);
                 Meetings++;
@@ -168,10 +168,16 @@ namespace Concurrent.Tests
                 private bool? __op1_Right;
             }
 
+            public static Chameneo CreateRemote(Guid id, Action<Guid, string, string, Action<string>> dispatch, Func<object, string> serialize, Func<string, object> deserialize)
+            {
+                return new __remoteChameneo(id)
+                { Dispatch = dispatch, Serialize = serialize, Deserialize = deserialize };
+            }
+
             public readonly Guid __ID = Guid.NewGuid();
         }
 
-        [Concurrent(id = "c7197f4c-6b40-45cb-8052-c20813d099ff")]
+        [Concurrent(id = "cfa4152b-c569-4561-bf22-d2cec80f4c4e")]
         public class Broker : ConcurrentObject
         {
             int _meetings = 0;
@@ -198,7 +204,7 @@ namespace Concurrent.Tests
                 Finished(default(CancellationToken), null, null);
             }
 
-            private IEnumerable<Expression> __concurrentrequest(Chameneo creature, CancellationToken __cancellation, Action<object> __success, Action<Exception> __failure)
+            protected virtual IEnumerable<Expression> __concurrentrequest(Chameneo creature, CancellationToken __cancellation, Action<object> __success, Action<Exception> __failure)
             {
                 if (_meetings == 0)
                 {
@@ -258,7 +264,7 @@ namespace Concurrent.Tests
                 yield break;
             }
 
-            private IEnumerable<Expression> __concurrentFinished(CancellationToken __cancellation, Action<object> __success, Action<Exception> __failure)
+            protected virtual IEnumerable<Expression> __concurrentFinished(CancellationToken __cancellation, Action<object> __success, Action<Exception> __failure)
             {
                 {
                     var __expr2_var = new __expr2
@@ -338,11 +344,17 @@ namespace Concurrent.Tests
                 private bool? __op2_Right;
             }
 
+            public static Broker CreateRemote(Guid id, Action<Guid, string, string, Action<string>> dispatch, Func<object, string> serialize, Func<string, object> deserialize)
+            {
+                return new __remoteBroker(id)
+                { Dispatch = dispatch, Serialize = serialize, Deserialize = deserialize };
+            }
+
             public readonly Guid __ID = Guid.NewGuid();
         }
 
-        [Concurrent(id = "96743e64-f420-47c6-bd7d-423c242de010")]
-        [ConcurrentSingleton(id: "99ca417a-7dec-45ba-87d1-3d906455a171")]
+        [Concurrent(id = "612b967b-7627-419c-bbec-53cb5ee7cdd3")]
+        [ConcurrentSingleton(id: "7c2a03f8-9534-41c7-bbc6-71a4b80d2271")]
         public class __app : ConcurrentObject
         {
             protected override void __started()
@@ -560,6 +572,12 @@ namespace Concurrent.Tests
                 private bool? __op4_Right;
             }
 
+            public static __app CreateRemote(Guid id, Action<Guid, string, string, Action<string>> dispatch, Func<object, string> serialize, Func<string, object> deserialize)
+            {
+                return new __remote__app(id)
+                { Dispatch = dispatch, Serialize = serialize, Deserialize = deserialize };
+            }
+
             public readonly Guid __ID = Guid.NewGuid();
             static __app()
             {
@@ -640,6 +658,174 @@ namespace Concurrent.Tests
                 }
 
                 throw new Exception();
+            }
+        }
+
+        public class __remoteChameneo : Chameneo
+        {
+            protected override IEnumerable<Expression> __concurrentmeet(Chameneo other, Color color, CancellationToken __cancellation, Action<object> __success, Action<Exception> __failure)
+            {
+                var __expr = new Expression();
+                Dispatch(Id, "__concurrentmeet", Serialize(new
+                {
+                    other = other,
+                    color = color,
+                    __cancellation = __cancellation,
+                    __success = __success,
+                    __failure = __failure
+                }
+
+                ), __response =>
+                {
+                    var __res = Deserialize(__response);
+                    if (__res is Exception)
+                        __failure(__res as Exception);
+                    else
+                        __success((IEnumerable<Expression>)__res);
+                }
+
+                );
+                yield return __expr;
+            }
+
+            public __remoteChameneo(Guid id) : base(default(Broker), default(Color))
+            {
+                Id = id;
+            }
+
+            public Guid Id
+            {
+                get;
+                set;
+            }
+
+            public Action<Guid, string, string, Action<string>> Dispatch
+            {
+                get;
+                set;
+            }
+
+            public Func<object, string> Serialize
+            {
+                get;
+                set;
+            }
+
+            public Func<string, object> Deserialize
+            {
+                get;
+                set;
+            }
+        }
+
+        public class __remoteBroker : Broker
+        {
+            protected override IEnumerable<Expression> __concurrentrequest(Chameneo creature, CancellationToken __cancellation, Action<object> __success, Action<Exception> __failure)
+            {
+                var __expr = new Expression();
+                Dispatch(Id, "__concurrentrequest", Serialize(new
+                {
+                    creature = creature,
+                    __cancellation = __cancellation,
+                    __success = __success,
+                    __failure = __failure
+                }
+
+                ), __response =>
+                {
+                    var __res = Deserialize(__response);
+                    if (__res is Exception)
+                        __failure(__res as Exception);
+                    else
+                        __success((IEnumerable<Expression>)__res);
+                }
+
+                );
+                yield return __expr;
+            }
+
+            protected override IEnumerable<Expression> __concurrentFinished(CancellationToken __cancellation, Action<object> __success, Action<Exception> __failure)
+            {
+                var __expr = new Expression();
+                Dispatch(Id, "__concurrentFinished", Serialize(new
+                {
+                    __cancellation = __cancellation,
+                    __success = __success,
+                    __failure = __failure
+                }
+
+                ), __response =>
+                {
+                    var __res = Deserialize(__response);
+                    if (__res is Exception)
+                        __failure(__res as Exception);
+                    else
+                        __success((IEnumerable<Expression>)__res);
+                }
+
+                );
+                yield return __expr;
+            }
+
+            public __remoteBroker(Guid id) : base(default(int))
+            {
+                Id = id;
+            }
+
+            public Guid Id
+            {
+                get;
+                set;
+            }
+
+            public Action<Guid, string, string, Action<string>> Dispatch
+            {
+                get;
+                set;
+            }
+
+            public Func<object, string> Serialize
+            {
+                get;
+                set;
+            }
+
+            public Func<string, object> Deserialize
+            {
+                get;
+                set;
+            }
+        }
+
+        public class __remote__app : __app
+        {
+            public __remote__app(Guid id)
+            {
+                Id = id;
+            }
+
+            public Guid Id
+            {
+                get;
+                set;
+            }
+
+            public Action<Guid, string, string, Action<string>> Dispatch
+            {
+                get;
+                set;
+            }
+
+            public Func<object, string> Serialize
+            {
+                get;
+                set;
+            }
+
+            public Func<string, object> Deserialize
+            {
+                get;
+                set;
             }
         }
     }
