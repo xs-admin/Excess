@@ -11,6 +11,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Excess.Compiler", "..\Exces
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Excess.Extensions.XS", "..\Excess.Entensions.XS\Excess.Extensions.XS.csproj", "{A9FC6A37-7E7C-4098-9908-CB2E927B9274}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Excess.VS.ServerProject", "Excess.VS.ServerProject\Excess.VS.ServerProject.csproj", "{5A8B58FB-580A-4482-B329-C92233AB835A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Server.Template", "Server.Template\Server.Template.csproj", "{D92B0E3A-1F06-476F-98B7-E9EAF2CFC360}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +37,14 @@ Global
 		{A9FC6A37-7E7C-4098-9908-CB2E927B9274}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A9FC6A37-7E7C-4098-9908-CB2E927B9274}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A9FC6A37-7E7C-4098-9908-CB2E927B9274}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5A8B58FB-580A-4482-B329-C92233AB835A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5A8B58FB-580A-4482-B329-C92233AB835A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5A8B58FB-580A-4482-B329-C92233AB835A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5A8B58FB-580A-4482-B329-C92233AB835A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D92B0E3A-1F06-476F-98B7-E9EAF2CFC360}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D92B0E3A-1F06-476F-98B7-E9EAF2CFC360}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D92B0E3A-1F06-476F-98B7-E9EAF2CFC360}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D92B0E3A-1F06-476F-98B7-E9EAF2CFC360}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

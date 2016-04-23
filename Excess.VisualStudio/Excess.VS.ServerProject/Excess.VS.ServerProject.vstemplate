@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<VSTemplate Version="3.0.0" Type="Project" xmlns="http://schemas.microsoft.com/developer/vstemplate/2005" xmlns:sdk="http://schemas.microsoft.com/developer/vstemplate-sdkextension/2010">
+  <TemplateData>
+    <Name>Excess.VS.ServerProject</Name>
+    <Description>Excess.VS.ServerProject</Description>
+    <Icon>Excess.VS.ServerProject.ico</Icon>
+    <ProjectType>CSharp</ProjectType>
+    <RequiredFrameworkVersion>2.0</RequiredFrameworkVersion>
+    <SortOrder>1000</SortOrder>
+    <TemplateID>7ad6a833-2573-4adf-bdf9-4d0b729f9b13</TemplateID>
+    <CreateNewFolder>true</CreateNewFolder>
+    <DefaultName>ServerApp</DefaultName>
+    <ProvideDefaultName>true</ProvideDefaultName>
+  </TemplateData>
+  <TemplateContent>
+    <Project File="ProjectTemplate.csproj" ReplaceParameters="true">
+      <ProjectItem ReplaceParameters="true" TargetFileName="Properties\AssemblyInfo.cs">AssemblyInfo.cs</ProjectItem>
+      <Folder Name="client">
+          
+      </Folder>
+      <ProjectItem TargetFileName="Service1.xs" ReplaceParameters="true">Service1.xs</ProjectItem>
+      <ProjectItem SubType="Code" TargetFileName="Service1.xs/Service1.xs.cs" ReplaceParameters="true">Service1.xs.cs</ProjectItem>
+    </Project>
+  </TemplateContent>
+</VSTemplate>
