@@ -23,6 +23,8 @@ namespace Excess.Extensions.Concurrent
             BlockUntilNextEvent = true;
             ThreadCount = 4;
             GenerateAppConstructor = true;
+            GenerateInterface = false;
+            GenerateRemote = false;
         }
 
         public int ThreadCount { get; set; }
@@ -31,7 +33,8 @@ namespace Excess.Extensions.Concurrent
         public bool GenerateInterface { get; set; }
         public bool GenerateRemote { get; set; }
         public bool GenerateID { get; set; }
-        public bool GenerateAppConstructor { get; internal set; }
+        public bool GenerateAppConstructor { get; set; }
+        public bool GenerateAppProgram { get; set; }
     }
 
     public class Extension
@@ -164,7 +167,7 @@ namespace Excess.Extensions.Concurrent
 
             //generate the interface
             if (options.GenerateInterface)
-                document.change(node.Parent, Roslyn.AddMember(CreateInterface(@class)));
+                scope.AddType(CreateInterface(@class));
 
             if (options.GenerateRemote)
             {
@@ -210,7 +213,7 @@ namespace Excess.Extensions.Concurrent
                 });
         }
 
-        private static MemberDeclarationSyntax CreateInterface(ClassDeclarationSyntax @class)
+        private static TypeDeclarationSyntax CreateInterface(ClassDeclarationSyntax @class)
         {
             var concurrentInterface = getConcurrentInterface(@class);
 
@@ -483,7 +486,9 @@ namespace Excess.Extensions.Concurrent
                 ctx.Replace(methodDeclaration, method
                     .WithBody(CSharp.Block()
                         .WithStatements(CSharp.List(new[] {
-                            Templates.PrivateSignal
+                            isEmptySignal
+                                ? Templates.SignalDispatcher.Get<StatementSyntax>(Roslyn.Quoted(method.Identifier.ToString()))
+                                : Templates.PrivateSignal
                         }))));
                 return false;
             }
@@ -633,7 +638,10 @@ namespace Excess.Extensions.Concurrent
             var compileObject = CompileObject(options);
             return (node, scope) =>
             {
-                var result = (ClassDeclarationSyntax)node;
+                var result = (node as ClassDeclarationSyntax)
+                        .WithModifiers(CSharp.TokenList(
+                            CSharp.Token(SyntaxKind.PublicKeyword)));
+
                 var main = result
                     .DescendantNodes()
                     .OfType<MethodDeclarationSyntax>()
@@ -645,15 +653,24 @@ namespace Excess.Extensions.Concurrent
                 else
                     Debug.Assert(false, "concurrent app must have main"); //td: error
 
+                if (options.GenerateAppProgram)
+                    scope.AddType(Templates.AppProgram.Get<ClassDeclarationSyntax>());
+
                 //convert to concurrent object
                 result = (ClassDeclarationSyntax)compileObject(result, scope);
 
                 //add a way for this app to run, stop and await completion
                 var runner = null as Func<BlockSyntax, MemberDeclarationSyntax>;
                 if (options.GenerateAppConstructor)
-                    runner = body => Templates.AppConstructor.WithBody(body);
+                    runner = body => CSharp.ConstructorDeclaration("__app")
+                        .WithModifiers(CSharp.TokenList(
+                            CSharp.Token(SyntaxKind.StaticKeyword)))
+                        .WithBody(body);
                 else
-                    runner = body => Templates.AppRun.WithBody(body); 
+                    runner = body => Templates.AppRun.WithBody(options.GenerateAppProgram
+                        ? CSharp.Block(new StatementSyntax[] { Templates.AppAssignArguments }
+                            .Union(body.Statements))
+                        : body); 
 
                 return result.AddMembers(
                     runner(Templates.AppThreaded
@@ -663,6 +680,7 @@ namespace Excess.Extensions.Concurrent
                             options.AsFastAsPossible
                                 ? Templates.HighPriority
                                 : Templates.NormalPriority)),
+                    Templates.AppArguments,
                     Templates.AppStop,
                     Templates.AppAwait);
             };
@@ -689,9 +707,9 @@ namespace Excess.Extensions.Concurrent
             }
 
             return main
-                .WithParameterList(Templates.AppMainParameters)
+                .WithParameterList(CSharp.ParameterList())
                 .WithBody(main.Body
-                    .AddStatements(CSharp.ReturnStatement()));
+                    .AddStatements(Templates.AppStopCall));
         }
     }
 }

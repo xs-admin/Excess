@@ -205,6 +205,9 @@ namespace Excess.Compiler.Roslyn
 
         public static ExpressionSyntax Constant(object value)
         {
+            if (value is bool)
+                return (bool)value ? @true : @false;
+
             return SyntaxFactory.ParseExpression(value.ToString());
         }
 
@@ -931,7 +934,7 @@ namespace Excess.Compiler.Roslyn
             if (type == null)
                 return null;
 
-            return CSharp.ParseTypeName(type.Name);
+            return CSharp.ParseTypeName(type.ToString());
         }
 
         public static TypeSyntax SymbolTypeSyntax(ISymbol symbol)
@@ -940,7 +943,7 @@ namespace Excess.Compiler.Roslyn
             if (type == null)
                 return null;
 
-            return CSharp.ParseTypeName(type.Name);
+            return CSharp.ParseTypeName(type.ToString());
         }
 
         public static ITypeSymbol SymbolType(ISymbol symbol)
@@ -956,10 +959,7 @@ namespace Excess.Compiler.Roslyn
                 case SymbolKind.Method: return ((IMethodSymbol)symbol).ReturnType;
                 case SymbolKind.Parameter: return ((IParameterSymbol)symbol).Type;
                 case SymbolKind.NamedType: return (ITypeSymbol)symbol;
-                default:
-                    {
-                        return null;
-                    }
+                default: return null;
             }
         }
 

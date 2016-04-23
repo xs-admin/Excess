@@ -125,8 +125,7 @@ namespace Concurrent.Tests
                         })
                         .dependency<ConcurrentObject>(new string[]
                         {
-                            "Excess.Concurrent.Runtime",
-                            "Excess.Concurrent.Runtime.Core",
+                            "Excess.Concurrent.Runtime"
                         })),
 
                 new DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel>(compiler =>

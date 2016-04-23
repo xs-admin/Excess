@@ -132,6 +132,8 @@ namespace Excess.Extensions.Concurrent
                 yield break;
             }");
 
+        public static Template SignalDispatcher = Template.ParseStatement("__dispatch(__0);");
+
         public static Template TaskPublicMethod = Template.Parse(@"
             public Task<__1> _0(CancellationToken cancellation)
             {
@@ -293,20 +295,21 @@ namespace Excess.Extensions.Concurrent
                 app.Start();
                 app.Spawn(new __app());
 
-                __app.Await = () => app.AwaitCompletion(); 
-                __app.Stop = () => app.Stop(); 
-            }");
-
-        public static ConstructorDeclarationSyntax AppConstructor = Template.Parse(@"
-            static __app()
-            {
-            }").Get<ConstructorDeclarationSyntax>();
+                Await = () => app.AwaitCompletion(); 
+                Stop = () => app.Stop(); ");
 
         public static MethodDeclarationSyntax AppRun = Template.Parse(@"
-            public static void Run()
+            public static void Start(string[] args)
             {
             }").Get<MethodDeclarationSyntax>();
 
+
+        public static PropertyDeclarationSyntax AppArguments = Template.Parse("public static string[] Arguments {get; set;}")
+            .Get<PropertyDeclarationSyntax>();
+
+        public static ExpressionStatementSyntax AppAssignArguments = (ExpressionStatementSyntax)CSharp.ParseStatement("Arguments = args;");
+        public static ExpressionStatementSyntax AppStopCall = (ExpressionStatementSyntax)CSharp.ParseStatement("App.Stop();");
+        
 
         public static PropertyDeclarationSyntax AppStop = Template.Parse("public static Action Stop {get; private set;}")
             .Get<PropertyDeclarationSyntax>();
@@ -317,6 +320,14 @@ namespace Excess.Extensions.Concurrent
         public static ExpressionSyntax HighPriority = CSharp.ParseExpression("ThreadPriority.Highest");
         public static ExpressionSyntax NormalPriority = CSharp.ParseExpression("ThreadPriority.Normal");
 
-        public static ParameterListSyntax AppMainParameters = CSharp.ParseParameterList("(object[] args)");
+        public static Template AppProgram = Template.Parse(@"
+            class Program
+            {
+                static void Main(string[] args)
+                {
+                    __app.Start(args);
+                    __app.Await();
+                }
+            }");
     }
 }

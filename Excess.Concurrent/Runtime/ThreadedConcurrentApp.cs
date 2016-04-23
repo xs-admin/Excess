@@ -39,7 +39,11 @@ namespace Excess.Concurrent.Runtime
         public override void Stop()
         {
             if (--_stopCount == 0)
+            {
                 _stop.Cancel();
+                if (_blockUntilNextEvent != null)
+                    _blockUntilNextEvent.Set();
+            }
         }
 
         public override void AwaitCompletion()
@@ -83,7 +87,12 @@ namespace Excess.Concurrent.Runtime
                         {
                             if (_blockUntilNextEvent != null)
                             {
-                                _blockUntilNextEvent.WaitOne();
+                                WaitHandle.WaitAny(new WaitHandle[]
+                                {
+                                    _blockUntilNextEvent,
+                                    cancellation.WaitHandle
+                                });
+
                                 _blockUntilNextEvent.Reset();
                             }
                             else

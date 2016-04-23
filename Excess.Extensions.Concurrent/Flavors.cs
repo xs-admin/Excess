@@ -14,7 +14,10 @@ namespace Excess.Extensions.Concurrent
         {
             Extension.Apply(compiler, new Options
             {
-                
+                GenerateAppProgram = true, //td
+                GenerateAppConstructor = false,
+                BlockUntilNextEvent = false,
+                AsFastAsPossible = true,
                 GenerateInterface = false,
                 GenerateRemote = false,
             });
