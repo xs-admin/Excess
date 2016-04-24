@@ -1,6 +1,6 @@
 ﻿using xs.concurrent;
 
-namespace $rootnamespace$
+namespace $safeprojectname$
 {
 	public concurrent class Service1
 	{
