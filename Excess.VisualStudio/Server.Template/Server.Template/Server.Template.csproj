@@ -4,12 +4,12 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{D92B0E3A-1F06-476F-98B7-E9EAF2CFC360}</ProjectGuid>
+    <ProjectGuid>{6C6FC84A-2554-4D60-B455-2C58F0E8D318}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Server.Template</RootNamespace>
     <AssemblyName>Server.Template</AssemblyName>
-    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -41,9 +41,39 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Service1.xs.cs">
+      <DependentUpon>Service1.xs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="client\" />
+    <Content Include="client\.gitignore" />
+    <Content Include="client\app\app.css" />
+    <Content Include="client\app\app.js" />
+    <Content Include="client\app\components\version\interpolate-filter.js" />
+    <Content Include="client\app\components\version\interpolate-filter_test.js" />
+    <Content Include="client\app\components\version\version-directive.js" />
+    <Content Include="client\app\components\version\version-directive_test.js" />
+    <Content Include="client\app\components\version\version.js" />
+    <Content Include="client\app\components\version\version_test.js" />
+    <Content Include="client\app\index-async.html" />
+    <Content Include="client\app\index.html" />
+    <Content Include="client\app\view1\view1.html" />
+    <Content Include="client\app\view1\view1.js" />
+    <Content Include="client\app\view1\view1_test.js" />
+    <Content Include="client\e2e-tests\protractor.conf.js" />
+    <Content Include="client\e2e-tests\scenarios.js" />
+    <Content Include="client\karma.conf.js" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="client\.bowerrc" />
+    <None Include="client\.jshintrc" />
+    <None Include="client\.travis.yml" />
+    <None Include="client\bower.json" />
+    <None Include="client\LICENSE" />
+    <None Include="client\package.json" />
+    <None Include="client\README.md" />
+    <None Include="packages.config" />
+    <None Include="Service1.xs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -16,7 +16,7 @@
         <Assembly>System</Assembly>
       </Reference>
     </References>
-    <ProjectItem TargetFileName="$fileinputname$.xs" ReplaceParameters="true">Class.xs</ProjectItem>
-    <ProjectItem SubType="Code" TargetFileName="$fileinputname$.xs/$fileinputname$.xs.cs" ReplaceParameters="true">Class.xs.cs</ProjectItem>   
+    <ProjectItem TargetFileName="$fileinputname$.xs" ReplaceParameters="true">Class1.xs</ProjectItem>
+    <ProjectItem SubType="Code" TargetFileName="$fileinputname$.xs/$fileinputname$.xs.cs" ReplaceParameters="true">Class1.xs.cs</ProjectItem>   
   </TemplateContent>
 </VSTemplate> 

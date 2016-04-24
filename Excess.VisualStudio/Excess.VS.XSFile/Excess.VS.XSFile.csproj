@@ -136,8 +136,8 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Class.xs.cs" />
-    <None Include="Class.xs" />
+    <None Include="Class1.xs.cs" />
+    <None Include="Class1.xs" />
     <None Include="Excess.VS.XSFile.ico" />
     <None Include="packages.config" />
   </ItemGroup>

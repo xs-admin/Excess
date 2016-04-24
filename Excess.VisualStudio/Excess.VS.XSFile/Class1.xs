@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+$if$ ($targetframeworkversion$ >= 3.5)
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+$endif$
 
 namespace $rootnamespace$
 {
-    class Service1
-    {
-    }
+	class $safeitemrootname$
+	{
+	}
 }
