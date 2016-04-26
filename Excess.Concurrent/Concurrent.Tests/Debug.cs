@@ -12,349 +12,11 @@ namespace Concurrent.Tests
     using System.Threading.Tasks;
     using System.Diagnostics;
     using Excess.Concurrent.Runtime;
-    using System.Text;
 
-    namespace ChameneoRedux
+    namespace DiningPhilosophers
     {
-        public enum Color
-        {
-            blue,
-            red,
-            yellow,
-        }
-
-        [Concurrent(id = "17b9c4d1-02b6-4dbc-9e05-c2c2d7c73f90")]
-        public class Chameneo : ConcurrentObject
-        {
-            public Color Colour
-            {
-                get;
-                private set;
-            }
-
-            public int Meetings
-            {
-                get;
-                private set;
-            }
-
-            public int MeetingsWithSelf
-            {
-                get;
-                private set;
-            }
-
-            public Broker MeetingPlace
-            {
-                get;
-                private set;
-            }
-
-            public Chameneo(Broker meetingPlace, Color color)
-            {
-                MeetingPlace = meetingPlace;
-                Colour = color;
-                Meetings = 0;
-                MeetingsWithSelf = 0;
-            }
-
-            protected override void __started()
-            {
-                var __enum = __concurrentmain(default(CancellationToken), null, null);
-                __enter(() => __advance(__enum.GetEnumerator()), null);
-            }
-
-            [Concurrent]
-            public void meet(Chameneo other, Color color)
-            {
-                meet(other, color, default(CancellationToken), null, null);
-            }
-
-            private IEnumerable<Expression> __concurrentmain(CancellationToken __cancellation, Action<object> __success, Action<Exception> __failure)
-            {
-                for (;;)
-                {
-                    MeetingPlace.request(this);
-                    {
-                        var __expr1_var = new __expr1
-                        {
-                            Start = (___expr) =>
-                            {
-                                var __expr = (__expr1)___expr;
-                                __listen("meet", () =>
-                                {
-                                    __expr.__op1(true, null, null);
-                                }
-
-                                );
-                                __expr.__op1(null, false, null);
-                            }
-
-                        ,
-                            End = (__expr) =>
-                            {
-                                __enter(() => __advance(__expr.Continuator), __failure);
-                            }
-                        };
-                        yield return __expr1_var;
-                        if (__expr1_var.Failure != null)
-                            throw __expr1_var.Failure;
-                    }
-                }
-
-                {
-                    __dispatch("main");
-                    if (__success != null)
-                        __success(null);
-                    yield break;
-                }
-            }
-
-            protected virtual IEnumerable<Expression> __concurrentmeet(Chameneo other, Color color, CancellationToken __cancellation, Action<object> __success, Action<Exception> __failure)
-            {
-                Colour = ColorUtils.Compliment(Colour, color);
-                Meetings++;
-                if (other == this)
-                    MeetingsWithSelf++;
-                {
-                    __dispatch("meet");
-                    if (__success != null)
-                        __success(null);
-                    yield break;
-                }
-            }
-
-            public Task<object> meet(Chameneo other, Color color, CancellationToken cancellation)
-            {
-                var completion = new TaskCompletionSource<object>();
-                Action<object> __success = (__res) => completion.SetResult((object)__res);
-                Action<Exception> __failure = (__ex) => completion.SetException(__ex);
-                var __cancellation = cancellation;
-                __enter(() => __advance(__concurrentmeet(other, color, __cancellation, __success, __failure).GetEnumerator()), __failure);
-                return completion.Task;
-            }
-
-            public void meet(Chameneo other, Color color, CancellationToken cancellation, Action<object> success, Action<Exception> failure)
-            {
-                var __success = success;
-                var __failure = failure;
-                var __cancellation = cancellation;
-                __enter(() => __advance(__concurrentmeet(other, color, __cancellation, __success, __failure).GetEnumerator()), failure);
-            }
-
-            private class __expr1 : Expression
-            {
-                public void __op1(bool? v1, bool? v2, Exception __ex)
-                {
-                    if (!tryUpdate(v1, v2, ref __op1_Left, ref __op1_Right, __ex))
-                        return;
-                    if (v1.HasValue)
-                    {
-                        if (__op1_Left.Value)
-                            __complete(true, null);
-                        else if (__op1_Right.HasValue)
-                            __complete(false, __ex);
-                    }
-                    else
-                    {
-                        if (__op1_Right.Value)
-                            __complete(true, null);
-                        else if (__op1_Left.HasValue)
-                            __complete(false, __ex);
-                    }
-                }
-
-                private bool? __op1_Left;
-                private bool? __op1_Right;
-            }
-
-            public static Chameneo CreateRemote(Guid id, Action<Guid, string, string, Action<string>> dispatch, Func<object, string> serialize, Func<string, object> deserialize)
-            {
-                return new __remoteChameneo(id)
-                { Dispatch = dispatch, Serialize = serialize, Deserialize = deserialize };
-            }
-
-            public readonly Guid __ID = Guid.NewGuid();
-        }
-
-        [Concurrent(id = "cfa4152b-c569-4561-bf22-d2cec80f4c4e")]
-        public class Broker : ConcurrentObject
-        {
-            int _meetings = 0;
-            public Broker(int meetings)
-            {
-                _meetings = meetings;
-            }
-
-            Chameneo _first = null;
-            [Concurrent]
-            public void request(Chameneo creature)
-            {
-                request(creature, default(CancellationToken), null, null);
-            }
-
-            void done()
-            {
-                __dispatch("done");
-            }
-
-            [Concurrent]
-            public void Finished()
-            {
-                Finished(default(CancellationToken), null, null);
-            }
-
-            protected virtual IEnumerable<Expression> __concurrentrequest(Chameneo creature, CancellationToken __cancellation, Action<object> __success, Action<Exception> __failure)
-            {
-                if (_meetings == 0)
-                {
-                    __dispatch("request");
-                    if (__success != null)
-                        __success(null);
-                    yield break;
-                }
-
-                if (_first != null)
-                {
-                    //perform meeting
-                    var firstColor = _first.Colour;
-                    _first.meet(creature, creature.Colour);
-                    creature.meet(_first, firstColor);
-                    //prepare for next
-                    _first = null;
-                    _meetings--;
-                    if (_meetings == 0)
-                        done();
-                }
-                else
-                    _first = creature;
-                {
-                    __dispatch("request");
-                    if (__success != null)
-                        __success(null);
-                    yield break;
-                }
-            }
-
-            public Task<object> request(Chameneo creature, CancellationToken cancellation)
-            {
-                var completion = new TaskCompletionSource<object>();
-                Action<object> __success = (__res) => completion.SetResult((object)__res);
-                Action<Exception> __failure = (__ex) => completion.SetException(__ex);
-                var __cancellation = cancellation;
-                __enter(() => __advance(__concurrentrequest(creature, __cancellation, __success, __failure).GetEnumerator()), __failure);
-                return completion.Task;
-            }
-
-            public void request(Chameneo creature, CancellationToken cancellation, Action<object> success, Action<Exception> failure)
-            {
-                var __success = success;
-                var __failure = failure;
-                var __cancellation = cancellation;
-                __enter(() => __advance(__concurrentrequest(creature, __cancellation, __success, __failure).GetEnumerator()), failure);
-            }
-
-            private IEnumerable<Expression> __concurrentdone(CancellationToken __cancellation, Action<object> __success, Action<Exception> __failure)
-            {
-                if (false && !__awaiting("done"))
-                    throw new InvalidOperationException("done" + " can not be executed in this state");
-                __dispatch("done");
-                if (__success != null)
-                    __success(null);
-                yield break;
-            }
-
-            protected virtual IEnumerable<Expression> __concurrentFinished(CancellationToken __cancellation, Action<object> __success, Action<Exception> __failure)
-            {
-                {
-                    var __expr2_var = new __expr2
-                    {
-                        Start = (___expr) =>
-                        {
-                            var __expr = (__expr2)___expr;
-                            __listen("done", () =>
-                            {
-                                __expr.__op2(true, null, null);
-                            }
-
-                            );
-                            __expr.__op2(null, false, null);
-                        }
-
-                    ,
-                        End = (__expr) =>
-                        {
-                            __enter(() => __advance(__expr.Continuator), __failure);
-                        }
-                    };
-                    yield return __expr2_var;
-                    if (__expr2_var.Failure != null)
-                        throw __expr2_var.Failure;
-                }
-
-                {
-                    __dispatch("Finished");
-                    if (__success != null)
-                        __success(null);
-                    yield break;
-                }
-            }
-
-            public Task<object> Finished(CancellationToken cancellation)
-            {
-                var completion = new TaskCompletionSource<object>();
-                Action<object> __success = (__res) => completion.SetResult((object)__res);
-                Action<Exception> __failure = (__ex) => completion.SetException(__ex);
-                var __cancellation = cancellation;
-                __enter(() => __advance(__concurrentFinished(__cancellation, __success, __failure).GetEnumerator()), __failure);
-                return completion.Task;
-            }
-
-            public void Finished(CancellationToken cancellation, Action<object> success, Action<Exception> failure)
-            {
-                var __success = success;
-                var __failure = failure;
-                var __cancellation = cancellation;
-                __enter(() => __advance(__concurrentFinished(__cancellation, __success, __failure).GetEnumerator()), failure);
-            }
-
-            private class __expr2 : Expression
-            {
-                public void __op2(bool? v1, bool? v2, Exception __ex)
-                {
-                    if (!tryUpdate(v1, v2, ref __op2_Left, ref __op2_Right, __ex))
-                        return;
-                    if (v1.HasValue)
-                    {
-                        if (__op2_Left.Value)
-                            __complete(true, null);
-                        else if (__op2_Right.HasValue)
-                            __complete(false, __ex);
-                    }
-                    else
-                    {
-                        if (__op2_Right.Value)
-                            __complete(true, null);
-                        else if (__op2_Left.HasValue)
-                            __complete(false, __ex);
-                    }
-                }
-
-                private bool? __op2_Left;
-                private bool? __op2_Right;
-            }
-
-            public static Broker CreateRemote(Guid id, Action<Guid, string, string, Action<string>> dispatch, Func<object, string> serialize, Func<string, object> deserialize)
-            {
-                return new __remoteBroker(id)
-                { Dispatch = dispatch, Serialize = serialize, Deserialize = deserialize };
-            }
-
-            public readonly Guid __ID = Guid.NewGuid();
-        }
-
-        [Concurrent(id = "612b967b-7627-419c-bbec-53cb5ee7cdd3")]
-        [ConcurrentSingleton(id: "7c2a03f8-9534-41c7-bbc6-71a4b80d2271")]
+        [Concurrent(id = "8c94e608-99cf-4973-bf59-28f432894bef")]
+        [ConcurrentSingleton(id: "9a2d34f4-14e8-48c2-b8f7-1561b0e52f34")]
         public class __app : ConcurrentObject
         {
             protected override void __started()
@@ -363,118 +25,20 @@ namespace Concurrent.Tests
                 __enter(() => __advance(__enum.GetEnumerator()), null);
             }
 
-            IEnumerable<Chameneo> Run(int meetings, Color[] colors)
-            {
-                throw new InvalidOperationException("Cannot call private signals directly");
-            }
-
-            void PrintColors()
-            {
-                printCompliment(Color.blue, Color.blue);
-                printCompliment(Color.blue, Color.red);
-                printCompliment(Color.blue, Color.yellow);
-                printCompliment(Color.red, Color.blue);
-                printCompliment(Color.red, Color.red);
-                printCompliment(Color.red, Color.yellow);
-                printCompliment(Color.yellow, Color.blue);
-                printCompliment(Color.yellow, Color.red);
-                printCompliment(Color.yellow, Color.yellow);
-            }
-
-            void PrintRun(Color[] colors, IEnumerable<Chameneo> creatures)
-            {
-                for (int i = 0; i < colors.Length; i++)
-                    Console.Write(" " + colors[i]);
-                Console.WriteLine();
-                var total = 0;
-                foreach (var creature in creatures)
-                {
-                    Console.WriteLine($"{creature.Meetings} {printNumber(creature.MeetingsWithSelf)}");
-                    total += creature.Meetings;
-                }
-
-                Console.WriteLine(printNumber(total));
-            }
-
-            void printCompliment(Color c1, Color c2)
-            {
-                Console.WriteLine(c1 + " + " + c2 + " -> " + ColorUtils.Compliment(c1, c2));
-            }
-
-            string[] NUMBERS = { "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine" };
-            string printNumber(int n)
-            {
-                StringBuilder sb = new StringBuilder();
-                String nStr = n.ToString();
-                for (int i = 0; i < nStr.Length; i++)
-                {
-                    sb.Append(" ");
-                    sb.Append(NUMBERS[(int)Char.GetNumericValue(nStr[i])]);
-                }
-
-                return sb.ToString();
-            }
-
             private IEnumerable<Expression> __concurrentmain(CancellationToken __cancellation, Action<object> __success, Action<Exception> __failure)
             {
-                var meetings = 0;
-                if (Arguments.Length != 1 || !int.TryParse(Arguments[0], out meetings))
+                var names = new[] { "Kant", "Archimedes", "Nietzche", "Plato", "Spinoza", };
+                //create chopsticks
+                var chopsticks = names.Select(n => spawn<chopstick>()).ToArray();
+                //create philosophers
+                var phCount = names.Length;
+                for (int i = 0; i < phCount; i++)
                 {
-                    meetings = 600;
+                    var left = chopsticks[i];
+                    var right = i == phCount - 1 ? chopsticks[0] : chopsticks[i + 1];
+                    spawn<philosopher>(names[i], left, right);
                 }
 
-                var firstRunColors = new[] { Color.blue, Color.red, Color.yellow };
-                var secondRunColors = new[] { Color.blue, Color.red, Color.yellow, Color.red, Color.yellow, Color.blue, Color.red, Color.yellow, Color.red, Color.blue };
-                //run and await 
-                IEnumerable<Chameneo> firstRun, secondRun;
-                var __expr3_var = new __expr3
-                {
-                    Start = (___expr) =>
-                    {
-                        var __expr = (__expr3)___expr;
-                        __advance((__concurrentRun(meetings, firstRunColors, __cancellation, (__res) =>
-                        {
-                            __expr.firstRun = (IEnumerable<ChameneoRedux.Chameneo>)__res;
-                            __expr.__op3(true, null, null);
-                        }
-
-                        , (__ex) =>
-                        {
-                            __expr.__op3(false, null, __ex);
-                        }
-
-                        )).GetEnumerator());
-                        __advance((__concurrentRun(meetings, secondRunColors, __cancellation, (__res) =>
-                        {
-                            __expr.secondRun = (IEnumerable<ChameneoRedux.Chameneo>)__res;
-                            __expr.__op3(null, true, null);
-                        }
-
-                        , (__ex) =>
-                        {
-                            __expr.__op3(null, false, __ex);
-                        }
-
-                        )).GetEnumerator());
-                    }
-
-                ,
-                    End = (__expr) =>
-                    {
-                        __enter(() => __advance(__expr.Continuator), __failure);
-                    }
-                };
-                yield return __expr3_var;
-                if (__expr3_var.Failure != null)
-                    throw __expr3_var.Failure;
-                firstRun = __expr3_var.firstRun;
-                secondRun = __expr3_var.secondRun;
-                //print results
-                PrintColors();
-                Console.WriteLine();
-                PrintRun(firstRunColors, firstRun);
-                Console.WriteLine();
-                PrintRun(secondRunColors, secondRun);
                 App.Stop();
                 {
                     __dispatch("main");
@@ -482,100 +46,6 @@ namespace Concurrent.Tests
                         __success(null);
                     yield break;
                 }
-            }
-
-            private IEnumerable<Expression> __concurrentRun(int meetings, Color[] colors, CancellationToken __cancellation, Action<object> __success, Action<Exception> __failure)
-            {
-                var id = 0;
-                var broker = App.Spawn(new Broker(meetings));
-                var result = colors.Select(color => App.Spawn(new Chameneo(broker, color))).ToArray();
-                {
-                    var __expr4_var = new __expr4
-                    {
-                        Start = (___expr) =>
-                        {
-                            var __expr = (__expr4)___expr;
-                            broker.Finished();
-                            __expr.__op4(null, false, null);
-                        }
-
-                    ,
-                        End = (__expr) =>
-                        {
-                            __enter(() => __advance(__expr.Continuator), __failure);
-                        }
-                    };
-                    yield return __expr4_var;
-                    if (__expr4_var.Failure != null)
-                        throw __expr4_var.Failure;
-                }
-
-                {
-                    __dispatch("Run");
-                    if (__success != null)
-                        __success(result);
-                    yield break;
-                }
-            }
-
-            private class __expr3 : Expression
-            {
-                public void __op3(bool? v1, bool? v2, Exception __ex)
-                {
-                    if (!tryUpdate(v1, v2, ref __op3_Left, ref __op3_Right, __ex))
-                        return;
-                    if (v1.HasValue)
-                    {
-                        if (!__op3_Left.Value)
-                            __complete(false, __ex);
-                        else if (__op3_Right.HasValue)
-                            __complete(true, null);
-                    }
-                    else
-                    {
-                        if (!__op3_Right.Value)
-                            __complete(false, __ex);
-                        else if (__op3_Left.HasValue)
-                            __complete(true, null);
-                    }
-                }
-
-                private bool? __op3_Left;
-                private bool? __op3_Right;
-                public IEnumerable<ChameneoRedux.Chameneo> firstRun;
-                public IEnumerable<ChameneoRedux.Chameneo> secondRun;
-            }
-
-            private class __expr4 : Expression
-            {
-                public void __op4(bool? v1, bool? v2, Exception __ex)
-                {
-                    if (!tryUpdate(v1, v2, ref __op4_Left, ref __op4_Right, __ex))
-                        return;
-                    if (v1.HasValue)
-                    {
-                        if (__op4_Left.Value)
-                            __complete(true, null);
-                        else if (__op4_Right.HasValue)
-                            __complete(false, __ex);
-                    }
-                    else
-                    {
-                        if (__op4_Right.Value)
-                            __complete(true, null);
-                        else if (__op4_Left.HasValue)
-                            __complete(false, __ex);
-                    }
-                }
-
-                private bool? __op4_Left;
-                private bool? __op4_Right;
-            }
-
-            public static __app CreateRemote(Guid id, Action<Guid, string, string, Action<string>> dispatch, Func<object, string> serialize, Func<string, object> deserialize)
-            {
-                return new __remote__app(id)
-                { Dispatch = dispatch, Serialize = serialize, Deserialize = deserialize };
             }
 
             public readonly Guid __ID = Guid.NewGuid();
@@ -607,226 +77,494 @@ namespace Concurrent.Tests
             }
         }
 
-        public class ColorUtils
+        [Concurrent(id = "0538798f-c8ea-4a60-bc09-64b175ab6c3f")]
+        class philosopher : ConcurrentObject
         {
-            public static Color Compliment(Color c1, Color c2)
+            string _name;
+            chopstick _left;
+            chopstick _right;
+            int _meals;
+            public philosopher(string name, chopstick left, chopstick right, int meals)
             {
-                switch (c1)
+                _name = name;
+                _left = left;
+                _right = right;
+                _meals = meals;
+            }
+
+            protected override void __started()
+            {
+                var __enum = __concurrentmain(default(CancellationToken), null, null);
+                __enter(() => __advance(__enum.GetEnumerator()), null);
+            }
+
+            void think()
+            {
+                throw new InvalidOperationException("Cannot call private signals directly");
+            }
+
+            void hungry()
+            {
+                throw new InvalidOperationException("Cannot call private signals directly");
+            }
+
+            void eat()
+            {
+                throw new InvalidOperationException("Cannot call private signals directly");
+            }
+
+            private IEnumerable<Expression> __concurrentmain(CancellationToken __cancellation, Action<object> __success, Action<Exception> __failure)
+            {
+                for (int i = 0; i < _meals; i++)
                 {
-                    case Color.blue:
-                        switch (c2)
+                    {
+                        var __expr1_var = new __expr1
                         {
-                            case Color.blue:
-                                return Color.blue;
-                            case Color.red:
-                                return Color.yellow;
-                            case Color.yellow:
-                                return Color.red;
-                            default:
-                                break;
+                            Start = (___expr) =>
+                            {
+                                var __expr = (__expr1)___expr;
+                                __advance((__concurrentthink(__cancellation, (__res) =>
+                                {
+                                    __expr.__op1(true, null, null);
+                                }
+
+                                , (__ex) =>
+                                {
+                                    __expr.__op1(false, null, __ex);
+                                }
+
+                                )).GetEnumerator());
+                                __expr.__op1(null, false, null);
+                            }
+
+                        ,
+                            End = (__expr) =>
+                            {
+                                __enter(() => __advance(__expr.Continuator), __failure);
+                            }
+                        };
+                        yield return __expr1_var;
+                        if (__expr1_var.Failure != null)
+                            throw __expr1_var.Failure;
+                    }
+                }
+
+                {
+                    __dispatch("main");
+                    if (__success != null)
+                        __success(null);
+                    yield break;
+                }
+            }
+
+            private IEnumerable<Expression> __concurrentthink(CancellationToken __cancellation, Action<object> __success, Action<Exception> __failure)
+            {
+                Console.WriteLine(_name + " is thinking");
+                var __expr2_var = new __expr2
+                {
+                    Start = (___expr) =>
+                    {
+                        var __expr = (__expr2)___expr;
+                        Task.Delay((int)((rand(1.0, 2.0)) * 1000)).ContinueWith(__task =>
+                        {
+                            __enter(() => __expr.__op2(true, null, null), (__ex) => __expr.__op2(false, null, __ex));
                         }
 
-                        break;
-                    case Color.red:
-                        switch (c2)
+                        );
+                    }
+
+                ,
+                    End = (__expr) =>
+                    {
+                        __enter(() => __advance(__expr.Continuator), __failure);
+                    }
+
+                ,
+                    __start1 = (___expr) =>
+                    {
+                        var __expr = (__expr2)___expr;
+                        __enter(() =>
                         {
-                            case Color.blue:
-                                return Color.yellow;
-                            case Color.red:
-                                return Color.red;
-                            case Color.yellow:
-                                return Color.blue;
-                            default:
-                                break;
+                            __advance((__concurrenthungry(__cancellation, (__res) =>
+                            {
+                                __expr.__op2(null, true, null);
+                            }
+
+                            , (__ex) =>
+                            {
+                                __expr.__op2(null, false, __ex);
+                            }
+
+                            )).GetEnumerator());
                         }
 
-                        break;
-                    case Color.yellow:
-                        switch (c2)
+                        , __failure);
+                    }
+                };
+                yield return __expr2_var;
+                if (__expr2_var.Failure != null)
+                    throw __expr2_var.Failure;
+                {
+                    __dispatch("think");
+                    if (__success != null)
+                        __success(null);
+                    yield break;
+                }
+            }
+
+            private IEnumerable<Expression> __concurrenthungry(CancellationToken __cancellation, Action<object> __success, Action<Exception> __failure)
+            {
+                Console.WriteLine(_name + " is hungry");
+                var __expr3_var = new __expr3
+                {
+                    Start = (___expr) =>
+                    {
+                        var __expr = (__expr3)___expr;
+                        _left.acquire(this, __cancellation, (__res) => __expr.__op4(true, null, null), (__ex) => __expr.__op4(false, null, __ex));
+                        _right.acquire(this, __cancellation, (__res) => __expr.__op4(null, true, null), (__ex) => __expr.__op4(null, false, __ex));
+                    }
+
+                ,
+                    End = (__expr) =>
+                    {
+                        __enter(() => __advance(__expr.Continuator), __failure);
+                    }
+
+                ,
+                    __start2 = (___expr) =>
+                    {
+                        var __expr = (__expr3)___expr;
+                        __enter(() =>
                         {
-                            case Color.blue:
-                                return Color.red;
-                            case Color.red:
-                                return Color.blue;
-                            case Color.yellow:
-                                return Color.yellow;
-                            default:
-                                break;
+                            __advance((__concurrenteat(__cancellation, (__res) =>
+                            {
+                                __expr.__op3(null, true, null);
+                            }
+
+                            , (__ex) =>
+                            {
+                                __expr.__op3(null, false, __ex);
+                            }
+
+                            )).GetEnumerator());
                         }
 
-                        break;
+                        , __failure);
+                    }
+                };
+                yield return __expr3_var;
+                if (__expr3_var.Failure != null)
+                    throw __expr3_var.Failure;
+                {
+                    __dispatch("hungry");
+                    if (__success != null)
+                        __success(null);
+                    yield break;
+                }
+            }
+
+            private IEnumerable<Expression> __concurrenteat(CancellationToken __cancellation, Action<object> __success, Action<Exception> __failure)
+            {
+                Console.WriteLine(_name + " is eating");
+                {
+                    var __expr4_var = new __expr4
+                    {
+                        Start = (___expr) =>
+                        {
+                            var __expr = (__expr4)___expr;
+                            Task.Delay((int)((rand(1.0, 2.0)) * 1000)).ContinueWith(__task =>
+                            {
+                                __enter(() => __expr.__op5(true, null, null), (__ex) => __expr.__op5(false, null, __ex));
+                            }
+
+                            );
+                            __expr.__op5(null, false, null);
+                        }
+
+                    ,
+                        End = (__expr) =>
+                        {
+                            __enter(() => __advance(__expr.Continuator), __failure);
+                        }
+                    };
+                    yield return __expr4_var;
+                    if (__expr4_var.Failure != null)
+                        throw __expr4_var.Failure;
                 }
 
-                throw new Exception();
+                _left.release(this);
+                _right.release(this);
+                {
+                    __dispatch("eat");
+                    if (__success != null)
+                        __success(null);
+                    yield break;
+                }
             }
+
+            private class __expr1 : Expression
+            {
+                public void __op1(bool? v1, bool? v2, Exception __ex)
+                {
+                    if (!tryUpdate(v1, v2, ref __op1_Left, ref __op1_Right, __ex))
+                        return;
+                    if (v1.HasValue)
+                    {
+                        if (__op1_Left.Value)
+                            __complete(true, null);
+                        else if (__op1_Right.HasValue)
+                            __complete(false, __ex);
+                    }
+                    else
+                    {
+                        if (__op1_Right.Value)
+                            __complete(true, null);
+                        else if (__op1_Left.HasValue)
+                            __complete(false, __ex);
+                    }
+                }
+
+                private bool? __op1_Left;
+                private bool? __op1_Right;
+            }
+
+            private class __expr2 : Expression
+            {
+                public void __op2(bool? v1, bool? v2, Exception __ex)
+                {
+                    if (!tryUpdate(v1, v2, ref __op2_Left, ref __op2_Right, __ex))
+                        return;
+                    if (v1.HasValue)
+                    {
+                        if (__op2_Left.Value)
+                            __start1(this);
+                        else
+                            __complete(false, __ex);
+                    }
+                    else
+                    {
+                        if (__op2_Right.Value)
+                            __complete(true, null);
+                        else
+                            __complete(false, __ex);
+                    }
+                }
+
+                private bool? __op2_Left;
+                private bool? __op2_Right;
+                public Action<__expr2> __start1;
+            }
+
+            private class __expr3 : Expression
+            {
+                public void __op3(bool? v1, bool? v2, Exception __ex)
+                {
+                    if (!tryUpdate(v1, v2, ref __op3_Left, ref __op3_Right, __ex))
+                        return;
+                    if (v1.HasValue)
+                    {
+                        if (__op3_Left.Value)
+                            __start2(this);
+                        else
+                            __complete(false, __ex);
+                    }
+                    else
+                    {
+                        if (__op3_Right.Value)
+                            __complete(true, null);
+                        else
+                            __complete(false, __ex);
+                    }
+                }
+
+                private bool? __op3_Left;
+                private bool? __op3_Right;
+                public Action<__expr3> __start2;
+                public void __op4(bool? v1, bool? v2, Exception __ex)
+                {
+                    if (!tryUpdate(v1, v2, ref __op4_Left, ref __op4_Right, __ex))
+                        return;
+                    if (v1.HasValue)
+                    {
+                        if (!__op4_Left.Value)
+                            __op3(false, null, __ex);
+                        else if (__op4_Right.HasValue)
+                            __op3(true, null, null);
+                    }
+                    else
+                    {
+                        if (!__op4_Right.Value)
+                            __op3(false, null, __ex);
+                        else if (__op4_Left.HasValue)
+                            __op3(true, null, null);
+                    }
+                }
+
+                private bool? __op4_Left;
+                private bool? __op4_Right;
+            }
+
+            private class __expr4 : Expression
+            {
+                public void __op5(bool? v1, bool? v2, Exception __ex)
+                {
+                    if (!tryUpdate(v1, v2, ref __op5_Left, ref __op5_Right, __ex))
+                        return;
+                    if (v1.HasValue)
+                    {
+                        if (__op5_Left.Value)
+                            __complete(true, null);
+                        else if (__op5_Right.HasValue)
+                            __complete(false, __ex);
+                    }
+                    else
+                    {
+                        if (__op5_Right.Value)
+                            __complete(true, null);
+                        else if (__op5_Left.HasValue)
+                            __complete(false, __ex);
+                    }
+                }
+
+                private bool? __op5_Left;
+                private bool? __op5_Right;
+            }
+
+            public readonly Guid __ID = Guid.NewGuid();
         }
 
-        public class __remoteChameneo : Chameneo
+        [Concurrent(id = "07150ece-3c05-42a5-8fe1-54c88989273b")]
+        class chopstick : ConcurrentObject
         {
-            protected override IEnumerable<Expression> __concurrentmeet(Chameneo other, Color color, CancellationToken __cancellation, Action<object> __success, Action<Exception> __failure)
+            philosopher _owner;
+            [Concurrent]
+            public void acquire(philosopher owner)
             {
-                var __expr = new Expression();
-                Dispatch(Id, "__concurrentmeet", Serialize(new
+                acquire(owner, default(CancellationToken), null, null);
+            }
+
+            [Concurrent]
+            public void release(philosopher owner)
+            {
+                release(owner, default(CancellationToken), null, null);
+            }
+
+            private IEnumerable<Expression> __concurrentacquire(philosopher owner, CancellationToken __cancellation, Action<object> __success, Action<Exception> __failure)
+            {
+                if (_owner != null)
                 {
-                    other = other,
-                    color = color,
-                    __cancellation = __cancellation,
-                    __success = __success,
-                    __failure = __failure
+                    {
+                        var __expr5_var = new __expr5
+                        {
+                            Start = (___expr) =>
+                            {
+                                var __expr = (__expr5)___expr;
+                                __listen("release", () =>
+                                {
+                                    __expr.__op6(true, null, null);
+                                }
+
+                                );
+                                __expr.__op6(null, false, null);
+                            }
+
+                        ,
+                            End = (__expr) =>
+                            {
+                                __enter(() => __advance(__expr.Continuator), __failure);
+                            }
+                        };
+                        yield return __expr5_var;
+                        if (__expr5_var.Failure != null)
+                            throw __expr5_var.Failure;
+                    }
                 }
 
-                ), __response =>
+                _owner = owner;
                 {
-                    var __res = Deserialize(__response);
-                    if (__res is Exception)
-                        __failure(__res as Exception);
+                    __dispatch("acquire");
+                    if (__success != null)
+                        __success(null);
+                    yield break;
+                }
+            }
+
+            public Task<object> acquire(philosopher owner, CancellationToken cancellation)
+            {
+                var completion = new TaskCompletionSource<object>();
+                Action<object> __success = (__res) => completion.SetResult((object)__res);
+                Action<Exception> __failure = (__ex) => completion.SetException(__ex);
+                var __cancellation = cancellation;
+                __enter(() => __advance(__concurrentacquire(owner, __cancellation, __success, __failure).GetEnumerator()), __failure);
+                return completion.Task;
+            }
+
+            public void acquire(philosopher owner, CancellationToken cancellation, Action<object> success, Action<Exception> failure)
+            {
+                var __success = success;
+                var __failure = failure;
+                var __cancellation = cancellation;
+                __enter(() => __advance(__concurrentacquire(owner, __cancellation, __success, __failure).GetEnumerator()), failure);
+            }
+
+            private IEnumerable<Expression> __concurrentrelease(philosopher owner, CancellationToken __cancellation, Action<object> __success, Action<Exception> __failure)
+            {
+                if (_owner != owner)
+                    throw new InvalidOperationException();
+                _owner = null;
+                {
+                    __dispatch("release");
+                    if (__success != null)
+                        __success(null);
+                    yield break;
+                }
+            }
+
+            public Task<object> release(philosopher owner, CancellationToken cancellation)
+            {
+                var completion = new TaskCompletionSource<object>();
+                Action<object> __success = (__res) => completion.SetResult((object)__res);
+                Action<Exception> __failure = (__ex) => completion.SetException(__ex);
+                var __cancellation = cancellation;
+                __enter(() => __advance(__concurrentrelease(owner, __cancellation, __success, __failure).GetEnumerator()), __failure);
+                return completion.Task;
+            }
+
+            public void release(philosopher owner, CancellationToken cancellation, Action<object> success, Action<Exception> failure)
+            {
+                var __success = success;
+                var __failure = failure;
+                var __cancellation = cancellation;
+                __enter(() => __advance(__concurrentrelease(owner, __cancellation, __success, __failure).GetEnumerator()), failure);
+            }
+
+            private class __expr5 : Expression
+            {
+                public void __op6(bool? v1, bool? v2, Exception __ex)
+                {
+                    if (!tryUpdate(v1, v2, ref __op6_Left, ref __op6_Right, __ex))
+                        return;
+                    if (v1.HasValue)
+                    {
+                        if (__op6_Left.Value)
+                            __complete(true, null);
+                        else if (__op6_Right.HasValue)
+                            __complete(false, __ex);
+                    }
                     else
-                        __success((IEnumerable<Expression>)__res);
+                    {
+                        if (__op6_Right.Value)
+                            __complete(true, null);
+                        else if (__op6_Left.HasValue)
+                            __complete(false, __ex);
+                    }
                 }
 
-                );
-                yield return __expr;
+                private bool? __op6_Left;
+                private bool? __op6_Right;
             }
 
-            public __remoteChameneo(Guid id) : base(default(Broker), default(Color))
-            {
-                Id = id;
-            }
-
-            public Guid Id
-            {
-                get;
-                set;
-            }
-
-            public Action<Guid, string, string, Action<string>> Dispatch
-            {
-                get;
-                set;
-            }
-
-            public Func<object, string> Serialize
-            {
-                get;
-                set;
-            }
-
-            public Func<string, object> Deserialize
-            {
-                get;
-                set;
-            }
-        }
-
-        public class __remoteBroker : Broker
-        {
-            protected override IEnumerable<Expression> __concurrentrequest(Chameneo creature, CancellationToken __cancellation, Action<object> __success, Action<Exception> __failure)
-            {
-                var __expr = new Expression();
-                Dispatch(Id, "__concurrentrequest", Serialize(new
-                {
-                    creature = creature,
-                    __cancellation = __cancellation,
-                    __success = __success,
-                    __failure = __failure
-                }
-
-                ), __response =>
-                {
-                    var __res = Deserialize(__response);
-                    if (__res is Exception)
-                        __failure(__res as Exception);
-                    else
-                        __success((IEnumerable<Expression>)__res);
-                }
-
-                );
-                yield return __expr;
-            }
-
-            protected override IEnumerable<Expression> __concurrentFinished(CancellationToken __cancellation, Action<object> __success, Action<Exception> __failure)
-            {
-                var __expr = new Expression();
-                Dispatch(Id, "__concurrentFinished", Serialize(new
-                {
-                    __cancellation = __cancellation,
-                    __success = __success,
-                    __failure = __failure
-                }
-
-                ), __response =>
-                {
-                    var __res = Deserialize(__response);
-                    if (__res is Exception)
-                        __failure(__res as Exception);
-                    else
-                        __success((IEnumerable<Expression>)__res);
-                }
-
-                );
-                yield return __expr;
-            }
-
-            public __remoteBroker(Guid id) : base(default(int))
-            {
-                Id = id;
-            }
-
-            public Guid Id
-            {
-                get;
-                set;
-            }
-
-            public Action<Guid, string, string, Action<string>> Dispatch
-            {
-                get;
-                set;
-            }
-
-            public Func<object, string> Serialize
-            {
-                get;
-                set;
-            }
-
-            public Func<string, object> Deserialize
-            {
-                get;
-                set;
-            }
-        }
-
-        public class __remote__app : __app
-        {
-            public __remote__app(Guid id)
-            {
-                Id = id;
-            }
-
-            public Guid Id
-            {
-                get;
-                set;
-            }
-
-            public Action<Guid, string, string, Action<string>> Dispatch
-            {
-                get;
-                set;
-            }
-
-            public Func<object, string> Serialize
-            {
-                get;
-                set;
-            }
-
-            public Func<string, object> Deserialize
-            {
-                get;
-                set;
-            }
+            public readonly Guid __ID = Guid.NewGuid();
         }
     }
 }

@@ -4,15 +4,14 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{462E9E6D-15AC-48BE-A23C-4C3EB8A29F6C}</ProjectGuid>
+    <ProjectGuid>{92B21B7E-01E4-4EEB-A3AB-2050F33C542A}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ChameneoRedux</RootNamespace>
-    <AssemblyName>ChameneoRedux</AssemblyName>
+    <RootNamespace>DiningPhilosophers</RootNamespace>
+    <AssemblyName>DiningPhilosophers</AssemblyName>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -44,12 +43,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ChameneoRedux.xs.cs" />
+    <Compile Include="DiningPhilosophers.xs.cs">
+      <DependentUpon>DiningPhilosophers.xs</DependentUpon>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <None Include="ChameneoRedux.xs" />
+    <None Include="DiningPhilosophers.xs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Runtime\Concurrent.Runtime.csproj">

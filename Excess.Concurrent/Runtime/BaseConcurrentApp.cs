@@ -97,6 +97,13 @@ namespace Excess.Concurrent.Runtime
 
         public abstract void Schedule(IConcurrentObject who, Action what, Action<Exception> failure, TimeSpan when);
 
+        //why? why not?
+        readonly Random _rand = new Random();
+        public double rand()
+        {
+            return _rand.NextDouble();
+        }
+
         //start a concurrent object
         protected virtual T spawnObject<T>(T @object) where T : IConcurrentObject
         {

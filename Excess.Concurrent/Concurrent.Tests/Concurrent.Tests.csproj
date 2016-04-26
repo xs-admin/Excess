@@ -120,9 +120,9 @@
       <Project>{99f869f8-7bd4-476a-98ca-27c63e89da93}</Project>
       <Name>Excess.Extensions.Concurrent</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Runtime\Runtime.csproj">
+    <ProjectReference Include="..\Runtime\Concurrent.Runtime.csproj">
       <Project>{4be92f98-4415-4118-9a57-e1e2b3cbb1a5}</Project>
-      <Name>Runtime</Name>
+      <Name>Concurrent.Runtime</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

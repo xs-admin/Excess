@@ -739,10 +739,7 @@ namespace Excess.Extensions.Concurrent
                 }
             }
 
-            return main
-                .WithParameterList(CSharp.ParameterList())
-                .WithBody(main.Body
-                    .AddStatements(Templates.AppStopCall));
+            return main.WithParameterList(CSharp.ParameterList());
         }
     }
 }

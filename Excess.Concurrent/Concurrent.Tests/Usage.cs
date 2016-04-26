@@ -336,213 +336,113 @@ namespace Concurrent.Tests
         {
             var text = null as string;
             var tree = Mock.Compile(@"
-                namespace ChameneoRedux
+                using xs.concurrent;
+
+                namespace DiningPhilosophers
                 {
-                    public enum Color
-                    {
-                        blue,
-                        red,
-                        yellow,
-                    }
-
-                    public concurrent class Chameneo
-                    {
-                        public Color Colour {get; private set;}
-                        public int Meetings {get; private set;}
-                        public int MeetingsWithSelf {get; private set;}
-                        public Broker MeetingPlace {get; private set;}
-
-                        public Chameneo(Broker meetingPlace, Color color)
-                        {
-                            MeetingPlace = meetingPlace;
-                            Colour = color;
-                            Meetings = 0;
-                            MeetingsWithSelf = 0;
-                        }
-    
-                        void main() 
-	                    {
-                            for(;;)
-                            {
-                                MeetingPlace.request(this);
-                                await meet;
-                            }
-	                    }
-	                
-                        public void meet(Chameneo other, Color color)
-                        {
-                            Colour = ColorUtils.Compliment(Colour, color);
-                            Meetings++;
-                            if (other == this)
-                                MeetingsWithSelf++;
-                        }                    
-                    }
-
-                    public concurrent class Broker
-                    {
-                        int _meetings = 0;
-                        public Broker(int meetings)
-                        {
-                            _meetings = meetings;
-                        }
-
-                        Chameneo _first = null;
-                        public void request(Chameneo creature)
-                        {
-                            if (_meetings == 0)
-				                return;
-
-                            if (_first != null)
-                            {
-                                //perform meeting
-                                var firstColor = _first.Colour;
-                                _first.meet(creature, creature.Colour);
-                                creature.meet(_first, firstColor);
-                            
-                                //prepare for next
-                                _first = null;
-                                _meetings--;
-                                if (_meetings == 0)
-                                    done();
-                            }
-                            else
-                                _first = creature;
-                        }
-
-		                void done();
-		                public void Finished()
-		                {
-			                await done;
-		                }
-                    }
-
-	                //application
 	                concurrent app
 	                {
-		                void main(threads: 4)
+		                void main()
 		                {
-                            var meetings = 0;
-                            if (Arguments.Length != 1 || !int.TryParse(Arguments[0], out meetings))
-                                meetings = 600;
+			                var names = new []
+			                {
+				                ""Kant"",
+                                ""Archimedes"",
+                                ""Nietzche"",
+                                ""Plato"",
+                                ""Spinoza"",
 
-                            var firstRunColors = new[] { Color.blue, Color.red, Color.yellow };
-                            var secondRunColors = new[] { Color.blue, Color.red, Color.yellow, Color.red, Color.yellow, Color.blue, Color.red, Color.yellow, Color.red, Color.blue };
-            
-			                //run and await 
-			                IEnumerable<Chameneo> firstRun, secondRun;
-			                (firstRun = Run(meetings, firstRunColors)) 
-			                && 
-			                (secondRun = Run(meetings, secondRunColors));
+                            };
 
-			                //print results
-                            PrintColors();
-                            Console.WriteLine();
-                            PrintRun(firstRunColors, firstRun);
-                            Console.WriteLine();
-                            PrintRun(secondRunColors, secondRun);
-		                }
-
-                        IEnumerable<Chameneo> Run(int meetings, Color[] colors)
-                        {
-                            var id = 0;
-                            var broker = App.Spawn(new Broker(meetings));
-                            var result = colors
-                                .Select(color => App.Spawn(new Chameneo(broker, color)))
+                            //create chopsticks
+                            var chopsticks = names
+                                .Select(n => spawn<chopstick>())
                                 .ToArray();
 
-			                await broker.Finished();
-			                return result;
-                        }
+                            //create philosophers
+                            var phCount = names.Length;
+			                for (int i = 0; i<phCount; i++)
+			                {
+				                var left = chopsticks[i];
+                                var right = i == phCount - 1
+                                    ? chopsticks[0]
+                                    : chopsticks[i + 1];
 
-                        void PrintColors()
-                        {
-                            printCompliment(Color.blue, Color.blue);
-                            printCompliment(Color.blue, Color.red);
-                            printCompliment(Color.blue, Color.yellow);
-                            printCompliment(Color.red, Color.blue);
-                            printCompliment(Color.red, Color.red);
-                            printCompliment(Color.red, Color.yellow);
-                            printCompliment(Color.yellow, Color.blue);
-                            printCompliment(Color.yellow, Color.red);
-                            printCompliment(Color.yellow, Color.yellow);
-                        }
-
-                        void PrintRun(Color[] colors, IEnumerable<Chameneo> creatures)
-                        {
-                            for (int i = 0; i < colors.Length; i++)
-                                Console.Write("" "" + colors[i]);
-
-                            Console.WriteLine();
-
-                            var total = 0;
-                            foreach (var creature in creatures)
-                            {
-                                Console.WriteLine($""{creature.Meetings} {printNumber(creature.MeetingsWithSelf)}"");
-                                total += creature.Meetings;
+                                spawn<philosopher>(names[i], left, right);
                             }
-
-                            Console.WriteLine(printNumber(total));
                         }
+	                }
 
-                        void printCompliment(Color c1, Color c2)
-                        {
-                            Console.WriteLine(c1 + "" + "" + c2 + "" -> "" + ColorUtils.Compliment(c1, c2));
-                        }
-
-                        string[] NUMBERS = { ""zero"", ""one"", ""two"", ""three"", ""four"", ""five"", ""six"", ""seven"", ""eight"", ""nine"" };
-
-                        string printNumber(int n)
-                        {
-                            StringBuilder sb = new StringBuilder();
-                            String nStr = n.ToString();
-                            for (int i = 0; i < nStr.Length; i++)
-                            {
-                                sb.Append("" "");
-                                sb.Append(NUMBERS[(int)Char.GetNumericValue(nStr[i])]);
-                            }
-
-                            return sb.ToString();
-                        }
-                    }
-
-                    public class ColorUtils
+                    concurrent class philosopher
                     {
-                        public static Color Compliment(Color c1, Color c2)
+                        string _name;
+                        chopstick _left;
+                        chopstick _right;
+                        int _meals;
+
+                        public philosopher(string name, chopstick left, chopstick right, int meals)
                         {
-                            switch (c1)
+                            _name = name;
+                            _left = left;
+                            _right = right;
+                            _meals = meals;
+                        }
+                        
+                        void main()
+                        {
+                            for (int i = 0; i < _meals; i++)
                             {
-                                case Color.blue:
-                                    switch (c2)
-                                    {
-                                        case Color.blue: return Color.blue;
-                                        case Color.red: return Color.yellow;
-                                        case Color.yellow: return Color.red;
-                                        default: break;
-                                    }
-                                    break;
-                                case Color.red:
-                                    switch (c2)
-                                    {
-                                        case Color.blue: return Color.yellow;
-                                        case Color.red: return Color.red;
-                                        case Color.yellow: return Color.blue;
-                                        default: break;
-                                    }
-                                    break;
-                                case Color.yellow:
-                                    switch (c2)
-                                    {
-                                        case Color.blue: return Color.red;
-                                        case Color.red: return Color.blue;
-                                        case Color.yellow: return Color.yellow;
-                                        default: break;
-                                    }
-                                    break;
+                                await think();
                             }
-                            throw new Exception();
+                        }
+
+                        void think()
+                        {
+                            Console.WriteLine(_name + "" is thinking"");
+                            seconds(rand(1.0, 2.0))
+                                >> hungry();
+                        }
+
+                        void hungry()
+                        {
+                            Console.WriteLine(_name + "" is hungry"");
+                            (_left.acquire(this) & _right.acquire(this))
+                                >> eat();
+                        }
+
+                        void eat()
+                        {
+                            Console.WriteLine(_name + "" is eating"");
+                            await seconds(rand(1.0, 2.0));
+
+                            _left.release(this);
+                            _right.release(this);
                         }
                     }
-                }", out text, false, true); //remote!
+
+                    concurrent class chopstick
+                    {
+                        philosopher _owner;
+
+                        public void acquire(philosopher owner)
+                        {
+                            if (_owner != null)
+                            {
+                                await release;
+                            }
+
+                            _owner = owner;
+                        }
+
+                        public void release(philosopher owner)
+                        {
+                            if (_owner != owner)
+                                throw new InvalidOperationException();
+
+                            _owner = null;
+                        }
+                    }
+                }", out text, false, false); 
 
             Assert.IsNotNull(text);
         }

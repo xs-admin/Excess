@@ -26,5 +26,6 @@ namespace Excess.Concurrent.Runtime
         void RegisterClass(Type type);
         void RegisterClass<T>() where T : IConcurrentObject;
         void RegisterRemoteClass(Type type);
+        double rand();
     }
 }
