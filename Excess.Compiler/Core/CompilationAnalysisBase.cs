@@ -61,7 +61,7 @@ namespace Excess.Compiler.Core
         public ICompilationAnalysis<TToken, TNode, TCompilation> after(Action<TCompilation, Scope> handler)
         {
             if (!_after.Contains(handler))
-                _after.Add(handler);
+                _after.Add(handler); //td: !!! multiples
             return this;
         }
     }

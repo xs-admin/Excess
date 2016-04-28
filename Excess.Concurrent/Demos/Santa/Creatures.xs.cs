@@ -8,7 +8,7 @@ using Excess.Concurrent.Runtime;
 
 namespace Santa
 {
-    [Concurrent(id = "a828f46d-8040-4a1c-b0df-b3e77f3317aa")]
+    [Concurrent(id = "4fd5b07b-0c71-443d-854c-cee85a5a7509")]
     class Reindeer : ConcurrentObject
     {
         string _name;
@@ -262,7 +262,7 @@ namespace Santa
         public readonly Guid __ID = Guid.NewGuid();
     }
 
-    [Concurrent(id = "135ba4c8-2090-4bcc-8b1c-8eb9c2cc1e29")]
+    [Concurrent(id = "4fe17c9b-e350-49c9-82c1-4f6061ddbae4")]
     class Elf : ConcurrentObject
     {
         string _name;

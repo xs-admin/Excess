@@ -26,7 +26,7 @@ namespace DiningPhilosophers
 
             //create philosophers
             var phCount = names.Length;
-			for (int i = 0; i<phCount; i++)
+			for (int i = 0; i < phCount; i++)
 			{
 				var left = chopsticks[i];
                 var right = i == phCount - 1
@@ -102,7 +102,7 @@ namespace DiningPhilosophers
         public void release(philosopher owner)
         {
             if (_owner != owner)
-                throw new InvalidOperationException();
+                throw new ArgumentException();
 
             _owner = null;
         }

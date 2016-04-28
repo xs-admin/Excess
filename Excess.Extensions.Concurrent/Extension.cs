@@ -867,7 +867,16 @@ namespace Excess.Extensions.Concurrent
                             .Select(ns => CSharp.UsingDirective(ns.Name))
                             .ToArray());
 
-                    compilation.addCSharpFile("Program.cs", result.SyntaxTree);
+                    compilation.addCSharpFile("Program.cs", result
+                        .ReplaceNodes(result
+                            .DescendantNodes()
+                            .OfType<MethodDeclarationSyntax>(),
+                            (on, nn) => nn.AddBodyStatements(singletons
+                                .Select(singleton => Templates
+                                    .StartSingleton
+                                    .Get<StatementSyntax>(singleton.Identifier))
+                                .ToArray()))
+                        .SyntaxTree);
                 }
             };
         }

@@ -8,6 +8,7 @@ namespace Santa
         {
             var app = new ThreadedConcurrentApp(threadCount: 4);
             app.Start();
+            SantaClaus.Start(app);
         }
     }
 }

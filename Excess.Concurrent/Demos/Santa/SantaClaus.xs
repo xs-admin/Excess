@@ -7,6 +7,8 @@ namespace Santa
 		List<Reindeer> _reindeer = new List<Reindeer>();
 		List<Elf> _elves = new List<Elf>();
 		bool _busy = false;
+
+		//a reindeer is ready for work
 		public void reindeer(Reindeer r)
 		{
 			_reindeer.Add(r);
@@ -31,6 +33,7 @@ namespace Santa
 			}
 		}
 
+		//and elf wants to meet with Santa
 		public void elf(Elf e)
 		{
 			if (_busy)
@@ -48,7 +51,7 @@ namespace Santa
 				seconds(1, 2) | cancelMeeting;
 
 				var isDelivering = readyToDeliver();
-				if (isDelivering)
+				if (isDelivering) //therefore the meeting was canceled
 				{
 					Console.WriteLine("Santa: sorry fellows, got toys to deliver!");
 					meetingCanceled();

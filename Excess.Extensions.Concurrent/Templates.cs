@@ -355,5 +355,8 @@ namespace Excess.Extensions.Concurrent
                     }
                 }
             }");
+
+        public static Template StartSingleton = Template.ParseStatement("_0.Start(app);");
+        
     }
 }

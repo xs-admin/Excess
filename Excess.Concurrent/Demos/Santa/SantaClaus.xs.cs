@@ -8,20 +8,22 @@ using Excess.Concurrent.Runtime;
 
 namespace Santa
 {
-    [Concurrent(id = "f3e0e27f-c6c4-42ba-812f-4b36b092b356")]
-    [ConcurrentSingleton(id: "93de19ae-027a-4b72-8e20-9acd53cc1702")]
+    [Concurrent(id = "793f0d50-e876-4341-a4e9-69e7af1f72f2")]
+    [ConcurrentSingleton(id: "0f2eee95-01c4-45e7-bbf0-5b06e8c2c790")]
     class SantaClaus : ConcurrentObject
     {
         List<Reindeer> _reindeer = new List<Reindeer>();
         List<Elf> _elves = new List<Elf>();
         bool _busy = false;
         [Concurrent]
+        //a reindeer is ready for work
         public void __reindeer(Reindeer r)
         {
             __reindeer(r, default (CancellationToken), null, null);
         }
 
         [Concurrent]
+        //and elf wants to meet with Santa
         public void __elf(Elf e)
         {
             __elf(e, default (CancellationToken), null, null);
@@ -147,6 +149,7 @@ namespace Santa
             __singleton.__reindeer(r, cancellation, success, failure);
         }
 
+        //a reindeer is ready for work
         public static void reindeer(Reindeer r)
         {
             __singleton.__reindeer(r);
@@ -214,7 +217,7 @@ namespace Santa
                 if (__expr7_var.Failure != null)
                     throw __expr7_var.Failure;
                 var isDelivering = readyToDeliver();
-                if (isDelivering)
+                if (isDelivering) //therefore the meeting was canceled
                 {
                     Console.WriteLine("Santa: sorry fellows, got toys to deliver!");
                     meetingCanceled();
@@ -252,6 +255,7 @@ namespace Santa
             __singleton.__elf(e, cancellation, success, failure);
         }
 
+        //and elf wants to meet with Santa
         public static void elf(Elf e)
         {
             __singleton.__elf(e);

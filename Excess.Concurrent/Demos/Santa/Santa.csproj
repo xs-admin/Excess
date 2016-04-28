@@ -46,6 +46,7 @@
     <Compile Include="Creatures.xs.cs">
       <DependentUpon>Creatures.xs</DependentUpon>
     </Compile>
+    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SantaClaus.xs.cs">
       <DependentUpon>SantaClaus.xs</DependentUpon>
