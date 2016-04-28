@@ -150,6 +150,7 @@ namespace xsc
             }
 
             var compilation = new ExcessCompilation(
+                analysis: new CompilationAnalysis(),
                 extensions: Extensions,
                 executable: asExe);
 
@@ -170,38 +171,48 @@ namespace xsc
 
             var errors = null as IEnumerable<Diagnostic>;
             var result = compilation.build(out errors);
-            if (result != null)
+            if (Transpile)
             {
-                if (Transpile)
+                foreach (var document in compilation.Documents())
                 {
-                    foreach (var document in compilation.Documents())
+                    var filename = compilation.DocumentFileName(document) + ".cs";
+                    Console.WriteLine($"Generated: {filename}");
+
+                    var text = document.SyntaxRoot.NormalizeWhitespace().ToFullString();
+                    File.WriteAllText(filename, text);
+                }
+
+                foreach (var file in compilation.getCSharpFiles())
+                {
+                    var filename = Path.Combine(_directory, file.Key);
+                    if (!File.Exists(file.Key) && !File.Exists(filename))
                     {
-                        var filename = compilation.DocumentFileName(document) + ".cs";
                         Console.WriteLine($"Generated: {filename}");
 
-                        var text = document.SyntaxRoot.NormalizeWhitespace().ToFullString();
+                        var text = file.Value.GetRoot().NormalizeWhitespace().ToFullString();
                         File.WriteAllText(filename, text);
                     }
                 }
-                else
-                {
-                    var outputPath = OutputPath;
-                    if (outputPath == null)
-                        outputPath = Path.Combine(
-                            _directory,
-                            Path.GetFileName(_directory));
-
-                    if (Path.GetExtension(outputPath) == string.Empty)
-                        outputPath = outputPath + (asExe ? ".exe" : ".dll");
-
-                    Debug.Assert(outputPath != null);
-
-                    outputPath = Path.GetFullPath(outputPath);
-                    File.WriteAllBytes(outputPath, result.GetBuffer());
-                    Console.WriteLine($"Successfully built: {outputPath}");
-                }
             }
-            else
+            else if (result != null)
+            {
+                var outputPath = OutputPath;
+                if (outputPath == null)
+                    outputPath = Path.Combine(
+                        _directory,
+                        Path.GetFileName(_directory));
+
+                if (Path.GetExtension(outputPath) == string.Empty)
+                    outputPath = outputPath + (asExe ? ".exe" : ".dll");
+
+                Debug.Assert(outputPath != null);
+
+                outputPath = Path.GetFullPath(outputPath);
+                File.WriteAllBytes(outputPath, result.GetBuffer());
+                Console.WriteLine($"Successfully built: {outputPath}");
+            }
+
+            if (errors.Any())
             {
                 foreach (var error in errors)
                     Console.Error.WriteLine(error.ToString());

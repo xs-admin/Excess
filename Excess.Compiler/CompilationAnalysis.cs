@@ -1,20 +1,17 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Excess.Compiler
 {
-    public interface ICompilationMatch<TToken, TNode, TModel>
+    public interface ICompilationMatch<TToken, TNode, TCompilation>
     {
-        ICompilationAnalysis<TToken, TNode, TModel> then(Action<TNode, TModel, Scope> handler);
+        ICompilationAnalysis<TToken, TNode, TCompilation> then(Action<TNode, TCompilation, Scope> handler);
 
-        bool matched(TNode node, TModel model, Scope scope);
+        bool matched(TNode node, TCompilation compilation, Scope scope);
     }
 
-    public interface ICompilationAnalysis<TToken, TNode, TModel>
+    public interface ICompilationAnalysis<TToken, TNode, TCompilation>
     {
-        ICompilationMatch<TToken, TNode, TModel> match<T>(Func<T, TModel, Scope, bool> matcher) where T : TNode;
-    } 
+        ICompilationMatch<TToken, TNode, TCompilation> match<T>(Func<T, TCompilation, Scope, bool> matcher) where T : TNode;
+        ICompilationAnalysis<TToken, TNode, TCompilation> after(Action<TCompilation, Scope> handler);
+    }
 }

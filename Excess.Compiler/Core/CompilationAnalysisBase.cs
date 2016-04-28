@@ -39,12 +39,13 @@ namespace Excess.Compiler.Core
         }
     }
 
-    public abstract class CompilationAnalysisBase<TToken, TNode, TModel> : ICompilationAnalysis<TToken, TNode, TModel>
+    public abstract class CompilationAnalysisBase<TToken, TNode, TCompilation> : ICompilationAnalysis<TToken, TNode, TCompilation>
     {
-        protected List<ICompilationMatch<TToken, TNode, TModel>> _matchers = new List<ICompilationMatch<TToken, TNode, TModel>>();
-        ICompilationMatch<TToken, TNode, TModel> ICompilationAnalysis<TToken, TNode, TModel>.match<T>(Func<T, TModel, Scope, bool> matcher) 
+        protected List<ICompilationMatch<TToken, TNode, TCompilation>> _matchers = new List<ICompilationMatch<TToken, TNode, TCompilation>>();
+        protected List<Action<TCompilation, Scope>> _after = new List<Action<TCompilation, Scope>>();
+        ICompilationMatch<TToken, TNode, TCompilation> ICompilationAnalysis<TToken, TNode, TCompilation>.match<T>(Func<T, TCompilation, Scope, bool> matcher) 
         {
-            var result = new CompilationMatch<TToken, TNode, TModel>(this, (node, model, scope) =>
+            var result = new CompilationMatch<TToken, TNode, TCompilation>(this, (node, model, scope) =>
             {
                 if (node is T)
                     return matcher((T)node, model, scope);
@@ -54,6 +55,14 @@ namespace Excess.Compiler.Core
 
             _matchers.Add(result);
             return result;
+        }
+
+
+        public ICompilationAnalysis<TToken, TNode, TCompilation> after(Action<TCompilation, Scope> handler)
+        {
+            if (!_after.Contains(handler))
+                _after.Add(handler);
+            return this;
         }
     }
 }

@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Diagnostics;
 using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Excess.Concurrent.Runtime;
@@ -15,9 +18,6 @@ namespace Concurrent.Tests
     using ExcessCompilation = Excess.Compiler.Roslyn.Compilation;
     using FactoryMap = Dictionary<string, Func<IConcurrentApp, object[], IConcurrentObject>>;
     using ConcurrentAttribute = Excess.Concurrent.Runtime.Concurrent;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using System.Diagnostics;
 
     public static class Mock
     {
@@ -111,11 +111,11 @@ namespace Concurrent.Tests
             return result;
         }
 
-        private static ICompilerInjector<SyntaxToken, SyntaxNode, SemanticModel> MockInjector(Options options)
+        private static ICompilerInjector<SyntaxToken, SyntaxNode, SemanticModel, ExcessCompilation> MockInjector(Options options)
         {
-            return new CompositeInjector<SyntaxToken, SyntaxNode, SemanticModel>(new[]
+            return new CompositeInjector<SyntaxToken, SyntaxNode, SemanticModel, ExcessCompilation>(new[]
             {
-                new DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel>(compiler => compiler
+                new DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel, ExcessCompilation>(compiler => compiler
                     .Environment()
                         .dependency(new[]
                         {
@@ -128,7 +128,7 @@ namespace Concurrent.Tests
                             "Excess.Concurrent.Runtime"
                         })),
 
-                new DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel>(compiler =>
+                new DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel, ExcessCompilation>(compiler =>
                     Extension.Apply((RoslynCompiler)compiler, options))
             });
         }

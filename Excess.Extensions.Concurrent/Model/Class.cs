@@ -29,6 +29,7 @@ namespace Excess.Extensions.Concurrent.Model
         public IDictionary<int, Signal> Signals { get; private set; }
         public Scope Scope { get; private set; }
         public bool IsSingleton { get; private set; }
+        public IEnumerable<MemberDeclarationSyntax> MembersToAdd => _add;
 
         List<MemberDeclarationSyntax> _add = new List<MemberDeclarationSyntax>();
         public void AddMember(MemberDeclarationSyntax member)
@@ -216,6 +217,11 @@ namespace Excess.Extensions.Concurrent.Model
             }
 
             return true;
+        }
+
+        public bool willReplace(MethodDeclarationSyntax method)
+        {
+            return _replace.ContainsKey(method);
         }
     }
 }

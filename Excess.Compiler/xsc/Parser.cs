@@ -30,7 +30,7 @@ namespace xsc
                             {{
                                 Files = directoryFiles();
                                 SolutionFile = null;
-                                Transpile = false;
+                                Transpile = true;
                                 
                                 {toRun}
 
@@ -134,7 +134,7 @@ namespace xsc
             { "-file",       (args, index) => consumeOne(args, index, "Files = new [] {@\"{0}\"};") },
             { "-files",      (args, index) => consumeOne(args, index, "Files = directoryFiles(@\"{0}\");") },
             { "-extensions", (args, index) => consumeOne(args, index, "Extensions = directoryExtensions(@\"{0}\");") },
-            { "-transpile",  (args, index) => addLine("Transpile = true;") },
+            { "-build",      (args, index) => addLine("Transpile = false;") },
         };
 
         private static ParseResult consumeOne(string[] args, int index, string template)

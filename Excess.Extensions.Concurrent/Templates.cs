@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 
 namespace Excess.Extensions.Concurrent
 {
+    using Microsoft.CodeAnalysis;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
     internal static class Templates
@@ -155,6 +156,14 @@ namespace Excess.Extensions.Concurrent
             }");
 
         public static Template InternalCall = Template.ParseExpression("_0(__cancellation, __success, __failure).GetEnumerator()");
+        public static Template SingletonCall = Template.ParseStatement("__singleton._0();");
+        public static Template SingletonReturnCall = Template.ParseStatement("return __singleton._0();");
+        public static Template SingletonField = Template.Parse("private static _0 __singleton;");
+        public static Template SingletonInit = Template.Parse(@"
+            public static void Start(IConcurrentApp app)
+            {
+                __singleton = app.Spawn<_0>();
+            }");
 
         public static Template ExpressionAssigment = Template.ParseStatement("__expr._0 = (__1)__res;");
         public static Template AssigmentAfterExpression = Template.ParseStatement("_0 = _1._0;");
@@ -278,6 +287,7 @@ namespace Excess.Extensions.Concurrent
             yield return __expr;");
 
         public static Template RemoteResult = Template.ParseExpression("(__0)__res");
+        public static StatementSyntax RemoteIdAssign = CSharp.ParseStatement("Id = id;");
 
         public static Template Interface = Template.Parse(@"
             public interface _0
@@ -330,6 +340,20 @@ namespace Excess.Extensions.Concurrent
                 }
             }");
 
-        public static StatementSyntax RemoteIdAssign = CSharp.ParseStatement("Id = id;");
+        public static Template AppStandaloneProgram = Template.Parse(@"
+            using Excess.Concurrent.Runtime;
+            
+            namespace __0
+            {
+                class Program
+                {
+                    static void Main(string[] args)
+                    {
+                        var app = new ThreadedConcurrentApp(threadCount: 4);
+
+                        app.Start();
+                    }
+                }
+            }");
     }
 }

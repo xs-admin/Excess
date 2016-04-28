@@ -7,25 +7,25 @@ using System.Threading.Tasks;
 
 namespace Excess.Compiler.Core
 {
-    public abstract class CompilerBase<TToken, TNode, TModel> : ICompiler<TToken, TNode, TModel>,
+    public abstract class CompilerBase<TToken, TNode, TModel, TCompilation> : ICompiler<TToken, TNode, TModel, TCompilation>,
                                                                 IDocumentInjector<TToken, TNode, TModel>
     {
-        protected ILexicalAnalysis<TToken, TNode, TModel>     _lexical;
-        protected ISyntaxAnalysis<TToken, TNode, TModel>      _syntax;
-        protected ISemanticAnalysis<TToken, TNode, TModel>    _semantics;
-        protected IInstanceAnalisys<TNode>                    _instance;     
-        protected ICompilerEnvironment                        _environment;
-        protected ICompilationAnalysis<TToken, TNode, TModel> _compilation;
-        protected CompilerStage                               _stage  = CompilerStage.Started;
-        protected IDocument<TToken, TNode, TModel>            _document;
-        protected Scope                                       _scope;
+        protected ILexicalAnalysis<TToken, TNode, TModel>           _lexical;
+        protected ISyntaxAnalysis<TToken, TNode, TModel>            _syntax;
+        protected ISemanticAnalysis<TToken, TNode, TModel>          _semantics;
+        protected IInstanceAnalisys<TNode>                          _instance;     
+        protected ICompilerEnvironment                              _environment;
+        protected ICompilationAnalysis<TToken, TNode, TCompilation> _compilation;
+        protected CompilerStage                                     _stage  = CompilerStage.Started;
+        protected IDocument<TToken, TNode, TModel>                  _document;
+        protected Scope                                             _scope;
 
         public CompilerBase(ILexicalAnalysis<TToken, TNode, TModel> lexical, 
                             ISyntaxAnalysis<TToken, TNode, TModel> syntax, 
                             ISemanticAnalysis<TToken, TNode, TModel> semantics,
                             ICompilerEnvironment environment,
                             IInstanceAnalisys<TNode> instance,
-                            ICompilationAnalysis<TToken, TNode, TModel> compilation,
+                            ICompilationAnalysis<TToken, TNode, TCompilation> compilation,
                             Scope scope)
         {
             _lexical  = lexical;
@@ -64,7 +64,7 @@ namespace Excess.Compiler.Core
             return _environment;
         }
 
-        public ICompilationAnalysis<TToken, TNode, TModel> Compilation()
+        public ICompilationAnalysis<TToken, TNode, TCompilation> Compilation()
         {
             return _compilation;
         }
@@ -118,29 +118,29 @@ namespace Excess.Compiler.Core
         }
     }
 
-    public class DelegateInjector<TToken, TNode, TModel> : ICompilerInjector<TToken, TNode, TModel>
+    public class DelegateInjector<TToken, TNode, TModel, TCompilation> : ICompilerInjector<TToken, TNode, TModel, TCompilation>
     {
-        Action<ICompiler<TToken, TNode, TModel>> _delegate;
-        public DelegateInjector(Action<ICompiler<TToken, TNode, TModel>> @delegate)
+        Action<ICompiler<TToken, TNode, TModel, TCompilation>> _delegate;
+        public DelegateInjector(Action<ICompiler<TToken, TNode, TModel, TCompilation>> @delegate)
         {
             _delegate = @delegate;
         }
 
-        public void apply(ICompiler<TToken, TNode, TModel> compiler)
+        public void apply(ICompiler<TToken, TNode, TModel, TCompilation> compiler)
         {
             _delegate(compiler);
         }
     }
 
-    public class CompositeInjector<TToken, TNode, TModel> : ICompilerInjector<TToken, TNode, TModel>
+    public class CompositeInjector<TToken, TNode, TModel, TCompilation> : ICompilerInjector<TToken, TNode, TModel, TCompilation>
     {
-        IEnumerable<ICompilerInjector<TToken, TNode, TModel>> _injectors;
-        public CompositeInjector(IEnumerable<ICompilerInjector<TToken, TNode, TModel>> injectors)
+        IEnumerable<ICompilerInjector<TToken, TNode, TModel, TCompilation>> _injectors;
+        public CompositeInjector(IEnumerable<ICompilerInjector<TToken, TNode, TModel, TCompilation>> injectors)
         {
             _injectors = injectors;
         }
 
-        public void apply(ICompiler<TToken, TNode, TModel> compiler)
+        public void apply(ICompiler<TToken, TNode, TModel, TCompilation> compiler)
         {
             foreach (var injector in _injectors)
                 injector.apply(compiler);

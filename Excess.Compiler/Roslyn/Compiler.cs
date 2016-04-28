@@ -166,7 +166,7 @@ namespace Excess.Compiler.Roslyn
         }
     }
 
-    public class RoslynCompiler : CompilerBase<SyntaxToken, SyntaxNode, SemanticModel>
+    public class RoslynCompiler : CompilerBase<SyntaxToken, SyntaxNode, SemanticModel, Compilation>
     {
         public RoslynCompiler(ICompilerEnvironment environment, Scope scope = null, CompilationAnalysis compilation = null) : 
             base(new RoslynLexicalAnalysis(), 
@@ -186,7 +186,7 @@ namespace Excess.Compiler.Roslyn
             }
         }
 
-        public RoslynCompiler(Scope scope) : this(null, scope)
+        public RoslynCompiler(Scope scope, CompilationAnalysis compilation = null) : this(null, scope, compilation)
         {
         }
 

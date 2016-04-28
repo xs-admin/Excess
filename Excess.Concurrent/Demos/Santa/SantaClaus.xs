@@ -1,0 +1,78 @@
+﻿using xs.concurrent;
+
+namespace Santa
+{
+	concurrent object SantaClaus
+	{
+		List<Reindeer> _reindeer = new List<Reindeer>();
+		List<Elf> _elves = new List<Elf>();
+		bool _busy = false;
+		public void reindeer(Reindeer r)
+		{
+			_reindeer.Add(r);
+			if (readyToDeliver())
+			{
+				//in case we're meeting with elves
+				if (_busy)
+					cancelMeeting() >> meetingCanceled;
+
+				//christmas!
+				_busy = true;
+				Console.WriteLine("Santa: Off to deliver toys!");
+				await seconds(rand(5, 10));
+				Console.WriteLine("Santa: Merry Christmas, enjoy the toys!");
+
+				//is over 
+				foreach(var rd in _reindeer)
+					rd.unharness();
+
+				_reindeer.Clear();
+				_busy = false;
+			}
+		}
+
+		public void elf(Elf e)
+		{
+			if (_busy)
+			{
+				e.advice(false);
+				return;
+			}
+
+			_elves.Add(e);
+			if (_elves.Count == 3)
+			{
+				_busy = true;
+
+				Console.WriteLine("Santa: hey guys, need help?");
+				seconds(1, 2) | cancelMeeting;
+
+				var isDelivering = readyToDeliver();
+				if (isDelivering)
+				{
+					Console.WriteLine("Santa: sorry fellows, got toys to deliver!");
+					meetingCanceled();
+				}
+				else
+				{
+					Console.WriteLine("Santa: Good meeting, little fellas!");
+					_busy = false;
+				}
+
+				//adjourned
+				foreach(var elf in _elves)
+					elf.advice(!isDelivering);
+
+				_elves.Clear();
+			}    
+		}
+
+		private void cancelMeeting();
+		private void meetingCanceled();
+
+		private bool readyToDeliver()
+		{
+			return _reindeer.Count == 8;
+		}
+	}
+}

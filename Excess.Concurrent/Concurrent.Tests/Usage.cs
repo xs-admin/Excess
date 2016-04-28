@@ -338,110 +338,81 @@ namespace Concurrent.Tests
             var tree = Mock.Compile(@"
                 using xs.concurrent;
 
-                namespace DiningPhilosophers
+                namespace Santa
                 {
-	                concurrent app
+	                concurrent object SantaClaus
 	                {
-		                void main()
+		                List<Reindeer> _reindeer = new List<Reindeer>();
+		                List<Elf> _elves = new List<Elf>();
+		                bool _busy = false;
+		                public void reindeer(Reindeer r)
 		                {
-			                var names = new []
+			                _reindeer.Add(r);
+			                if (readyToDeliver())
 			                {
-				                ""Kant"",
-                                ""Archimedes"",
-                                ""Nietzche"",
-                                ""Plato"",
-                                ""Spinoza"",
+				                //in case we're meeting with elves
+				                if (_busy)
+					                cancelMeeting() >> meetingCanceled;
 
-                            };
+				                //christmas!
+				                _busy = true;
+				                Console.WriteLine(""Santa: Off to deliver toys!"");
+				                await seconds(rand(5, 10));
+				                Console.WriteLine(""Santa: Merry Christmas, enjoy the toys!"");
 
-                            //create chopsticks
-                            var chopsticks = names
-                                .Select(n => spawn<chopstick>())
-                                .ToArray();
+				                //is over 
+				                foreach(var rd in _reindeer)
+					                rd.unharness();
 
-                            //create philosophers
-                            var phCount = names.Length;
-			                for (int i = 0; i<phCount; i++)
+				                _reindeer.Clear();
+				                _busy = false;
+			                }
+		                }
+
+		                public void elf(Elf e)
+		                {
+			                if (_busy)
 			                {
-				                var left = chopsticks[i];
-                                var right = i == phCount - 1
-                                    ? chopsticks[0]
-                                    : chopsticks[i + 1];
+				                e.advice(false);
+				                return;
+			                }
 
-                                spawn<philosopher>(names[i], left, right);
-                            }
-                        }
+			                _elves.Add(e);
+			                if (_elves.Count == 3)
+			                {
+				                _busy = true;
+
+				                Console.WriteLine(""Santa: hey guys, need help? "");
+				                seconds(1, 2) | cancelMeeting;
+
+				                var isDelivering = readyToDeliver();
+				                if (isDelivering)
+				                {
+					                Console.WriteLine(""Santa: sorry fellows, got toys to deliver!"");
+					                meetingCanceled();
+				                }
+				                else
+				                {
+					                Console.WriteLine(""Santa: Good meeting, little fellas!"");
+					                _busy = false;
+				                }
+
+				                //adjourned
+				                foreach(var elf in _elves)
+					                elf.advice(!isDelivering);
+
+				                _elves.Clear();
+			                }    
+		                }
+
+		                private void cancelMeeting();
+		                private void meetingCanceled();
+
+		                private bool readyToDeliver()
+		                {
+			                return _reindeer.Count == 8;
+		                }
 	                }
-
-                    concurrent class philosopher
-                    {
-                        string _name;
-                        chopstick _left;
-                        chopstick _right;
-                        int _meals;
-
-                        public philosopher(string name, chopstick left, chopstick right, int meals)
-                        {
-                            _name = name;
-                            _left = left;
-                            _right = right;
-                            _meals = meals;
-                        }
-                        
-                        void main()
-                        {
-                            for (int i = 0; i < _meals; i++)
-                            {
-                                await think();
-                            }
-                        }
-
-                        void think()
-                        {
-                            Console.WriteLine(_name + "" is thinking"");
-                            seconds(rand(1.0, 2.0))
-                                >> hungry();
-                        }
-
-                        void hungry()
-                        {
-                            Console.WriteLine(_name + "" is hungry"");
-                            (_left.acquire(this) & _right.acquire(this))
-                                >> eat();
-                        }
-
-                        void eat()
-                        {
-                            Console.WriteLine(_name + "" is eating"");
-                            await seconds(rand(1.0, 2.0));
-
-                            _left.release(this);
-                            _right.release(this);
-                        }
-                    }
-
-                    concurrent class chopstick
-                    {
-                        philosopher _owner;
-
-                        public void acquire(philosopher owner)
-                        {
-                            if (_owner != null)
-                            {
-                                await release;
-                            }
-
-                            _owner = owner;
-                        }
-
-                        public void release(philosopher owner)
-                        {
-                            if (_owner != owner)
-                                throw new InvalidOperationException();
-
-                            _owner = null;
-                        }
-                    }
                 }", out text, false, false); 
 
             Assert.IsNotNull(text);

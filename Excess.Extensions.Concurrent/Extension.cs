@@ -14,6 +14,7 @@ namespace Excess.Extensions.Concurrent
 {
     using CSharp = SyntaxFactory;
     using Roslyn = RoslynCompiler;
+    using Compilation = Excess.Compiler.Roslyn.Compilation;
 
     public class Options
     {
@@ -82,6 +83,25 @@ namespace Excess.Extensions.Concurrent
                     "System.Threading.Tasks",
                 })
                 .dependency<ConcurrentObject>("Excess.Concurrent.Runtime");
+
+            var compilation = compiler.Compilation();
+            if (options.GenerateAppProgram && compilation != null)
+            {
+                //app support
+                var HasProgramObject = false;
+                var Singletons = new List<ClassDeclarationSyntax>();
+                compilation
+                    .match<ClassDeclarationSyntax>((@class, model, scope) =>
+                        @class.Identifier.ToString() == "Program"
+                        && @class
+                            .Members
+                            .OfType<MethodDeclarationSyntax>()
+                            .Any(method => method.Identifier.ToString() == "Main"))
+                        .then((node, model, scope) => HasProgramObject = true)
+                    .match<ClassDeclarationSyntax>((@class, model, scope) => isSingleton(@class))
+                        .then((node, model, scope) => Singletons.Add((ClassDeclarationSyntax)node))
+                    .after(AddAppProgram(HasProgramObject, Singletons));
+            }
         }
 
         private static Func<SyntaxNode, Scope, SyntaxNode> CompileClass(Options options)
@@ -116,7 +136,7 @@ namespace Excess.Extensions.Concurrent
                 else if (member is MethodDeclarationSyntax)
                 {
                     var method = member as MethodDeclarationSyntax;
-                    if (compileMethod(method, ctx, scope, options))
+                    if (compileMethod(method, ctx, scope, options, isSingleton))
                     {
                         var isVoid = method.ReturnType.ToString() == "void";
                         var taskArgs = isVoid
@@ -143,7 +163,7 @@ namespace Excess.Extensions.Concurrent
                                     .Union(
                                         taskArgs))));
 
-                        ctx.Replace(method, method
+                        var newMethod = method
                             .AddAttributeLists(CSharp.AttributeList(CSharp.SeparatedList(new[] {CSharp
                                 .Attribute(CSharp
                                     .ParseName("Concurrent"))})))
@@ -155,7 +175,24 @@ namespace Excess.Extensions.Concurrent
                                             .Get<StatementSyntax>(taskCall)
                                         : Templates
                                             .SynchReturnMethod
-                                            .Get<StatementSyntax>(taskCall)}))));
+                                            .Get<StatementSyntax>(taskCall)})));
+
+                        if (isSingleton && ctx.willReplace(method))
+                        {
+                            //singleton methods must change into __methodName
+                            var fs = (newMethod
+                                .Body
+                                .Statements
+                                .First() as ExpressionStatementSyntax)
+                                .Expression as InvocationExpressionSyntax;
+
+                            var newId = "__" + method.Identifier.ToString();
+                            newMethod = newMethod
+                                .ReplaceNode(fs, fs.WithExpression(CSharp.IdentifierName(newId)))
+                                .WithIdentifier(CSharp.ParseToken(newId));
+                        }
+
+                        ctx.Replace(method, newMethod);
                     }
                 }
             }
@@ -163,7 +200,12 @@ namespace Excess.Extensions.Concurrent
             //all concurrent compilation has been done, produce 
             @class = ctx.Update(@class);
 
-            var document = scope.GetDocument();
+            if (isSingleton)
+                @class = @class.AddMembers(
+                    Templates.SingletonField
+                        .Get<MemberDeclarationSyntax>(@class.Identifier),
+                    Templates.SingletonInit
+                        .Get<MemberDeclarationSyntax>(@class.Identifier));
 
             //generate the interface
             if (options.GenerateInterface)
@@ -183,6 +225,7 @@ namespace Excess.Extensions.Concurrent
                     .Get<MemberDeclarationSyntax>());
 
             //schedule linking
+            var document = scope.GetDocument();
             return document.change(@class, Link(ctx), null);
         }
 
@@ -392,7 +435,7 @@ namespace Excess.Extensions.Concurrent
             }
         }
 
-        private static bool compileMethod(MethodDeclarationSyntax methodDeclaration, Class ctx, Scope scope, Options options)
+        private static bool compileMethod(MethodDeclarationSyntax methodDeclaration, Class ctx, Scope scope, Options options, bool isSingleton)
         {
             var method = methodDeclaration;
             var name = method.Identifier.ToString();
@@ -507,7 +550,11 @@ namespace Excess.Extensions.Concurrent
 
             var signal = ctx.AddSignal(name, returnType, isVisible);
             if (isVisible)
-                createPublicSignals(ctx, method, signal);
+            {
+                method = createPublicSignals(ctx, method, signal, isSingleton);
+                if (isSingleton)
+                    ctx.Replace(methodDeclaration, method);
+            }
             else
             {
                 ctx.Replace(methodDeclaration, method
@@ -595,7 +642,7 @@ namespace Excess.Extensions.Concurrent
             return (statement != null && statement is ContinueStatementSyntax);
         }
 
-        private static void createPublicSignals(Class ctx, MethodDeclarationSyntax method, Signal signal)
+        private static MethodDeclarationSyntax createPublicSignals(Class ctx, MethodDeclarationSyntax method, Signal signal, bool isSingleton)
         {
             var returnType = method.ReturnType.ToString() != "void"
                 ? method.ReturnType
@@ -605,8 +652,7 @@ namespace Excess.Extensions.Concurrent
             if (!internalMethod.StartsWith("__concurrent"))
                 internalMethod = "__concurrent" + internalMethod;
 
-            var internalCall = Templates
-                .InternalCall
+            var internalCall = Templates.InternalCall
                 .Get<ExpressionSyntax>(internalMethod);
 
             internalCall = internalCall
@@ -621,30 +667,68 @@ namespace Excess.Extensions.Concurrent
                                 param.Identifier)))
                         .Union(on.ArgumentList.Arguments)))));
 
-            ctx.AddMember(AddParameters(
+            var ps1 = publicSignal(
                 method.ParameterList,
                 Templates.TaskPublicMethod
-                .Get<MethodDeclarationSyntax>(
-                    method.Identifier.ToString(),
-                    returnType,
-                    internalCall)));
+                    .Get<MethodDeclarationSyntax>(
+                        method.Identifier.ToString(),
+                        returnType,
+                        internalCall));
 
-            ctx.AddMember(AddParameters(
+            var ps2 = publicSignal(
                 method.ParameterList,
                 Templates.TaskCallbackMethod
-                .Get<MethodDeclarationSyntax>(
-                    method.Identifier.ToString(),
-                    internalCall)));
+                    .Get<MethodDeclarationSyntax>(
+                        method.Identifier.ToString(),
+                        internalCall));
+
+            if (isSingleton)
+            {
+                ctx.AddMember(singletonPublicSignal(ps1, out ps1));
+                ctx.AddMember(singletonPublicSignal(ps2, out ps2));
+                ctx.AddMember(singletonPublicSignal(method, out method));
+            }
+
+            ctx.AddMember(ps1);
+            ctx.AddMember(ps2);
+            return method;
         }
 
-        private static MemberDeclarationSyntax AddParameters(ParameterListSyntax parameterList, MethodDeclarationSyntax methodDeclarationSyntax)
+        private static MethodDeclarationSyntax singletonPublicSignal(MethodDeclarationSyntax method, out MethodDeclarationSyntax  result)
         {
-            return methodDeclarationSyntax
-            .WithParameterList(methodDeclarationSyntax.ParameterList
-                .WithParameters(CSharp.SeparatedList(
-                    parameterList.Parameters
-                    .Union(methodDeclarationSyntax
-                        .ParameterList.Parameters))));
+            result = method.WithIdentifier(CSharp.ParseToken("__" + method.Identifier.ToString()));
+
+            var sCall = method.ReturnType.ToString() == "void"
+                ? Templates.SingletonCall
+                    .Get<StatementSyntax>(result.Identifier.ToString())
+                : Templates.SingletonReturnCall
+                    .Get<StatementSyntax>(result.Identifier.ToString());
+
+            return method
+                .AddModifiers(Roslyn.@static.ToArray())
+                .WithBody(CSharp.Block(sCall
+                    .ReplaceNodes(sCall
+                        .DescendantNodes()
+                        .OfType<ArgumentListSyntax>(),
+                        (on, nn) => nn.WithArguments(CSharp.SeparatedList(method
+                            .ParameterList
+                            .Parameters
+                            .Select(parameter => CSharp.Argument(CSharp.IdentifierName(parameter.Identifier))))))));
+        }
+
+        private static MethodDeclarationSyntax publicSignal(ParameterListSyntax parameterList, MethodDeclarationSyntax methodDeclarationSyntax)
+        {
+            var result = methodDeclarationSyntax
+                .WithParameterList(methodDeclarationSyntax.ParameterList
+                    .WithParameters(CSharp.SeparatedList(
+                        parameterList.Parameters
+                        .Union(methodDeclarationSyntax
+                            .ParameterList.Parameters))));
+
+            //if (isSingleton)
+            //    result = result.AddModifiers(CSharp.Token(SyntaxKind.StaticKeyword));
+
+            return result;
         }
 
         private static Func<SyntaxNode, Scope, SyntaxNode> CompileObject(Options options)
@@ -740,6 +824,52 @@ namespace Excess.Extensions.Concurrent
             }
 
             return main.WithParameterList(CSharp.ParameterList());
+        }
+
+        private static bool isSingleton(ClassDeclarationSyntax @class)
+        {
+            return @class
+                .AttributeLists
+                .Any(list => list
+                    .Attributes
+                    .Any(attr => attr.Name.ToString() == "ConcurrentSingleton"));
+        }
+
+        private static Action<Compilation, Scope> AddAppProgram(bool hasProgramObject, IEnumerable<ClassDeclarationSyntax> singletons)
+        {
+            return (compilation, scope) =>
+            {
+                if (!hasProgramObject)
+                {
+                    var namespaces = new List<NamespaceDeclarationSyntax>();
+                    foreach (var singleton in singletons)
+                    {
+                        var @namespace = singleton
+                            .Ancestors()
+                            .OfType<NamespaceDeclarationSyntax>()
+                            .LastOrDefault();
+
+                        if (@namespace != null && !namespaces.Any(ns => ns.Name.ToString() == @namespace.Name.ToString()))
+                            namespaces.Add(@namespace);
+                    }
+
+                    var Namespace = namespaces.Any()
+                        ? namespaces.First().Name
+                        : CSharp.ParseName("__namespace");
+
+                    var result = Templates
+                        .AppStandaloneProgram
+                        .Get<CompilationUnitSyntax>(Namespace);
+
+                    if (namespaces.Count > 1)
+                        result = result.AddUsings(namespaces
+                            .Take(1)
+                            .Select(ns => CSharp.UsingDirective(ns.Name))
+                            .ToArray());
+
+                    compilation.addCSharpFile("Program.cs", result.SyntaxTree);
+                }
+            };
         }
     }
 }

@@ -141,7 +141,7 @@ namespace Excess.Compiler.Roslyn
             var source = File.ReadAllText(fileName);
             var document = new RoslynDocument(new Scope(_scope), source, fileName);
 
-            var compilerResult = new RoslynCompiler(_scope);
+            var compilerResult = new RoslynCompiler(_scope, _analysis);
             var tree = CSharpSyntaxTree.ParseText(source);
             var usings = (tree.GetRoot() as CompilationUnitSyntax)
                 ?.Usings
@@ -207,7 +207,7 @@ namespace Excess.Compiler.Roslyn
             _documents.Add(newDoc);
         }
 
-        public void addDocument(string id, string contents, ICompilerInjector<SyntaxToken, SyntaxNode, SemanticModel> injector)
+        public void addDocument(string id, string contents, ICompilerInjector<SyntaxToken, SyntaxNode, SemanticModel, Compilation> injector)
         {
             if (_documents
                 .Where(doc => doc.Id == id)
@@ -359,9 +359,16 @@ namespace Excess.Compiler.Roslyn
             _csharpFiles[file] = tree;
         }
 
+        public IEnumerable<KeyValuePair<string, SyntaxTree>> getCSharpFiles()
+        {
+            return _csharpFiles;
+        }
+
         public void addCSharpFile(string file, string contents)
         {
-            var tree = CSharp.ParseSyntaxTree(contents);
+            var tree = CSharp.ParseSyntaxTree(contents)
+                .WithFilePath(file);
+
             addCSharpFile(file, tree);
         }
 
@@ -548,7 +555,7 @@ namespace Excess.Compiler.Roslyn
                 return null;
 
             if (_analysis != null)
-                performAnalysis(_analysis);
+                performAnalysis(_analysis, this);
 
             var stream = new MemoryStream();
             var result = _compilation.Emit(stream);
@@ -596,18 +603,23 @@ namespace Excess.Compiler.Roslyn
             return result;
         }
 
-        private void performAnalysis(CompilationAnalysis analysis)
+        private void performAnalysis(CompilationAnalysis analysis, Compilation compilation)
         {
+            if (!analysis.isNeeded())
+                return;
+
             foreach (var document in _documents)
             {
                 var root = document.Document.SyntaxRoot;
                 if (root != null)
                 {
                     var model = _compilation.GetSemanticModel(root.SyntaxTree); //td: really neccesary?
-                    var visitor = new CompilationAnalysisVisitor(analysis, model, _scope);
+                    var visitor = new CompilationAnalysisVisitor(analysis, compilation, _scope);
                     visitor.Visit(root);
                 }
             }
+
+            analysis.Finish(compilation, compilation.Scope);
         }
 
         public IEnumerable<Diagnostic> errors()
