@@ -21,6 +21,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DiningPhilosophers", "Demos
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Santa", "Demos\Santa\Santa.csproj", "{9567D7E4-7931-4F69-A0C8-146692DD071D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Barbers", "Demos\Barbers\Barbers.csproj", "{50B60332-BDAB-4D25-9BE2-8F07602A39CC}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Nuget", "Nuget", "{A43B47AC-BD5B-49BA-A16C-17A6993C6E6E}"
+	ProjectSection(SolutionItems) = preProject
+		Nuget\Excess.Concurrent.nuspec = Nuget\Excess.Concurrent.nuspec
+		Nuget\publish.bat = Nuget\publish.bat
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -55,6 +63,10 @@ Global
 		{9567D7E4-7931-4F69-A0C8-146692DD071D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9567D7E4-7931-4F69-A0C8-146692DD071D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9567D7E4-7931-4F69-A0C8-146692DD071D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{50B60332-BDAB-4D25-9BE2-8F07602A39CC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{50B60332-BDAB-4D25-9BE2-8F07602A39CC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{50B60332-BDAB-4D25-9BE2-8F07602A39CC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{50B60332-BDAB-4D25-9BE2-8F07602A39CC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -64,5 +76,6 @@ Global
 		{462E9E6D-15AC-48BE-A23C-4C3EB8A29F6C} = {D7FF6925-F52F-4354-8BBC-C417B4C0F768}
 		{92B21B7E-01E4-4EEB-A3AB-2050F33C542A} = {8F9F3F05-8FD8-4612-9CEF-3B9331B37671}
 		{9567D7E4-7931-4F69-A0C8-146692DD071D} = {8F9F3F05-8FD8-4612-9CEF-3B9331B37671}
+		{50B60332-BDAB-4D25-9BE2-8F07602A39CC} = {8F9F3F05-8FD8-4612-9CEF-3B9331B37671}
 	EndGlobalSection
 EndGlobal

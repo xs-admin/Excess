@@ -513,10 +513,7 @@ namespace Excess.Extensions.Concurrent
                 .Any()); //td: errors
 
             var symbol = _model.GetSymbolInfo(invocation.Expression).Symbol;
-            if (symbol == null)
-                return CSharp.ExpressionStatement(invocation);
-
-            if (isConcurrent(symbol))
+            if (symbol != null && isConcurrent(symbol))
                 return CSharp.ExpressionStatement(
                     invocation
                     .WithArgumentList(invocation
@@ -530,7 +527,9 @@ namespace Excess.Extensions.Concurrent
                                 .FailureFunction
                                 .Get<ExpressionSyntax>(failure)))));
 
-            return CSharp.ExpressionStatement(invocation);
+            return Templates
+                .NonConcurrentInvocation
+                .Get<StatementSyntax>(invocation, success, failure);
         }
 
         private bool isConcurrent(ISymbol symbol)

@@ -8,8 +8,70 @@ using Excess.Concurrent.Runtime;
 
 namespace Santa
 {
-    [Concurrent(id = "793f0d50-e876-4341-a4e9-69e7af1f72f2")]
-    [ConcurrentSingleton(id: "0f2eee95-01c4-45e7-bbf0-5b06e8c2c790")]
+    [Concurrent(id = "d672321b-70a3-449e-b704-f62d47a33872")]
+    [ConcurrentSingleton(id: "acd319b3-c1c0-4ef4-a328-fbef72d110da")]
+    public class __app : ConcurrentObject
+    {
+        protected override void __started()
+        {
+            var __enum = __concurrentmain(default (CancellationToken), null, null);
+            __enter(() => __advance(__enum.GetEnumerator()), null);
+        }
+
+        private IEnumerable<Expression> __concurrentmain(CancellationToken __cancellation, Action<object> __success, Action<Exception> __failure)
+        {
+            var reindeers = new[]{"Dasher", "Dancer", "Prancer", "Vixen", "Comet", "Cupid", "Dunder", "Rudolph"};
+            var elves = new[]{"Alabaster", "Bushy", "Pepper", "Shinny", "Sugarplum", "Wunorse", "Buddy", "Kringle", "Tinsel", "Jangle"};
+            var santa = spawn<SantaClaus>();
+            foreach (var reindeer in reindeers)
+                spawn<Reindeer>(reindeer, santa);
+            foreach (var elf in elves)
+                spawn<Elf>(elf, santa);
+            {
+                __dispatch("main");
+                if (__success != null)
+                    __success(null);
+                yield break;
+            }
+        }
+
+        private static __app __singleton;
+        public static void Start(IConcurrentApp app)
+        {
+            __singleton = app.Spawn<__app>();
+        }
+
+        public readonly Guid __ID = Guid.NewGuid();
+        public static void Start(string[] args)
+        {
+            Arguments = args;
+            var app = new ThreadedConcurrentApp(threadCount: 4, blockUntilNextEvent: true, priority: ThreadPriority.Normal);
+            app.Start();
+            app.Spawn(new __app());
+            Await = () => app.AwaitCompletion();
+            Stop = () => app.Stop();
+        }
+
+        public static string[] Arguments
+        {
+            get;
+            set;
+        }
+
+        public static Action Stop
+        {
+            get;
+            private set;
+        }
+
+        public static Action Await
+        {
+            get;
+            private set;
+        }
+    }
+
+    [Concurrent(id = "666088de-f25b-4306-8dee-fcabb2717b22")]
     class SantaClaus : ConcurrentObject
     {
         List<Reindeer> _reindeer = new List<Reindeer>();
@@ -17,16 +79,16 @@ namespace Santa
         bool _busy = false;
         [Concurrent]
         //a reindeer is ready for work
-        public void __reindeer(Reindeer r)
+        public void reindeer(Reindeer r)
         {
-            __reindeer(r, default (CancellationToken), null, null);
+            reindeer(r, default (CancellationToken), null, null);
         }
 
         [Concurrent]
         //and elf wants to meet with Santa
-        public void __elf(Elf e)
+        public void elf(Elf e)
         {
-            __elf(e, default (CancellationToken), null, null);
+            elf(e, default (CancellationToken), null, null);
         }
 
         private void cancelMeeting()
@@ -129,6 +191,7 @@ namespace Santa
 
                 _reindeer.Clear();
                 _busy = false;
+                App.Stop();
             }
 
             {
@@ -139,23 +202,7 @@ namespace Santa
             }
         }
 
-        public static Task<object> reindeer(Reindeer r, CancellationToken cancellation)
-        {
-            return __singleton.__reindeer(r, cancellation);
-        }
-
-        public static void reindeer(Reindeer r, CancellationToken cancellation, Action<object> success, Action<Exception> failure)
-        {
-            __singleton.__reindeer(r, cancellation, success, failure);
-        }
-
-        //a reindeer is ready for work
-        public static void reindeer(Reindeer r)
-        {
-            __singleton.__reindeer(r);
-        }
-
-        public Task<object> __reindeer(Reindeer r, CancellationToken cancellation)
+        public Task<object> reindeer(Reindeer r, CancellationToken cancellation)
         {
             var completion = new TaskCompletionSource<object>();
             Action<object> __success = (__res) => completion.SetResult((object)__res);
@@ -165,7 +212,7 @@ namespace Santa
             return completion.Task;
         }
 
-        public void __reindeer(Reindeer r, CancellationToken cancellation, Action<object> success, Action<Exception> failure)
+        public void reindeer(Reindeer r, CancellationToken cancellation, Action<object> success, Action<Exception> failure)
         {
             var __success = success;
             var __failure = failure;
@@ -245,23 +292,7 @@ namespace Santa
             }
         }
 
-        public static Task<object> elf(Elf e, CancellationToken cancellation)
-        {
-            return __singleton.__elf(e, cancellation);
-        }
-
-        public static void elf(Elf e, CancellationToken cancellation, Action<object> success, Action<Exception> failure)
-        {
-            __singleton.__elf(e, cancellation, success, failure);
-        }
-
-        //and elf wants to meet with Santa
-        public static void elf(Elf e)
-        {
-            __singleton.__elf(e);
-        }
-
-        public Task<object> __elf(Elf e, CancellationToken cancellation)
+        public Task<object> elf(Elf e, CancellationToken cancellation)
         {
             var completion = new TaskCompletionSource<object>();
             Action<object> __success = (__res) => completion.SetResult((object)__res);
@@ -271,7 +302,7 @@ namespace Santa
             return completion.Task;
         }
 
-        public void __elf(Elf e, CancellationToken cancellation, Action<object> success, Action<Exception> failure)
+        public void elf(Elf e, CancellationToken cancellation, Action<object> success, Action<Exception> failure)
         {
             var __success = success;
             var __failure = failure;
@@ -378,12 +409,18 @@ namespace Santa
             private bool ? __op11_Right;
         }
 
-        private static SantaClaus __singleton;
-        public static void Start(IConcurrentApp app)
-        {
-            __singleton = app.Spawn<SantaClaus>();
-        }
-
         public readonly Guid __ID = Guid.NewGuid();
+    }
+
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            __app.Start(args);
+            {
+            }
+
+            __app.Await();
+        }
     }
 }

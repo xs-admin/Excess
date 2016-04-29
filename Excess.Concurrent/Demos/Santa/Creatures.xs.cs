@@ -8,13 +8,15 @@ using Excess.Concurrent.Runtime;
 
 namespace Santa
 {
-    [Concurrent(id = "4fd5b07b-0c71-443d-854c-cee85a5a7509")]
+    [Concurrent(id = "04bff6f9-4556-4363-ab8e-97eafea0394e")]
     class Reindeer : ConcurrentObject
     {
         string _name;
-        public Reindeer(string name)
+        SantaClaus _santa;
+        public Reindeer(string name, SantaClaus santa)
         {
             _name = name;
+            _santa = santa;
         }
 
         protected override void __started()
@@ -127,7 +129,7 @@ namespace Santa
                 var __expr = (__expr2)___expr;
                 __enter(() =>
                 {
-                    SantaClaus.reindeer(this, __cancellation, (__res) => __expr.__op4(true, null, null), (__ex) => __expr.__op4(false, null, __ex));
+                    _santa.reindeer(this, __cancellation, (__res) => __expr.__op4(true, null, null), (__ex) => __expr.__op4(false, null, __ex));
                     __listen("unharness", () =>
                     {
                         __expr.__op4(null, true, null);
@@ -144,7 +146,15 @@ namespace Santa
                 var __expr = (__expr2)___expr;
                 __enter(() =>
                 {
-                    Console.WriteLine(_name + ": back from vacation");
+                    try
+                    {
+                        Console.WriteLine(_name + ": back from vacation");
+                        __expr.__op3(null, true, null);
+                    }
+                    catch (Exception __ex)
+                    {
+                        __expr.__op3(null, false, __ex);
+                    }
                 }
 
                 , __failure);
@@ -262,13 +272,15 @@ namespace Santa
         public readonly Guid __ID = Guid.NewGuid();
     }
 
-    [Concurrent(id = "4fe17c9b-e350-49c9-82c1-4f6061ddbae4")]
+    [Concurrent(id = "5e891810-5f0a-4b05-b992-0ac8deb9ce2b")]
     class Elf : ConcurrentObject
     {
         string _name;
-        public Elf(string name)
+        SantaClaus _santa;
+        public Elf(string name, SantaClaus santa)
         {
             _name = name;
+            _santa = santa;
         }
 
         protected override void __started()
@@ -384,7 +396,7 @@ namespace Santa
                 var __expr = (__expr4)___expr;
                 __enter(() =>
                 {
-                    SantaClaus.elf(this, __cancellation, (__res) => __expr.__op8(true, null, null), (__ex) => __expr.__op8(false, null, __ex));
+                    _santa.elf(this, __cancellation, (__res) => __expr.__op8(true, null, null), (__ex) => __expr.__op8(false, null, __ex));
                     __listen("advice", () =>
                     {
                         __expr.__op8(null, true, null);
@@ -401,7 +413,15 @@ namespace Santa
                 var __expr = (__expr4)___expr;
                 __enter(() =>
                 {
-                    Console.WriteLine(_name + ": off to see Santa");
+                    try
+                    {
+                        Console.WriteLine(_name + ": off to see Santa");
+                        __expr.__op7(null, true, null);
+                    }
+                    catch (Exception __ex)
+                    {
+                        __expr.__op7(null, false, __ex);
+                    }
                 }
 
                 , __failure);

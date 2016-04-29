@@ -340,79 +340,71 @@ namespace Concurrent.Tests
 
                 namespace Santa
                 {
-	                concurrent object SantaClaus
+	                concurrent class Reindeer
 	                {
-		                List<Reindeer> _reindeer = new List<Reindeer>();
-		                List<Elf> _elves = new List<Elf>();
-		                bool _busy = false;
-		                public void reindeer(Reindeer r)
+		                string _name;        
+		                SantaClaus _santa;  
+		                public Reindeer(string name, SantaClaus santa)
 		                {
-			                _reindeer.Add(r);
-			                if (readyToDeliver())
+			                _name = name;
+			                _santa = santa;
+		                }
+
+		                void main()
+		                {
+			                for(;;)
 			                {
-				                //in case we're meeting with elves
-				                if (_busy)
-					                cancelMeeting() >> meetingCanceled;
-
-				                //christmas!
-				                _busy = true;
-				                Console.WriteLine(""Santa: Off to deliver toys!"");
-				                await seconds(rand(5, 10));
-				                Console.WriteLine(""Santa: Merry Christmas, enjoy the toys!"");
-
-				                //is over 
-				                foreach(var rd in _reindeer)
-					                rd.unharness();
-
-				                _reindeer.Clear();
-				                _busy = false;
+				                await vacation();
 			                }
 		                }
 
-		                public void elf(Elf e)
+		                public void unharness()
 		                {
-			                if (_busy)
-			                {
-				                e.advice(false);
-				                return;
-			                }
+			                Console.WriteLine(_name + "": job well done"");
 
-			                _elves.Add(e);
-			                if (_elves.Count == 3)
-			                {
-				                _busy = true;
+                        }
 
-				                Console.WriteLine(""Santa: hey guys, need help? "");
-				                seconds(1, 2) | cancelMeeting;
+                        private void vacation()
+                        {
+                            seconds(rand(3, 7))
+                                >> Console.WriteLine(_name + "": back from vacation"")
+                                >> (_santa.reindeer(this) & unharness);
+                        }
+                    }
 
-				                var isDelivering = readyToDeliver();
-				                if (isDelivering)
-				                {
-					                Console.WriteLine(""Santa: sorry fellows, got toys to deliver!"");
-					                meetingCanceled();
-				                }
-				                else
-				                {
-					                Console.WriteLine(""Santa: Good meeting, little fellas!"");
-					                _busy = false;
-				                }
+                    concurrent class Elf
+                    {
+                        string _name;
+                        SantaClaus _santa;
+                        public Elf(string name, SantaClaus santa)
+                        {
+                            _name = name;
+                            _santa = santa;
+                        }
 
-				                //adjourned
-				                foreach(var elf in _elves)
-					                elf.advice(!isDelivering);
+                        void main()
+                        {
+                            for (;;)
+                            {
+                                await work();
+                            }
+                        }
 
-				                _elves.Clear();
-			                }    
-		                }
+                        public void advice(bool given)
+                        {
+                            if (given)
+                                Console.WriteLine(_name + "": great advice, santa!"");
+                            else
+                                Console.WriteLine(_name + "": Santa is busy, back to work"");
+                        }
 
-		                private void cancelMeeting();
-		                private void meetingCanceled();
-
-		                private bool readyToDeliver()
-		                {
-			                return _reindeer.Count == 8;
-		                }
-	                }
+                        private void work()
+                        {
+                            seconds(rand(1, 5))
+                                >> Console.WriteLine(_name + "": off to see Santa"")
+                                >> (_santa.elf(this) & advice);
+                        }
+                    }
                 }", out text, false, false); 
 
             Assert.IsNotNull(text);

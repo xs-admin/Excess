@@ -13,7 +13,7 @@ using System.Threading.Tasks;
 namespace Excess.Entensions.XS
 {
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
-    using ExcessCompiler = ICompiler<SyntaxToken, SyntaxNode, SemanticModel>;
+    using ExcessCompiler = ICompiler<SyntaxToken, SyntaxNode, SemanticModel, Compiler.Roslyn.Compilation>;
 
     public class Members
     {

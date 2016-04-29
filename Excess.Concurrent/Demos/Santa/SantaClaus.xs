@@ -2,7 +2,23 @@
 
 namespace Santa
 {
-	concurrent object SantaClaus
+	concurrent app
+	{
+		void main()
+		{
+			var reindeers = new [] {"Dasher", "Dancer", "Prancer", "Vixen", "Comet", "Cupid", "Dunder", "Rudolph"};
+			var elves = new [] {"Alabaster", "Bushy", "Pepper", "Shinny", "Sugarplum", "Wunorse", "Buddy", "Kringle", "Tinsel", "Jangle"};
+			
+			var santa = spawn<SantaClaus>();
+			foreach(var reindeer in reindeers)
+				spawn<Reindeer>(reindeer, santa);
+
+			foreach(var elf in elves)
+				spawn<Elf>(elf, santa);
+		}
+	}
+
+	concurrent class SantaClaus
 	{
 		List<Reindeer> _reindeer = new List<Reindeer>();
 		List<Elf> _elves = new List<Elf>();
@@ -30,6 +46,8 @@ namespace Santa
 
 				_reindeer.Clear();
 				_busy = false;
+
+				App.Stop();
 			}
 		}
 

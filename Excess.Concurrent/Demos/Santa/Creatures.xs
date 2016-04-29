@@ -5,9 +5,11 @@ namespace Santa
 	concurrent class Reindeer
 	{
 		string _name;        
-		public Reindeer(string name)
+		SantaClaus _santa;  
+		public Reindeer(string name, SantaClaus santa)
 		{
 			_name = name;
+			_santa = santa;
 		}
 
 		void main()
@@ -27,16 +29,18 @@ namespace Santa
 		{
 			seconds(rand(3, 7))
 				>> Console.WriteLine(_name + ": back from vacation")
-				>> (SantaClaus.reindeer(this) & unharness);
+				>> (_santa.reindeer(this) & unharness);
 		}
 	}
 
 	concurrent class Elf
 	{
-		string _name;        
-		public Elf(string name)
+		string _name;     
+		SantaClaus _santa;  
+		public Elf(string name, SantaClaus santa)
 		{
 			_name = name;
+			_santa = santa;
 		}
 
 		void main()
@@ -59,7 +63,7 @@ namespace Santa
 		{
 			seconds(rand(1, 5))
 				>> Console.WriteLine(_name + ": off to see Santa")
-				>> (SantaClaus.elf(this) & advice);
+				>> (_santa.elf(this) & advice);
 		}
 	}
 }

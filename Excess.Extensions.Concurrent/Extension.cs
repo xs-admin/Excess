@@ -88,7 +88,7 @@ namespace Excess.Extensions.Concurrent
             if (options.GenerateAppProgram && compilation != null)
             {
                 //app support
-                var HasProgramObject = false;
+                var Programs = new List<ClassDeclarationSyntax>();
                 var Singletons = new List<ClassDeclarationSyntax>();
                 compilation
                     .match<ClassDeclarationSyntax>((@class, model, scope) =>
@@ -97,10 +97,10 @@ namespace Excess.Extensions.Concurrent
                             .Members
                             .OfType<MethodDeclarationSyntax>()
                             .Any(method => method.Identifier.ToString() == "Main"))
-                        .then((node, model, scope) => HasProgramObject = true)
+                        .then((node, model, scope) => Programs.Add((ClassDeclarationSyntax)node))
                     .match<ClassDeclarationSyntax>((@class, model, scope) => isSingleton(@class))
                         .then((node, model, scope) => Singletons.Add((ClassDeclarationSyntax)node))
-                    .after(AddAppProgram(HasProgramObject, Singletons));
+                    .after(AddAppProgram(Programs, Singletons));
             }
         }
 
@@ -835,11 +835,11 @@ namespace Excess.Extensions.Concurrent
                     .Any(attr => attr.Name.ToString() == "ConcurrentSingleton"));
         }
 
-        private static Action<Compilation, Scope> AddAppProgram(bool hasProgramObject, IEnumerable<ClassDeclarationSyntax> singletons)
+        private static Action<Compilation, Scope> AddAppProgram(IEnumerable<ClassDeclarationSyntax> programs, IEnumerable<ClassDeclarationSyntax> singletons)
         {
             return (compilation, scope) =>
             {
-                if (!hasProgramObject)
+                if (!programs.Any()) //do nothing is there is already a program 
                 {
                     var namespaces = new List<NamespaceDeclarationSyntax>();
                     foreach (var singleton in singletons)

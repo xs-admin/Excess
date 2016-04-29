@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+        <id>Excess.Compiler</id>
+        <version>0.46.1-alpha</version>
+        <authors>Excess</authors>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>Metaprogramming platform for C#</description>
+    </metadata>
+    <files>
+        <file src="..\bin\Release\Excess.Compiler.dll" target="lib\Net45\Excess.Compiler.dll" />
+        <file src="..\..\Excess.Compiler.Razor\bin\Release\Excess.Compiler.Razor.dll" target="lib\Net45\Excess.Compiler.Razor.dll" />
+    </files>
+</package>

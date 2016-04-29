@@ -114,6 +114,5 @@ namespace Excess.Concurrent.Runtime
 
         protected double rand() => _app.rand();
         protected double rand(double from, double to) => from + _app.rand()*(to - from);
-        protected int rand(int from, int to) => from + (int)_app.rand() * (to - from);
     }
 }

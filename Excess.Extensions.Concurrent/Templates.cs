@@ -204,6 +204,16 @@ namespace Excess.Extensions.Concurrent
 
         public static Template SuccessFunction = Template.ParseExpression("(__res) => __0");
         public static Template FailureFunction = Template.ParseExpression("(__ex) => __0");
+        public static Template NonConcurrentInvocation = Template.ParseStatement(@"
+            try
+            {
+                __0;
+                __1;
+            }
+            catch(Exception __ex)
+            {
+                __2;
+            }");
 
         public static Template Advance = Template.ParseExpression("__advance((__0).GetEnumerator())");
 
@@ -336,6 +346,8 @@ namespace Excess.Extensions.Concurrent
                 static void Main(string[] args)
                 {
                     __app.Start(args);
+                    {
+                    }
                     __app.Await();
                 }
             }");
