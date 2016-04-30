@@ -17,6 +17,7 @@ using Excess.Entensions.XS;
 
 namespace Excess.VS
 {
+    using Compiler.Attributes;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
     internal static class XSKeywords            
@@ -78,19 +79,29 @@ namespace Excess.VS
             private void addExtension(IVsPackageMetadata package)
             {
                 //td: determine if the package is installed in this project
-                if (!package.Id.StartsWith("Excess.Extensions."))
-                    return;
 
-                var name = package
-                    .Id
-                    .Substring("Excess.Extensions.".Length)
-                    .ToLower();
 
-                var extensionPath = Path.Combine(package.InstallPath, $"tools\\{package.Id}.dll");
-                if (!File.Exists(extensionPath))
-                    return;
+                var toolPath = Path.Combine(package.InstallPath, "tools");
+                if (!Directory.Exists(toolPath))
+                    return; //td: ask to restore packages
 
-                _extensions[name] = loadReference(extensionPath, name);
+                var dlls = Directory.EnumerateFiles(toolPath)
+                    .Where(file => Path.GetExtension(file) == ".dll");
+
+                foreach (var dll in dlls)
+                {
+                    var fileName = Path.GetFileName(dll);
+                    if (!fileName.StartsWith("Excess."))
+                        continue; //convention over configuration?
+
+                    var name = fileName
+                        .Substring("Excess.".Length)
+                        .ToLower();
+
+                    var extension = loadReference(dll, name);
+                    if (extension != null)
+                        _extensions[name] = extension;
+                }
             }
 
             Dictionary<long, RoslynCompiler> _cache = new Dictionary<long, RoslynCompiler>();
@@ -166,57 +177,72 @@ namespace Excess.VS
             private Action<RoslynCompiler, IList<string>> loadReference(string filePath, string name)
             {
                 var assembly = Assembly.LoadFrom(filePath);
-
-                var extensionType = assembly
-                    .GetTypes()
-                    .Where(type => type.Name == "Extension")
-                    .SingleOrDefault();
-                var flavorsType = assembly
-                    .GetTypes()
-                    .Where(type => type.Name == "Flavors")
-                    .SingleOrDefault();
-
-                var items = name.Split('.');
-                var result = null as Action<RoslynCompiler, IList<string>>;
-                switch (items.Length)
-                {
-                    case 1:
-                        if (flavorsType != null)
-                            result = loadExtension(flavorsType, "Default", extensionType);
-                        
-                         if (result == null && extensionType != null)
-                            result = loadExtension(extensionType, "Apply", extensionType);
-                        break;
-                    case 2:
-                        if (flavorsType != null)
-                            result = loadExtension(flavorsType, items[1], extensionType);
-                        break;
-                    default:
-                        throw new ArgumentException(name);
-                }
-
-                return result;
-            }
-
-            private Action<RoslynCompiler, IList<string>> loadExtension(Type type, string methodName, Type extensionType)
-            {
-                var method = type.GetMethod(methodName);
-                if (method == null)
+                if (assembly == null)
                     return null;
 
-                var keywordMethod = extensionType != null
-                    ? extensionType.GetMethod("GetKeywords")
-                    : null;
+                var types = assembly.GetTypes()
+                    .Where(type => type
+                        .CustomAttributes
+                        .Any(attr => attr.AttributeType == typeof(Extension)));
+
+                if (!types.Any())
+                    return null;
+
+                var flavors = types
+                    .SelectMany(type => type
+                        .GetMethods()
+                        .Where(method => method
+                            .CustomAttributes
+                            .Any(attr => attr.AttributeType == typeof(Flavor))));
+
+                //var extensionType = assembly
+                //    .GetTypes()
+                //    .Where(type => type.Name == "Extension")
+                //    .SingleOrDefault();
+                //var flavorsType = assembly
+                //    .GetTypes()
+                //    .Where(type => type.Name == "Flavors")
+                //    .SingleOrDefault();
+
+                var items = name.Split('.');
+                switch (items.Length)
+                {
+                    case 1: return loadExtension(types, flavors, "Default");
+                    case 2: throw new NotImplementedException();
+                    default:
+                        throw new ArgumentException(name); //td: error
+                }
+            }
+
+            private Action<RoslynCompiler, IList<string>> loadExtension(IEnumerable<Type> types, IEnumerable<MethodInfo> flavors, string flavorId = null)
+            {
+                var method = flavors
+                    .Where(mthd => mthd.Name == (flavorId ?? "Default"))
+                    .FirstOrDefault();
+
+                if (method == null)
+                {
+                    foreach (var type in types)
+                    {
+                        method = type.GetMethods()
+                            .FirstOrDefault(mthd => mthd.Name == "Apply");
+
+                        if (method != null)
+                            break;
+                    }
+                }
+
+                if (method == null)
+                    throw new InvalidOperationException("cannot find a extension method");
 
                 return (compiler, keywords) =>
                 {
-                    method.Invoke(null, new object[] { compiler });
-
-                    if (keywordMethod != null)
-                    {
-                        var extKeywords = (IEnumerable<string>)keywordMethod.Invoke(null, new object[] {});
-                        keywords.AddRange(extKeywords);
-                    }
+                    if (method.GetParameters().Length == 1)
+                        method.Invoke(null, new object[] { compiler });
+                    else if (method.GetParameters().Length == 2)
+                        method.Invoke(null, new object[] { compiler, keywords });
+                    else
+                        throw new InvalidOperationException("invalid extension method");
                 };
             }
 

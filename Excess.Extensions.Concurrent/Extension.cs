@@ -38,6 +38,7 @@ namespace Excess.Extensions.Concurrent
         public bool GenerateAppProgram { get; set; }
     }
 
+    [Compiler.Attributes.Extension]
     public class Extension
     {
         public static IEnumerable<string> GetKeywords()
