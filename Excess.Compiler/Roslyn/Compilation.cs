@@ -16,6 +16,9 @@ using System.Linq.Expressions;
 
 namespace Excess.Compiler.Roslyn
 {
+    using LoaderProperties = Dictionary<string, object>;
+    using LoaderFunc = Action<RoslynCompiler, Dictionary<string, object>>;
+
     public interface ICompilationTool //td: get rid of this
     {
         string displayName { get; }
@@ -35,12 +38,12 @@ namespace Excess.Compiler.Roslyn
     public class Compilation
     {
         CompilationAnalysis _analysis;
-        IDictionary<string, Action<RoslynCompiler>> _extensions;
+        IDictionary<string, LoaderFunc> _extensions;
         bool _executable;
         public Compilation(
             IPersistentStorage storage = null, 
             CompilationAnalysis analysis = null,
-            IDictionary<string, Action<RoslynCompiler>> extensions = null,
+            IDictionary<string, LoaderFunc> extensions = null,
             bool executable = false)
         {
             _environment = createEnvironment(storage);
@@ -153,10 +156,10 @@ namespace Excess.Compiler.Roslyn
 
                     usingId = usingId.Substring("xs.".Length);
 
-                    var action = null as Action<RoslynCompiler>;
+                    var action = null as LoaderFunc;
                     if (_extensions.TryGetValue(usingId, out action))
                     {
-                        action(compilerResult);
+                        action(compilerResult, null); //td: props?
                         return true;
                     }
 

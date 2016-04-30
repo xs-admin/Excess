@@ -6,16 +6,19 @@ using System.Diagnostics;
 using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Excess.Compiler.Roslyn;
+using Excess.Compiler.Reflection;
 
 namespace xsc
 {
     using ExcessCompilation = Excess.Compiler.Roslyn.Compilation;
+    using LoaderProperties = Dictionary<string, object>;
+    using LoaderFunc = Action<RoslynCompiler, Dictionary<string, object>>;
 
     public class Runner
     {
         public IEnumerable<string> Files { get; set; }
         public string SolutionFile { get; set; }
-        public IDictionary<string, Action<RoslynCompiler>> Extensions { get; set; }
+        public IDictionary<string, LoaderFunc> Extensions { get; set; }
         public IDictionary<string, string> Flavors { get; set; }
         public string OutputPath { get; set; }
         public bool Transpile { get; set; }
@@ -38,17 +41,17 @@ namespace xsc
                             && !file.Contains("Generated"));
         }
 
-        public IDictionary<string, Action<RoslynCompiler>> directoryExtensions(string directory)
+        public IDictionary<string, LoaderFunc> directoryExtensions(string directory)
         {
             var items = Directory.EnumerateFiles(directory, "*", SearchOption.AllDirectories)
                 .Where(file => Path.GetExtension(file) == ".dll"
                             && Path.GetFileName(file).StartsWith("Excess.Extensions"))
                 .Select(dll => loadExtension(dll));
 
-            var result = new Dictionary<string, Action<RoslynCompiler>>();
+            var result = new Dictionary<string, LoaderFunc>();
             foreach (var item in items)
             {
-                if (item.Equals(default(KeyValuePair<string, Action<RoslynCompiler>>)))
+                if (item.Equals(default(KeyValuePair<string, LoaderFunc>)))
                     continue;
 
                 result[item.Key] = item.Value;
@@ -57,52 +60,15 @@ namespace xsc
             return result;
         }
 
-        private KeyValuePair<string, Action<RoslynCompiler>> loadExtension(string dll)
+        private KeyValuePair<string, LoaderFunc> loadExtension(string dll)
         {
             var assembly = Assembly.LoadFrom(dll);
+            var name = string.Empty;
+            var loader = Loader<RoslynCompiler>.CreateFrom(assembly, out name);
+            if (loader == null)
+                return default(KeyValuePair<string, LoaderFunc>);
 
-            var id = Path
-                .GetFileNameWithoutExtension(dll)
-                .Substring("Excess.Extensions.".Length)
-                .ToLower();
-
-            var flavorType = assembly
-                .GetTypes()
-                .Where(type => type.Name == "Flavors")
-                .SingleOrDefault();
-
-            var method = null as MethodInfo;
-            if (flavorType != null)
-            {
-                string flavor;
-                if (Flavors.TryGetValue(id, out flavor))
-                {
-                    method = getStaticMethod(flavorType, flavor);
-                    if (method == null)
-                        throw new InvalidOperationException($"invalid flavor: {flavor} for {id}");
-
-                    Flavors.Remove(id);
-                }
-                else
-                    throw new InvalidOperationException($"invalid flavor: {flavor} for {id}");
-            }
-
-            if (method == null)
-            {
-                var extensionType = assembly
-                    .GetTypes()
-                    .Where(type => type.Name == "Extension")
-                    .SingleOrDefault();
-
-                if (extensionType != null)
-                    method = getStaticMethod(extensionType, "Apply");
-            }
-
-            if (method == null)
-                return default(KeyValuePair<string, Action<RoslynCompiler>>);
-
-            return new KeyValuePair<string, Action<RoslynCompiler>>(id,
-                compiler => method.Invoke(null, new object[] { compiler }));
+            return new KeyValuePair<string, LoaderFunc>(name, loader);
         }
 
         private MethodInfo getStaticMethod(Type type, string id)

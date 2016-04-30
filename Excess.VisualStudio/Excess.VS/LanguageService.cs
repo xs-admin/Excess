@@ -10,15 +10,17 @@ using Microsoft.VisualStudio.LanguageServices;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.VisualStudio.ComponentModelHost;
-using NuGet;
 using NuGet.VisualStudio;
 using Excess.Compiler.Roslyn;
 using Excess.Entensions.XS;
+using Excess.Compiler.Attributes;
+using Excess.Compiler.Reflection;
 
 namespace Excess.VS
 {
-    using Compiler.Attributes;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
+    using LoaderProperties = Dictionary<string, object>;
+    using LoaderFunc = Action<RoslynCompiler, Dictionary<string, object>>;
 
     internal static class XSKeywords            
     {
@@ -94,11 +96,13 @@ namespace Excess.VS
                     if (!fileName.StartsWith("Excess."))
                         continue; //convention over configuration?
 
-                    var name = fileName
-                        .Substring("Excess.".Length)
-                        .ToLower();
+                    var assembly = Assembly.LoadFrom(dll);
+                    if (assembly == null)
+                        continue;
 
-                    var extension = loadReference(dll, name);
+                    //var extension = loadReference(dll, name);
+                    var name = string.Empty;
+                    var extension = Loader<RoslynCompiler>.CreateFrom(assembly, out name);
                     if (extension != null)
                         _extensions[name] = extension;
                 }
@@ -107,7 +111,7 @@ namespace Excess.VS
             Dictionary<long, RoslynCompiler> _cache = new Dictionary<long, RoslynCompiler>();
             Dictionary<long, IEnumerable<string>> _keywordCache = new Dictionary<long, IEnumerable<string>>();
             Dictionary<DocumentId, long> _documentExtensions = new Dictionary<DocumentId, long>();
-            Dictionary<string, Action<RoslynCompiler, IList<string>>> _extensions = new Dictionary<string, Action<RoslynCompiler, IList<string>>>();
+            Dictionary<string, Action<RoslynCompiler, LoaderProperties>> _extensions = new Dictionary<string, Action<RoslynCompiler, LoaderProperties>>();
 
             public RoslynCompiler GetCompiler(DocumentId documentId, ICollection<UsingDirectiveSyntax> extensions, out IEnumerable<string> keywords)
             {
@@ -134,6 +138,9 @@ namespace Excess.VS
                 XSLang.Apply(result);
 
                 var keywordList = new List<string>();
+                var props = new LoaderProperties();
+                props["keywords"] = keywordList;
+
                 foreach (var extension in extensions.ToArray())
                 {
                     if (isExtension(extension))
@@ -143,10 +150,10 @@ namespace Excess.VS
                             .ToString()
                             .Substring("xs.".Length);
 
-                        var extensionFunc = null as Action<RoslynCompiler, IList<string>>;
+                        var extensionFunc = null as LoaderFunc;
                         if (_extensions.TryGetValue(extensionName, out extensionFunc))
                         {
-                            extensionFunc(result, keywordList);
+                            extensionFunc(result, props);
                             continue;
                         }
                     }
@@ -172,78 +179,6 @@ namespace Excess.VS
                     result = result.Union(cache);
 
                 return result;
-            }
-
-            private Action<RoslynCompiler, IList<string>> loadReference(string filePath, string name)
-            {
-                var assembly = Assembly.LoadFrom(filePath);
-                if (assembly == null)
-                    return null;
-
-                var types = assembly.GetTypes()
-                    .Where(type => type
-                        .CustomAttributes
-                        .Any(attr => attr.AttributeType == typeof(Extension)));
-
-                if (!types.Any())
-                    return null;
-
-                var flavors = types
-                    .SelectMany(type => type
-                        .GetMethods()
-                        .Where(method => method
-                            .CustomAttributes
-                            .Any(attr => attr.AttributeType == typeof(Flavor))));
-
-                //var extensionType = assembly
-                //    .GetTypes()
-                //    .Where(type => type.Name == "Extension")
-                //    .SingleOrDefault();
-                //var flavorsType = assembly
-                //    .GetTypes()
-                //    .Where(type => type.Name == "Flavors")
-                //    .SingleOrDefault();
-
-                var items = name.Split('.');
-                switch (items.Length)
-                {
-                    case 1: return loadExtension(types, flavors, "Default");
-                    case 2: throw new NotImplementedException();
-                    default:
-                        throw new ArgumentException(name); //td: error
-                }
-            }
-
-            private Action<RoslynCompiler, IList<string>> loadExtension(IEnumerable<Type> types, IEnumerable<MethodInfo> flavors, string flavorId = null)
-            {
-                var method = flavors
-                    .Where(mthd => mthd.Name == (flavorId ?? "Default"))
-                    .FirstOrDefault();
-
-                if (method == null)
-                {
-                    foreach (var type in types)
-                    {
-                        method = type.GetMethods()
-                            .FirstOrDefault(mthd => mthd.Name == "Apply");
-
-                        if (method != null)
-                            break;
-                    }
-                }
-
-                if (method == null)
-                    throw new InvalidOperationException("cannot find a extension method");
-
-                return (compiler, keywords) =>
-                {
-                    if (method.GetParameters().Length == 1)
-                        method.Invoke(null, new object[] { compiler });
-                    else if (method.GetParameters().Length == 2)
-                        method.Invoke(null, new object[] { compiler, keywords });
-                    else
-                        throw new InvalidOperationException("invalid extension method");
-                };
             }
 
             private bool isExtension(UsingDirectiveSyntax @using) => @using.Name.ToString().StartsWith("xs.");

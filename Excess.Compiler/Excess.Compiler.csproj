@@ -136,6 +136,7 @@
     <Compile Include="Core\InstanceAnalysisBase.cs" />
     <Compile Include="Core\InstanceScope.cs" />
     <Compile Include="InstanceAnalysis.cs" />
+    <Compile Include="Reflection\Loader.cs" />
     <Compile Include="Roslyn\AntlrErrors.cs" />
     <Compile Include="Core\CompilerBase.cs" />
     <Compile Include="Core\DocumentBase.cs" />
