@@ -4,19 +4,19 @@ using Excess.Concurrent.Runtime;
 
 namespace Excess.Extensions.Concurrent
 {
-    [Compiler.Attributes.Extension]
+    [Extension("concurrent")]
     public static class Flavors
     {
         [Flavor]
         public static void Default(RoslynCompiler compiler)
         {
-            Extension.Apply(compiler);
+            ConcurrentExtension.Apply(compiler);
         }
 
         [Flavor]
         public static void Performance(RoslynCompiler compiler)
         {
-            Extension.Apply(compiler, new Options
+            ConcurrentExtension.Apply(compiler, new Options
             {
                 GenerateAppProgram = true, //td
                 GenerateAppConstructor = false,
@@ -30,7 +30,7 @@ namespace Excess.Extensions.Concurrent
         [Flavor]
         public static void Console(RoslynCompiler compiler)
         {
-            Extension.Apply(compiler, new Options
+            ConcurrentExtension.Apply(compiler, new Options
             {
                 GenerateAppProgram = true, 
                 GenerateAppConstructor = false,
@@ -40,7 +40,7 @@ namespace Excess.Extensions.Concurrent
         [Flavor]
         public static void Distributed(RoslynCompiler compiler)
         {
-            Extension.Apply(compiler, new Options
+            ConcurrentExtension.Apply(compiler, new Options
             {
                 GenerateInterface = true,
                 GenerateRemote = true,

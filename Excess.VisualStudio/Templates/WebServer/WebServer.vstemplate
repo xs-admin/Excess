@@ -1,0 +1,61 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<VSTemplate Version="3.0.0" Type="Project" xmlns="http://schemas.microsoft.com/developer/vstemplate/2005" xmlns:sdk="http://schemas.microsoft.com/developer/vstemplate-sdkextension/2010">
+  <TemplateData>
+    <Name>WebServer</Name>
+    <Description>Excess Web Application</Description>
+    <Icon>WebServer.ico</Icon>
+    <ProjectType>CSharp</ProjectType>
+    <RequiredFrameworkVersion>2.0</RequiredFrameworkVersion>
+    <SortOrder>1000</SortOrder>
+    <TemplateID>b4049362-eb06-458a-8791-f8892a1ff232</TemplateID>
+    <CreateNewFolder>true</CreateNewFolder>
+    <DefaultName>WebServer</DefaultName>
+    <ProvideDefaultName>true</ProvideDefaultName>
+  </TemplateData>
+  <TemplateContent>
+    <Project File="ProjectTemplate.csproj" ReplaceParameters="true">
+      <Folder Name="client" TargetFolderName="client">
+        <ProjectItem ReplaceParameters="false" TargetFileName=".bowerrc">.bowerrc</ProjectItem>
+        <ProjectItem ReplaceParameters="true" TargetFileName=".gitignore">.gitignore</ProjectItem>
+        <ProjectItem ReplaceParameters="false" TargetFileName=".jshintrc">.jshintrc</ProjectItem>
+        <ProjectItem ReplaceParameters="false" TargetFileName=".travis.yml">.travis.yml</ProjectItem>
+        <Folder Name="app" TargetFolderName="app">
+          <ProjectItem ReplaceParameters="true" TargetFileName="app.css">app.css</ProjectItem>
+          <ProjectItem ReplaceParameters="true" TargetFileName="app.js">app.js</ProjectItem>
+          <Folder Name="components" TargetFolderName="components">
+            <Folder Name="version" TargetFolderName="version">
+              <ProjectItem ReplaceParameters="true" TargetFileName="interpolate-filter.js">interpolate-filter.js</ProjectItem>
+              <ProjectItem ReplaceParameters="true" TargetFileName="interpolate-filter_test.js">interpolate-filter_test.js</ProjectItem>
+              <ProjectItem ReplaceParameters="true" TargetFileName="version-directive.js">version-directive.js</ProjectItem>
+              <ProjectItem ReplaceParameters="true" TargetFileName="version-directive_test.js">version-directive_test.js</ProjectItem>
+              <ProjectItem ReplaceParameters="true" TargetFileName="version.js">version.js</ProjectItem>
+              <ProjectItem ReplaceParameters="true" TargetFileName="version_test.js">version_test.js</ProjectItem>
+            </Folder>
+          </Folder>
+          <ProjectItem ReplaceParameters="true" TargetFileName="index-async.html">index-async.html</ProjectItem>
+          <ProjectItem ReplaceParameters="true" TargetFileName="index.html">index.html</ProjectItem>
+          <Folder Name="view1" TargetFolderName="view1">
+            <ProjectItem ReplaceParameters="true" TargetFileName="view1.html">view1.html</ProjectItem>
+            <ProjectItem ReplaceParameters="true" TargetFileName="view1.js">view1.js</ProjectItem>
+            <ProjectItem ReplaceParameters="true" TargetFileName="view1_test.js">view1_test.js</ProjectItem>
+          </Folder>
+        </Folder>
+        <ProjectItem ReplaceParameters="false" TargetFileName="bower.json">bower.json</ProjectItem>
+        <Folder Name="e2e-tests" TargetFolderName="e2e-tests">
+          <ProjectItem ReplaceParameters="true" TargetFileName="protractor.conf.js">protractor.conf.js</ProjectItem>
+          <ProjectItem ReplaceParameters="true" TargetFileName="scenarios.js">scenarios.js</ProjectItem>
+        </Folder>
+        <ProjectItem ReplaceParameters="true" TargetFileName="karma.conf.js">karma.conf.js</ProjectItem>
+        <ProjectItem ReplaceParameters="false" TargetFileName="LICENSE">LICENSE</ProjectItem>
+        <ProjectItem ReplaceParameters="false" TargetFileName="package.json">package.json</ProjectItem>
+        <ProjectItem ReplaceParameters="false" TargetFileName="README.md">README.md</ProjectItem>
+      </Folder>
+      <ProjectItem ReplaceParameters="true" TargetFileName="packages.config">packages.config</ProjectItem>
+      <Folder Name="Properties" TargetFolderName="Properties">
+        <ProjectItem ReplaceParameters="true" TargetFileName="AssemblyInfo.cs">AssemblyInfo.cs</ProjectItem>
+      </Folder>
+      <ProjectItem ReplaceParameters="true" TargetFileName="Service1.xs">Service1.xs</ProjectItem>
+      <ProjectItem ReplaceParameters="true" TargetFileName="Service1.xs.cs">Service1.xs.cs</ProjectItem>
+    </Project>
+  </TemplateContent>
+</VSTemplate>

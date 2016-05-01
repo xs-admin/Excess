@@ -15,7 +15,7 @@ namespace Excess.Extensions.Concurrent
     using CSharp = SyntaxFactory;
     using Roslyn = RoslynCompiler;
     using Compilation = Excess.Compiler.Roslyn.Compilation;
-
+    using Compiler.Attributes;
     public class Options
     {
         public Options()
@@ -38,8 +38,8 @@ namespace Excess.Extensions.Concurrent
         public bool GenerateAppProgram { get; set; }
     }
 
-    [Compiler.Attributes.Extension]
-    public class Extension
+    [Extension("concurrent")]
+    public class ConcurrentExtension
     {
         public static IEnumerable<string> GetKeywords()
         {

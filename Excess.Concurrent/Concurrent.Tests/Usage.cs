@@ -16,7 +16,7 @@ namespace Concurrent.Tests
         public void BasicOperators()
         {
             RoslynCompiler compiler = new RoslynCompiler();
-            Excess.Extensions.Concurrent.Extension.Apply(compiler);
+            Excess.Extensions.Concurrent.ConcurrentExtension.Apply(compiler);
 
             SyntaxTree tree = null;
             string text = null;
@@ -79,7 +79,7 @@ namespace Concurrent.Tests
         public void BasicAssigment()
         {
             RoslynCompiler compiler = new RoslynCompiler();
-            Extension.Apply(compiler);
+            ConcurrentExtension.Apply(compiler);
 
             SyntaxTree tree = null;
             string text = null;
@@ -137,7 +137,7 @@ namespace Concurrent.Tests
         public void BasicTryCatch()
         {
             RoslynCompiler compiler = new RoslynCompiler();
-            Extension.Apply(compiler);
+            ConcurrentExtension.Apply(compiler);
 
             SyntaxTree tree = null;
             string text = null;
@@ -179,7 +179,7 @@ namespace Concurrent.Tests
         public void BasicProtection()
         {
             RoslynCompiler compiler = new RoslynCompiler();
-            Extension.Apply(compiler);
+            ConcurrentExtension.Apply(compiler);
 
             SyntaxTree tree = null;
             string text = null;
@@ -215,7 +215,7 @@ namespace Concurrent.Tests
         public void BasicAwait()
         {
             RoslynCompiler compiler = new RoslynCompiler();
-            Extension.Apply(compiler);
+            ConcurrentExtension.Apply(compiler);
 
             SyntaxTree tree = null;
             string text = null;

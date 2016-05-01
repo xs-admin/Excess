@@ -9,6 +9,10 @@ namespace Excess.Compiler.Attributes
     [AttributeUsage(AttributeTargets.Class)]
     public class Extension : Attribute
     {
-        public string id;
+        public string Id;
+        public Extension(string id)
+        {
+            Id = id;
+        }
     }
 }

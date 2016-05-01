@@ -29,9 +29,12 @@ namespace Excess.Compiler.Reflection
             //calculate the name of the extension
             foreach (var type in types)
             {
+                var attrDebug = type.CustomAttributes
+                    .Single(attr => attr.AttributeType == typeof(Extension));
+
                 var name = type.CustomAttributes
                     .Single(attr => attr.AttributeType == typeof(Extension))
-                    .NamedArguments
+                    .ConstructorArguments
                     .Single()
                     .ToString();
 

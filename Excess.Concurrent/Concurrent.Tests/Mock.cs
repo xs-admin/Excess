@@ -129,7 +129,7 @@ namespace Concurrent.Tests
                         })),
 
                 new DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel, ExcessCompilation>(compiler =>
-                    Extension.Apply((RoslynCompiler)compiler, options))
+                    ConcurrentExtension.Apply((RoslynCompiler)compiler, options))
             });
         }
 

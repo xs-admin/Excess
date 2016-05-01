@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<VSTemplate Version="3.0.0" Type="Item" xmlns="http://schemas.microsoft.com/developer/vstemplate/2005" xmlns:sdk="http://schemas.microsoft.com/developer/vstemplate-sdkextension/2010">
+  <TemplateData>
+    <Name>XS.File</Name>
+    <Description>Excess File (Extended C#)</Description>
+    <Icon>XS.File.ico</Icon>
+    <TemplateID>69d809fe-76af-4614-9637-c5ec7d6768d3</TemplateID>
+    <ProjectType>CSharp</ProjectType>
+    <RequiredFrameworkVersion>2.0</RequiredFrameworkVersion>
+    <NumberOfParentCategoriesToRollUp>1</NumberOfParentCategoriesToRollUp>
+    <DefaultName>Class.xs</DefaultName>
+  </TemplateData>
+  <TemplateContent>
+    <References>
+      <Reference>
+        <Assembly>System</Assembly>
+      </Reference>
+    </References>
+    <ProjectItem TargetFileName="$fileinputname$.xs" ReplaceParameters="true">Class.xs</ProjectItem>
+    <ProjectItem SubType="Code" OpenInEditor="false" TargetFileName="$fileinputname$.xs/$fileinputname$.xs.cs" ReplaceParameters="true">Class.xs.cs</ProjectItem>
+  </TemplateContent>
+</VSTemplate>
