@@ -17,8 +17,8 @@ using Newtonsoft.Json.Linq;
 
 namespace Tests
 {
-    using ServerExtension = LanguageExtension.Extension;
-    using ConcurrentExtension = Excess.Extensions.Concurrent.Extension;
+    using ServerExtension = LanguageExtension.ServerExtension;
+    using ConcurrentExtension = Excess.Extensions.Concurrent.ConcurrentExtension;
     using Compilation = Excess.Compiler.Roslyn.Compilation;
     using FactoryMethod = Func<IConcurrentApp, object[], IConcurrentObject>;
 
@@ -197,21 +197,21 @@ namespace Tests
             IPersistentStorage storage = null,
             CompilationAnalysis compilationAnalysis = null)
         {
-            var injector = new CompositeInjector<SyntaxToken, SyntaxNode, SemanticModel>(new[]
+            var injector = new CompositeInjector<SyntaxToken, SyntaxNode, SemanticModel, Compilation>(new[]
             {
-                new DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel>(compiler => compiler
+                new DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel, Compilation>(compiler => compiler
                     .Environment()
                         .dependency<ExcessOwinMiddleware>("Middleware")
                         .dependency<IAppBuilder>("Owin")),
 
-                new DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel>(compiler => Excess
+                new DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel, Compilation>(compiler => Excess
                     .Extensions
                     .Concurrent
-                    .Extension
+                    .ConcurrentExtension
                         .Apply((RoslynCompiler)compiler)),
 
-                new DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel>(compiler => LanguageExtension
-                    .Extension
+                new DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel, Compilation>(compiler => LanguageExtension
+                    .ServerExtension
                         .Apply(compiler))
             });
 

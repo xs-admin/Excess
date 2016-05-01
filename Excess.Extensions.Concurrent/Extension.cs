@@ -105,7 +105,7 @@ namespace Excess.Extensions.Concurrent
             }
         }
 
-        private static Func<SyntaxNode, Scope, SyntaxNode> CompileClass(Options options)
+        public static Func<SyntaxNode, Scope, SyntaxNode> CompileClass(Options options)
         {
             return (node, scope) => Compile(node, scope, false, options);
         }

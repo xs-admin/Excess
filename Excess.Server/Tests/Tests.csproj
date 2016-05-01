@@ -148,9 +148,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Excess.Concurrent\Runtime\Runtime.csproj">
+    <ProjectReference Include="..\..\Excess.Concurrent\Runtime\Concurrent.Runtime.csproj">
       <Project>{4be92f98-4415-4118-9a57-e1e2b3cbb1a5}</Project>
-      <Name>Runtime</Name>
+      <Name>Concurrent.Runtime</Name>
     </ProjectReference>
     <ProjectReference Include="..\LanguageExtension\LanguageExtension.csproj">
       <Project>{0b09cefb-454e-42d0-8f2b-e7353bf52d98}</Project>

@@ -160,6 +160,24 @@ namespace Tests
         }
 
         [TestMethod]
+        public void ServiceUsage()
+        {
+            //setup
+            const string Code = @"
+            service SomeService
+            {
+                public void someMethod()
+                {
+                }
+            }";
+
+            string output;
+            var tree = Mock.Compile(Code, out output);
+
+            Assert.IsNotNull(tree);
+        }
+
+        [TestMethod]
         public void DebugPrint()
         {
             string text;

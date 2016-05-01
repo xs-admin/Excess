@@ -64,9 +64,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Excess.Concurrent\Runtime\Runtime.csproj">
+    <ProjectReference Include="..\..\Excess.Concurrent\Runtime\Concurrent.Runtime.csproj">
       <Project>{4be92f98-4415-4118-9a57-e1e2b3cbb1a5}</Project>
-      <Name>Runtime</Name>
+      <Name>Concurrent.Runtime</Name>
     </ProjectReference>
     <ProjectReference Include="..\Middleware\Middleware.csproj">
       <Project>{ed3d63d8-7c35-4f77-8430-7bc6bbfe56b9}</Project>

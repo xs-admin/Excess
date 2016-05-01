@@ -12,16 +12,28 @@ using Excess.Compiler.Roslyn;
 
 namespace LanguageExtension
 {
-    using ExcessCompiler = ICompiler<SyntaxToken, SyntaxNode, SemanticModel>;
+    using Compilation = Excess.Compiler.Roslyn.Compilation;
+    using ExcessCompiler = ICompiler<SyntaxToken, SyntaxNode, SemanticModel, Excess.Compiler.Roslyn.Compilation>;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
     using Roslyn = RoslynCompiler;
-
-    public class Extension
+    using Excess.Compiler.Attributes;
+    using Excess.Extensions.Concurrent;
+    [Extension("server")]
+    public class ServerExtension
     {
         public static void Apply(ExcessCompiler compiler, bool withCompilation = true)
         {
             compiler.Syntax()
                 .extension("server", ExtensionKind.Type, CompileServer);
+
+            var lexical = compiler.Lexical();
+            lexical
+                .match()
+                    .token("service", named: "keyword")
+                    .identifier(named: "ref")
+                    .then(lexical.transform()
+                        .replace("keyword", "class ")
+                        .then(CompileService));
 
             if (withCompilation)
             {
@@ -327,9 +339,9 @@ namespace LanguageExtension
         }
 
         //generation
-        private static bool isConcurrentObject(ClassDeclarationSyntax @class, SemanticModel model, Scope scope)
+        private static bool isConcurrentObject(ClassDeclarationSyntax @class, Compilation compilation, Scope scope)
         {
-            if (!isConcurrentClass(@class, model, scope))
+            if (!isConcurrentClass(@class, compilation, scope))
                 return false;
 
             return @class
@@ -339,12 +351,12 @@ namespace LanguageExtension
                     .Any(attr => attr.Name.ToString() == "ConcurrentSingleton"));
         }
 
-        private static void jsConcurrentObject(SyntaxNode arg1, SemanticModel arg2, Scope arg3)
+        private static void jsConcurrentObject(SyntaxNode arg1, Compilation arg2, Scope arg3)
         {
             throw new NotImplementedException();
         }
 
-        private static bool isConcurrentClass(ClassDeclarationSyntax @class, SemanticModel model, Scope scope)
+        private static bool isConcurrentClass(ClassDeclarationSyntax @class, Compilation compilation, Scope scope)
         {
             if (@class.BaseList == null)
                 return false;
@@ -355,7 +367,7 @@ namespace LanguageExtension
                 .Any(type => type.Type.ToString() == "ConcurrentObject");
         }
 
-        private static void jsConcurrentClass(SyntaxNode node, SemanticModel model, Scope scope)
+        private static void jsConcurrentClass(SyntaxNode node, Compilation compilation, Scope scope)
         {
             Debug.Assert(node is ClassDeclarationSyntax);
             var @class = node as ClassDeclarationSyntax;
@@ -364,6 +376,7 @@ namespace LanguageExtension
             Debug.Assert(config != null);
 
             var body = new StringBuilder();
+            var model = compilation.getSemanticModel(node.SyntaxTree);
             ConcurrentClass.Visit(@class,
                 methods: (name, type, parameters) =>
                 {
@@ -488,6 +501,16 @@ namespace LanguageExtension
                         Debug.Assert(false); //td:
                 }
             }
+        }
+
+        private static SyntaxNode CompileService(SyntaxNode node, Scope scope)
+        {
+            var @class = (node as ClassDeclarationSyntax)
+                .AddAttributeLists(CSharp.AttributeList(CSharp.SeparatedList(new[] { 
+                    CSharp.Attribute(CSharp.ParseName("Service"))})));
+
+            var options = new Options();
+            return ConcurrentExtension.CompileClass(options)(@class, scope);
         }
     }
 }

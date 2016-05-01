@@ -507,6 +507,7 @@ namespace Excess.Compiler.Roslyn
         }
 
         CSharpCompilation _compilation;
+        public SemanticModel getSemanticModel(SyntaxTree tree) => _compilation.GetSemanticModel(tree);
 
         public MemoryStream build(out IEnumerable<Diagnostic> errors)
         {
