@@ -94,9 +94,6 @@ namespace ChameneoRedux
             var secondRunColors = new[] { Color.blue, Color.red, Color.yellow, Color.red, Color.yellow, Color.blue, Color.red, Color.yellow, Color.red, Color.blue };
             
 			//run and await 
-			let firstRun = Run(meetings, firstRunColors),
-				secondRun = Run(meetings, secondRunColors);
-
 			IEnumerable<Chameneo> firstRun, secondRun;
 			(firstRun = Run(meetings, firstRunColors)) 
 			&& 

@@ -189,7 +189,7 @@ namespace Tests
                 public GoodbyeService Goodbye;
             }
 
-            public concurrent object HelloService
+            service HelloService
             {
                 int _times = 0;
                 public HelloModel Hello(string who)

@@ -1,4 +1,3 @@
-using System.Text;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -9,7 +8,7 @@ using Excess.Concurrent.Runtime;
 
 namespace ThreadRing
 {
-    [Concurrent(id = "a1b4320a-09cd-42b2-abc5-07fb9444aca5")]
+    [Concurrent(id = "978e9e4b-dacb-4d56-8773-1a709c469e99")]
     class RingItem : ConcurrentObject
     {
         int _idx;
@@ -68,8 +67,8 @@ namespace ThreadRing
         public readonly Guid __ID = Guid.NewGuid();
     }
 
-    [Concurrent(id = "02ed5930-825a-4a74-9af7-556c5b92beb1")]
-    [ConcurrentSingleton(id: "dcaad1e4-671b-45f7-a246-13e4d0ca04e9")]
+    [Concurrent(id = "181ac22b-7d43-4ca7-8ccd-e8b9e92d7d0e")]
+    [ConcurrentSingleton(id: "d82e7f4c-adf6-4d1c-b2bc-dbce540fb85f")]
     public class __app : ConcurrentObject
     {
         protected override void __started()
@@ -103,11 +102,17 @@ namespace ThreadRing
             }
         }
 
+        private static __app __singleton;
+        public static void Start(IConcurrentApp app)
+        {
+            __singleton = app.Spawn<__app>();
+        }
+
         public readonly Guid __ID = Guid.NewGuid();
         public static void Start(string[] args)
         {
             Arguments = args;
-            var app = new ThreadedConcurrentApp(threadCount: 4, blockUntilNextEvent: true, priority: ThreadPriority.Normal);
+            var app = new ThreadedConcurrentApp(threadCount: 4, blockUntilNextEvent: false, priority: ThreadPriority.Highest);
             app.Start();
             app.Spawn(new __app());
             Await = () => app.AwaitCompletion();
@@ -138,6 +143,9 @@ namespace ThreadRing
         static void Main(string[] args)
         {
             __app.Start(args);
+            {
+            }
+
             __app.Await();
         }
     }

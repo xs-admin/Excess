@@ -8,8 +8,8 @@ using Excess.Concurrent.Runtime;
 
 namespace DiningPhilosophers
 {
-    [Concurrent(id = "b6e1f4c6-5912-4fb4-9fdd-004b68631e8d")]
-    [ConcurrentSingleton(id: "423005e1-6be5-4413-879d-c88a6c849875")]
+    [Concurrent(id = "9a56cedc-5256-4e10-9d10-28ac292975b3")]
+    [ConcurrentSingleton(id: "95c24c07-05aa-4ca5-83b0-c01877ebd968")]
     public class __app : ConcurrentObject
     {
         protected override void __started()
@@ -28,11 +28,12 @@ namespace DiningPhilosophers
             var chopsticks = names.Select(n => spawn<chopstick>()).ToArray();
             //create philosophers
             var phCount = names.Length;
+            var stopper = new StopCount(phCount);
             for (int i = 0; i < phCount; i++)
             {
                 var left = chopsticks[i];
                 var right = i == phCount - 1 ? chopsticks[0] : chopsticks[i + 1];
-                spawn<philosopher>(names[i], left, right, meals);
+                spawn<philosopher>(names[i], left, right, meals, stopper);
             }
 
             {
@@ -41,6 +42,12 @@ namespace DiningPhilosophers
                     __success(null);
                 yield break;
             }
+        }
+
+        private static __app __singleton;
+        public static void Start(IConcurrentApp app)
+        {
+            __singleton = app.Spawn<__app>();
         }
 
         public readonly Guid __ID = Guid.NewGuid();
@@ -73,19 +80,21 @@ namespace DiningPhilosophers
         }
     }
 
-    [Concurrent(id = "204f8aeb-7efc-47e8-b7e4-01444be6bb43")]
+    [Concurrent(id = "02afb1cf-c7e7-44f8-8ca1-33958cb1c821")]
     class philosopher : ConcurrentObject
     {
         string _name;
         chopstick _left;
         chopstick _right;
         int _meals;
-        public philosopher(string name, chopstick left, chopstick right, int meals)
+        StopCount _stop;
+        public philosopher(string name, chopstick left, chopstick right, int meals, StopCount stop)
         {
             _name = name;
             _left = left;
             _right = right;
             _meals = meals;
+            _stop = stop;
         }
 
         protected override void __started()
@@ -142,7 +151,11 @@ namespace DiningPhilosophers
                 }
             }
 
-            Console.WriteLine($"{DateTime.Now.ToLongTimeString()}: {_name} is done eating.");
+            if (_stop.ShouldStop())
+            {
+                App.Stop();
+            }
+
             {
                 __dispatch("main");
                 if (__success != null)
@@ -153,7 +166,7 @@ namespace DiningPhilosophers
 
         private IEnumerable<Expression> __concurrentthink(CancellationToken __cancellation, Action<object> __success, Action<Exception> __failure)
         {
-            Console.WriteLine($"{DateTime.Now.ToLongTimeString()}: {_name} is thinking.");
+            Console.WriteLine(_name + " is thinking");
             var __expr2_var = new __expr2{Start = (___expr) =>
             {
                 var __expr = (__expr2)___expr;
@@ -204,7 +217,7 @@ namespace DiningPhilosophers
 
         private IEnumerable<Expression> __concurrenthungry(CancellationToken __cancellation, Action<object> __success, Action<Exception> __failure)
         {
-            Console.WriteLine($"{DateTime.Now.ToLongTimeString()}: {_name} is hungry.");
+            Console.WriteLine(_name + " is hungry");
             var __expr3_var = new __expr3{Start = (___expr) =>
             {
                 var __expr = (__expr3)___expr;
@@ -251,7 +264,7 @@ namespace DiningPhilosophers
 
         private IEnumerable<Expression> __concurrenteat(CancellationToken __cancellation, Action<object> __success, Action<Exception> __failure)
         {
-            Console.WriteLine($"{DateTime.Now.ToLongTimeString()}: {_name} is eating.");
+            Console.WriteLine(_name + " is eating");
             {
                 var __expr4_var = new __expr4{Start = (___expr) =>
                 {
@@ -416,7 +429,7 @@ namespace DiningPhilosophers
         public readonly Guid __ID = Guid.NewGuid();
     }
 
-    [Concurrent(id = "75f9a8c2-108f-465c-9cdb-8d0584fbb9f6")]
+    [Concurrent(id = "9648df94-1fe7-481f-9409-6971dd516635")]
     class chopstick : ConcurrentObject
     {
         philosopher _owner;
@@ -490,7 +503,7 @@ namespace DiningPhilosophers
         private IEnumerable<Expression> __concurrentrelease(philosopher owner, CancellationToken __cancellation, Action<object> __success, Action<Exception> __failure)
         {
             if (_owner != owner)
-                throw new InvalidOperationException();
+                throw new ArgumentException();
             _owner = null;
             {
                 __dispatch("release");
@@ -547,11 +560,27 @@ namespace DiningPhilosophers
         public readonly Guid __ID = Guid.NewGuid();
     }
 
+    //temporary class to abort the app when all meals has been served
+    //will dissapear soon.
+    class StopCount
+    {
+        int _count;
+        public StopCount(int count)
+        {
+            _count = count;
+        }
+
+        public bool ShouldStop() => --_count == 0;
+    }
+
     class Program
     {
         static void Main(string[] args)
         {
             __app.Start(args);
+            {
+            }
+
             __app.Await();
         }
     }

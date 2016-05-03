@@ -54,6 +54,7 @@
   <ItemGroup>
     <None Include="App.config" />
     <None Include="Creatures.xs" />
+    <None Include="Readme.md" />
     <None Include="SantaClaus.xs" />
   </ItemGroup>
   <ItemGroup>

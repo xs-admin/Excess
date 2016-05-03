@@ -49,6 +49,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <None Include="Readme.md" />
     <None Include="ThreadRing.xs" />
   </ItemGroup>
   <ItemGroup>

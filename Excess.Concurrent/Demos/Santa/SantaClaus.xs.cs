@@ -8,8 +8,8 @@ using Excess.Concurrent.Runtime;
 
 namespace Santa
 {
-    [Concurrent(id = "d672321b-70a3-449e-b704-f62d47a33872")]
-    [ConcurrentSingleton(id: "acd319b3-c1c0-4ef4-a328-fbef72d110da")]
+    [Concurrent(id = "8fb03663-8c39-4709-83c4-4fbe15fd5b16")]
+    [ConcurrentSingleton(id: "5bbefbfe-2ebb-49b1-bad8-ed906938070b")]
     public class __app : ConcurrentObject
     {
         protected override void __started()
@@ -71,7 +71,7 @@ namespace Santa
         }
     }
 
-    [Concurrent(id = "666088de-f25b-4306-8dee-fcabb2717b22")]
+    [Concurrent(id = "9e183a5e-852a-4900-9eaa-93556f471be4")]
     class SantaClaus : ConcurrentObject
     {
         List<Reindeer> _reindeer = new List<Reindeer>();

@@ -50,6 +50,7 @@
   <ItemGroup>
     <None Include="App.config" />
     <None Include="ChameneoRedux.xs" />
+    <None Include="Readme.md" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Runtime\Concurrent.Runtime.csproj">

@@ -16,7 +16,7 @@ namespace ChameneoRedux
         yellow,
     }
 
-    [Concurrent(id = "0ac84506-1178-47f7-b45c-f9d3b17a8826")]
+    [Concurrent(id = "309e985c-480e-4676-b893-3f4eb749acc3")]
     public class Chameneo : ConcurrentObject
     {
         public Color Colour
@@ -161,7 +161,7 @@ namespace ChameneoRedux
         public readonly Guid __ID = Guid.NewGuid();
     }
 
-    [Concurrent(id = "88f4f156-33c6-4f7e-baac-dc2afa4b4232")]
+    [Concurrent(id = "2cde6b45-07fd-474a-b579-8904ee45d3d6")]
     public class Broker : ConcurrentObject
     {
         int _meetings = 0;
@@ -328,8 +328,8 @@ namespace ChameneoRedux
         public readonly Guid __ID = Guid.NewGuid();
     }
 
-    [Concurrent(id = "2e18eb22-afff-4425-93d6-64a09531fcee")]
-    [ConcurrentSingleton(id: "288db633-5611-4660-8f93-243ce69a3d4f")]
+    [Concurrent(id = "7ccf93be-3439-45dd-a553-b51e6f5b18bc")]
+    [ConcurrentSingleton(id: "3bcc8c09-c043-4b52-a19b-83c9e4536908")]
     public class __app : ConcurrentObject
     {
         protected override void __started()
@@ -447,7 +447,6 @@ namespace ChameneoRedux
             PrintRun(firstRunColors, firstRun);
             Console.WriteLine();
             PrintRun(secondRunColors, secondRun);
-            App.Stop();
             {
                 __dispatch("main");
                 if (__success != null)
@@ -520,41 +519,31 @@ namespace ChameneoRedux
             public void __op4(bool ? v1, bool ? v2, Exception __ex)
             {
                 if (!tryUpdate(v1, v2, ref __op4_Left, ref __op4_Right, __ex))
-                {
-                    Console.WriteLine("FAILED UPDATING");
                     return;
-                }
-
                 if (v1.HasValue)
                 {
                     if (__op4_Left.Value)
-                    {
-                        Console.WriteLine("Complete 1");
                         __complete(true, null);
-                    }
                     else if (__op4_Right.HasValue)
-                    {
-                        Console.WriteLine("Fail 1");
                         __complete(false, __ex);
-                    }
                 }
                 else
                 {
                     if (__op4_Right.Value)
-                    {
-                        Console.WriteLine("Complete 2");
                         __complete(true, null);
-                    }
                     else if (__op4_Left.HasValue)
-                    {
-                        Console.WriteLine("Fail 2");
                         __complete(false, __ex);
-                    }
                 }
             }
 
             private bool ? __op4_Left;
             private bool ? __op4_Right;
+        }
+
+        private static __app __singleton;
+        public static void Start(IConcurrentApp app)
+        {
+            __singleton = app.Spawn<__app>();
         }
 
         public readonly Guid __ID = Guid.NewGuid();
@@ -646,6 +635,9 @@ namespace ChameneoRedux
         static void Main(string[] args)
         {
             __app.Start(args);
+            {
+            }
+
             __app.Await();
         }
     }

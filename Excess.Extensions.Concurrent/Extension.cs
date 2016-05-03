@@ -46,8 +46,15 @@ namespace Excess.Extensions.Concurrent
             return new[] { "concurrent", "spawn" };
         }
 
-        public static void Apply(RoslynCompiler compiler, Options options = null)
+        public static void Apply(RoslynCompiler compiler, Options options = null, Dictionary<string, object> props = null)
         {
+            if (props != null)
+            {
+                object tmp;
+                if (props.TryGetValue("keywords", out tmp))
+                    (tmp as List<string>).AddRange(GetKeywords());
+            }
+
             if (options == null)
                 options = new Options();
 
@@ -102,6 +109,58 @@ namespace Excess.Extensions.Concurrent
                     .match<ClassDeclarationSyntax>((@class, model, scope) => isSingleton(@class))
                         .then((node, model, scope) => Singletons.Add((ClassDeclarationSyntax)node))
                     .after(AddAppProgram(Programs, Singletons));
+            }
+        }
+
+        public static void Visit(ClassDeclarationSyntax @class,
+            Action<SyntaxToken, TypeSyntax, IEnumerable<ParameterSyntax>> methods = null,
+            Action<SyntaxToken, TypeSyntax, ExpressionSyntax> fields = null,
+            Action<IEnumerable<ParameterSyntax>> constructors = null)
+        {
+            var publicMembers = @class
+                .DescendantNodes()
+                .OfType<MemberDeclarationSyntax>()
+                .Where(member => Roslyn.IsVisible(member));
+
+            foreach (var member in publicMembers)
+            {
+                if (member is MethodDeclarationSyntax && methods != null)
+                {
+                    var method = member as MethodDeclarationSyntax;
+
+                    //since we generate multiple methods
+                    if (methods != null
+                        && method
+                            .AttributeLists
+                            .Any(attrList => attrList
+                                .Attributes
+                                .Any(attr => attr.Name.ToString() == "Concurrent")))
+                    {
+                        methods(method.Identifier, method.ReturnType, method.ParameterList.Parameters);
+                    }
+                }
+                else if (member is FieldDeclarationSyntax && fields != null)
+                {
+                    var declaration = (member as FieldDeclarationSyntax)
+                        .Declaration;
+
+                    var variable = declaration
+                        .Variables
+                        .Single();
+
+                    fields(variable.Identifier, declaration.Type, variable.Initializer.Value);
+                }
+                else if (member is PropertyDeclarationSyntax && fields != null)
+                {
+                    var property = member as PropertyDeclarationSyntax;
+                    fields(property.Identifier, property.Type, null);
+                }
+                else if (member is ConstructorDeclarationSyntax && constructors != null)
+                    constructors((member as ConstructorDeclarationSyntax)
+                        .ParameterList
+                        .Parameters);
+                else
+                    Debug.Assert(false); //td:
             }
         }
 

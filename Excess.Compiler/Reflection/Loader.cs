@@ -10,12 +10,12 @@ namespace Excess.Compiler.Reflection
 
     public class Loader<TCompiler>
     {
-        public static Action<TCompiler, LoaderProperties> CreateFrom(Assembly assembly, out string extensionName, string flavor = null)
+        public static Action<TCompiler, LoaderProperties> CreateFrom(Assembly assembly, out string extensionName, string flavor = null, Func<string, string> flavorFunction = null)
         {
-            return Create(assembly.ExportedTypes, out extensionName, flavor);
+            return Create(assembly.ExportedTypes, out extensionName, flavor, flavorFunction);
         }
 
-        public static Action<TCompiler, LoaderProperties> Create(IEnumerable<Type> extensionTypes, out string extensionName, string flavor = null)
+        public static Action<TCompiler, LoaderProperties> Create(IEnumerable<Type> extensionTypes, out string extensionName, string flavor = null, Func<string, string> flavorFunction = null)
         {
             var types = extensionTypes
                 .Where(type => type
@@ -29,14 +29,11 @@ namespace Excess.Compiler.Reflection
             //calculate the name of the extension
             foreach (var type in types)
             {
-                var attrDebug = type.CustomAttributes
-                    .Single(attr => attr.AttributeType == typeof(Extension));
-
                 var name = type.CustomAttributes
                     .Single(attr => attr.AttributeType == typeof(Extension))
                     .ConstructorArguments
                     .Single()
-                    .ToString();
+                    .Value as string;
 
                 if (extensionName == null)
                     extensionName = name;
@@ -53,6 +50,9 @@ namespace Excess.Compiler.Reflection
                     .Where(mthd => mthd
                         .CustomAttributes
                         .Any(attr => attr.AttributeType == typeof(Flavor))));
+
+            if (flavor == null && flavorFunction != null)
+                flavor = flavorFunction(extensionName);
 
             var method = flavors
                 .Where(mthd => mthd.Name == (flavor ?? "Default"))

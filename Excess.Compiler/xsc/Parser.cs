@@ -197,8 +197,13 @@ namespace xsc
                 }
                 else if (index == 1)
                 {
-                    //failed on the first token, assume its all code
-                    return string.Join("", args);
+                    if (File.Exists(arg))
+                        result.AppendLine($"Files = new string[] {{ @\"{arg}\" }};");
+                    else
+                    {
+                        //failed on the first token, assume its all code
+                        return string.Join("", args);
+                    }
                 }
                 else
                     throw new ArgumentException($"invalid argument {args[index - 1]}");

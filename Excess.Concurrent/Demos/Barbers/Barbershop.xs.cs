@@ -8,8 +8,8 @@ using Excess.Concurrent.Runtime;
 
 namespace Barbers
 {
-    [Concurrent(id = "5b2caa9d-a05f-427c-8b65-b0b3a5964ff4")]
-    [ConcurrentSingleton(id: "97c6148a-94b1-4bef-b50a-c7058bd43903")]
+    [Concurrent(id = "ddc04f88-ac79-45c4-b353-c47607004048")]
+    [ConcurrentSingleton(id: "400e498f-26bd-4ae2-b5c3-9b068a8bc65a")]
     public class __app : ConcurrentObject
     {
         protected override void __started()
@@ -133,7 +133,7 @@ namespace Barbers
         }
     }
 
-    [Concurrent(id = "72fd2b5d-a056-4a02-938b-ab186957c43a")]
+    [Concurrent(id = "85ebb0f2-41d2-4033-b4fe-30d2f5fe6c48")]
     class Barbershop : ConcurrentObject
     {
         Barber[] _barbers;
@@ -391,7 +391,7 @@ namespace Barbers
         private Queue<Action> __queuevisit = new Queue<Action>();
     }
 
-    [Concurrent(id = "a0c471ce-8b09-449e-87c7-1436774bb412")]
+    [Concurrent(id = "fcf8519e-f954-4b3e-b834-179951e69747")]
     class Barber : ConcurrentObject
     {
         int _index;

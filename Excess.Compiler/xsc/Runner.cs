@@ -64,7 +64,11 @@ namespace xsc
         {
             var assembly = Assembly.LoadFrom(dll);
             var name = string.Empty;
-            var loader = Loader<RoslynCompiler>.CreateFrom(assembly, out name);
+            var loader = Loader<RoslynCompiler>.CreateFrom(assembly, out name, 
+                flavorFunction: ext => Flavors.ContainsKey(ext)
+                    ? Flavors[ext]
+                    : "Default");
+
             if (loader == null)
                 return default(KeyValuePair<string, LoaderFunc>);
 
