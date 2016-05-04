@@ -15,19 +15,27 @@ namespace xss
             var errors = null as string;
             var url = null as string;
             var concurrentClasses = null as IEnumerable<Type>;
-            var concurrentInstances = null as IEnumerable<KeyValuePair<Guid, IConcurrentObject>>;
-            if (!parseArguments(args, out errors, out url, out concurrentClasses, out concurrentInstances))
+            var concurrentInstances = null as IEnumerable<KeyValuePair<Guid, Type>>;
+            var staticFiles = null as string;
+            if (!parseArguments(args, out errors, out url, out concurrentClasses, out concurrentInstances, out staticFiles))
             {
                 Console.Write(errors);
                 return;
             }
 
             //start a http concurrent server
-            throw new NotImplementedException(); //td: 
+            HttpServer.Start(url,
+                classes: concurrentClasses,
+                instances: concurrentInstances,
+                staticFiles: staticFiles);
         }
 
-        private static bool parseArguments(string[] args, out string errors, out string url, out IEnumerable<Type> concurrentClasses, out IEnumerable<KeyValuePair<Guid, IConcurrentObject>> concurrentInstances)
+        private static bool parseArguments(string[] args, out string errors, out string url, out IEnumerable<Type> concurrentClasses, out IEnumerable<KeyValuePair<Guid, Type>> concurrentInstances, out string staticFiles)
         {
+            staticFiles = args.Length == 2
+                ? args[1]
+                : null;
+
             errors = null;
             url = null;
             concurrentClasses = null;
@@ -37,6 +45,7 @@ namespace xss
             switch (args.Length)
             {
                 case 1:
+                case 2:
                     url = args[0];
 
                     var currentDirectory = Environment.CurrentDirectory;
@@ -53,20 +62,26 @@ namespace xss
             return errors != null;
         }
 
-        private static void concurrentAssemblies(string filePath, out string errors, out IEnumerable<Type> concurrentClasses, out IEnumerable<KeyValuePair<Guid, IConcurrentObject>> concurrentInstances)
+        private static void concurrentAssemblies(string filePath, out string errors, out IEnumerable<Type> concurrentClasses, out IEnumerable<KeyValuePair<Guid, Type>> concurrentInstances)
         {
             var assemblies = Directory
                 .EnumerateFiles(filePath)
-                .Select(file => Assembly.LoadFile(file));
+                .Where(file => Path.GetExtension(file) == ".dll")
+                .Select(file => Assembly.LoadFrom(file));
 
             var found = false;
             var classes = new List<Type>();
-            var instances = new Dictionary<Guid, IConcurrentObject>();
+            var instances = new Dictionary<Guid, Type>();
             foreach (var assembly in assemblies)
             {
                 foreach (var type in assembly.GetTypes())
                 {
-                    if (isConcurrent(type, instances))
+                    var id = default(Guid);
+                    if (isService(type, out id))
+                    {
+                        instances[id] = type;
+                    }
+                    else if (isConcurrent(type))
                     {
                         found = true;
                         classes.Add(type);
@@ -82,16 +97,34 @@ namespace xss
             concurrentInstances = instances;
         }
 
-        private static bool isConcurrent(Type type, Dictionary<Guid, IConcurrentObject> instances)
+        private static bool isService(Type type, out Guid id)
         {
-            if (type.BaseType == null || type.BaseType.Name != "ConcurrentObject")
-                return false;
+            var attribute = type
+                .CustomAttributes
+                .Where(attr => attr.AttributeType.Name == "Service")
+                .SingleOrDefault();
 
-            var method = type.GetMethod("__singleton", BindingFlags.Static);
-            if (method != null)
-                method.Invoke(null, new object[] { instances });
+            if (attribute != null)
+            {
+                attribute = type
+                    .CustomAttributes
+                    .Where(attr => attr.AttributeType.Name == "Concurrent")
+                    .SingleOrDefault();
 
-            return true;
+                id = Guid.Parse((string)attribute.ConstructorArguments[0].Value);
+                return true;
+            }
+
+            id = Guid.Empty;
+            return false;
+        }
+
+        private static bool isConcurrent(Type type)
+        {
+            return type
+                .CustomAttributes
+                .Where(attr => attr.AttributeType.Name == "Concurrent")
+                .Any();
         }
     }
 }

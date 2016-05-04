@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Owin;
 using Microsoft.Owin.Hosting;
 using Excess.Concurrent.Runtime;
+using System.IO;
 
 namespace Middleware
 {
@@ -13,15 +14,20 @@ namespace Middleware
             string url,
             string identityUrl = null,
             int threads = 4,
-            bool useStaticFiles = true,
+            string staticFiles = null,
             int nodes = 0,
             IEnumerable<Type> classes = null,
-            IEnumerable<KeyValuePair<Guid, IConcurrentObject>> instances = null)
+            IEnumerable<KeyValuePair<Guid, Type>> instances = null)
         {
             using (WebApp.Start(url, (builder) =>
             {
-                if (useStaticFiles)
-                    builder.UseStaticFiles();
+                if (staticFiles != null)
+                {
+                    if (!Directory.Exists(staticFiles))
+                        throw new ArgumentException(staticFiles);
+
+                    builder.UseStaticFiles(staticFiles);
+                }
 
                 var distributed = null as IDistributedApp;
                 builder.UseExcess(initializeApp: server =>
@@ -39,7 +45,7 @@ namespace Middleware
                     {
                         foreach (var instance in instances)
                         {
-                            server.RegisterInstance(instance.Key, instance.Value);
+                            server.RegisterInstance(instance.Key, (IConcurrentObject)Activator.CreateInstance(instance.Value));
                         }
                     }
 

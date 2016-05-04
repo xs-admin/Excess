@@ -90,10 +90,12 @@ namespace Middleware
 
         public void Start()
         {
-            Debug.Assert(Connect != null);
-            var exception = Connect(this);
-            if (exception != null)
-                throw exception;
+            if (Connect != null)
+            {
+                var exception = Connect(this);
+                if (exception != null)
+                    throw exception;
+            }
 
             ConcurrentApp.AddSpawnListener(onSpawn);
             ConcurrentApp.Start();

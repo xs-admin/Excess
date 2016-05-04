@@ -70,7 +70,7 @@ namespace Tests
                     Node node1 = new NetMQ.Node
                     {
                         Url = ""tcp://localhost:1081"",
-                        Hosts = new []
+                        Services = new []
                         {
                             HelloService
                         }
@@ -79,7 +79,7 @@ namespace Tests
                     Node node2 = new NetMQ.Node
                     {
                         Url = ""tcp://localhost:1082"",
-                        Hosts = new []
+                        Services = new []
                         {
                             ProcessingService
                         }
