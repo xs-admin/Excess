@@ -29,6 +29,7 @@ namespace Middleware
                     if (!Directory.Exists(staticFiles))
                         throw new ArgumentException(staticFiles);
 
+                    staticFiles = Path.GetFullPath(staticFiles);
                     builder.UseStaticFiles(new StaticFileOptions
                     {
                         FileSystem = new PhysicalFileSystem(staticFiles),

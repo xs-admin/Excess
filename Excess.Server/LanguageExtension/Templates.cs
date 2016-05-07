@@ -99,7 +99,7 @@ namespace LanguageExtension
         public static AttributeArgumentListSyntax GuidAttributeArgument()
         {
             return CSharp.ParseAttributeArgumentList(
-                $"(id = \"{Guid.NewGuid()}\")");
+                $"(id : \"{Guid.NewGuid()}\")");
         }
     }
 }
