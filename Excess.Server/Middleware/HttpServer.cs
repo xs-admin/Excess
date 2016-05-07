@@ -5,6 +5,9 @@ using Owin;
 using Microsoft.Owin.Hosting;
 using Excess.Concurrent.Runtime;
 using System.IO;
+using Microsoft.Owin.StaticFiles;
+using Microsoft.Owin.FileSystems;
+using Microsoft.Owin;
 
 namespace Middleware
 {
@@ -26,7 +29,10 @@ namespace Middleware
                     if (!Directory.Exists(staticFiles))
                         throw new ArgumentException(staticFiles);
 
-                    builder.UseStaticFiles(staticFiles);
+                    builder.UseStaticFiles(new StaticFileOptions
+                    {
+                        FileSystem = new PhysicalFileSystem(staticFiles),
+                    });
                 }
 
                 var distributed = null as IDistributedApp;

@@ -23,6 +23,13 @@
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>false</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>
+    </AssemblyOriginatorKeyFile>
+  </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -31,8 +38,8 @@
     <ProjectGuid>{B4B1F731-D10F-4EB1-A15F-F9F1D0E1A858}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>WebServer</RootNamespace>
-    <AssemblyName>WebServer</AssemblyName>
+    <RootNamespace>Server.Angular</RootNamespace>
+    <AssemblyName>Server.Angular</AssemblyName>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <GeneratePkgDefFile>false</GeneratePkgDefFile>
@@ -64,9 +71,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Microsoft.VisualStudio.CoreUtility">
-      <Private>False</Private>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
@@ -74,11 +78,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Service1.xs.cs">
+    <None Include="Service1.xs.cs">
       <DependentUpon>Service1.xs</DependentUpon>
-    </Compile>
+    </None>
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.config" />
     <None Include="AssemblyInfo.cs" />
     <None Include="client\.bowerrc" />
     <None Include="client\.jshintrc" />
@@ -87,12 +92,15 @@
     <None Include="client\LICENSE" />
     <None Include="client\package.json" />
     <None Include="client\README.md" />
+    <None Include="xs.packages" />
     <None Include="ProjectTemplate.csproj" />
     <None Include="Service1.xs" />
-    <None Include="WebServer.ico" />
+    <None Include="Server.Angular.ico" />
   </ItemGroup>
   <ItemGroup>
-    <VSTemplate Include="WebServer.vstemplate" />
+    <VSTemplate Include="Server.Angular.vstemplate">
+      <SubType>Designer</SubType>
+    </VSTemplate>
   </ItemGroup>
   <ItemGroup>
     <Content Include="client\.gitignore" />

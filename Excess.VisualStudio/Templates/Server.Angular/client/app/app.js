@@ -4,7 +4,6 @@
 angular.module('$safeprojectname$', [
   'ngRoute',
   '$safeprojectname$.view1',
-  '$safeprojectname$.view2',
   '$safeprojectname$.version'
 ]).
 config(['$routeProvider', function($routeProvider) {

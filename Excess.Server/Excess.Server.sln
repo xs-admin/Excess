@@ -15,6 +15,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Concurrent.Runtime", "..\Ex
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Excess.Extensions.Concurrent", "..\Excess.Extensions.Concurrent\Excess.Extensions.Concurrent.csproj", "{99F869F8-7BD4-476A-98CA-27C63E89DA93}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Nuget", "Nuget", "{BA18FB8A-1576-4033-ABEC-082039A9A6CC}"
+	ProjectSection(SolutionItems) = preProject
+		Nuget\Excess.Server.nuspec = Nuget\Excess.Server.nuspec
+		Nuget\publish.bat = Nuget\publish.bat
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

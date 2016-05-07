@@ -9,6 +9,8 @@ using Microsoft.CodeAnalysis;
 
 using Excess.Compiler;
 using Excess.Compiler.Roslyn;
+using Excess.Compiler.Attributes;
+using Excess.Extensions.Concurrent;
 
 namespace LanguageExtension
 {
@@ -16,26 +18,35 @@ namespace LanguageExtension
     using ExcessCompiler = ICompiler<SyntaxToken, SyntaxNode, SemanticModel, Excess.Compiler.Roslyn.Compilation>;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
     using Roslyn = RoslynCompiler;
-    using Excess.Compiler.Attributes;
-    using Excess.Extensions.Concurrent;
+
+    public class ServerExtensionOptions
+    {
+        public bool GenerateJsServices { get; set; }
+    }
+
     [Extension("server")]
     public class ServerExtension
     {
-        public static void Apply(ExcessCompiler compiler, bool withCompilation = true)
+        public static void Apply(ExcessCompiler compiler, Scope scope)
         {
+            var options = scope?.get<ServerExtensionOptions>()
+                ?? new ServerExtensionOptions();
+
             compiler.Syntax()
                 .extension("server", ExtensionKind.Type, CompileServer);
 
             var lexical = compiler.Lexical();
-            lexical
-                .match()
-                    .token("service", named: "keyword")
-                    .identifier(named: "ref")
-                    .then(lexical.transform()
-                        .replace("keyword", "class ")
-                        .then(CompileService));
+            lexical.match()
+                .token("service", named: "keyword")
+                .identifier(named: "ref")
+                .then(lexical.transform()
+                    .replace("keyword", "class ")
+                    .then(CompileService));
 
-            if (withCompilation)
+            compiler.Environment()
+                .dependency("Middleware");
+
+            if (options.GenerateJsServices)
             {
                 var compilation = compiler.Compilation();
                 if (compilation != null)
@@ -297,7 +308,7 @@ namespace LanguageExtension
                 case "Identity":
                     result.Identity = assignment.Right;
                     break;
-                case "Hosts":
+                case "Services":
                     if (assignment.Right is ImplicitArrayCreationExpressionSyntax)
                     {
                         var hostedClasses = (assignment.Right as ImplicitArrayCreationExpressionSyntax)
@@ -450,8 +461,11 @@ namespace LanguageExtension
         private static SyntaxNode CompileService(SyntaxNode node, Scope scope)
         {
             var @class = (node as ClassDeclarationSyntax)
-                .AddAttributeLists(CSharp.AttributeList(CSharp.SeparatedList(new[] { 
-                    CSharp.Attribute(CSharp.ParseName("Service"))})));
+                .AddAttributeLists(CSharp.AttributeList(CSharp.SeparatedList(new[] {CSharp
+                    .Attribute(CSharp
+                        .ParseName("Service"),
+                        CSharp.ParseAttributeArgumentList(
+                            $"(id = \"{Guid.NewGuid()}\")"))})));
 
             var options = new Options();
             return ConcurrentExtension.CompileClass(options)(@class, scope);

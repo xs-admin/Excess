@@ -32,41 +32,43 @@ namespace xss
 
         private static bool parseArguments(string[] args, out string errors, out string url, out IEnumerable<Type> concurrentClasses, out IEnumerable<KeyValuePair<Guid, Type>> concurrentInstances, out string staticFiles)
         {
-            staticFiles = args.Length == 2
-                ? args[1]
-                : null;
-
             errors = null;
             url = null;
             concurrentClasses = null;
             concurrentInstances = null;
-            var directory = Environment.CurrentDirectory;
+            staticFiles = null;
 
-            switch (args.Length)
+            if (args.Length < 1 || args.Length > 3)
             {
-                case 1:
-                case 2:
-                    url = args[0];
-
-                    var currentDirectory = Environment.CurrentDirectory;
-                    concurrentAssemblies(currentDirectory, out errors, out concurrentClasses, out concurrentInstances);
-                    break;
-                case 0:
-                    errors = "you must provide the url where the server is hosted";
-                    break;
-                default:
-                    errors = "too many parameters";
-                    break;
+                errors = "usage [url] [target] [dir]";
+                return false;
             }
 
+            url = args[0];
+            var target = Environment.CurrentDirectory;
+            if (args.Length > 2)
+                target = args[1];
+
+            if (args.Length == 3)
+            {
+                staticFiles = args[2];
+                if (staticFiles != null && staticFiles.StartsWith("\"") && staticFiles.EndsWith("\""))
+                    staticFiles = staticFiles.Substring(1, staticFiles.Length - 2);
+            }
+
+            concurrentAssemblies(target, out errors, out concurrentClasses, out concurrentInstances);
             return errors != null;
         }
 
         private static void concurrentAssemblies(string filePath, out string errors, out IEnumerable<Type> concurrentClasses, out IEnumerable<KeyValuePair<Guid, Type>> concurrentInstances)
         {
-            var assemblies = Directory
-                .EnumerateFiles(filePath)
-                .Where(file => Path.GetExtension(file) == ".dll")
+            var files = File.Exists(filePath)
+                ? new[] { filePath }
+                : Directory
+                    .EnumerateFiles(filePath)
+                    .Where(file => file.StartsWith("Excess.") && Path.GetExtension(file) == ".dll");
+
+            var assemblies = files
                 .Select(file => Assembly.LoadFrom(file));
 
             var found = false;
@@ -106,11 +108,6 @@ namespace xss
 
             if (attribute != null)
             {
-                attribute = type
-                    .CustomAttributes
-                    .Where(attr => attr.AttributeType.Name == "Concurrent")
-                    .SingleOrDefault();
-
                 id = Guid.Parse((string)attribute.ConstructorArguments[0].Value);
                 return true;
             }

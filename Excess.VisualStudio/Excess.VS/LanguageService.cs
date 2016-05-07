@@ -15,12 +15,13 @@ using Excess.Compiler.Roslyn;
 using Excess.Entensions.XS;
 using Excess.Compiler.Attributes;
 using Excess.Compiler.Reflection;
+using Excess.Compiler;
 
 namespace Excess.VS
 {
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
-    using LoaderProperties = Dictionary<string, object>;
-    using LoaderFunc = Action<RoslynCompiler, Dictionary<string, object>>;
+    using LoaderProperties = Scope;
+    using LoaderFunc = Action<RoslynCompiler, Scope>;
 
     internal static class XSKeywords            
     {
@@ -138,8 +139,8 @@ namespace Excess.VS
                 XSLang.Apply(result);
 
                 var keywordList = new List<string>();
-                var props = new LoaderProperties();
-                props["keywords"] = keywordList;
+                var props = new Scope(null);
+                props.set("keywords", keywordList);
 
                 foreach (var extension in extensions.ToArray())
                 {

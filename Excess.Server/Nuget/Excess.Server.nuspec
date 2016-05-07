@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+        <id>Excess.Server</id>
+        <version>0.46.2-alpha</version>
+        <authors>Excess</authors>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>Excess Web App</description>
+
+        <dependencies>
+          <dependency id="Excess.Concurrent"/>
+          <dependency id="Newtonsoft.Json"/>
+          <dependency id="Owin"/>
+          <dependency id="Microsoft.Owin"/>
+          <dependency id="Microsoft.Owin.FileSystems"/>
+          <dependency id="Microsoft.Owin.Hosting"/>
+          <dependency id="Microsoft.Owin.StaticFiles"/>
+          <dependency id="NetMQ"/>
+        </dependencies>
+    </metadata>
+    <files>
+        <file src="..\LanguageExtension\bin\Release\Excess.Extensions.Server.dll" target="tools\Excess.Extensions.Server.dll" />
+        <file src="..\Middleware\bin\Release\Excess.Server.Middleware.dll" target="lib\Net45\Excess.Server.Middleware.dll" />
+    </files>
+</package>

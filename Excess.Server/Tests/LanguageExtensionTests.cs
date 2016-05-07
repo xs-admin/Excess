@@ -182,74 +182,11 @@ namespace Tests
         {
             string text;
             Mock.Compile(@"
-            public struct HelloModel
+            public service TestService
             {
-                public string Greeting;                
-                public int Times;
-                public GoodbyeService Goodbye;
-            }
-
-            public service HelloService
-            {
-                int _times = 0;
-                public HelloModel Hello(string who)
+                public string Hello(string what)
                 {
-                    return new HelloModel
-                    {
-                        Greeting = ""greetings, "" + who,
-                        Times = _times++,
-                        Goodbye = spawn<GoodbyeService>(who)
-                    };
-                }
-            }
-
-            public concurrent class GoodbyeService
-            {
-                string _who;
-                public GoodbyeService(string who)
-                {
-                    _who = who;
-                }
-
-                public string Goodbye(string what)
-                {
-                    return $""Goodbye {what}, goodbye {_who}"";
-                }
-            }
-
-            public service ProcessingService
-            {
-                public string Process(string what, GoodbyeService unGreeter)
-                {
-                    string goodbyeText = await unGreeter.Goodbye(what);
-                    return what + "" then "" + goodbyeText;
-                }
-            }
-
-            namespace Servers
-            {
-                server Default()
-                {
-                    Url = ""http://localhost:1080"";
-                    Identity = ""tcp://localhost:5000"";
-
-                    Node node1 = new NetMQ.Node
-                    {
-                        Url = ""tcp://localhost:1081"",
-                        Hosts = new []
-                        {
-                            HelloService
-                        }
-                    };
-
-                    Node node2 = new NetMQ.Node
-                    {
-                        Url = ""tcp://localhost:1082"",
-                        Hosts = new []
-                        {
-                            ProcessingService
-                        }
-                    };
+                    return ""Hello "" + what;
                 }
             }", out text);
 

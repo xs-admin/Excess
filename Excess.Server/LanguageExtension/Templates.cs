@@ -4,6 +4,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace LanguageExtension
 {
     using Excess.Compiler.Razor;
+    using System;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
     public static class Templates
@@ -94,5 +95,11 @@ namespace LanguageExtension
 
         public static StatementSyntax RemoteTypes = CSharp.ParseStatement(@"
             return new Type[] {};");
+
+        public static AttributeArgumentListSyntax GuidAttributeArgument()
+        {
+            return CSharp.ParseAttributeArgumentList(
+                $"(id = \"{Guid.NewGuid()}\")");
+        }
     }
 }

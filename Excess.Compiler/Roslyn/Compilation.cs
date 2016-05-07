@@ -16,8 +16,8 @@ using System.Linq.Expressions;
 
 namespace Excess.Compiler.Roslyn
 {
-    using LoaderProperties = Dictionary<string, object>;
-    using LoaderFunc = Action<RoslynCompiler, Dictionary<string, object>>;
+    using LoaderProperties = Scope;
+    using LoaderFunc = Action<RoslynCompiler, Scope>;
 
     public interface ICompilationTool //td: get rid of this
     {

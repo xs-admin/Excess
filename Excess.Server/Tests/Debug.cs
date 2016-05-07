@@ -4,13 +4,14 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Excess.Concurrent.Runtime;
-using Middleware;
+using Excess;
 
 namespace SomeNS
 {
     using System.Threading;
     using System.Threading.Tasks;
     using Excess.Concurrent.Runtime;
+    using Middleware;
 
     public struct HelloModel
     {

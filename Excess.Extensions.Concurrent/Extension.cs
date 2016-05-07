@@ -46,7 +46,12 @@ namespace Excess.Extensions.Concurrent
             return new[] { "concurrent", "spawn" };
         }
 
-        public static void Apply(RoslynCompiler compiler, Options options = null, Dictionary<string, object> props = null)
+        public static void Apply(RoslynCompiler compiler, IDictionary<string, object> props)
+        {
+            Apply(compiler, new Options(), props);
+        }
+
+        public static void Apply(RoslynCompiler compiler, Options options = null, IDictionary<string, object> props = null)
         {
             if (props != null)
             {

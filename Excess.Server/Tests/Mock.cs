@@ -30,7 +30,7 @@ namespace Tests
                 environment: null,
                 compilation: new CompilationAnalysis());
 
-            ServerExtension.Apply(compiler);
+            ServerExtension.Apply(compiler, compiler.Scope);
             ConcurrentExtension.Apply(compiler);
             return compiler.ApplySemanticalPass(code, out output);
         }
@@ -151,12 +151,12 @@ namespace Tests
                 Guid id;
                 if (remoteTypes != null && remoteTypes.Contains(type))
                 {
-                    if (allInstances != null && type.IsConcurrentSingleton(out id))
+                    if (allInstances != null && isService(type, out id))
                         allInstances[type.Name] = id;
                     continue;
                 }
 
-                commonClasses.Add(type);
+                commonClasses?.Add(type);
                 app.RegisterClass(type);
 
                 if (userInstances != null)
@@ -175,6 +175,23 @@ namespace Tests
             }
 
             return app;
+        }
+
+        private static bool isService(Type type, out Guid id)
+        {
+            var attribute = type
+                .CustomAttributes
+                .Where(attr => attr.AttributeType.Name == "Service")
+                .SingleOrDefault();
+
+            if (attribute != null)
+            {
+                id = Guid.Parse((string)attribute.ConstructorArguments[0].Value);
+                return true;
+            }
+
+            id = Guid.Empty;
+            return false;
         }
 
         public static dynamic ParseResponse(HttpResponseMessage response)
@@ -212,7 +229,7 @@ namespace Tests
 
                 new DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel, Compilation>(compiler => LanguageExtension
                     .ServerExtension
-                        .Apply(compiler))
+                        .Apply(compiler, new Scope(null)))
             });
 
             var compilation = new Compilation(storage, compilationAnalysis);

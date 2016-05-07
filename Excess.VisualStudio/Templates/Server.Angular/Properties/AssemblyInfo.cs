@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("WebServer")]
+[assembly: AssemblyTitle("Server.Angular")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Emilio Santos")]
-[assembly: AssemblyProduct("WebServer")]
+[assembly: AssemblyProduct("Server.Angular")]
 [assembly: AssemblyCopyright("Copyright © Emilio Santos 2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

@@ -6,7 +6,7 @@ using Excess.Compiler.Attributes;
 
 namespace Excess.Compiler.Reflection
 {
-    using LoaderProperties = Dictionary<string, object>;
+    using LoaderProperties = Scope;
 
     public class Loader<TCompiler>
     {
@@ -86,7 +86,8 @@ namespace Excess.Compiler.Reflection
 
         public static void Apply(IEnumerable<Type> types, TCompiler compiler, out string extensionName, string flavor = null, LoaderProperties props = null)
         {
-            Create(types, out extensionName, flavor)?.Invoke(compiler, props);
+            Create(types, out extensionName, flavor)
+                ?.Invoke(compiler, props);
         }
     }
 }

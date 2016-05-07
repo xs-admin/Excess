@@ -1,8 +1,9 @@
 ﻿using xs.concurrent;
+using xs.server;
 
 namespace $safeprojectname$
 {
-	public concurrent class Service1
+	public service Service1
 	{
 	}
 }

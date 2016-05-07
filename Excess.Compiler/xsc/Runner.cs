@@ -7,12 +7,13 @@ using System.Reflection;
 using Microsoft.CodeAnalysis;
 using Excess.Compiler.Roslyn;
 using Excess.Compiler.Reflection;
+using Excess.Compiler;
 
 namespace xsc
 {
     using ExcessCompilation = Excess.Compiler.Roslyn.Compilation;
-    using LoaderProperties = Dictionary<string, object>;
-    using LoaderFunc = Action<RoslynCompiler, Dictionary<string, object>>;
+    using LoaderProperties = Scope;
+    using LoaderFunc = Action<RoslynCompiler, Scope>;
 
     public class Runner
     {

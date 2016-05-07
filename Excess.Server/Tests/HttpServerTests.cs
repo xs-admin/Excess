@@ -15,7 +15,7 @@ namespace Tests
         {
             //setup
             const string SourceCode = @"
-            concurrent class TestService
+            public TestService
             {
                 public string Hello(string what)
                 {
