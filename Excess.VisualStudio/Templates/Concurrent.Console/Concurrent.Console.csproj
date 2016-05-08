@@ -78,11 +78,11 @@
       <DependentUpon>App.xs</DependentUpon>
     </None>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <None Include="xs.packages" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.xs" />
     <None Include="AssemblyInfo.cs" />
-    <None Include="packages.config" />
     <None Include="ProjectTemplate.csproj">
       <SubType>Designer</SubType>
     </None>

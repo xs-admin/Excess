@@ -46,18 +46,18 @@ namespace Excess.Extensions.Concurrent
             return new[] { "concurrent", "spawn" };
         }
 
-        public static void Apply(RoslynCompiler compiler, IDictionary<string, object> props)
+        public static void Apply(RoslynCompiler compiler, Scope scope)
         {
-            Apply(compiler, new Options(), props);
+            Apply(compiler, new Options(), scope);
         }
 
-        public static void Apply(RoslynCompiler compiler, Options options = null, IDictionary<string, object> props = null)
+        public static void Apply(RoslynCompiler compiler, Options options = null, Scope scope = null)
         {
-            if (props != null)
+            if (scope != null)
             {
-                object tmp;
-                if (props.TryGetValue("keywords", out tmp))
-                    (tmp as List<string>).AddRange(GetKeywords());
+                var keywords = scope.get("keywords") as List<string>;
+                if (keywords != null)
+                    keywords.AddRange(GetKeywords());
             }
 
             if (options == null)
@@ -104,15 +104,15 @@ namespace Excess.Extensions.Concurrent
                 var Programs = new List<ClassDeclarationSyntax>();
                 var Singletons = new List<ClassDeclarationSyntax>();
                 compilation
-                    .match<ClassDeclarationSyntax>((@class, model, scope) =>
+                    .match<ClassDeclarationSyntax>((@class, model, scpe) =>
                         @class.Identifier.ToString() == "Program"
                         && @class
                             .Members
                             .OfType<MethodDeclarationSyntax>()
                             .Any(method => method.Identifier.ToString() == "Main"))
-                        .then((node, model, scope) => Programs.Add((ClassDeclarationSyntax)node))
-                    .match<ClassDeclarationSyntax>((@class, model, scope) => isSingleton(@class))
-                        .then((node, model, scope) => Singletons.Add((ClassDeclarationSyntax)node))
+                        .then((node, model, scpe) => Programs.Add((ClassDeclarationSyntax)node))
+                    .match<ClassDeclarationSyntax>((@class, model, scpe) => isSingleton(@class))
+                        .then((node, model, scpe) => Singletons.Add((ClassDeclarationSyntax)node))
                     .after(AddAppProgram(Programs, Singletons));
             }
         }

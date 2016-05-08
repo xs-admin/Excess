@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <VSTemplate Version="3.0.0" Type="Project" xmlns="http://schemas.microsoft.com/developer/vstemplate/2005" xmlns:sdk="http://schemas.microsoft.com/developer/vstemplate-sdkextension/2010">
   <TemplateData>
-    <Name>Concurrent.Console</Name>
+    <Name>Concurrent Console App</Name>
     <Description>Runs concurrent objects in a console app.</Description>
     <Icon>Concurrent.Console.ico</Icon>
     <ProjectType>CSharp</ProjectType>
@@ -18,7 +18,6 @@
       <ProjectItem ReplaceParameters="true" TargetFileName="App.config">App.config</ProjectItem>
       <ProjectItem ReplaceParameters="true" TargetFileName="App.xs">App.xs</ProjectItem>
       <ProjectItem ReplaceParameters="true" TargetFileName="App.xs.cs">App.xs.cs</ProjectItem>
-      <ProjectItem ReplaceParameters="true" TargetFileName="packages.config">packages.config</ProjectItem>
     </Project>
   </TemplateContent>
 </VSTemplate>

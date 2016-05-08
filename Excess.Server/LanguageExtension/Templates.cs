@@ -95,11 +95,5 @@ namespace LanguageExtension
 
         public static StatementSyntax RemoteTypes = CSharp.ParseStatement(@"
             return new Type[] {};");
-
-        public static AttributeArgumentListSyntax GuidAttributeArgument()
-        {
-            return CSharp.ParseAttributeArgumentList(
-                $"(id : \"{Guid.NewGuid()}\")");
-        }
     }
 }

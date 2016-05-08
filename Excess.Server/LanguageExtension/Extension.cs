@@ -32,6 +32,9 @@ namespace LanguageExtension
             var options = scope?.get<ServerExtensionOptions>()
                 ?? new ServerExtensionOptions();
 
+            var keywords = scope?.get("keywords") as List<string>;
+            keywords?.Add("service");
+
             compiler.Syntax()
                 .extension("server", ExtensionKind.Type, CompileServer);
 
@@ -465,7 +468,7 @@ namespace LanguageExtension
                     .Attribute(CSharp
                         .ParseName("Service"),
                         CSharp.ParseAttributeArgumentList(
-                            $"(id = \"{Guid.NewGuid()}\")"))})));
+                            $"(id : \"{Guid.NewGuid()}\")"))})));
 
             var options = new Options();
             return ConcurrentExtension.CompileClass(options)(@class, scope);

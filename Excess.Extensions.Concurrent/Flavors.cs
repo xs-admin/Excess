@@ -1,4 +1,5 @@
-﻿using Excess.Compiler.Attributes;
+﻿using Excess.Compiler;
+using Excess.Compiler.Attributes;
 using Excess.Compiler.Roslyn;
 using Excess.Concurrent.Runtime;
 using System.Collections.Generic;
@@ -9,13 +10,13 @@ namespace Excess.Extensions.Concurrent
     public static class Flavors
     {
         [Flavor]
-        public static void Default(RoslynCompiler compiler, Dictionary<string, object> props)
+        public static void Default(RoslynCompiler compiler, Scope scope)
         {
-            ConcurrentExtension.Apply(compiler, props: props);
+            ConcurrentExtension.Apply(compiler, scope);
         }
 
         [Flavor]
-        public static void Performance(RoslynCompiler compiler, Dictionary<string, object> props)
+        public static void Performance(RoslynCompiler compiler, Scope props)
         {
             ConcurrentExtension.Apply(compiler, new Options
             {
@@ -29,7 +30,7 @@ namespace Excess.Extensions.Concurrent
         }
 
         [Flavor]
-        public static void Console(RoslynCompiler compiler, Dictionary<string, object> props)
+        public static void Console(RoslynCompiler compiler, Scope props)
         {
             ConcurrentExtension.Apply(compiler, new Options
             {
@@ -39,7 +40,7 @@ namespace Excess.Extensions.Concurrent
         }
 
         [Flavor]
-        public static void Distributed(RoslynCompiler compiler, Dictionary<string, object> props)
+        public static void Distributed(RoslynCompiler compiler, Scope props)
         {
             ConcurrentExtension.Apply(compiler, new Options
             {

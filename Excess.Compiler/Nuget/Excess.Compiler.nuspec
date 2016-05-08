@@ -6,6 +6,10 @@
         <authors>Excess</authors>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>Metaprogramming platform for C#</description>
+
+        <dependencies>
+          <dependency id="Microsoft.CodeAnalysis"/>
+        </dependencies>
     </metadata>
     <files>
         <file src="..\bin\Release\Excess.Compiler.dll" target="lib\Net45\Excess.Compiler.dll" />
