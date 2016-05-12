@@ -15,7 +15,7 @@ using Excess.Extensions.Concurrent;
 namespace LanguageExtension
 {
     using Compilation = Excess.Compiler.Roslyn.Compilation;
-    using ExcessCompiler = ICompiler<SyntaxToken, SyntaxNode, SemanticModel, Excess.Compiler.Roslyn.Compilation>;
+    using ExcessCompiler = ICompiler<SyntaxToken, SyntaxNode, SemanticModel>;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
     using Roslyn = RoslynCompiler;
 
@@ -51,13 +51,14 @@ namespace LanguageExtension
 
             if (options.GenerateJsServices)
             {
-                var compilation = compiler.Compilation();
-                if (compilation != null)
-                    compilation
-                        .match<ClassDeclarationSyntax>(isConcurrentClass)
-                            .then(jsConcurrentClass)
-                        .match<ClassDeclarationSyntax>(isConcurrentObject)
-                            .then(jsConcurrentObject);
+                throw new NotImplementedException();
+                //var compilation = compiler.Compilation();
+                //if (compilation != null)
+                //    compilation
+                //        .match<ClassDeclarationSyntax>(isConcurrentClass)
+                //            .then(jsConcurrentClass)
+                //        .match<ClassDeclarationSyntax>(isConcurrentObject)
+                //            .then(jsConcurrentObject);
             }
         }
 

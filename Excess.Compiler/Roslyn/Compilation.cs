@@ -13,11 +13,12 @@ using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 using System.IO;
 using System.Diagnostics;
 using System.Linq.Expressions;
+using Excess.Compiler.Core;
 
 namespace Excess.Compiler.Roslyn
 {
-    using LoaderProperties = Scope;
     using LoaderFunc = Action<RoslynCompiler, Scope>;
+    using CompilationAnalysis = CompilationAnalysisBase<SyntaxToken, SyntaxNode, Compilation>;
 
     public interface ICompilationTool //td: get rid of this
     {
@@ -144,7 +145,7 @@ namespace Excess.Compiler.Roslyn
             var source = File.ReadAllText(fileName);
             var document = new RoslynDocument(new Scope(_scope), source, fileName);
 
-            var compilerResult = new RoslynCompiler(_scope, _analysis);
+            var compilerResult = new RoslynCompiler(_environment, _scope);
             var tree = CSharpSyntaxTree.ParseText(source);
             var usings = (tree.GetRoot() as CompilationUnitSyntax)
                 ?.Usings
@@ -210,7 +211,7 @@ namespace Excess.Compiler.Roslyn
             _documents.Add(newDoc);
         }
 
-        public void addDocument(string id, string contents, ICompilerInjector<SyntaxToken, SyntaxNode, SemanticModel, Compilation> injector)
+        public void addDocument(string id, string contents, ICompilerInjector<SyntaxToken, SyntaxNode, SemanticModel> injector)
         {
             if (_documents
                 .Where(doc => doc.Id == id)
@@ -223,10 +224,7 @@ namespace Excess.Compiler.Roslyn
             var hash = 0;
             if (string.IsNullOrEmpty(ext))
             {
-                compiler = new RoslynCompiler(_environment, 
-                    scope : _scope,
-                    compilation: _analysis);
-
+                compiler = new RoslynCompiler(_environment, _scope);
                 injector.apply(compiler);
             }
             else if (ext == ".cs")

@@ -198,7 +198,12 @@ namespace xsc
                 else if (index == 1)
                 {
                     if (File.Exists(arg))
-                        result.AppendLine($"Files = new string[] {{ @\"{arg}\" }};");
+                    {
+                        if (Path.GetExtension(arg) == ".sln")
+                            result.AppendLine($"SolutionFile = @\"{arg}\";");
+                        else
+                            result.AppendLine($"Files = new string[] {{ @\"{arg}\" }};");
+                    }
                     else
                     {
                         //failed on the first token, assume its all code

@@ -1,7 +1,10 @@
-﻿using Microsoft.CodeAnalysis;
+﻿using Excess.Compiler.Core;
+using Microsoft.CodeAnalysis;
 
 namespace Excess.Compiler.Roslyn
 {
+    using CompilationAnalysis = CompilationAnalysisBase<SyntaxToken, SyntaxNode, Compilation>;
+
     public class CompilationAnalysisVisitor : SyntaxWalker
     {
         CompilationAnalysis _analysis;

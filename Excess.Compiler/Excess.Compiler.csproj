@@ -161,6 +161,7 @@
     <Compile Include="Roslyn\MappingService.cs" />
     <Compile Include="Roslyn\Scope.cs" />
     <Compile Include="Roslyn\SemanticAnalysis.cs" />
+    <Compile Include="Roslyn\SolutionCompilation.cs" />
     <Compile Include="Roslyn\SyntaxAnalysis.cs" />
     <Compile Include="Roslyn\SyntaxRewriter.cs" />
     <Compile Include="Roslyn\ExtensionRewriter.cs" />

@@ -29,9 +29,7 @@ namespace Excess.Compiler.Core
         {
             if (_eval(node, model, scope))
             {
-                if (_exec != null)
-                    _exec(node, model, scope);
-
+                _exec?.Invoke(node, model, scope);
                 return true;
             }
 
@@ -39,8 +37,12 @@ namespace Excess.Compiler.Core
         }
     }
 
-    public abstract class CompilationAnalysisBase<TToken, TNode, TCompilation> : ICompilationAnalysis<TToken, TNode, TCompilation>
+    public class CompilationAnalysisBase<TToken, TNode, TCompilation> : ICompilationAnalysis<TToken, TNode, TCompilation>
     {
+        public CompilationAnalysisBase()
+        {
+        }
+
         protected List<ICompilationMatch<TToken, TNode, TCompilation>> _matchers = new List<ICompilationMatch<TToken, TNode, TCompilation>>();
         protected List<Action<TCompilation, Scope>> _after = new List<Action<TCompilation, Scope>>();
         ICompilationMatch<TToken, TNode, TCompilation> ICompilationAnalysis<TToken, TNode, TCompilation>.match<T>(Func<T, TCompilation, Scope, bool> matcher) 
@@ -63,6 +65,29 @@ namespace Excess.Compiler.Core
             if (!_after.Contains(handler))
                 _after.Add(handler); //td: !!! multiples
             return this;
+        }
+
+        //internal use
+        public bool Analyze(TNode node, TCompilation compilation, Scope scope)
+        {
+            var result = false;
+            foreach (var matcher in _matchers)
+            {
+                result = result || matcher.matched(node, compilation, scope);
+            }
+
+            return result;
+        }
+
+        public bool isNeeded()
+        {
+            return _matchers.Any() || _after.Any();
+        }
+
+        public void Finish(TCompilation compilation, Scope scope)
+        {
+            foreach (var after in _after)
+                after(compilation, scope);
         }
     }
 }

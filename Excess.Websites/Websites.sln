@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.23107.0
+VisualStudioVersion = 14.0.25123.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "PublishScripts", "PublishScripts", "{A0E8FEC1-2A4E-4B72-9CEF-AEA720F2923A}"
 	ProjectSection(SolutionItems) = preProject
@@ -17,6 +17,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Configurations", "Configura
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Metaprogramming", "Metaprogramming\Metaprogramming.csproj", "{A5E58027-E711-434A-9C12-74537AC59B8D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MP.Prototype", "MP.Prototype\MP.Prototype.csproj", "{092F4155-3F3A-4B1B-9C0A-F9890030CE51}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{A5E58027-E711-434A-9C12-74537AC59B8D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A5E58027-E711-434A-9C12-74537AC59B8D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A5E58027-E711-434A-9C12-74537AC59B8D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{092F4155-3F3A-4B1B-9C0A-F9890030CE51}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{092F4155-3F3A-4B1B-9C0A-F9890030CE51}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{092F4155-3F3A-4B1B-9C0A-F9890030CE51}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{092F4155-3F3A-4B1B-9C0A-F9890030CE51}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

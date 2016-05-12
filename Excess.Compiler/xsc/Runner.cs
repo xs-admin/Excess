@@ -8,12 +8,15 @@ using Microsoft.CodeAnalysis;
 using Excess.Compiler.Roslyn;
 using Excess.Compiler.Reflection;
 using Excess.Compiler;
+using Excess.Compiler.Core;
 
 namespace xsc
 {
     using ExcessCompilation = Excess.Compiler.Roslyn.Compilation;
     using LoaderProperties = Scope;
     using LoaderFunc = Action<RoslynCompiler, Scope>;
+    using CompilationAnalysis = CompilationAnalysisBase<SyntaxToken, SyntaxNode, Excess.Compiler.Roslyn.Compilation>;
+    using SolutionCompilationAnalysis = CompilationAnalysisBase<SyntaxToken, SyntaxNode, SolutionCompilation>;
 
     public class Runner
     {
@@ -96,7 +99,19 @@ namespace xsc
             if (SolutionFile == null || !File.Exists(SolutionFile))
                 throw new InvalidProgramException($"invalid solution file: {SolutionFile ?? "null"}");
 
-            throw new NotImplementedException();
+            var analysis = new SolutionCompilationAnalysis();
+            var solution = new SolutionCompilation(SolutionFile, analysis, Extensions);
+
+            if (Transpile)
+            {
+                var errors = solution.Transpile();
+                if (errors.Any())
+                {
+                    foreach (var error in errors)
+                        Console.Error.WriteLine(error.ToString());
+                }
+            }
+            else throw new NotImplementedException();
         }
 
         public void buildFiles()

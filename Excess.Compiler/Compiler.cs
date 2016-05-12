@@ -15,9 +15,9 @@ namespace Excess.Compiler
         Finished,
     }
 
-    public interface ICompilerInjector<TToken, TNode, TModel, TCompilation>
+    public interface ICompilerInjector<TToken, TNode, TModel>
     {
-        void apply(ICompiler<TToken, TNode, TModel, TCompilation> compiler);
+        void apply(ICompiler<TToken, TNode, TModel> compiler);
     }
 
     public interface IPersistentStorage
@@ -44,14 +44,13 @@ namespace Excess.Compiler
         IPersistentStorage storage();
     }
 
-    public interface ICompiler<TToken, TNode, TModel, TCompilation>
+    public interface ICompiler<TToken, TNode, TModel>
     {
         ILexicalAnalysis<TToken, TNode, TModel> Lexical();
         ISyntaxAnalysis<TToken, TNode, TModel> Syntax();
         ISemanticAnalysis<TToken, TNode, TModel> Semantics();
         IInstanceAnalisys<TNode> Instance();
         ICompilerEnvironment Environment();
-        ICompilationAnalysis<TToken, TNode, TCompilation> Compilation();
 
         Scope Scope { get; }
 

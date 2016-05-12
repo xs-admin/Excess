@@ -166,15 +166,14 @@ namespace Excess.Compiler.Roslyn
         }
     }
 
-    public class RoslynCompiler : CompilerBase<SyntaxToken, SyntaxNode, SemanticModel, Compilation>
+    public class RoslynCompiler : CompilerBase<SyntaxToken, SyntaxNode, SemanticModel>
     {
-        public RoslynCompiler(ICompilerEnvironment environment, Scope scope = null, CompilationAnalysis compilation = null) : 
+        public RoslynCompiler(ICompilerEnvironment environment, Scope scope = null) : 
             base(new RoslynLexicalAnalysis(), 
                  new RoslynSyntaxAnalysis(),
                  new RoslynSemanticAnalysis(),
                  environment ?? scope?.get<ICompilerEnvironment>(),
                  new InstanceAnalisysBase<SyntaxToken, SyntaxNode, SemanticModel>(),
-                 compilation,
                  scope)
         {
             _scope.set<ICompilerService<SyntaxToken, SyntaxNode, SemanticModel>>(new CompilerService());
@@ -186,7 +185,7 @@ namespace Excess.Compiler.Roslyn
             }
         }
 
-        public RoslynCompiler(Scope scope, CompilationAnalysis compilation = null) : this(null, scope, compilation)
+        public RoslynCompiler(Scope scope) : this(null, scope)
         {
         }
 

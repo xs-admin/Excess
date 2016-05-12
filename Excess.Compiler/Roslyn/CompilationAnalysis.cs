@@ -9,30 +9,7 @@ using System.Threading.Tasks;
 
 namespace Excess.Compiler.Roslyn
 {
-    public class CompilationAnalysis : CompilationAnalysisBase<SyntaxToken, SyntaxNode, Compilation>
-    {
-        public bool Analyze(SyntaxNode node, Compilation compilation, Scope scope)
-        {
-            var result = false;
-            foreach (var matcher in _matchers)
-            {
-                result = result | matcher.matched(node, compilation, scope);
-            }
-
-            return result;
-        }
-
-        public bool isNeeded()
-        {
-            return _matchers.Any() || _after.Any();
-        }
-
-        public void Finish(Compilation compilation, Scope scope)
-        {
-            foreach (var after in _after)
-            {
-                after(compilation, scope);
-            }
-        }
-    }
+    //public class CompilationAnalysis : CompilationAnalysisBase<SyntaxToken, SyntaxNode, Compilation>
+    //{
+    //}
 }

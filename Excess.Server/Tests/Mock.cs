@@ -26,9 +26,7 @@ namespace Tests
     {
         public static SyntaxTree Compile(string code, out string output)
         {
-            RoslynCompiler compiler = new RoslynCompiler(
-                environment: null,
-                compilation: new CompilationAnalysis());
+            RoslynCompiler compiler = new RoslynCompiler(environment: null);
 
             ServerExtension.Apply(compiler, compiler.Scope);
             ConcurrentExtension.Apply(compiler);
@@ -40,8 +38,7 @@ namespace Tests
             List<string> errors = null)
         {
             var compilation = createCompilation(code, 
-                storage: storage, 
-                compilationAnalysis: new CompilationAnalysis());
+                storage: storage);
 
             if (compilation.build() == null && errors != null)
             {
@@ -211,28 +208,27 @@ namespace Tests
 
         private static Compilation createCompilation(string text,
             List<Diagnostic> errors = null,
-            IPersistentStorage storage = null,
-            CompilationAnalysis compilationAnalysis = null)
+            IPersistentStorage storage = null)
         {
-            var injector = new CompositeInjector<SyntaxToken, SyntaxNode, SemanticModel, Compilation>(new[]
+            var injector = new CompositeInjector<SyntaxToken, SyntaxNode, SemanticModel>(new[]
             {
-                new DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel, Compilation>(compiler => compiler
+                new DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel>(compiler => compiler
                     .Environment()
                         .dependency<ExcessOwinMiddleware>("Middleware")
                         .dependency<IAppBuilder>("Owin")),
 
-                new DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel, Compilation>(compiler => Excess
+                new DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel>(compiler => Excess
                     .Extensions
                     .Concurrent
                     .ConcurrentExtension
                         .Apply((RoslynCompiler)compiler)),
 
-                new DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel, Compilation>(compiler => LanguageExtension
+                new DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel>(compiler => LanguageExtension
                     .ServerExtension
                         .Apply(compiler, new Scope(null)))
             });
 
-            var compilation = new Compilation(storage, compilationAnalysis);
+            var compilation = new Compilation(storage);
             compilation.addDocument("test", text, injector);
             return compilation;
         }
