@@ -111,11 +111,11 @@ namespace Concurrent.Tests
             return result;
         }
 
-        private static ICompilerInjector<SyntaxToken, SyntaxNode, SemanticModel, ExcessCompilation> MockInjector(Options options)
+        private static ICompilerInjector<SyntaxToken, SyntaxNode, SemanticModel> MockInjector(Options options)
         {
-            return new CompositeInjector<SyntaxToken, SyntaxNode, SemanticModel, ExcessCompilation>(new[]
+            return new CompositeInjector<SyntaxToken, SyntaxNode, SemanticModel>(new[]
             {
-                new DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel, ExcessCompilation>(compiler => compiler
+                new DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel>(compiler => compiler
                     .Environment()
                         .dependency(new[]
                         {
@@ -128,7 +128,7 @@ namespace Concurrent.Tests
                             "Excess.Concurrent.Runtime"
                         })),
 
-                new DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel, ExcessCompilation>(compiler =>
+                new DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel>(compiler =>
                     ConcurrentExtension.Apply((RoslynCompiler)compiler, options))
             });
         }

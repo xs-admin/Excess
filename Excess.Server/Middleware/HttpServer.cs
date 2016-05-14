@@ -30,10 +30,18 @@ namespace Middleware
                         throw new ArgumentException(staticFiles);
 
                     staticFiles = Path.GetFullPath(staticFiles);
-                    builder.UseStaticFiles(new StaticFileOptions
+
+                    var physicalFileSystem = new PhysicalFileSystem(staticFiles);
+                    var options = new FileServerOptions
                     {
-                        FileSystem = new PhysicalFileSystem(staticFiles),
-                    });
+                        EnableDefaultFiles = true,
+                        FileSystem = physicalFileSystem
+                    };
+                    options.StaticFileOptions.FileSystem = physicalFileSystem;
+                    options.StaticFileOptions.ServeUnknownFileTypes = true;
+                    options.DefaultFilesOptions.DefaultFileNames = new[] { "index.html" };
+
+                    builder.UseFileServer(options);
                 }
 
                 var distributed = null as IDistributedApp;

@@ -12,7 +12,7 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 namespace Excess.Entensions.XS
 {
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
-    using ExcessCompiler = ICompiler<SyntaxToken, SyntaxNode, SemanticModel, Compiler.Roslyn.Compilation>;
+    using ExcessCompiler = ICompiler<SyntaxToken, SyntaxNode, SemanticModel>;
 
     class Arrays
     {

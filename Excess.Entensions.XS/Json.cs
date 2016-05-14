@@ -16,7 +16,7 @@ using Newtonsoft.Json.Linq;
 namespace Excess.Entensions.XS
 {
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
-    using ExcessCompiler = ICompiler<SyntaxToken, SyntaxNode, SemanticModel, Compiler.Roslyn.Compilation>;
+    using ExcessCompiler = ICompiler<SyntaxToken, SyntaxNode, SemanticModel>;
     using Roslyn = RoslynCompiler;
 
     internal class JsonGrammar : IGrammar<SyntaxToken, SyntaxNode, ParserRuleContext>

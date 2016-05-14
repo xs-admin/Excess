@@ -18,6 +18,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Nuget", "Nuget", "{BA18FB8A-1576-4033-ABEC-082039A9A6CC}"
 	ProjectSection(SolutionItems) = preProject
 		Nuget\Excess.Server.nuspec = Nuget\Excess.Server.nuspec
+		Nuget\install.ps1 = Nuget\install.ps1
 		Nuget\publish.bat = Nuget\publish.bat
 	EndProjectSection
 EndProject
