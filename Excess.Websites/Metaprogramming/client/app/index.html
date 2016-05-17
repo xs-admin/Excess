@@ -239,8 +239,8 @@
                 <div ui-layout-container>
                     <div ui-layout="{flow : 'column'}">
                         <div ui-layout-container size="60%" style="overflow:hidden">
-                            <graph-panel nodes="sampleScene" nodeTypes="NodeTypes">
-                            </graph-panel>
+                            <div ui-graph-panel="{nodeTypes : NodeTypes, dataTypes: DataTypes}" nodes="Model">
+                            </div>
                         </div>
                         <div ui-layout-container size="40%">
                             <div ui-ace="{
@@ -302,7 +302,8 @@
     <script src="bower_components/ace-builds/src-min-noconflict/ace.js"></script>
     <script src="bower_components/angular-ui-ace/ui-ace.js"></script>
 
-    <script src="components/angular-ui-graph/angular-ui-graphpanel.js"></script>
+    <script src="components/angular-ui-graph/ui-graphpanel.js"></script>
+    <!--<script src="components/angular-ui-graph/angular-ui-graphpanel.js"></script>-->
     <script src="components/angular-ui-graph/nodes.js"></script>
 
     <script src="app.js"></script>

@@ -6,33 +6,40 @@
  */
 angular.module('ui.graphpanel', [])
   .constant('uiGraphPanelConfig', {})
-  .directive('uiGraphPanel', ['uiGraphPanelConfig', function (uiGraphPanelConfig) {
+  .directive('uiGraphPanel', ['uiGraphPanelConfig', '$interval', function (uiGraphPanelConfig, $interval) {
 
-      if (angular.isUndefined(window.graphpanel)) {
-          throw new Error('graphpanel is missing');
-      }
+      //td: check the low level lib is present
 
       /**
-       * Sets editor options such as the wrapping mode or the syntax checker.
+       * Sets editor options
        *
        * The supported options are:
        *
        *   <ul>
-       *     <li>showGutter</li>
-       *     <li>useWrapMode</li>
+       *     <li>nodeTypes (mandatory)</li>
+       *     <li>dataTypes (mandatory)</li>
+       *     <li>editable</li>
+       *     <li>selectable</li>
+       *     <li>scrollAndZoom</li>
+       *     <li>editNodes</li>
+       *     <li>editLinks</li>
        *     <li>onLoad</li>
-       *     <li>theme</li>
-       *     <li>mode</li>
+       *     <li>onChange</li>
+       *     <li>onNodeSelected</li>
        *   </ul>
        *
        * @param graphpanel
        * @param {object} opts Options to be set
        */
       var setOptions = function (panel, opts) {
-          if (!angular.isDefined(opts.NodeTypes))
+          if (!angular.isDefined(opts.nodeTypes))
               throw new Error('must provide node types');
 
-          panel.nodeTypes = opts.NodeTypes;
+          if (!angular.isDefined(opts.dataTypes))
+              throw new Error('must provide data types');
+
+          panel.dataTypes = opts.dataTypes;
+          panel.nodeTypes = opts.nodeTypes;
 
           //boolean options
           if (angular.isDefined(opts.editable)) {
@@ -83,7 +90,7 @@ angular.module('ui.graphpanel', [])
           div.appendChild(canvas);
 
           //create component
-          var panel = new GraphPanel(canvas, scope.graphstyle);
+          var panel = new GraphPanel(canvas); //td: styles
 
           //keep the canvas in synch with the parent
           var width = 0;
@@ -99,6 +106,8 @@ angular.module('ui.graphpanel', [])
                   panel.update();
               }
           }, 333);
+
+          return panel;
       }
 
       return {
@@ -114,9 +123,8 @@ angular.module('ui.graphpanel', [])
                */
               var panel = createGraphPanel(elm);
 
-
               attrs.$observe('nodes', function (nodes) {
-                  panel.fromJSON(nodes);
+                  panel.fromJSON(scope.$eval(nodes));
               });
 
               // Listen for option updates
@@ -128,22 +136,11 @@ angular.module('ui.graphpanel', [])
               };
 
               scope.$watch(attrs.uiGraphPanel, updateOptions, /* deep watch */ true);
-
-              // set the options here, even if we try to watch later, if this
-              // line is missing things go wrong (and the tests will also fail)
               updateOptions(options);
 
               elm.on('$destroy', function () {
                   panel.destroy();
               });
-
-              scope.$watch(function () {
-                  return [elm[0].offsetWidth, elm[0].offsetHeight];
-              }, function () {
-                  panel.resize(elm[0].offsetWidth, elm[0].offsetHeight);
-                  panel.draw();
-              }, true);
-
           }
       };
   }]);

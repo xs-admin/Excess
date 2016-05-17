@@ -18,7 +18,7 @@ angular.module('metaprogramming', [
 
     $scope.sourceLoaded = function (editor) {
         sourceEditor = editor;
-        sourceEditor.setValue(MetaProgrammingSamples[0], -1);
+        sourceEditor.setValue(Samples.MetaProgrammingSamples[0], -1);
     }
 
     $scope.transpileLoaded = function (editor) {
@@ -27,15 +27,16 @@ angular.module('metaprogramming', [
 
     $scope.setSample = function (index)
     {
-        sourceEditor.setValue(MetaProgrammingSamples[index], -1);
+        sourceEditor.setValue(Samples.MetaProgrammingSamples[index], -1);
         sourceEditor.focus();
     }
 }])
 
 //graph
 .controller("ctrlVisual", ['$scope', function ($scope) {
-    $scope.sampleScene = VisualProgrammingScene;
-    $scope.NodeTypes = DataProgrammingNodeTypes;
+    $scope.Model = Samples.DataProgrammingModel;
+    $scope.NodeTypes = Samples.DataProgrammingNodeTypes;
+    $scope.DataTypes = Samples.DataProgrammingDataTypes;
 }])
 
 ;
