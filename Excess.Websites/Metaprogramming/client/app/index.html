@@ -2,31 +2,39 @@
 <!--[if lt IE 7]>      <html lang="en" ng-app="metaprogramming" class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
 <!--[if IE 7]>         <html lang="en" ng-app="metaprogramming" class="no-js lt-ie9 lt-ie8"> <![endif]-->
 <!--[if IE 8]>         <html lang="en" ng-app="metaprogramming" class="no-js lt-ie9"> <![endif]-->
-<!--[if gt IE 8]><!--> <html lang="en" ng-app="metaprogramming" class="no-js"> <!--<![endif]-->
+<!--[if gt IE 8]><!-->
+<html lang="en" ng-app="metaprogramming" class="no-js">
+<!--<![endif]-->
 <head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>metaprogramming</title>
-  <meta name="description" content="">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="bower_components/html5-boilerplate/dist/css/normalize.css">
-  <link rel="stylesheet" href="bower_components/html5-boilerplate/dist/css/main.css">
-  <link rel="stylesheet" href="app.css">
-  <script src="bower_components/html5-boilerplate/dist/js/vendor/modernizr-2.8.3.min.js"></script>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>metaprogramming</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="bower_components/html5-boilerplate/dist/css/normalize.css">
+    <link rel="stylesheet" href="bower_components/html5-boilerplate/dist/css/main.css">
+    <link rel="stylesheet" href="app.css">
+    <link href="fonts/themify-icons/themify-icons.min.css" rel="stylesheet">
+    <link href="css/main.css" rel="stylesheet">
+
+    <link rel="stylesheet" type="text/css" href="bower_components/angular-ui-layout/src/ui-layout.css" />
+    <script src="bower_components/html5-boilerplate/dist/js/vendor/modernizr-2.8.3.min.js"></script>
 </head>
 <body data-spy="scroll" data-target=".header">
     <header id="header" class="header navbar navbar-default">
         <div class="container">
             <div class="row">
                 <div class="navbar-header">
-                    <button type="button" data-toggle="collapse" data-target="#navbar-collapse-1" class="navbar-toggle"><span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span></button><a href="javascript:;" class="navbar-brand"> <span class="logo">F</span><span>FlatBoard</span></a>
+                    <button type="button" data-toggle="collapse" data-target="#navbar-collapse-1" class="navbar-toggle">
+                        <span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span>
+                    </button>
+                    <a href="javascript:;" class="navbar-brand"> <span class="logo">XS</span><span>Excess</span></a>
                 </div>
                 <div id="navbar-collapse-1" class="collapse navbar-collapse">
                     <ul id="nav" class="nav navbar-nav navbar-right">
                         <li><a href="#banner">Home</a></li>
                         <li><a href="#features">Features</a></li>
-                        <li><a href="#testimonials">Testimonials</a></li>
-                        <li><a href="#faq">FAQ</a></li>
+                        <li><a href="#examples">Examples</a></li>
                         <li class="highlight"><a href="https://wrapbootstrap.com/theme/flatboard-angularjs-admin-frontend-WB0G434G7" target="_blank">Buy</a></li>
                     </ul>
                 </div>
@@ -36,34 +44,66 @@
     <div class="main-content">
         <div id="banner" class="banner">
             <div class="container">
-                <h2>Responsive AngularJS Admin with Bootstrap</h2><a href="https://wrapbootstrap.com/theme/flatboard-angularjs-admin-frontend-WB0G434G7" target="_blank" class="btn btn-download btn-lg">Download</a>
+                <div class="social-bar">
+                    <a href="javascript:;" class="btn btn-icon"><i class="ti-twitter"></i></a>
+                    <a href="javascript:;" class="btn btn-icon"><i class="ti-facebook"></i></a>
+                    <a href="javascript:;" class="btn btn-icon"><i class="ti-pinterest"></i></a>
+                    <a href="javascript:;" class="btn btn-icon"><i class="ti-instagram"></i></a>
+                </div>
+                <div id="testimonials-carousel" data-ride="carousel" data-interval="10000" class="carousel slide">
+                    <div class="carousel-inner text-center">
+                        <div class="item active">
+                            <h2>Excess: a meta-programming platform</h2>
+                            <div class="desc">
+                                <p>The community adds extensions to the C# language <br> And so can you</p>
+                            </div>
+                        </div>
+                        <div class="item">
+                            <h2>Makes your language better</h2>
+                            <div class="desc">
+                                <p>Streamline <strong>your</strong> processes at the language level <br> Drastically reducing the learning curves and bugs</p>
+                            </div>
+                        </div>
+                        <div class="item">
+                            <h2>Democratizes programming languages</h2>
+                            <div class="desc">
+                                <p>You no longer wait years for language designers <br> We decide</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="app-buttons">
+                    <a href="#examples" class="btn btn-download btn-lg">Try it</a>
+                    <a href="#visual" class="btn btn-download btn-lg">Visualize it</a>
+                    <a href="#testimonials" class="btn btn-download btn-lg">Get it</a>
+                </div>
             </div>
         </div>
         <div id="features" class="features">
             <header>
-                <h2 class="section-heading-underline">Key Features</h2>
+                <h2 class="section-heading-underline app-link"><a href="#features">Key Features</a></h2>
             </header>
             <div class="container">
                 <div class="row">
                     <div class="feature-item col-md-4 text-center">
                         <div class="icon-container"><span class="ti-palette"></span></div>
-                        <h3>Multiple Colors</h3>
+                        <h3>Transpiled</h3>
                         <div class="desc">
                             <p>18 predefined color schemes</p>
                         </div>
                     </div>
                     <div class="feature-item col-md-4 text-center">
                         <div class="icon-container"><span class="ti-layout"></span></div>
-                        <h3>Powerful Layouts</h3>
+                        <h3>Integrated</h3>
                         <div class="desc">
                             <p>multiple layouts to choose from</p>
                         </div>
                     </div>
                     <div class="feature-item col-md-4 text-center">
                         <div class="icon-container"><span class="ti-desktop"></span></div>
-                        <h3>AngularJS Web App</h3>
+                        <h3>Unobstrusive</h3>
                         <div class="desc">
-                            <p>single page application with AngularJS</p>
+                            <p>add it to your existing projects, <br> extensions are Nugte packages</p>
                         </div>
                     </div>
                 </div>
@@ -92,91 +132,123 @@
                 </div>
             </div>
         </div>
-        <div id="download" class="download">
-            <h2>FlatBoard - Responsive Bootstrap & AngularJS Admin</h2><a href="https://wrapbootstrap.com/theme/flatboard-angularjs-admin-frontend-WB0G434G7" target="_blank" class="btn btn-primary btn-lg">Download FlatBoard</a>
-        </div>
-        <div id="testimonials" class="testimonials">
-            <div id="testimonials-carousel" data-ride="carousel" data-interval="5000" class="carousel slide">
-                <ol class="carousel-indicators">
-                    <li data-target="#testimonials-carousel" data-slide-to="0" class="active"></li>
-                    <li data-target="#testimonials-carousel" data-slide-to="1"></li>
-                    <li data-target="#testimonials-carousel" data-slide-to="2"></li>
-                    <li data-target="#testimonials-carousel" data-slide-to="3"></li>
-                    <li data-target="#testimonials-carousel" data-slide-to="4"></li>
-                </ol>
-                <div class="carousel-inner text-center">
-                    <div class="item active">
-                        <blockquote>
-                            <span class="ti-quote-left quote"></span>
-                            <p>Great job! It's simply wonderful! Lot of plugins that are useful and not just inflate the package.</p>
-                        </blockquote><small>Comments from buyer</small>
+
+        <div id="examples" class="container examples" ng-controller="ctrlExamples">
+            <div ui-layout="{dividerSize : 0, flow : 'row'}">
+                <div ui-layout-container size="230px" style="overflow:hidden">
+                    <header>
+                        <h2 class="section-heading-underline app-link"><a href="#examples">Examples</a></h2>
+                    </header>
+                    <div class="container">
+                        <div class="row">
+                            <div class="examples-item col-md-2 text-center">
+                                <a class="btn" ng-click="setSample(0)"><span class="ti-settings example-icon"></span></a>
+                                <div class="desc">
+                                    <p> <b>expression extensions</b> <br> javascript style arrays</p>
+                                </div>
+                            </div>
+                            <div class="examples-item col-md-2 text-center">
+                                <a class="btn"><span class="ti-settings example-icon"></span></a>
+                                <div class="desc">
+                                    <p> <b>statement extensions</b><br> match, an advanced switch</p>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4 text-center">
+                                <a class="btn" style="font-size:50px"><span class="ti-arrow-circle-right"></span></a>
+                                <div class="desc">
+                                    <p>click here to transpile</p>
+                                </div>
+                            </div>
+
+                            <div class="examples-item col-md-2 text-center">
+                                <a class="btn"><span class="ti-settings example-icon"></span></a>
+                                <div class="desc">
+                                    <p> <b>member extensions</b> <br> constructors</p>
+                                </div>
+                            </div>
+                            <div class="examples-item col-md-2 text-center">
+                                <a class="btn"><span class="ti-settings example-icon"></span></a>
+                                <div class="desc">
+                                    <p> <b>type extensions</b> <br> concurrent super object</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="item">
-                        <blockquote>
-                            <span class="ti-quote-left quote"></span>
-                            <p>Very impresive for being the first project here at WrapBootstrap and the very first angularjs theme amazing! </p>
-                        </blockquote><small>Comments from buyer</small>
-                    </div>
-                    <div class="item">
-                        <blockquote>
-                            <span class="ti-quote-left quote"></span>
-                            <p>Excellent! First Angular JS Template on WrapBootstrap! Looking forward to see more beautiful templates from you.</p>
-                        </blockquote><small>Comments from buyer</small>
-                    </div>
-                    <div class="item">
-                        <blockquote>
-                            <span class="ti-quote-left quote"></span>
-                            <p>Really awesome that you're the first one who creates an AngularJS for WrapBootstrap. I've been looking for one for a long time.</p>
-                        </blockquote><small>Comments from buyer</small>
-                    </div>
-                    <div class="item">
-                        <blockquote>
-                            <span class="ti-quote-left quote"></span>
-                            <p>Amazing! Exact what I am looking for. So thank you so much for making my life easier.</p>
-                        </blockquote><small>Comments from buyer</small>
+                </div>
+                <div ui-layout-container>
+                    <div ui-layout="{flow : 'column'}">
+                        <div ui-layout-container size="50%">
+                            <div ui-ace="{
+                                  useWrapMode : true,
+                                  mode: 'csharp',
+                                  onLoad: sourceLoaded}" class="ace-editor"></div>
+                        </div>
+                        <div ui-layout-container size="50%">
+                            <div ui-ace="{
+                                  useWrapMode : true,
+                                  mode: 'csharp',
+                                  onLoad: transpileLoaded}" class="ace-editor"></div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div id="faq" class="faq">
-            <div class="container">
-                <header>
-                    <h2 class="section-heading-underline">FAQs</h2>
-                </header>
-                <ul class="faq-list">
-                    <li>
-                        <h4 class="faq-q">What browsers does Angular work with?</h4>
-                        <p class="faq-a">We run our extensive test suite against the following browsers: Safari, Chrome, Firefox, Opera 15, IE9 and mobile browsers (Android, Chrome Mobile, iOS Safari).</p>
-                    </li>
-                    <li>
-                        <h4 class="faq-q">Does Angular use the jQuery library?</h4>
-                        <p class="faq-a">Yes, Angular can use jQuery if it's present in your app when the application is being bootstrapped. If jQuery is not present in your script path, Angular falls back to its own implementation of the subset of jQuery that we call jQLite.</p>
-                    </li>
-                    <li>
-                        <h4 class="faq-q">What is testability like in Angular?</h4>
-                        <p class="faq-a">Very testable and designed this way from ground up. It has an integrated dependency injection framework, provides mocks for many heavy dependencies (server-side communication). See ngMock for details.</p>
-                    </li>
-                    <li>
-                        <h4 class="faq-q">Can I use the Angular logo artwork?</h4>
-                        <p class="faq-a">Yes! You can find design files in our github repository, under "angular.js/images/logo" The logo design is licensed under a "Creative Commons Attribution-ShareAlike 3.0 Unported License".</p>
-                    </li>
-                    <li>
-                        <h4 class="faq-q">Why is the namespace called "ng"?</h4>
-                        <p class="faq-a">Because HTML has Angular brackets and "ng" sounds like "Angular". AngularJS is 100% JavaScript, 100% client-side and compatible with both desktop and mobile browsers. </p>
-                    </li>
-                    <li>
-                        <h4 class="faq-q">Is AngularJS a library, framework, plugin or a browser extension?</h4>
-                        <p class="faq-a">AngularJS fits the definition of a framework the best, even though it's much more lightweight than a typical framework and that's why many confuse it with a library.</p>
-                    </li>
-                    <li>
-                        <h4 class="faq-q"></h4>
-                        <p class="faq-a"></p>
-                    </li>
-                    <li>
-                        <h4 class="faq-q"></h4>
-                        <p class="faq-a"></p>
-                    </li>
-                </ul>
+
+        <div id="visual" class="container visual features" ng-controller="ctrlVisual">
+            <div ui-layout="{dividerSize : 0, flow : 'row'}">
+                <div ui-layout-container size="230px" style="overflow:hidden">
+                    <header>
+                        <h2 class="section-heading-underline app-link"><a href="#visual">Data Programming</a></h2>
+                    </header>
+                    <div class="container">
+                        <div class="row">
+                            <div class="col-md-1">
+                                <div class="visual-icon"><span class="ti-shine"></span></div>
+                            </div>
+
+                            <div class="examples-item col-md-3 text-center">
+                                <p class="desc" style="margin-top:15px;text-align:left">
+                                    A picture is worth 1000 LOC. <br>
+                                    Transform your data into code. <br>
+                                    Get more done.
+                                </p>
+                            </div>
+
+                            <div class="col-md-4 text-center">
+                                <a class="btn" style="font-size:50px"><span class="ti-arrow-circle-right"></span></a>
+                                <div class="desc">
+                                    <p>click here to transpile</p>
+                                </div>
+                            </div>
+
+                            <div class="examples-item col-md-3 text-center">
+                                <p class="desc" style="margin-top:15px;text-align:right">
+                                    Directed graphs are not the only<br>
+                                    data models. But they are good.<br>
+                                    See demo below.
+                                </p>
+                            </div>
+
+                            <div class="col-md-1">
+                                <div class="visual-icon"><span class="ti-shine"></span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div ui-layout-container>
+                    <div ui-layout="{flow : 'column'}">
+                        <div ui-layout-container size="60%" style="overflow:hidden">
+                            <graph-panel nodes="sampleScene" nodeTypes="NodeTypes">
+                            </graph-panel>
+                        </div>
+                        <div ui-layout-container size="40%">
+                            <div ui-ace="{
+                                  useWrapMode : true,
+                                  mode: 'csharp'}" class="ace-editor"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -226,7 +298,15 @@
     -->
     <script src="bower_components/angular/angular.js"></script>
     <script src="bower_components/angular-route/angular-route.js"></script>
+    <script src="bower_components/angular-ui-layout/src/ui-layout.js"></script>
+    <script src="bower_components/ace-builds/src-min-noconflict/ace.js"></script>
+    <script src="bower_components/angular-ui-ace/ui-ace.js"></script>
+
+    <script src="components/angular-ui-graph/angular-ui-graphpanel.js"></script>
+    <script src="components/angular-ui-graph/nodes.js"></script>
+
     <script src="app.js"></script>
+    <script src="samples.js"></script>
     <script src="view1/view1.js"></script>
     <script src="components/version/version.js"></script>
     <script src="components/version/version-directive.js"></script>

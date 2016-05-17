@@ -28,3 +28,76 @@
   content: "";
   padding: 0;
 }
+
+.ace-editor {
+    margin-left: 3px;
+    margin-right: 3px;
+    height: 100%;
+    border-radius: 10px;
+}
+
+.example-icon {
+    height: 52px;
+    width: 52px;
+    line-height:56px;
+    font-size: 30px;
+    color: #A9DC8E;
+    text-decoration:none;
+}
+
+.app-buttons {
+    margin-top: 85px
+}
+
+.app-link a {
+    text-decoration: none !important;
+    color: rgb(98, 98, 98);
+}
+
+.app-link a:hover {
+    color: rgb(98, 98, 98);
+}
+
+.app-link a:visited {
+    color: rgb(98, 98, 98);
+}
+
+.social-bar a {
+  margin-right: 5px;
+  background-color: #384453;
+  color: #b3b3b3;
+}
+
+.examples {
+    position: relative;
+    min-height: 840px;
+}
+
+.examples .examples-item {
+  margin-bottom: 40px;
+}
+
+.examples .examples-item .icon-container {
+  margin: auto;
+  height: 52px;
+  width: 52px;
+  line-height: 52px;
+  padding: 0;
+  border: 2px solid #A9DC8E;
+  font-size: 30px;
+  color: #A9DC8E;
+  border-radius: 26px;
+}
+
+.visual {
+    position: relative;
+    min-height: 840px;
+}
+
+.visual-icon {
+    height: 96px;
+    width: 96px;
+    line-height:96px;
+    font-size: 66px;
+    color: #A9DC8E;
+}

@@ -18,7 +18,7 @@ function ModifyConfigurations
     $configurationManager = $project.ConfigurationManager
 	$path = [System.IO.Path]
     $projectAbsolutePath = $path::GetDirectoryName($project.FileName)
-	$startUrl = "http://localhost:71710"
+	$startUrl = "http://localhost:1080"
 	$outputFile = $path::GetFileNameWithoutExtension($project.FileName) + ".dll"
 
     foreach ($name in $configurationManager.ConfigurationRowNames)
