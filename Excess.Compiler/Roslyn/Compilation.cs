@@ -10,15 +10,13 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis;
 
-using Excess.Compiler.Core;
-
 namespace Excess.Compiler.Roslyn
 {
     using LoaderFunc = Action<RoslynCompiler, Scope>;
-    using CompilationAnalysis = CompilationAnalysisBase<SyntaxToken, SyntaxNode, SemanticModel>;
+    using CompilationAnalysis = ICompilationAnalysis<SyntaxToken, SyntaxNode, SemanticModel>;
     using Compilation = ICompilation<SyntaxToken, SyntaxNode, SemanticModel>;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
-
+    using Core;
     public interface ICompilationTool //td: get rid of this
     {
         string displayName { get; }
@@ -636,8 +634,14 @@ namespace Excess.Compiler.Roslyn
             return result;
         }
 
-        private void performAnalysis(CompilationAnalysis analysis, Compilation compilation)
+        public void PerformAnalysis() => performAnalysis(_analysis, this);
+
+        private void performAnalysis(CompilationAnalysis analysis_, Compilation compilation)
         {
+            if (analysis_ == null)
+                return;
+
+            var analysis = (CompilationAnalysisBase<SyntaxToken, SyntaxNode, SemanticModel>)analysis_;
             if (!analysis.isNeeded())
                 return;
 

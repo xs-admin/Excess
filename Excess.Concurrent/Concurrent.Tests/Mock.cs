@@ -15,7 +15,6 @@ using Excess.Extensions.Concurrent;
 
 namespace Concurrent.Tests
 {
-    using ExcessCompilation = Excess.Compiler.Roslyn.Compilation;
     using FactoryMap = Dictionary<string, Func<IConcurrentApp, object[], IConcurrentObject>>;
     using ConcurrentAttribute = Excess.Concurrent.Runtime.Concurrent;
 
@@ -52,7 +51,7 @@ namespace Concurrent.Tests
                 GenerateInterface = withInterface,
                 GenerateRemote = withRemote,
             });
-            var compilation = new ExcessCompilation();
+            var compilation = new RoslynCompilation();
 
             compilation.addDocument("concurrent-test", code, config);
 

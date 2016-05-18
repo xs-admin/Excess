@@ -1,4 +1,5 @@
-﻿using Excess.Compiler.Roslyn;
+﻿using Excess.Compiler.Core;
+using Excess.Compiler.Roslyn;
 using LanguageExtension;
 using Microsoft.CodeAnalysis;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -143,12 +144,15 @@ namespace Tests
 
             var storage = new MockStorage();
             var errors = new List<string>();
-            var compilation = Mock.Build(Source, storage, errors);
+            var analysis = new CompilationAnalysisBase<SyntaxToken, SyntaxNode, SemanticModel>();
+            var compilation = Mock.Build(Source, storage, errors, analysis);
 
             Assert.IsFalse(errors.Any());
 
-            var serverConfig = compilation.Scope.get<IServerConfiguration>();
+            var serverConfig = compilation.Scope.GetServerConfiguration();
             Assert.IsNotNull(serverConfig);
+
+            compilation.PerformAnalysis();
 
             var clientCode = serverConfig.GetClientInterface();
 

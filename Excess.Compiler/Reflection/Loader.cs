@@ -92,6 +92,8 @@ namespace Excess.Compiler.Reflection
                     method.Invoke(null, new object[] { compiler });
                 else if (method.GetParameters().Length == 2)
                     method.Invoke(null, new object[] { compiler, props });
+                else if (method.GetParameters().Length == 3)
+                    method.Invoke(null, new object[] { compiler, props, null });
                 else
                     throw new InvalidOperationException("invalid extension method");
             };

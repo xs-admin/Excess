@@ -21,6 +21,7 @@ namespace Tests
     using ConcurrentExtension = Excess.Extensions.Concurrent.ConcurrentExtension;
     using FactoryMethod = Func<IConcurrentApp, object[], IConcurrentObject>;
     using Compilation = Excess.Compiler.Roslyn.RoslynCompilation;
+    using CompilationAnalysis = Excess.Compiler.ICompilationAnalysis<SyntaxToken, SyntaxNode, SemanticModel>;
 
     public static class Mock
     {
@@ -35,10 +36,12 @@ namespace Tests
 
         public static Compilation Build(string code, 
             IPersistentStorage storage = null, 
-            List<string> errors = null)
+            List<string> errors = null,
+            CompilationAnalysis analysis = null)
         {
             var compilation = createCompilation(code, 
-                storage: storage);
+                storage: storage,
+                analysis: analysis);
 
             if (compilation.build() == null && errors != null)
             {
@@ -208,7 +211,8 @@ namespace Tests
 
         private static Compilation createCompilation(string text,
             List<Diagnostic> errors = null,
-            IPersistentStorage storage = null)
+            IPersistentStorage storage = null,
+            CompilationAnalysis analysis = null)
         {
             var injector = new CompositeInjector<SyntaxToken, SyntaxNode, SemanticModel>(new[]
             {
@@ -228,7 +232,10 @@ namespace Tests
                         .Apply(compiler, new Scope(null)))
             });
 
-            var compilation = new Compilation(storage);
+            if (analysis != null)
+                ServerExtension.Compilation(analysis);
+
+            var compilation = new Compilation(storage, analysis: analysis);
             compilation.addDocument("test", text, injector);
             return compilation;
         }
