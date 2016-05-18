@@ -9,13 +9,14 @@ using Excess.Compiler;
 using Excess.Compiler.Roslyn;
 using Excess.Extensions.Concurrent.Model;
 using Excess.Concurrent.Runtime;
+using Excess.Compiler.Attributes;
 
 namespace Excess.Extensions.Concurrent
 {
     using CSharp = SyntaxFactory;
     using Roslyn = RoslynCompiler;
-    using Compilation = Excess.Compiler.Roslyn.Compilation;
-    using Compiler.Attributes;
+    using Compilation = ICompilation<SyntaxToken, SyntaxNode, SemanticModel>;
+
     public class Options
     {
         public Options()
@@ -934,7 +935,7 @@ namespace Excess.Extensions.Concurrent
                             .Select(ns => CSharp.UsingDirective(ns.Name))
                             .ToArray());
 
-                    compilation.addCSharpFile("Program.cs", result
+                    compilation.AddNativeDocument("Program.cs", result
                         .ReplaceNodes(result
                             .DescendantNodes()
                             .OfType<MethodDeclarationSyntax>(),
@@ -942,8 +943,7 @@ namespace Excess.Extensions.Concurrent
                                 .Select(singleton => Templates
                                     .StartSingleton
                                     .Get<StatementSyntax>(singleton.Identifier))
-                                .ToArray()))
-                        .SyntaxTree);
+                                .ToArray())));
                 }
             };
         }

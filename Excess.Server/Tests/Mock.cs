@@ -19,8 +19,8 @@ namespace Tests
 {
     using ServerExtension = LanguageExtension.ServerExtension;
     using ConcurrentExtension = Excess.Extensions.Concurrent.ConcurrentExtension;
-    using Compilation = Excess.Compiler.Roslyn.Compilation;
     using FactoryMethod = Func<IConcurrentApp, object[], IConcurrentObject>;
+    using Compilation = Excess.Compiler.Roslyn.RoslynCompilation;
 
     public static class Mock
     {

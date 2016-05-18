@@ -14,7 +14,7 @@ namespace Excess.Compiler.Roslyn
 {
     using ExcessDocument = IDocument<SyntaxToken, SyntaxNode, SemanticModel>;
     using ExtensionFunc = Action<RoslynCompiler, Scope>;
-    using CompilationAnalysis = CompilationAnalysisBase<SyntaxToken, SyntaxNode, SolutionCompilation>;
+    using CompilationAnalysis = CompilationAnalysisBase<SyntaxToken, SyntaxNode, SemanticModel>;
 
     public class SolutionStorage : IPersistentStorage
     {

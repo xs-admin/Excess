@@ -1,24 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Text;
-using Microsoft.CodeAnalysis;
-using System.Reflection;
-
-using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 using System.IO;
 using System.Diagnostics;
 using System.Linq.Expressions;
+using System.Reflection;
+
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis;
+
 using Excess.Compiler.Core;
 
 namespace Excess.Compiler.Roslyn
 {
     using LoaderFunc = Action<RoslynCompiler, Scope>;
-    using CompilationAnalysis = CompilationAnalysisBase<SyntaxToken, SyntaxNode, Compilation>;
+    using CompilationAnalysis = CompilationAnalysisBase<SyntaxToken, SyntaxNode, SemanticModel>;
+    using Compilation = ICompilation<SyntaxToken, SyntaxNode, SemanticModel>;
+    using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
     public interface ICompilationTool //td: get rid of this
     {
@@ -36,12 +35,12 @@ namespace Excess.Compiler.Roslyn
 
     public delegate void ToolEventHandler(object sender, ToolEventArgs e);
 
-    public class Compilation
+    public class RoslynCompilation : Compilation
     {
         CompilationAnalysis _analysis;
         IDictionary<string, LoaderFunc> _extensions;
         bool _executable;
-        public Compilation(
+        public RoslynCompilation(
             IPersistentStorage storage = null, 
             CompilationAnalysis analysis = null,
             IDictionary<string, LoaderFunc> extensions = null,
@@ -55,6 +54,38 @@ namespace Excess.Compiler.Roslyn
             //setup
             _scope.set<ICompilerEnvironment>(_environment);
             _scope.set<ICompilerService<SyntaxToken, SyntaxNode, SemanticModel>>(new CompilerService());
+        }
+
+        public SemanticModel GetSemanticModel(SyntaxNode node) => getSemanticModel(node.SyntaxTree);
+
+        public void AddContent(string path, string contents)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void AddNativeDocument(string path, SyntaxNode root)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void AddNativeDocument(string path, string contents)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void AddDocument(string path, string contents)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void AddDocument(string path, IDocument<SyntaxToken, SyntaxNode, SemanticModel> document)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void ReplaceNode(SyntaxNode old, SyntaxNode @new)
+        {
+            throw new NotImplementedException();
         }
 
         public string OutputFile { get; set; }

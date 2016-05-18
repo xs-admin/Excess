@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Diagnostics;
 using System.Collections.Generic;
+using System.Composition;
 using Microsoft.VisualStudio.Package;
 using Microsoft.VisualStudio.TextManager.Interop;
 using Microsoft.VisualStudio.LanguageServices;
@@ -16,12 +17,17 @@ using Excess.Entensions.XS;
 using Excess.Compiler.Attributes;
 using Excess.Compiler.Reflection;
 using Excess.Compiler;
+using EnvDTE;
+using EnvDTE80;
+using Microsoft.VisualStudio.Shell;
+using Excess.Compiler.Core;
 
 namespace Excess.VS
 {
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
     using LoaderProperties = Scope;
-    using LoaderFunc = Action<RoslynCompiler, Scope>;
+    using RoslynCompilationAnalysis = CompilationAnalysisBase<SyntaxToken, SyntaxNode, SemanticModel>;
+    using CompilerFunc = Action<RoslynCompiler, Scope>;
 
     internal static class XSKeywords            
     {
@@ -56,9 +62,12 @@ namespace Excess.VS
         class ProjectCache
         {
             VisualStudioWorkspace _workspace;
+            ProjectId _project;
             string _path;
+            RoslynCompilationAnalysis _compilation;
             public ProjectCache(VisualStudioWorkspace workspace, ProjectId projectId, IVsPackageInstallerServices nuget, IVsPackageInstallerEvents nugetEvents)
             {
+                _project = projectId;
                 var project = workspace.CurrentSolution.GetProject(projectId);
 
                 _workspace = workspace;
@@ -103,16 +112,27 @@ namespace Excess.VS
 
                     //var extension = loadReference(dll, name);
                     var name = string.Empty;
-                    var extension = Loader<RoslynCompiler>.CreateFrom(assembly, out name);
+                    var compilationFunc = null as Action<RoslynCompilationAnalysis>;
+                    var extension = Loader<RoslynCompiler, RoslynCompilationAnalysis>.CreateFrom(assembly, out name, out compilationFunc);
                     if (extension != null)
+                    {
+                        if (compilationFunc != null)
+                        {
+                            if (_compilation == null)
+                                _compilation = new CompilationAnalysisBase<SyntaxToken, SyntaxNode, SemanticModel>();
+
+                            compilationFunc(_compilation);
+                        }
+
                         _extensions[name] = extension;
+                    }
                 }
             }
 
             Dictionary<long, RoslynCompiler> _cache = new Dictionary<long, RoslynCompiler>();
             Dictionary<long, IEnumerable<string>> _keywordCache = new Dictionary<long, IEnumerable<string>>();
             Dictionary<DocumentId, long> _documentExtensions = new Dictionary<DocumentId, long>();
-            Dictionary<string, Action<RoslynCompiler, LoaderProperties>> _extensions = new Dictionary<string, Action<RoslynCompiler, LoaderProperties>>();
+            Dictionary<string, CompilerFunc> _extensions = new Dictionary<string, CompilerFunc>();
 
             public RoslynCompiler GetCompiler(DocumentId documentId, ICollection<UsingDirectiveSyntax> extensions, out IEnumerable<string> keywords)
             {
@@ -151,10 +171,10 @@ namespace Excess.VS
                             .ToString()
                             .Substring("xs.".Length);
 
-                        var extensionFunc = null as LoaderFunc;
-                        if (_extensions.TryGetValue(extensionName, out extensionFunc))
+                        var compilerFunc = null as CompilerFunc;
+                        if (_extensions.TryGetValue(extensionName, out compilerFunc))
                         {
-                            extensionFunc(result, props);
+                            compilerFunc(result, props);
                             continue;
                         }
                     }
@@ -184,6 +204,18 @@ namespace Excess.VS
 
             private bool isExtension(UsingDirectiveSyntax @using) => @using.Name.ToString().StartsWith("xs.");
 
+            public void ApplyCompilation()
+            {
+                if (_compilation != null)
+                {
+                    var solution = _workspace.CurrentSolution;
+                    var project = solution.GetProject(_project);
+                    var scope = new Scope(null); //td: !!! keep it
+                    var compilation = new VSCompilation(project, scope);
+
+                    compilation.PerformAnalysis(_compilation);
+                }
+            }
         }
 
         Dictionary<ProjectId, ProjectCache> _projects = new Dictionary<ProjectId, ProjectCache>();
@@ -193,6 +225,7 @@ namespace Excess.VS
             if (!_projects.TryGetValue(document.ProjectId, out cache))
             {
                 ensureNuget();
+                ensureDTE();
 
                 cache = new ProjectCache(_workspace, document.ProjectId, _nuget, _nugetEvents);
                 _projects[document.ProjectId] = cache;
@@ -231,6 +264,32 @@ namespace Excess.VS
 
             if (_nuget == null || _nugetEvents == null)
                 throw new InvalidOperationException("nuget");
+        }
+
+        DTE2 _dte;
+        private Events _dteEvents;
+        private BuildEvents _buildEvents;
+        private void ensureDTE()
+        {
+            if (_dte == null)
+            {
+                _dte = (DTE2)GetService(typeof(DTE));
+                _dteEvents = _dte.Events;
+                _buildEvents = _dteEvents.BuildEvents;
+
+                _buildEvents.OnBuildDone += BuildDone;
+            }
+        }
+
+        private void BuildDone(vsBuildScope Scope, vsBuildAction Action)
+        {
+            if (Scope == vsBuildScope.vsBuildScopeSolution)
+            {
+                foreach (var cache in _projects)
+                {
+                    cache.Value.ApplyCompilation();
+                }
+            }
         }
 
         public override string GetFormatFilterList()

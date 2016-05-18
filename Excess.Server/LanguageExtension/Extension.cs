@@ -14,20 +14,35 @@ using Excess.Extensions.Concurrent;
 
 namespace LanguageExtension
 {
-    using Compilation = Excess.Compiler.Roslyn.Compilation;
     using ExcessCompiler = ICompiler<SyntaxToken, SyntaxNode, SemanticModel>;
+    using ExcessCompilation = ICompilation<SyntaxToken, SyntaxNode, SemanticModel>;
+    using CompilationAnalysis = ICompilationAnalysis<SyntaxToken, SyntaxNode, SemanticModel>;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
     using Roslyn = RoslynCompiler;
 
     public class ServerExtensionOptions
     {
+        public ServerExtensionOptions(bool generateJsServices = true)
+        {
+            GenerateJsServices = generateJsServices;
+        }
+
         public bool GenerateJsServices { get; set; }
     }
 
     [Extension("server")]
     public class ServerExtension
     {
-        public static void Apply(ExcessCompiler compiler, Scope scope)
+        public static void Compilation(CompilationAnalysis compilation)
+        {
+            compilation
+                .match<ClassDeclarationSyntax>(isConcurrentClass)
+                    .then(jsConcurrentClass)
+                .match<ClassDeclarationSyntax>(isConcurrentObject)
+                    .then(jsConcurrentObject);
+        }
+
+        public static void Apply(ExcessCompiler compiler, Scope scope, CompilationAnalysis compilation = null)
         {
             var options = scope?.get<ServerExtensionOptions>()
                 ?? new ServerExtensionOptions();
@@ -48,18 +63,6 @@ namespace LanguageExtension
 
             compiler.Environment()
                 .dependency("Middleware");
-
-            if (options.GenerateJsServices)
-            {
-                throw new NotImplementedException();
-                //var compilation = compiler.Compilation();
-                //if (compilation != null)
-                //    compilation
-                //        .match<ClassDeclarationSyntax>(isConcurrentClass)
-                //            .then(jsConcurrentClass)
-                //        .match<ClassDeclarationSyntax>(isConcurrentObject)
-                //            .then(jsConcurrentObject);
-            }
         }
 
         //server information
@@ -354,7 +357,7 @@ namespace LanguageExtension
         }
 
         //generation
-        private static bool isConcurrentObject(ClassDeclarationSyntax @class, Compilation compilation, Scope scope)
+        private static bool isConcurrentObject(ClassDeclarationSyntax @class, ExcessCompilation compilation, Scope scope)
         {
             if (!isConcurrentClass(@class, compilation, scope))
                 return false;
@@ -366,12 +369,12 @@ namespace LanguageExtension
                     .Any(attr => attr.Name.ToString() == "ConcurrentSingleton"));
         }
 
-        private static void jsConcurrentObject(SyntaxNode arg1, Compilation arg2, Scope arg3)
+        private static void jsConcurrentObject(SyntaxNode arg1, ExcessCompilation arg2, Scope arg3)
         {
             throw new NotImplementedException();
         }
 
-        private static bool isConcurrentClass(ClassDeclarationSyntax @class, Compilation compilation, Scope scope)
+        private static bool isConcurrentClass(ClassDeclarationSyntax @class, ExcessCompilation compilation, Scope scope)
         {
             if (@class.BaseList == null)
                 return false;
@@ -382,7 +385,7 @@ namespace LanguageExtension
                 .Any(type => type.Type.ToString() == "ConcurrentObject");
         }
 
-        private static void jsConcurrentClass(SyntaxNode node, Compilation compilation, Scope scope)
+        private static void jsConcurrentClass(SyntaxNode node, ExcessCompilation compilation, Scope scope)
         {
             Debug.Assert(node is ClassDeclarationSyntax);
             var @class = node as ClassDeclarationSyntax;
@@ -391,7 +394,7 @@ namespace LanguageExtension
             Debug.Assert(config != null);
 
             var body = new StringBuilder();
-            var model = compilation.getSemanticModel(node.SyntaxTree);
+            var model = compilation.GetSemanticModel(node);
             ConcurrentExtension.Visit(@class,
                 methods: (name, type, parameters) =>
                 {

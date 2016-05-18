@@ -2,16 +2,28 @@
 
 namespace Excess.Compiler
 {
-    public interface ICompilationMatch<TToken, TNode, TCompilation>
+    public interface ICompilation<TToken, TNode, TModel>
     {
-        ICompilationAnalysis<TToken, TNode, TCompilation> then(Action<TNode, TCompilation, Scope> handler);
-
-        bool matched(TNode node, TCompilation compilation, Scope scope);
+        Scope Scope { get; }
+        TModel GetSemanticModel(TNode node);
+        void AddContent(string path, string contents);
+        void AddNativeDocument(string path, TNode root);
+        void AddNativeDocument(string path, string contents);
+        void AddDocument(string path, string contents);
+        void AddDocument(string path, IDocument<TToken, TNode, TModel> document);
+        void ReplaceNode(TNode old, TNode @new);
     }
 
-    public interface ICompilationAnalysis<TToken, TNode, TCompilation>
+    public interface ICompilationMatch<TToken, TNode, TModel>
     {
-        ICompilationMatch<TToken, TNode, TCompilation> match<T>(Func<T, TCompilation, Scope, bool> matcher) where T : TNode;
-        ICompilationAnalysis<TToken, TNode, TCompilation> after(Action<TCompilation, Scope> handler);
+        ICompilationAnalysis<TToken, TNode, TModel> then(Action<TNode, ICompilation<TToken, TNode, TModel>, Scope> handler);
+
+        bool matched(TNode node, ICompilation<TToken, TNode, TModel> compilation, Scope scope);
+    }
+
+    public interface ICompilationAnalysis<TToken, TNode, TModel>
+    {
+        ICompilationMatch<TToken, TNode, TModel> match<T>(Func<T, ICompilation<TToken, TNode, TModel>, Scope, bool> matcher) where T : TNode;
+        ICompilationAnalysis<TToken, TNode, TModel> after(Action<ICompilation<TToken, TNode, TModel>, Scope> handler);
     }
 }

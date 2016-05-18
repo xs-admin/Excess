@@ -8,15 +8,16 @@ namespace Excess.Compiler.Reflection
 {
     using LoaderProperties = Scope;
 
-    public class Loader<TCompiler>
+    public class Loader<TCompiler, TCompilationAnalysis>
     {
-        public static Action<TCompiler, LoaderProperties> CreateFrom(Assembly assembly, out string extensionName, string flavor = null, Func<string, string> flavorFunction = null)
+        public static Action<TCompiler, LoaderProperties> CreateFrom(Assembly assembly, out string extensionName, out Action<TCompilationAnalysis> compilation, string flavor = null, Func<string, string> flavorFunction = null)
         {
-            return Create(assembly.ExportedTypes, out extensionName, flavor, flavorFunction);
+            return Create(assembly.ExportedTypes, out extensionName, out compilation, flavor, flavorFunction);
         }
 
-        public static Action<TCompiler, LoaderProperties> Create(IEnumerable<Type> extensionTypes, out string extensionName, string flavor = null, Func<string, string> flavorFunction = null)
+        public static Action<TCompiler, LoaderProperties> Create(IEnumerable<Type> extensionTypes, out string extensionName, out Action<TCompilationAnalysis> compilation, string flavor = null, Func<string, string> flavorFunction = null)
         {
+            compilation = null;
             var types = extensionTypes
                 .Where(type => type
                     .CustomAttributes
@@ -58,6 +59,7 @@ namespace Excess.Compiler.Reflection
                 .Where(mthd => mthd.Name == (flavor ?? "Default"))
                 .FirstOrDefault();
 
+            var compilationMethod = null as MethodInfo;
             if (method == null)
             {
                 foreach (var type in types)
@@ -66,12 +68,23 @@ namespace Excess.Compiler.Reflection
                         .FirstOrDefault(mthd => mthd.Name == "Apply");
 
                     if (method != null)
+                    {
+                        compilationMethod = type.GetMethods()
+                            .FirstOrDefault(mthd => mthd.Name == "Compilation");
+
                         break;
+                    }
                 }
             }
+            else compilationMethod = flavors
+                .Where(mthd => mthd.Name == (flavor ?? "Default") + "Compilation")
+                .FirstOrDefault();
 
             if (method == null)
                 return null;
+
+            if (compilationMethod != null)
+                compilation = (analysys) => compilationMethod.Invoke(null, new object[] { analysys });
 
             return (compiler, props) =>
             {
@@ -84,9 +97,9 @@ namespace Excess.Compiler.Reflection
             };
         }
 
-        public static void Apply(IEnumerable<Type> types, TCompiler compiler, out string extensionName, string flavor = null, LoaderProperties props = null)
+        public static void Apply(IEnumerable<Type> types, TCompiler compiler, out string extensionName, out Action<TCompilationAnalysis> compilation, string flavor = null, LoaderProperties props = null)
         {
-            Create(types, out extensionName, flavor)
+            Create(types, out extensionName, out compilation, flavor)
                 ?.Invoke(compiler, props);
         }
     }

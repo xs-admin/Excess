@@ -3,7 +3,8 @@ using Microsoft.CodeAnalysis;
 
 namespace Excess.Compiler.Roslyn
 {
-    using CompilationAnalysis = CompilationAnalysisBase<SyntaxToken, SyntaxNode, Compilation>;
+    using CompilationAnalysis = CompilationAnalysisBase<SyntaxToken, SyntaxNode, SemanticModel>;
+    using Compilation = ICompilation<SyntaxToken, SyntaxNode, SemanticModel>;
 
     public class CompilationAnalysisVisitor : SyntaxWalker
     {
