@@ -53,6 +53,7 @@ namespace Excess.VS
                              )]
 
     [ProvideLanguageExtensionAttribute(typeof(ExcessLanguageService), ".xs")]
+    [ProvideBindingPath]
     public sealed class VSPackage : Package, IOleComponent
     {
         /// <summary>

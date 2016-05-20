@@ -12,10 +12,10 @@ using Excess.Compiler.Core;
 
 namespace xsc
 {
-    using ExcessCompilation = Excess.Compiler.Roslyn.Compilation;
+    using ExcessCompilation = Excess.Compiler.Roslyn.RoslynCompilation;
     using LoaderProperties = Scope;
     using LoaderFunc = Action<RoslynCompiler, Scope>;
-    using CompilationAnalysis = CompilationAnalysisBase<SyntaxToken, SyntaxNode, Excess.Compiler.Roslyn.Compilation>;
+    using CompilationAnalysis = CompilationAnalysisBase<SyntaxToken, SyntaxNode, SemanticModel>;
     using SolutionCompilationAnalysis = CompilationAnalysisBase<SyntaxToken, SyntaxNode, SolutionCompilation>;
 
     public class Runner
@@ -68,7 +68,8 @@ namespace xsc
         {
             var assembly = Assembly.LoadFrom(dll);
             var name = string.Empty;
-            var loader = Loader<RoslynCompiler>.CreateFrom(assembly, out name, 
+            var compilationFn = null as Action<CompilationAnalysis>;
+            var loader = Loader<RoslynCompiler, CompilationAnalysis>.CreateFrom(assembly, out name, out compilationFn,
                 flavorFunction: ext => Flavors.ContainsKey(ext)
                     ? Flavors[ext]
                     : "Default");
@@ -99,19 +100,20 @@ namespace xsc
             if (SolutionFile == null || !File.Exists(SolutionFile))
                 throw new InvalidProgramException($"invalid solution file: {SolutionFile ?? "null"}");
 
-            var analysis = new SolutionCompilationAnalysis();
-            var solution = new SolutionCompilation(SolutionFile, analysis, Extensions);
+            throw new NotImplementedException(); //td: !!! solution compilation
+            //var analysis = new SolutionCompilationAnalysis();
+            //var solution = new SolutionCompilation(SolutionFile, analysis, Extensions);
 
-            if (Transpile)
-            {
-                var errors = solution.Transpile();
-                if (errors.Any())
-                {
-                    foreach (var error in errors)
-                        Console.Error.WriteLine(error.ToString());
-                }
-            }
-            else throw new NotImplementedException();
+            //if (Transpile)
+            //{
+            //    var errors = solution.Transpile();
+            //    if (errors.Any())
+            //    {
+            //        foreach (var error in errors)
+            //            Console.Error.WriteLine(error.ToString());
+            //    }
+            //}
+            //else throw new NotImplementedException();
         }
 
         public void buildFiles()

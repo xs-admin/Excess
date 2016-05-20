@@ -11,16 +11,17 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LanguageExtension", "Langua
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{BD9BEFD3-4AE6-4E30-981A-818A700B3843}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Concurrent.Runtime", "..\Excess.Concurrent\Runtime\Concurrent.Runtime.csproj", "{4BE92F98-4415-4118-9A57-E1E2B3CBB1A5}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Excess.Extensions.Concurrent", "..\Excess.Extensions.Concurrent\Excess.Extensions.Concurrent.csproj", "{99F869F8-7BD4-476A-98CA-27C63E89DA93}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Nuget", "Nuget", "{BA18FB8A-1576-4033-ABEC-082039A9A6CC}"
 	ProjectSection(SolutionItems) = preProject
+		Nuget\Excess.Server.Debug.nuspec = Nuget\Excess.Server.Debug.nuspec
 		Nuget\Excess.Server.nuspec = Nuget\Excess.Server.nuspec
 		Nuget\install.ps1 = Nuget\install.ps1
 		Nuget\publish.bat = Nuget\publish.bat
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Excess.Extensions.Concurrent", "..\Excess.Extensions.Concurrent\Excess.Extensions.Concurrent.csproj", "{99F869F8-7BD4-476A-98CA-27C63E89DA93}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Concurrent.Runtime", "..\Excess.Concurrent\Runtime\Concurrent.Runtime.csproj", "{4BE92F98-4415-4118-9A57-E1E2B3CBB1A5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -44,14 +45,14 @@ Global
 		{BD9BEFD3-4AE6-4E30-981A-818A700B3843}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BD9BEFD3-4AE6-4E30-981A-818A700B3843}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BD9BEFD3-4AE6-4E30-981A-818A700B3843}.Release|Any CPU.Build.0 = Release|Any CPU
-		{4BE92F98-4415-4118-9A57-E1E2B3CBB1A5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4BE92F98-4415-4118-9A57-E1E2B3CBB1A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4BE92F98-4415-4118-9A57-E1E2B3CBB1A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4BE92F98-4415-4118-9A57-E1E2B3CBB1A5}.Release|Any CPU.Build.0 = Release|Any CPU
 		{99F869F8-7BD4-476A-98CA-27C63E89DA93}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{99F869F8-7BD4-476A-98CA-27C63E89DA93}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{99F869F8-7BD4-476A-98CA-27C63E89DA93}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{99F869F8-7BD4-476A-98CA-27C63E89DA93}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4BE92F98-4415-4118-9A57-E1E2B3CBB1A5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4BE92F98-4415-4118-9A57-E1E2B3CBB1A5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4BE92F98-4415-4118-9A57-E1E2B3CBB1A5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4BE92F98-4415-4118-9A57-E1E2B3CBB1A5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

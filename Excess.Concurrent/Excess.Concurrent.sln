@@ -25,6 +25,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Barbers", "Demos\Barbers\Ba
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Nuget", "Nuget", "{A43B47AC-BD5B-49BA-A16C-17A6993C6E6E}"
 	ProjectSection(SolutionItems) = preProject
+		Nuget\Excess.Concurrent.Debug.nuspec = Nuget\Excess.Concurrent.Debug.nuspec
 		Nuget\Excess.Concurrent.nuspec = Nuget\Excess.Concurrent.nuspec
 		Nuget\publish.bat = Nuget\publish.bat
 	EndProjectSection

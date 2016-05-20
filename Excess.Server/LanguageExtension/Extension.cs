@@ -39,7 +39,8 @@ namespace LanguageExtension
                 .match<ClassDeclarationSyntax>(isConcurrentClass)
                     .then(jsConcurrentClass)
                 .match<ClassDeclarationSyntax>(isConcurrentObject)
-                    .then(jsConcurrentObject);
+                    .then(jsConcurrentObject)
+                .after(addJSFiles);
         }
 
         public static void Apply(ExcessCompiler compiler, Scope scope, CompilationAnalysis compilation = null)
@@ -376,13 +377,11 @@ namespace LanguageExtension
 
         private static bool isConcurrentClass(ClassDeclarationSyntax @class, ExcessCompilation compilation, Scope scope)
         {
-            if (@class.BaseList == null)
-                return false;
-
             return @class
-                .BaseList
-                .Types
-                .Any(type => type.Type.ToString() == "ConcurrentObject");
+                .AttributeLists
+                .Any(attrList => attrList
+                    .Attributes
+                    .Any(attr => attr.Name.ToString() == "Concurrent"));
         }
 
         private static void jsConcurrentClass(SyntaxNode node, ExcessCompilation compilation, Scope scope)
@@ -426,6 +425,16 @@ namespace LanguageExtension
                     Name = @class.Identifier.ToString(),
                     Body = body.ToString()
                 }));
+        }
+
+        private static void addJSFiles(ExcessCompilation compilation, Scope scope)
+        {
+            var serverConfig = compilation.Scope.get<IServerConfiguration>();
+            if (serverConfig == null)
+                throw new ArgumentException("IServerConfiguration");
+
+            var clientCode = serverConfig.GetClientInterface();
+            compilation.AddContent(@"client\app\services", clientCode);
         }
 
         private static string calculateResponse(TypeSyntax type, SemanticModel model)
