@@ -1,24 +1,19 @@
 
             var xsServices = angular.module('xs.Services', []);
             
-            xsServices.service('Home', ['$http', '$q', function($htpp, $q)
+            xsServices.service('Home', ['$http', '$q', function($http, $q)
             {
                 
             this.Transpile = function (text)
             {
                 var deferred = $q.defer();
 
-                $http.post('/' + __init.__ID + '/Transpile', 
-                {
+                $http.post('/' + this.__ID + '/Transpile', {
                     text : text,
 
-                })
-                .success(function(response)
-                {
+                }).then(function(response) {
                     deferred.resolve(response);
-                })
-                .failure(function(ex)
-                {
+                }, function(ex){
                     deferred.reject(ex);
                 });
 
@@ -26,5 +21,5 @@
             }
 
 
-                this.__ID = '312d9508-889d-4c0d-afb6-af96e2096cfd'
+                this.__ID = '9abac447-8bfb-4ee1-b27a-6b40bc15cbc2';
             }])

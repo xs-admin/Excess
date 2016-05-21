@@ -57,7 +57,7 @@ namespace xss
             }
 
             concurrentAssemblies(target, out errors, out concurrentClasses, out concurrentInstances);
-            return errors != null;
+            return errors == null;
         }
 
         private static void concurrentAssemblies(string filePath, out string errors, out IEnumerable<Type> concurrentClasses, out IEnumerable<KeyValuePair<Guid, Type>> concurrentInstances)
@@ -79,15 +79,14 @@ namespace xss
                 foreach (var type in assembly.GetTypes())
                 {
                     var id = default(Guid);
-                    if (isService(type, out id))
-                    {
-                        instances[id] = type;
-                    }
-                    else if (isConcurrent(type))
+                    if (isConcurrent(type))
                     {
                         found = true;
                         classes.Add(type);
                     }
+
+                    if (isService(type, out id))
+                        instances[id] = type;
                 }
             }
 

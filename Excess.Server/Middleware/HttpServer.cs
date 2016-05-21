@@ -53,7 +53,7 @@ namespace Middleware
                     if (classes != null)
                     {
                         foreach (var @class in classes)
-                            server.ConcurrentApp.RegisterClass(@class);
+                            server.RegisterClass(@class);
                     }
 
                     if (instances != null)

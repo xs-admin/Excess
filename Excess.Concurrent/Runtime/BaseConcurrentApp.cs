@@ -200,7 +200,8 @@ namespace Excess.Concurrent.Runtime
             }
 
             _methods[type] = methodFuncs;
-            _types[type.Name] = (app, args) => (IConcurrentObject)Activator.CreateInstance(type, args);
+            if (_types != null)
+                _types[type.Name] = (app, args) => (IConcurrentObject)Activator.CreateInstance(type, args);
         }
 
         public void RegisterClass<T>() where T : IConcurrentObject
@@ -211,7 +212,8 @@ namespace Excess.Concurrent.Runtime
         public void RegisterRemoteClass(Type type)
         {
             notWhileRunning();
-            _types[type.Name] = (app, args) => { throw new NotImplementedException(); };
+            if (_types != null)
+                _types[type.Name] = (app, args) => { throw new NotImplementedException(); };
         }
 
         private void notWhileRunning()

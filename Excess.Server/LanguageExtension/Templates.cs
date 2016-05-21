@@ -71,16 +71,11 @@ namespace LanguageExtension
             {
                 var deferred = $q.defer();
 
-                $http.post('/' + this.__ID + '/@Model.Name', 
-                {
+                $http.post('/' + this.__ID + '/@Model.Name', {
                     @Model.Data
-                })
-                .success(function(response)
-                {
-                    deferred.resolve(@Model.Response);
-                })
-                .failure(function(ex)
-                {
+                }).then(function(response) {
+                    deferred.resolve(response);
+                }, function(ex){
                     deferred.reject(ex);
                 });
 
@@ -97,11 +92,11 @@ namespace LanguageExtension
             return new Type[] {};");
 
         public static RazorTemplate jsService = RazorTemplate.Parse(@"
-            xsServices.service('@Model.Name', ['$http', '$q', function($htpp, $q)
+            xsServices.service('@Model.Name', ['$http', '$q', function($http, $q)
             {
                 @Model.Body
 
-                this.__ID = '@Model.ID'
+                this.__ID = '@Model.ID';
             }])");
 
         public static RazorTemplate servicesFile = RazorTemplate.Parse(@"

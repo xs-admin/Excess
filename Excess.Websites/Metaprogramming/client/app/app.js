@@ -26,11 +26,20 @@ angular.module('metaprogramming', [
         transpileEditor = editor;
     }
 
-    $scope.setSample = function (index)
-    {
+    $scope.setSample = function (index){
         sourceEditor.setValue(Samples.MetaProgrammingSamples[index], -1);
         sourceEditor.focus();
     }
+
+    $scope.transpileExample = function () {
+        var text = sourceEditor.getValue();
+        Home.Transpile(text)
+            .then(function (value){
+                transpileEditor.setValue(value);
+                transpileEditor.focus();
+            });
+    }
+    
 }])
 
 //graph

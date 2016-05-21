@@ -32,6 +32,7 @@ namespace Middleware
         bool HasInstance(Guid id);
         void RegisterInstance(Guid id, IConcurrentObject @object);
         void RemoteInstance(Guid id, Action<DistributedAppMessage> send);
+        void RegisterClass(Type type);
         IEnumerable<Guid> Instances();
 
         //distributed functions
