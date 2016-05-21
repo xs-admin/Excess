@@ -214,6 +214,8 @@ namespace Excess.VS
                     var compilation = new VSCompilation(project, scope);
 
                     compilation.PerformAnalysis(_compilation);
+
+                    _workspace.TryApplyChanges(compilation.Project.Solution);
                 }
             }
         }
@@ -331,7 +333,6 @@ namespace Excess.VS
         {
             var scanner = GetScanner(buffer) as Scanner;
             Debug.Assert(scanner != null);
-            Debug.Assert(scanner.Keywords == XSKeywords.Values);
 
             var documentId = GetDocumentId(buffer);
             scanner.Keywords = GetKeywords(documentId);

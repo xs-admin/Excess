@@ -32,7 +32,9 @@
               <ProjectItem ReplaceParameters="true" TargetFileName="version_test.js">version_test.js</ProjectItem>
             </Folder>
           </Folder>
-          <ProjectItem ReplaceParameters="true" TargetFileName="index-async.html">index-async.html</ProjectItem>
+          <Folder Name="services" TargetFolderName="services">
+            <ProjectItem ReplaceParameters="false" TargetFileName="__services.js">__services.js</ProjectItem>
+          </Folder>
           <ProjectItem ReplaceParameters="true" TargetFileName="index.html">index.html</ProjectItem>
           <Folder Name="view1" TargetFolderName="view1">
             <ProjectItem ReplaceParameters="true" TargetFileName="view1.html">view1.html</ProjectItem>

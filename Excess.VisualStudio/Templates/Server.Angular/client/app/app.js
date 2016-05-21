@@ -3,6 +3,7 @@
 // Declare app level module which depends on views, and components
 angular.module('$safeprojectname$', [
   'ngRoute',
+  'xs.Services',
   '$safeprojectname$.view1',
   '$safeprojectname$.version'
 ]).

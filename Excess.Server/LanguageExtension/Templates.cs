@@ -59,7 +59,7 @@ namespace LanguageExtension
             .Get<ArrayCreationExpressionSyntax>();
 
         public static RazorTemplate jsConcurrentClass = RazorTemplate.Parse(@"
-            function @Model.Name (__init)
+            xsServices.@Model.Name = function (__init, $http, $q)
             {
                 @Model.Body
 
@@ -71,7 +71,7 @@ namespace LanguageExtension
             {
                 var deferred = $q.defer();
 
-                $http.post('/' + __init.__ID + '/@Model.Name', 
+                $http.post('/' + this.__ID + '/@Model.Name', 
                 {
                     @Model.Data
                 })
@@ -95,5 +95,17 @@ namespace LanguageExtension
 
         public static StatementSyntax RemoteTypes = CSharp.ParseStatement(@"
             return new Type[] {};");
+
+        public static RazorTemplate jsService = RazorTemplate.Parse(@"
+            xsServices.service('@Model.Name', ['$http', '$q', function($htpp, $q)
+            {
+                @Model.Body
+
+                this.__ID = '@Model.ID'
+            }])");
+
+        public static RazorTemplate servicesFile = RazorTemplate.Parse(@"
+            var xsServices = angular.module('xs.Services', []);
+            @Model.Members");
     }
 }

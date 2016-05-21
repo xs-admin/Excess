@@ -91,7 +91,7 @@
 
 .visual {
     position: relative;
-    min-height: 840px;
+    min-height: 760px;
 }
 
 .visual-icon {
@@ -100,4 +100,34 @@
     line-height:96px;
     font-size: 66px;
     color: #A9DC8E;
+}
+
+.download {
+  background-color: #f5f5f5;
+}
+
+.download li {
+  list-style-type: none;
+  margin-bottom: 1.6em;
+  padding: 1em 3em;
+}
+
+@media (min-width: 47.5em) {
+  .download li {
+    width: 49%;
+    display: inline-block;
+    vertical-align: top;
+  }
+}
+
+.download h4 {
+  margin-bottom: .6em;
+  font-size: 21px;
+  line-height: 1.6em;
+}
+
+.download .download-a {
+  font-family: Georgia, "Times New Roman", Times, serif;
+  font-size: 16px;
+  line-height: 1.6em;
 }

@@ -48,7 +48,6 @@
     </Compile>
 	</ItemGroup>
   <ItemGroup>
-    <Content Include="client\.gitignore" />
     <Content Include="client\app\app.css" />
     <Content Include="client\app\app.js" />
     <Content Include="client\app\components\version\interpolate-filter.js" />
@@ -57,22 +56,16 @@
     <Content Include="client\app\components\version\version-directive_test.js" />
     <Content Include="client\app\components\version\version.js" />
     <Content Include="client\app\components\version\version_test.js" />
-    <Content Include="client\app\index-async.html" />
+    <Content Include="client\app\services\__services.js" />
     <Content Include="client\app\index.html" />
     <Content Include="client\app\view1\view1.html" />
     <Content Include="client\app\view1\view1.js" />
     <Content Include="client\app\view1\view1_test.js" />
     <Content Include="client\e2e-tests\protractor.conf.js" />
     <Content Include="client\e2e-tests\scenarios.js" />
-    <Content Include="client\karma.conf.js" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="client\.bowerrc" />
-    <None Include="client\.jshintrc" />
-    <None Include="client\.travis.yml" />
-    <None Include="client\bower.json" />
     <None Include="client\LICENSE" />
-    <None Include="client\package.json" />
     <None Include="client\README.md" />
     <None Include="Service1.xs" />
     <None Include="xs.packages" />

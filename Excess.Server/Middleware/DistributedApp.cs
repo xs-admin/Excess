@@ -229,12 +229,39 @@ namespace Middleware
             throw new ArgumentException("method");
         }
 
+        public class ConcurrentJsonConverter : JsonConverter
+        {
+            public override bool CanConvert(Type type)
+            {
+                return type.BaseType?.Name == "ConcurrentObject";
+            }
+
+            public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
+            {
+                throw new InvalidOperationException("write only");
+            }
+
+            public override void WriteJson(JsonWriter writer, object obj, JsonSerializer serializer)
+            {
+                var id = (Guid)obj
+                    .GetType()
+                    .GetField("__ID")
+                    .GetValue(obj);
+
+                writer.WriteStartObject();
+                    writer.WriteRaw($"__ID : \"{id}\"");
+                writer.WriteEndObject();
+            }
+        }
+
+        static ConcurrentJsonConverter ConcurrentConverter = new ConcurrentJsonConverter();
+
         private void sendResponse(DistributedAppMessage msg, object response)
         {
             if (msg.Success == null && msg.RequestId == Guid.Empty)
                 return; // no one is waiting for this
 
-            var jsonMessage = $"{{\"__res\": {JsonConvert.SerializeObject(response)}}}";
+            var jsonMessage = $"{{\"__res\": {JsonConvert.SerializeObject(response, ConcurrentConverter)}}}";
             if (msg.Success != null)
                 msg.Success(jsonMessage);
             else

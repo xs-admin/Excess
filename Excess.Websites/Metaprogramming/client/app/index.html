@@ -35,7 +35,7 @@
                         <li><a href="#banner">Home</a></li>
                         <li><a href="#features">Features</a></li>
                         <li><a href="#examples">Examples</a></li>
-                        <li class="highlight"><a href="https://wrapbootstrap.com/theme/flatboard-angularjs-admin-frontend-WB0G434G7" target="_blank">Buy</a></li>
+                        <li class="highlight"><a href="#download" target="_blank">Download</a></li>
                     </ul>
                 </div>
             </div>
@@ -203,11 +203,7 @@
                     </header>
                     <div class="container">
                         <div class="row">
-                            <div class="col-md-1">
-                                <div class="visual-icon"><span class="ti-shine"></span></div>
-                            </div>
-
-                            <div class="examples-item col-md-3 text-center">
+                            <div class="examples-item col-md-4 text-center">
                                 <p class="desc" style="margin-top:15px;text-align:left">
                                     A picture is worth 1000 LOC. <br>
                                     Transform your data into code. <br>
@@ -222,16 +218,12 @@
                                 </div>
                             </div>
 
-                            <div class="examples-item col-md-3 text-center">
-                                <p class="desc" style="margin-top:15px;text-align:right">
+                            <div class="examples-item col-md-4" style="text-align:right">
+                                <p class="desc" style="margin-top:15px">
                                     Directed graphs are not the only<br>
                                     data models. But they are good.<br>
                                     See demo below.
                                 </p>
-                            </div>
-
-                            <div class="col-md-1">
-                                <div class="visual-icon"><span class="ti-shine"></span></div>
                             </div>
                         </div>
                     </div>
@@ -251,6 +243,60 @@
                 </div>
             </div>
         </div>
+        <div id="download" class="download features">
+            <header>
+                <h2 class="section-heading-underline app-link"><a href="#download">Download</a></h2>
+                <p class="download-a text-center">Get our prototype. </p>
+            </header>
+            <div class="container">
+                <div class="row">
+                    <div class="feature-item col-md-4 text-center">
+                        <div class="icon-container"><span class="ti-github"></span></div>
+                        <h3>Source Code</h3>
+                        <div class="desc">
+                            <p>Fork our repo, we will accept pull requests.</p>
+                        </div>
+                    </div>
+                    <div class="feature-item col-md-4 text-center">
+                        <div class="icon-container"><span class="ti-book"></span></div>
+                        <h3>Documentation</h3>
+                        <div class="desc">
+                            <p>Still working on it</p>
+                        </div>
+                    </div>
+                    <div class="feature-item col-md-4 text-center">
+                        <div class="icon-container"><span class="ti-cloud"></span></div>
+                        <h3>Binaries</h3>
+                        <div class="desc">
+                            <p>Get our Nuget packages.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="feature-item col-md-4 text-center">
+                        <div class="icon-container"><span class="ti-microsoft-alt"></span></div>
+                        <h3>Visual Studio</h3>
+                        <div class="desc">
+                            <p>Install our Visual Studio Extension</p>
+                        </div>
+                    </div>
+                    <div class="feature-item col-md-4 text-center">
+                        <div class="icon-container"><span class="ti-linux"></span></div>
+                        <h3>Command Line</h3>
+                        <div class="desc">
+                            <p>Or download out command line interface</p>
+                        </div>
+                    </div>
+                    <div class="feature-item col-md-4 text-center">
+                        <div class="icon-container"><span class="ti-world"></span></div>
+                        <h3>Contribute</h3>
+                        <div class="desc">
+                            <p>Please.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     <section id="footer">
         <section class="footer">
@@ -261,9 +307,7 @@
                             <ul class="nav nav-pills">
                                 <li><a href="#home">Home</a></li>
                                 <li><a href="#features">Features</a></li>
-                                <li><a href="#testimonials">Testimonials</a></li>
-                                <li><a href="#faq">FAQ</a></li>
-                                <li class="highlight"><a href="https://wrapbootstrap.com/theme/flatboard-angularjs-admin-frontend-WB0G434G7" target="_blank">Buy</a></li>
+                                <li><a href="#examples">Examples</a></li> 
                             </ul>
                         </div>
                         <div class="info">
@@ -280,11 +324,9 @@
             </div>
         </section>
         <section class="copyright">
-            <div class="container"><span>© Copyright <span id="copyright"></span> FlatBoard</span></div>
+            <div class="container"><span>© Copyright <span id="copyright"></span> Excess</span></div>
         </section>
     </section>
-
-    <div>metaprogramming: v<span app-version></span></div>
     <!--if lt IE 8
     <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
     -->
@@ -312,5 +354,6 @@
     <script src="components/version/version.js"></script>
     <script src="components/version/version-directive.js"></script>
     <script src="components/version/interpolate-filter.js"></script>
+    <script src="services/__services.js"></script>
 </body>
 </html>

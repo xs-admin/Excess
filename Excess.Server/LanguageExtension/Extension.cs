@@ -36,10 +36,10 @@ namespace LanguageExtension
         public static void Compilation(CompilationAnalysis compilation)
         {
             compilation
+                .match<ClassDeclarationSyntax>(isService)
+                    .then(jsService)
                 .match<ClassDeclarationSyntax>(isConcurrentClass)
                     .then(jsConcurrentClass)
-                .match<ClassDeclarationSyntax>(isConcurrentObject)
-                    .then(jsConcurrentObject)
                 .after(addJSFiles);
         }
 
@@ -358,7 +358,7 @@ namespace LanguageExtension
         }
 
         //generation
-        private static bool isConcurrentObject(ClassDeclarationSyntax @class, ExcessCompilation compilation, Scope scope)
+        private static bool isService(ClassDeclarationSyntax @class, ExcessCompilation compilation, Scope scope)
         {
             if (!isConcurrentClass(@class, compilation, scope))
                 return false;
@@ -367,12 +367,44 @@ namespace LanguageExtension
                 .AttributeLists
                 .Any(attrList => attrList
                     .Attributes
-                    .Any(attr => attr.Name.ToString() == "ConcurrentSingleton"));
+                    .Any(attr => attr.Name.ToString() == "Service"));
         }
 
-        private static void jsConcurrentObject(SyntaxNode arg1, ExcessCompilation arg2, Scope arg3)
+        private static void jsService(SyntaxNode node, ExcessCompilation compilation, Scope scope)
         {
-            throw new NotImplementedException();
+            Debug.Assert(node is ClassDeclarationSyntax);
+            var @class = node as ClassDeclarationSyntax;
+
+            var serviceAttribute = @class
+                .AttributeLists
+                .Where(attrList => attrList
+                    .Attributes
+                    .Any(attr => attr.Name.ToString() == "Service"))
+                .Single()
+                .Attributes
+                .First();
+
+            var guidString = serviceAttribute
+                .ArgumentList
+                .Arguments
+                .Single(attr => attr.NameColon.Name.ToString() == "id")
+                .Expression
+                .ToString();
+
+            var id = guidString.Substring(1, guidString.Length - 2);
+            var model = compilation.GetSemanticModel(node);
+            var config = scope.GetServerConfiguration();
+            Debug.Assert(config != null);
+
+            var body = renderObjectMembers(@class, config, model);
+            config.AddClientInterface(node.SyntaxTree, Templates
+                .jsService
+                .Render(new
+                {
+                    Name = @class.Identifier.ToString(),
+                    Body = body.ToString(),
+                    ID = id
+                }));
         }
 
         private static bool isConcurrentClass(ClassDeclarationSyntax @class, ExcessCompilation compilation, Scope scope)
@@ -388,16 +420,27 @@ namespace LanguageExtension
         {
             Debug.Assert(node is ClassDeclarationSyntax);
             var @class = node as ClassDeclarationSyntax;
-
+            var model = compilation.GetSemanticModel(node);
             var config = scope.GetServerConfiguration();
             Debug.Assert(config != null);
 
-            var body = new StringBuilder();
-            var model = compilation.GetSemanticModel(node);
+            var body = renderObjectMembers(@class, config, model);
+            config.AddClientInterface(node.SyntaxTree, Templates
+                .jsConcurrentClass
+                .Render(new
+                {
+                    Name = @class.Identifier.ToString(),
+                    Body = body
+                }));
+        }
+
+        private static string renderObjectMembers(ClassDeclarationSyntax @class, IServerConfiguration config, SemanticModel model)
+        {
+            var result = new StringBuilder();
             ConcurrentExtension.Visit(@class,
                 methods: (name, type, parameters) =>
                 {
-                    body.AppendLine(Templates
+                    result.AppendLine(Templates
                         .jsMethod
                         .Render(new
                         {
@@ -409,32 +452,31 @@ namespace LanguageExtension
                 },
                 fields: (name, type, value) =>
                 {
-                    body.AppendLine(Templates
-                        .jsProperty
-                        .Render(new
-                        {
-                            Name = name.ToString(),
-                            Value = valueString(value, type, model) 
-                        }));
+                    //result.AppendLine(Templates
+                    //    .jsProperty
+                    //    .Render(new
+                    //    {
+                    //        Name = name.ToString(),
+                    //        Value = valueString(value, type, model)
+                    //    }));
                 });
 
-            config.AddClientInterface(node.SyntaxTree, Templates
-                .jsConcurrentClass
-                .Render(new
-                {
-                    Name = @class.Identifier.ToString(),
-                    Body = body.ToString()
-                }));
+            return result.ToString();
         }
 
         private static void addJSFiles(ExcessCompilation compilation, Scope scope)
         {
-            var serverConfig = compilation.Scope.get<IServerConfiguration>();
+            var serverConfig = compilation.Scope.GetServerConfiguration();
             if (serverConfig == null)
                 throw new ArgumentException("IServerConfiguration");
 
             var clientCode = serverConfig.GetClientInterface();
-            compilation.AddContent(@"client\app\services", clientCode);
+            compilation.AddContent(@"client\app\services\__services.js", Templates
+                .servicesFile
+                .Render( new
+                {
+                    Members = clientCode
+                }));
         }
 
         private static string calculateResponse(TypeSyntax type, SemanticModel model)

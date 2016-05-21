@@ -5,6 +5,7 @@ angular.module('metaprogramming', [
     'ngRoute',
     'metaprogramming.view1',
     'metaprogramming.version',
+    'xs.Services',
     'ui.layout',
     'ui.ace',
     'ui.graphpanel'])
@@ -13,7 +14,7 @@ angular.module('metaprogramming', [
     $routeProvider.otherwise({ redirectTo: '/view1' });
 }])
 
-.controller("ctrlExamples", ['$scope', function ($scope) {
+.controller("ctrlExamples", ['$scope', 'Home', function ($scope, Home) {
     var sourceEditor, transpileEditor;
 
     $scope.sourceLoaded = function (editor) {

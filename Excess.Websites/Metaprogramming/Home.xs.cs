@@ -11,8 +11,8 @@ using Excess.Concurrent.Runtime;
 namespace metaprogramming
 #line 5
 {
-    [Service(id: "f167d5d3-bb4e-44ea-835d-69a6deea2009")]
-    [Concurrent(id = "5039ff4a-1f5a-4752-8f25-02acc4ab0ea3")]
+    [Service(id: "312d9508-889d-4c0d-afb6-af96e2096cfd")]
+    [Concurrent(id = "ce3b2838-8fae-4453-af42-241fb190d912")]
 #line 6
     public class Home : ConcurrentObject
 #line 7

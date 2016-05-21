@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.IO;
 using Excess.Compiler.Core;
 using Excess.Compiler.Roslyn;
+using Microsoft.CodeAnalysis.Text;
 
 namespace Excess.VS
 {
@@ -40,9 +41,20 @@ namespace Excess.VS
 
         public void AddContent(string path, string contents)
         {
-            _project = _project
-                .AddAdditionalDocument(Path.GetFileName(path), contents, filePath: Path.GetDirectoryName(path))
-                .Project;
+            var contentFile = Path.Combine(
+                Path.GetDirectoryName(_project.FilePath), 
+                path);
+
+            if (File.Exists(contentFile))
+            {
+                File.WriteAllText(contentFile, contents);
+            }
+            else
+            {
+                _project = _project
+                    .AddAdditionalDocument(Path.GetFileName(path), contents, filePath: Path.GetDirectoryName(path))
+                    .Project;
+            }
         }
 
         public void AddDocument(string path, IDocument<SyntaxToken, SyntaxNode, SemanticModel> document)
