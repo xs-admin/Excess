@@ -256,9 +256,10 @@ namespace Excess.Compiler.Roslyn
             return result;
         }
 
-        public SyntaxTree ApplySyntacticalPass(string text, out string result)
+        public SyntaxTree ApplySyntacticalPass(string text, out string result, IMappingService<SyntaxToken, SyntaxNode> mapper = null)
         {
             var document = new RoslynDocument(_scope, text); //we actually dont touch our own state during these calls
+            document.Mapper = mapper;
             var lHandler = _lexical as IDocumentInjector<SyntaxToken, SyntaxNode, SemanticModel>;
             var sHandler = _syntax as IDocumentInjector<SyntaxToken, SyntaxNode, SemanticModel>;
 
