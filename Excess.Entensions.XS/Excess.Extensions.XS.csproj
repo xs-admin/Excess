@@ -131,6 +131,7 @@
     <Compile Include="Grammar\JSONLexer.cs" />
     <Compile Include="Grammar\JSONListener.cs" />
     <Compile Include="Grammar\JSONParser.cs" />
+    <Compile Include="Injection.cs" />
     <Compile Include="Json.cs" />
     <Compile Include="Match.cs" />
     <Compile Include="Members.cs" />

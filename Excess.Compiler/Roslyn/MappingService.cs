@@ -98,6 +98,7 @@ namespace Excess.Compiler.Roslyn
         {
             var result = new StringBuilder($"#line 1 \"{fileName}\"{Environment.NewLine}");
             var lineNumber = 1;
+            var addHiddenPragma = false;
             foreach (var token in node.DescendantTokens())
             {
                 var annotation = token
@@ -106,24 +107,40 @@ namespace Excess.Compiler.Roslyn
 
                 var id = -1;
                 var original = -1;
-                var lastLine = 0;
+                var lastLine = lineNumber;
                 if (annotation != null
                     && int.TryParse(annotation.Data, out id)
                     && _originalTokens.TryGetValue(id, out original))
                 {
-                    lastLine = lineNumber;
                     lineNumber = original;
                 }
+                else
+                {
+                    lineNumber = 0;
+                }
 
-                lineNumber = addToken(result, token, lastLine, lineNumber);
+                if (addHiddenPragma && lineNumber == 0)
+                    result.AppendLine($"#line hidden{Environment.NewLine}");
+
+                var oldHiddenPragma = addHiddenPragma;
+                lineNumber = addToken(result, token, lastLine, lineNumber, out addHiddenPragma);
+                if (addHiddenPragma && oldHiddenPragma)
+                    addHiddenPragma = false;
             }
 
             Debug.Assert(lineNumber > 0); //must have mappings
             return result.ToString();
         }
 
-        private int addToken(StringBuilder result, SyntaxToken token, int oldLine, int newLine)
+        private int addToken(StringBuilder result, SyntaxToken token, int oldLine, int newLine, out bool addHiddenPragma)
         {
+            addHiddenPragma = false;
+
+            var linePragma = $"#line {newLine}";
+            var hiddenPragma = $"#line hidden";
+            var afterLineChange = string.Empty;
+            var lineChanged = false;
+
             if (oldLine <= 0 && newLine <= 0) //not actively on an original line
             {
                 result.Append(token.ToFullString());
@@ -131,21 +148,42 @@ namespace Excess.Compiler.Roslyn
             }
             else if (newLine <= 0) //non-original token while rendering original line
             {
-                var pragma = $"#hidden";
-                var lineChanged = addTrivia(result, token.LeadingTrivia, firstLineChange: pragma);
-                result.Append(token.ToString());
-                lineChanged |= addTrivia(result, token.TrailingTrivia,
-                    lastLineChange: lineChanged ? null : pragma);
+                afterLineChange = addTrivia(result, token.LeadingTrivia);
+                lineChanged = afterLineChange != null;
+                if (lineChanged)
+                {
+                    result.AppendLine(hiddenPragma);
+                    result.Append(afterLineChange);
+                }
 
-                return lineChanged ? 0 : oldLine;
+                result.Append(token.ToString());
+
+                afterLineChange = addTrivia(result, token.TrailingTrivia);
+                if (afterLineChange != null)
+                {
+                    result.Append(afterLineChange);
+                    addHiddenPragma = true;
+                }
+
+                return lineChanged? 0 : oldLine;
             }
             else if (oldLine <= 0) //just found an original line
             {
-                var pragma = $"#line {newLine}";
-                addTrivia(result, token.LeadingTrivia, lastLineChange: pragma);
+                afterLineChange = addTrivia(result, token.LeadingTrivia, linePragma);
+                if (afterLineChange != null)
+                    result.Append(afterLineChange);
+
                 result.Append(token.ToString());
-                var lineChanged = addTrivia(result, token.TrailingTrivia, firstLineChange: "#hidden");
-                return lineChanged ? 0 : newLine;
+
+                afterLineChange = addTrivia(result, token.TrailingTrivia);
+                if (afterLineChange != null)
+                {
+                    result.Append(afterLineChange);
+                    addHiddenPragma = true;
+                    return 0;
+                }
+
+                return newLine;
             }
             else //found original line while rendering another
             {
@@ -153,22 +191,38 @@ namespace Excess.Compiler.Roslyn
                 {
                     addTrivia(result, token.LeadingTrivia);
                     result.Append(token.ToString());
-                    var lineChanged = addTrivia(result, token.TrailingTrivia, firstLineChange: "#hidden");
-                    return lineChanged ? 0 : newLine;
+                    afterLineChange = addTrivia(result, token.TrailingTrivia);
+                    if (afterLineChange != null)
+                    {
+                        result.Append(afterLineChange);
+                        addHiddenPragma = true;
+                        return 0;
+                    }
+
+                    return newLine;
                 }
                 else
                 {
-                    addTrivia(result, token.LeadingTrivia);
+                    afterLineChange = addTrivia(result, token.LeadingTrivia, linePragma);
+                    if (afterLineChange != null)
+                        result.Append(afterLineChange);
+
                     result.Append(token.ToString());
-                    var lineChanged = addTrivia(result, token.TrailingTrivia, firstLineChange: "#hidden");
-                    return lineChanged ? 0 : newLine;
+                    afterLineChange = addTrivia(result, token.TrailingTrivia);
+                    if (afterLineChange != null)
+                    {
+                        result.Append(afterLineChange);
+                        addHiddenPragma = true;
+                        return 0;
+                    }
+
+                    return newLine;
                 }
             }
         }
 
-        private bool addTrivia(StringBuilder result, SyntaxTriviaList triviaList, string firstLineChange = null, string lastLineChange = null)
+        private string addTrivia(StringBuilder result, SyntaxTriviaList triviaList, string pragma = null)
         {
-            var first = true;
             var line = new StringBuilder();
             var lineChanged = false;
             foreach (var trivia in triviaList)
@@ -177,25 +231,23 @@ namespace Excess.Compiler.Roslyn
                 {
                     lineChanged = true;
                     result.Append(line.ToString() + Environment.NewLine); line.Clear();
-                    if (first && firstLineChange != null)
-                        result.Append(firstLineChange + Environment.NewLine);
                 }
                 else 
                     line.Append(trivia.ToString());
-
-                first = false;
             }
 
-            if (lastLineChange != null)
+            if (lineChanged)
             {
-                if (lineChanged)
-                    result.Append(lastLineChange + Environment.NewLine);
-                else
-                    result.Append(Environment.NewLine + lastLineChange + Environment.NewLine);
+                if (pragma != null)
+                    result.Append(pragma + Environment.NewLine);
+                return line.ToString();
             }
+
+            if (pragma != null)
+                result.Append(Environment.NewLine + pragma + Environment.NewLine);
 
             result.Append(line.ToString());
-            return lineChanged;
+            return null;
         }
 
         private void AppendCurrent(StringBuilder result, StringBuilder line, bool asLine)

@@ -1,11 +1,11 @@
 ﻿using System.Linq;
-using Excess.Compiler;
-using Excess.Compiler.Roslyn;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Excess.Compiler;
+using Excess.Compiler.Roslyn;
 
-namespace Excess.Entensions.XS
+namespace xslang
 {
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
     using ExcessCompiler = ICompiler<SyntaxToken, SyntaxNode, SemanticModel>;

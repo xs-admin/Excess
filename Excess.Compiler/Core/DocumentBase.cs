@@ -211,28 +211,40 @@ namespace Excess.Compiler.Core
             if (stage < _stage)
                 return true;
 
-            var oldStage = _stage;
-            _stage = stage;
-
-            if (oldStage < CompilerStage.Lexical && stage >= CompilerStage.Lexical)
-                applyLexical();
-
-            if (oldStage < CompilerStage.Syntactical && stage >= CompilerStage.Syntactical)
+            if (_stage < CompilerStage.Lexical && stage >= CompilerStage.Lexical)
             {
+                _stage = CompilerStage.Lexical;
+                applyLexical();
+            }
+
+            if (_stage < CompilerStage.Syntactical && stage >= CompilerStage.Syntactical)
+            {
+                _stage = CompilerStage.Syntactical;
                 applySyntactical();
+
                 _semanticalTries = 0;
             }
 
-            if (oldStage <= CompilerStage.Semantical && stage >= CompilerStage.Semantical)
+            if (_stage <= CompilerStage.Semantical && stage >= CompilerStage.Semantical)
             {
+                _stage = CompilerStage.Semantical;
                 bool result = applySemantical();
                 if (result)
+                {
                     _semanticalTries = 0;
+                }
                 else
+                {
                     _semanticalTries++;
-                return result;
+                    if (_semanticalTries > 5)
+                        return false;
+
+                    if (stage == CompilerStage.Finished)
+                        return applyChanges(stage);
+                }
             }
 
+            _stage = stage;
             return true; //finished
         }
 

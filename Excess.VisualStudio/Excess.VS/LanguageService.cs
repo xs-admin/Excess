@@ -4,7 +4,8 @@ using System.Linq;
 using System.Reflection;
 using System.Diagnostics;
 using System.Collections.Generic;
-using System.Composition;
+using EnvDTE;
+using EnvDTE80;
 using Microsoft.VisualStudio.Package;
 using Microsoft.VisualStudio.TextManager.Interop;
 using Microsoft.VisualStudio.LanguageServices;
@@ -13,35 +14,16 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.VisualStudio.ComponentModelHost;
 using NuGet.VisualStudio;
 using Excess.Compiler.Roslyn;
-using Excess.Entensions.XS;
-using Excess.Compiler.Attributes;
 using Excess.Compiler.Reflection;
 using Excess.Compiler;
-using EnvDTE;
-using EnvDTE80;
-using Microsoft.VisualStudio.Shell;
 using Excess.Compiler.Core;
+using xslang;
 
 namespace Excess.VS
 {
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
-    using LoaderProperties = Scope;
     using RoslynCompilationAnalysis = CompilationAnalysisBase<SyntaxToken, SyntaxNode, SemanticModel>;
     using CompilerFunc = Action<RoslynCompiler, Scope>;
-
-    internal static class XSKeywords            
-    {
-        public static string[] Values = new[]
-        {
-            "function",
-            "method",
-            "property",
-            "on",
-            "match",
-            "constructor",
-            "var",
-        };
-    }
 
     class ExcessLanguageService : LanguageService
     {
@@ -155,8 +137,7 @@ namespace Excess.VS
                     return result;
                 }
 
-                result = new RoslynCompiler();
-                XSLang.Apply(result);
+                result = (RoslynCompiler)XSLanguage.CreateCompiler();
 
                 var keywordList = new List<string>();
                 var props = new Scope(null);
@@ -194,7 +175,7 @@ namespace Excess.VS
                 if (!_documentExtensions.TryGetValue(documentId, out iid))
                     return null;
 
-                IEnumerable<string> result = XSKeywords.Values;
+                IEnumerable<string> result = XSLanguage.Keywords;
                 IEnumerable<string> cache;
                 if (_keywordCache.TryGetValue(iid, out cache))
                     result = result.Union(cache);
@@ -248,7 +229,7 @@ namespace Excess.VS
 
             var scanner = null as Scanner;
             if (keywords != null && keywords.Any()  && _scannerCache.TryGetValue(document, out scanner))
-                scanner.Keywords = XSKeywords.Values.Union(keywords);
+                scanner.Keywords = XSLanguage.Keywords.Union(keywords);
 
             return result;
         }
@@ -269,7 +250,7 @@ namespace Excess.VS
         }
 
         DTE2 _dte;
-        private Events _dteEvents;
+        private EnvDTE.Events _dteEvents;
         private BuildEvents _buildEvents;
         private void ensureDTE()
         {
@@ -319,7 +300,7 @@ namespace Excess.VS
             if (_scannerCache.TryGetValue(documentId, out result))
                 return result;
 
-            var scanner = new Scanner(XSKeywords.Values);
+            var scanner = new Scanner(XSLanguage.Keywords);
             _scannerCache[documentId] = scanner;
             return scanner;
         }
@@ -345,7 +326,7 @@ namespace Excess.VS
             if (_projects.TryGetValue(documentId.ProjectId, out project))
                 return project.Keywords(documentId);
 
-            return XSKeywords.Values;
+            return XSLanguage.Keywords;
         }
 
         private DocumentId GetDocumentId(IVsTextLines buffer)

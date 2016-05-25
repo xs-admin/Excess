@@ -93,11 +93,11 @@
       <EmbedInteropTypes>False</EmbedInteropTypes>
     </Reference>
     <Reference Include="Excess.Compiler, Version=1.0.0.0, Culture=neutral, PublicKeyToken=b0e2cc790a4c1b9e, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Compiler.0.46.7-alpha\lib\Net45\Excess.Compiler.dll</HintPath>
+      <HintPath>..\packages\Excess.Compiler.0.46.11-alpha\lib\Net45\Excess.Compiler.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Compiler.Razor, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Compiler.0.46.7-alpha\lib\Net45\Excess.Compiler.Razor.dll</HintPath>
+      <HintPath>..\packages\Excess.Compiler.0.46.11-alpha\lib\Net45\Excess.Compiler.Razor.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.AspNet.Razor, Version=4.0.0.0, Culture=neutral, processorArchitecture=MSIL">
@@ -247,12 +247,12 @@
     </Reference>
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
+    <Reference Include="xslang, Version=1.0.0.0, Culture=neutral, PublicKeyToken=a8909f1e5623e4ea, processorArchitecture=MSIL">
+      <HintPath>..\packages\Excess.Compiler.0.46.11-alpha\lib\Net45\xslang.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Excess.Entensions.XS\Excess.Extensions.XS.csproj">
-      <Project>{a9fc6a37-7e7c-4098-9908-cb2e927b9274}</Project>
-      <Name>Excess.Extensions.XS</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Templates\Concurrent.Console\Concurrent.Console.csproj">
       <Project>{3501F82B-CB37-4AE6-9F36-F855644F752B}</Project>
       <Name>Concurrent.Console</Name>

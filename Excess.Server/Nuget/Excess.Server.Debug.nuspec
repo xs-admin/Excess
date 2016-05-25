@@ -2,13 +2,13 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
         <id>Excess.Server</id>
-        <version>0.46.28-alpha</version>
+        <version>0.46.30-alpha</version>
         <authors>Excess</authors>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>Excess Web App</description>
 
         <dependencies>
-          <dependency id="Excess.Concurrent" version="0.46.8-alpha"/>
+          <dependency id="Excess.Concurrent" version="0.46.12-alpha"/>
           <dependency id="Newtonsoft.Json" version="8.0.0"/>
           <dependency id="Owin" version="1.0.0"/>
           <dependency id="Microsoft.Owin" version="3.0.0"/>
