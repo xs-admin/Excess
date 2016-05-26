@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.23107.0
+VisualStudioVersion = 14.0.25123.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Excess.Application", "Excess.Application\Excess.Application.csproj", "{EDF5D964-4C0F-4F19-B674-58A38A5E5401}"
 EndProject
@@ -25,6 +25,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Excess.Compiler.Razor", "Excess.Compiler.Razor\Excess.Compiler.Razor.csproj", "{FF771A02-CF66-4F21-9E04-A87CEBCD7952}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Excess.Extensions.Concurrent", "Excess.Extensions.Concurrent\Excess.Extensions.Concurrent.csproj", "{99F869F8-7BD4-476A-98CA-27C63E89DA93}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Excess.Extensions.XS", "Excess.Entensions.XS\Excess.Extensions.XS.csproj", "{506C003E-8276-48D5-8423-9CEB7F578936}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -64,6 +66,10 @@ Global
 		{99F869F8-7BD4-476A-98CA-27C63E89DA93}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{99F869F8-7BD4-476A-98CA-27C63E89DA93}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{99F869F8-7BD4-476A-98CA-27C63E89DA93}.Release|Any CPU.Build.0 = Release|Any CPU
+		{506C003E-8276-48D5-8423-9CEB7F578936}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{506C003E-8276-48D5-8423-9CEB7F578936}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{506C003E-8276-48D5-8423-9CEB7F578936}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{506C003E-8276-48D5-8423-9CEB7F578936}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{A9FC6A37-7E7C-4098-9908-CB2E927B9274}</ProjectGuid>
+    <ProjectGuid>{506C003E-8276-48D5-8423-9CEB7F578936}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Excess.Entensions.XS</RootNamespace>

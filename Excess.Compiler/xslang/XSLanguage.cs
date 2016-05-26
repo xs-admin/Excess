@@ -29,6 +29,14 @@ namespace xslang
 
         public static void Apply(ICompiler<SyntaxToken, SyntaxNode, SemanticModel> compiler)
         {
+            compiler.Environment()
+                .dependency(new string[]
+                {
+                    "System",
+                    "System.Collections.Generic",
+                    "System.Linq"
+                });
+
             DependencyInjection.Apply(compiler);
             Arrays.Apply(compiler);
             Events.Apply(compiler);
