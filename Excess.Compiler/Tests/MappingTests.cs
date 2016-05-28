@@ -3,6 +3,7 @@ using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Excess.Compiler.Roslyn;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Excess.Compiler.Mock;
 
 namespace Tests
 {
@@ -12,7 +13,7 @@ namespace Tests
         [TestMethod]
         public void MappingComments()
         {
-            var tree = Mock.CompileWithMapping(
+            var tree = ExcessMock.CompileWithMapping(
                 @"  class SomeClass
                     {
                         //one line comment                        

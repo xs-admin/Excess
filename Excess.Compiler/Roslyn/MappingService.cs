@@ -122,7 +122,6 @@ namespace Excess.Compiler.Roslyn
                 lineNumber = addToken(result, token, lastLine, lineNumber, ref inHiddenPragma);
             }
 
-            Debug.Assert(lineNumber > 0); //must have mappings
             return result.ToString();
         }
 

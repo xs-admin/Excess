@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>Excess.Extensions.NInjector</id>
+    <version>0.46.0-alpha</version>
+    <authors>Excess</authors>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>C# extensions for dependency injection using NInject</description>
+
+    <dependencies>
+      <dependency id="Ninject" version="3.2.2"/>
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="..\NInjector\bin\Release\NInjector.dll" target="tools\NInjector.dll" />
+    <file src="..\NInjector\bin\Release\NInjector.pdb" target="tools\NInjector.pdb" />
+  </files>
+</package>

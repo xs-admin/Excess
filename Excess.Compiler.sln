@@ -13,12 +13,18 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Nuget", "Nuget", "{50B788E2
 	ProjectSection(SolutionItems) = preProject
 		Excess.Compiler\Nuget\Excess.Compiler.Debug.nuspec = Excess.Compiler\Nuget\Excess.Compiler.Debug.nuspec
 		Excess.Compiler\Nuget\Excess.Compiler.nuspec = Excess.Compiler\Nuget\Excess.Compiler.nuspec
+		Excess.Compiler\Nuget\Excess.Runtime.Debug.nuspec = Excess.Compiler\Nuget\Excess.Runtime.Debug.nuspec
+		Excess.Compiler\Nuget\Excess.Runtime.nuspec = Excess.Compiler\Nuget\Excess.Runtime.nuspec
 		Excess.Compiler\Nuget\publish.bat = Excess.Compiler\Nuget\publish.bat
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Excess.Compiler\Tests\Tests.csproj", "{A968AB3B-1EC6-4577-B095-599D69A88468}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "xslang", "Excess.Compiler\xslang\xslang.csproj", "{ADE4E1F7-1EF1-4C8A-9FBE-63C497EC522B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Excess.Runtime", "Excess.Runtime\Excess.Runtime.csproj", "{62F3B315-2B69-4A4B-A40D-93190F6773D7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Excess.Compiler.Mock", "Excess.Compiler\Excess.Compiler.Mock\Excess.Compiler.Mock.csproj", "{5BDD0791-9973-41A2-BE2E-A2CAA9F5A4CB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -46,6 +52,14 @@ Global
 		{ADE4E1F7-1EF1-4C8A-9FBE-63C497EC522B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ADE4E1F7-1EF1-4C8A-9FBE-63C497EC522B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{ADE4E1F7-1EF1-4C8A-9FBE-63C497EC522B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{62F3B315-2B69-4A4B-A40D-93190F6773D7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{62F3B315-2B69-4A4B-A40D-93190F6773D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{62F3B315-2B69-4A4B-A40D-93190F6773D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{62F3B315-2B69-4A4B-A40D-93190F6773D7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5BDD0791-9973-41A2-BE2E-A2CAA9F5A4CB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5BDD0791-9973-41A2-BE2E-A2CAA9F5A4CB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5BDD0791-9973-41A2-BE2E-A2CAA9F5A4CB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5BDD0791-9973-41A2-BE2E-A2CAA9F5A4CB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

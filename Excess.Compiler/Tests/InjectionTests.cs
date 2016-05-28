@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using xslang;
+using Excess.Compiler.Mock;
 
 namespace Tests
 {
@@ -15,7 +16,7 @@ namespace Tests
         [TestMethod]
         public void InjectionUsage()
         {
-            var tree = Mock.Compile(@"
+            var tree = ExcessMock.Compile(@"
                 class TestClass
                 {
                     inject

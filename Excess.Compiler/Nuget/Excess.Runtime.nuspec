@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+        <id>Excess.Runtime</id>
+        <version>0.46.1-alpha</version>
+        <authors>Excess</authors>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>Excess Runtime</description>
+    </metadata>
+    <files>
+        <file src="..\..\Excess.Runtime\bin\Release\Excess.Runtime.dll" target="lib\Net45\Excess.Runtime.dll" />
+    </files>
+</package>

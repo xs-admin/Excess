@@ -3,17 +3,16 @@ using xs.concurrent;
 
 namespace metaprogramming
 {
-	public service Home
+	public service Home  
 	{
-		ITranspiler _transpiler;
-		//constructor(ITranspiler transpiler)
-		//{
-		//	_transpiler = transpiler;
-		//}   
+		inject 
+		{
+			ITranspiler _transpiler;
+		}   
 
 		public string Transpile(string text)
 		{
-			return _transpiler.Process(text);   
+			return _transpiler.Process(text);    
 		}
 	}
 }

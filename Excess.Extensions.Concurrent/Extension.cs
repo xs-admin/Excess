@@ -163,12 +163,16 @@ namespace Excess.Extensions.Concurrent
                     var property = member as PropertyDeclarationSyntax;
                     fields(property.Identifier, property.Type, null);
                 }
-                else if (member is ConstructorDeclarationSyntax && constructors != null)
-                    constructors((member as ConstructorDeclarationSyntax)
+                else if (member is ConstructorDeclarationSyntax)
+                {
+                    constructors?.Invoke((member as ConstructorDeclarationSyntax)
                         .ParameterList
                         .Parameters);
+                }
                 else
-                    Debug.Assert(false); //td:
+                {
+                    //td: review other member types
+                }
             }
         }
 

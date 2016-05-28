@@ -84,10 +84,6 @@ namespace Excess.VS
 
                 foreach (var dll in dlls)
                 {
-                    var fileName = Path.GetFileName(dll);
-                    if (!fileName.StartsWith("Excess."))
-                        continue; //convention over configuration?
-
                     var assembly = Assembly.LoadFrom(dll);
                     if (assembly == null)
                         continue;
@@ -155,7 +151,14 @@ namespace Excess.VS
                         var compilerFunc = null as CompilerFunc;
                         if (_extensions.TryGetValue(extensionName, out compilerFunc))
                         {
-                            compilerFunc(result, props);
+                            try
+                            {
+                                compilerFunc(result, props);
+                            }
+                            catch (Exception ex)
+                            {
+                                Debug.WriteLine(ex.Message);
+                            }
                             continue;
                         }
                     }

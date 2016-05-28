@@ -6,6 +6,7 @@ using System.Collections.Concurrent;
 
 namespace Excess.Concurrent.Runtime
 {
+    using Excess.Runtime;
     using FactoryFunction = Func<IConcurrentApp, object[], IConcurrentObject>;
     using FactoryMap = Dictionary<string, Func<IConcurrentApp, object[], IConcurrentObject>>;
     using MethodFunc = Action<IConcurrentObject, object[], Action<object>, Action<Exception>>;
@@ -13,9 +14,11 @@ namespace Excess.Concurrent.Runtime
     public abstract class BaseConcurrentApp : IConcurrentApp
     {
         protected FactoryMap _types;
+        protected IInstantiator _instantiator;
         public BaseConcurrentApp(FactoryMap types)
         {
             _types = types;
+            _instantiator = Application.GetService<IInstantiator>();
         }
 
         //type management
@@ -30,13 +33,22 @@ namespace Excess.Concurrent.Runtime
                     return spawnObject(func(this, args)); 
             }
 
-            throw new ArgumentException($"{typeName} can not be created in this app");
+            return null;
         }
 
         public virtual T Spawn<T>() where T : IConcurrentObject, new()
         {
             if (_types != null)
-                return (T)Spawn(typeof(T).Name);
+            {
+                var result = (T)Spawn(typeof(T).Name);
+                return result;
+            }
+
+            if (_instantiator != null)
+            {
+                var result = (T)_instantiator.Create(typeof(T));
+                return result;
+            }
 
             return spawnObject(new T());
         }

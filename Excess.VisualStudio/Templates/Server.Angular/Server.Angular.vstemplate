@@ -55,6 +55,10 @@
       <Folder Name="Properties" TargetFolderName="Properties">
         <ProjectItem ReplaceParameters="true" TargetFileName="AssemblyInfo.cs">AssemblyInfo.cs</ProjectItem>
       </Folder>
+      <Folder Name="server" TargetFolderName="server">
+        <ProjectItem ReplaceParameters="true" TargetFileName="Dependencies.xs">Dependencies.xs</ProjectItem>
+        <ProjectItem ReplaceParameters="true" TargetFileName="Dependencies.xs.cs">Dependencies.xs.cs</ProjectItem>
+      </Folder>
       <ProjectItem ReplaceParameters="true" TargetFileName="Service1.xs">Service1.xs</ProjectItem>
       <ProjectItem ReplaceParameters="true" TargetFileName="Service1.xs.cs">Service1.xs.cs</ProjectItem>
       <ProjectItem ReplaceParameters="false" TargetFileName="xs.packages">xs.packages</ProjectItem>

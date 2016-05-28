@@ -2,13 +2,14 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
         <id>Excess.Server</id>
-        <version>0.46.21-alpha</version>
+        <version>0.47.0-alpha</version>
         <authors>Excess</authors>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>Excess Web App</description>
 
         <dependencies>
-          <dependency id="Excess.Concurrent" version="0.46.7-alpha"/>
+          <dependency id="Excess.Concurrent" version="0.47.0-alpha"/>
+          <dependency id="Excess.Extensions.NInjector" version="0.47.0-alpha"/>
           <dependency id="Newtonsoft.Json" version="8.0.0"/>
           <dependency id="Owin" version="1.0.0"/>
           <dependency id="Microsoft.Owin" version="3.0.0"/>
@@ -21,8 +22,6 @@
     </metadata>
     <files>
         <file src="..\LanguageExtension\bin\Release\Excess.Extensions.Server.dll" target="tools\Excess.Extensions.Server.dll" />
-        <!--<file src="..\..\Excess.Compiler.Razor\bin\Release\Excess.Compiler.Razor.dll" target="tools\Excess.Compiler.Razor.dll" />
-        <file src="..\..\Excess.Compiler.Razor\bin\Release\RazorEngine.dll" target="tools\RazorEngine.dll" />-->
         <file src="install.ps1" target="tools\install.ps1" />
         <file src="..\xss\bin\Release\xss.exe" target="lib\Net45\xss.exe" />
         <file src="..\Middleware\bin\Release\Excess.Server.Middleware.dll" target="lib\Net45\Excess.Server.Middleware.dll" />

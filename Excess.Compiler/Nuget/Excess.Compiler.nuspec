@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
         <id>Excess.Compiler</id>
-        <version>0.46.4-alpha</version>
+        <version>0.47.0-alpha</version>
         <authors>Excess</authors>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>Metaprogramming platform for C#</description>
@@ -14,6 +14,7 @@
     <files>
         <file src="..\bin\Release\Excess.Compiler.dll" target="lib\Net45\Excess.Compiler.dll" />
         <file src="..\xslang\bin\Release\xslang.dll" target="lib\Net45\xslang.dll" />
+        <file src="..\Excess.Compiler.Mock\bin\Release\xslang.dll" target="lib\Net45\Excess.Compiler.Mock.dll" />
         <file src="..\..\Excess.Compiler.Razor\bin\Release\Excess.Compiler.Razor.dll" target="lib\Net45\Excess.Compiler.Razor.dll" />
     </files>
 </package>

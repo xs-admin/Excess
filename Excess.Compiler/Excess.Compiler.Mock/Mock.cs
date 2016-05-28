@@ -8,13 +8,13 @@ using System.Text;
 using System.Threading.Tasks;
 using xslang;
 
-namespace Tests
+namespace Excess.Compiler.Mock
 {
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
     using Compiler = ICompiler<SyntaxToken, SyntaxNode, SemanticModel>;
     using Mapper = IMappingService<SyntaxToken, SyntaxNode>;
 
-    public static class Mock
+    public static class ExcessMock
     {
         public static SyntaxTree CompileWithMapping(string code, Action<Compiler> builder = null)
         {

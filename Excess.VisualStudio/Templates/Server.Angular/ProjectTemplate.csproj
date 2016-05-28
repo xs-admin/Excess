@@ -46,7 +46,10 @@
     <Compile Include="Service1.xs.cs">
       <DependentUpon>Service1.xs</DependentUpon>
     </Compile>
-	</ItemGroup>
+    <Compile Include="server\Dependencies.xs.cs">
+      <DependentUpon>Dependencies.xs</DependentUpon>
+    </Compile>
+  </ItemGroup>
   <ItemGroup>
     <Content Include="client\app\app.css" />
     <Content Include="client\app\app.js" />
@@ -67,6 +70,7 @@
   <ItemGroup>
     <None Include="client\LICENSE" />
     <None Include="client\README.md" />
+    <None Include="server\Dependencies.xs" />
     <None Include="Service1.xs" />
     <None Include="xs.packages" />
   </ItemGroup>

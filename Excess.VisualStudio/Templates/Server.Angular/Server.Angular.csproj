@@ -78,6 +78,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <None Include="server\Dependencies.xs.cs">
+      <DependentUpon>Dependencies.xs</DependentUpon>
+    </None>
+    <None Include="server\Dependencies.xs" />
     <None Include="Service1.xs.cs">
       <DependentUpon>Service1.xs</DependentUpon>
     </None>

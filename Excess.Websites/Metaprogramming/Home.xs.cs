@@ -1,5 +1,7 @@
 ﻿#line 1 "C:\dev\Excess\Excess.Websites\metaprogramming\Home.xs"
 using System;
+#line hidden
+
 using System.Collections.Generic;
 using System.Linq;
 using Middleware;
@@ -7,63 +9,128 @@ using System.Threading;
 using System.Threading.Tasks;
 using Excess.Concurrent.Runtime;
 
+
 #line 4
 namespace metaprogramming
+
 #line 5
 {
-    [Service(id: "9abac447-8bfb-4ee1-b27a-6b40bc15cbc2")]
-    [Concurrent(id = "fea753ec-3743-4baf-a550-fe7798e43fec")]
+#line hidden
+
+    [Service(id: "ce2afa92-5c34-4ead-b484-83031b80f0f3")]
+    [Concurrent(id = "00c61830-fa47-4742-b542-f4495dbb5304")]
+
 #line 6
     public class Home : ConcurrentObject
+#line hidden
+
+
 #line 7
     {
-#line 8
-        ITranspiler _transpiler;
-        [Concurrent]
+#line hidden
+
+        public 
+#line 6
+Home(
 #line 10
-        //constructor(ITranspiler transpiler)
-        //{
-        //	_transpiler = transpiler;
-        //}   
-        public string Transpile(string text)
+ITranspiler ___transpiler)
+#line hidden
+
         {
-            return Transpile(text, default (CancellationToken)).Result;
+
+#line 10
+            _transpiler = ___transpiler;
+#line hidden
+
         }
 
-        private IEnumerable<Expression> __concurrentTranspile(string text, CancellationToken __cancellation, Action<object> __success, Action<Exception> __failure)
-#line 11
+        [Concurrent]
+
+#line 13
+        public string Transpile(string text)
+#line hidden
+
         {
+            return 
+#line 13
+Transpile(text, default (CancellationToken)).Result;
+#line hidden
+
+        }
+
+        private IEnumerable<Expression> __concurrentTranspile
+#line 13
+(string text, CancellationToken __cancellation, Action<object> __success, Action<Exception> __failure)
+
+#line 14
+        {
+#line hidden
+
             {
                 __dispatch("Transpile");
                 if (__success != null)
-#line 12
-                    __success(_transpiler.Process(text));
+                    __success(
+#line 15
+_transpiler.Process(text));
+#line hidden
+
                 yield break;
             }
-#line 13
+
+#line 16
         }
 
-#line 10
-        public Task<string> Transpile(string text, CancellationToken cancellation)
+#line hidden
+
+        public Task<
+#line 13
+string> Transpile(string text, CancellationToken cancellation)
+#line hidden
+
         {
-            var completion = new TaskCompletionSource<string>();
-            Action<object> __success = (__res) => completion.SetResult((string)__res);
+            var completion = new TaskCompletionSource<
+#line 13
+string>();
+#line hidden
+
+            Action<object> __success = (__res) => completion.SetResult((
+#line 13
+string)__res);
+#line hidden
+
             Action<Exception> __failure = (__ex) => completion.SetException(__ex);
             var __cancellation = cancellation;
-            __enter(() => __advance(__concurrentTranspile(text, __cancellation, __success, __failure).GetEnumerator()), __failure);
+            __enter(() => __advance(__concurrentTranspile(
+#line 13
+text, __cancellation, __success, __failure).GetEnumerator()), __failure);
+#line hidden
+
             return completion.Task;
         }
 
-        public void Transpile(string text, CancellationToken cancellation, Action<object> success, Action<Exception> failure)
+        public void Transpile(
+#line 13
+string text, CancellationToken cancellation, Action<object> success, Action<Exception> failure)
+#line hidden
+
         {
             var __success = success;
             var __failure = failure;
             var __cancellation = cancellation;
-            __enter(() => __advance(__concurrentTranspile(text, __cancellation, __success, __failure).GetEnumerator()), failure);
+            __enter(() => __advance(__concurrentTranspile(
+#line 13
+text, __cancellation, __success, __failure).GetEnumerator()), failure);
+#line hidden
+
         }
 
         public readonly Guid __ID = Guid.NewGuid();
-#line 14
+
+#line 10
+        ITranspiler _transpiler;
+
+#line 17
     }
-#line 15
+
+#line 18
 }
