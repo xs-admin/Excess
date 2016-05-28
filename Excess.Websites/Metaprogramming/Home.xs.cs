@@ -17,8 +17,8 @@ namespace metaprogramming
 {
 #line hidden
 
-    [Service(id: "ce2afa92-5c34-4ead-b484-83031b80f0f3")]
-    [Concurrent(id = "00c61830-fa47-4742-b542-f4495dbb5304")]
+    [Service(id: "7c8e5b77-4c5b-4137-8551-2f2bfa561dc5")]
+    [Concurrent(id = "91bcaacf-fb50-4d9b-a7f8-ce670fd386d5")]
 
 #line 6
     public class Home : ConcurrentObject

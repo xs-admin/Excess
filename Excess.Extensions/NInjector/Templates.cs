@@ -7,6 +7,7 @@ namespace NInjector
     {
         public static Template Bind = Template.ParseStatement("Bind<__0>().To<__1>();");
         public static ClassDeclarationSyntax Module = Template.Parse(@"
+            [AutoInit]
             public class NinjectExcessModule : Ninject.Modules.NinjectModule
             {
                 private class NinjectInstantiator : IInstantiator
@@ -19,7 +20,7 @@ namespace NInjector
                     }
                 }
 
-                static NinjectExcessModule()
+                public static void __init()
                 {
                     Application.RegisterService<IInstantiator>(new NinjectInstantiator());
                 }   

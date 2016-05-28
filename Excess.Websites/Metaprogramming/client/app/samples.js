@@ -18,7 +18,25 @@ MetaProgrammingSamples : [
 
 ],
 
-DataProgrammingDataTypes : { 
+MetaProgrammingResults: [
+"//array sample" + '\n' + 
+"using System;" + '\n' + 
+"using System.Collections.Generic;" + '\n' + 
+"using System.Linq;" + '\n' + 
+"" + '\n' + 
+"//demonstrates javascript-like arrays," + '\n' + 
+"//which c# should have anyway." + '\n' + 
+"class Demo" + '\n' + 
+"{" + '\n' + 
+"    public static void Start()" + '\n' + 
+"    {" + '\n' + 
+"        var intArray = new[]{1, 2, 3};" + '\n' + 
+"    }" + '\n' + 
+"}",
+
+],
+
+DataProgrammingDataTypes: {
     number : 
     {
         color: "yellow"

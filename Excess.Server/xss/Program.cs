@@ -17,7 +17,8 @@ namespace xss
             var concurrentClasses = null as IEnumerable<Type>;
             var concurrentInstances = null as IEnumerable<KeyValuePair<Guid, Type>>;
             var staticFiles = null as string;
-            if (!parseArguments(args, out errors, out url, out concurrentClasses, out concurrentInstances, out staticFiles))
+            var assemblies = null as IEnumerable<Assembly>;
+            if (!parseArguments(args, out errors, out url, out concurrentClasses, out concurrentInstances, out staticFiles, out assemblies))
             {
                 Console.Write(errors);
                 return;
@@ -27,16 +28,24 @@ namespace xss
             HttpServer.Start(url,
                 classes: concurrentClasses,
                 instances: concurrentInstances,
-                staticFiles: staticFiles);
+                staticFiles: staticFiles,
+                assemblies: assemblies);
         }
 
-        private static bool parseArguments(string[] args, out string errors, out string url, out IEnumerable<Type> concurrentClasses, out IEnumerable<KeyValuePair<Guid, Type>> concurrentInstances, out string staticFiles)
+        private static bool parseArguments(string[] args, 
+            out string errors, 
+            out string url, 
+            out IEnumerable<Type> concurrentClasses, 
+            out IEnumerable<KeyValuePair<Guid, Type>> concurrentInstances, 
+            out string staticFiles,
+            out IEnumerable<Assembly> assemblies)
         {
             errors = null;
             url = null;
             concurrentClasses = null;
             concurrentInstances = null;
             staticFiles = null;
+            assemblies = null;
 
             if (args.Length < 1 || args.Length > 3)
             {
@@ -56,11 +65,15 @@ namespace xss
                     staticFiles = staticFiles.Substring(1, staticFiles.Length - 2);
             }
 
-            concurrentAssemblies(target, out errors, out concurrentClasses, out concurrentInstances);
+            concurrentAssemblies(target, out errors, out concurrentClasses, out concurrentInstances, out assemblies);
             return errors == null;
         }
 
-        private static void concurrentAssemblies(string filePath, out string errors, out IEnumerable<Type> concurrentClasses, out IEnumerable<KeyValuePair<Guid, Type>> concurrentInstances)
+        private static void concurrentAssemblies(string filePath, 
+            out string errors, 
+            out IEnumerable<Type> concurrentClasses, 
+            out IEnumerable<KeyValuePair<Guid, Type>> concurrentInstances,
+            out IEnumerable<Assembly> assemblies)
         {
             var files = File.Exists(filePath)
                 ? new[] { filePath }
@@ -68,7 +81,7 @@ namespace xss
                     .EnumerateFiles(filePath)
                     .Where(file => file.StartsWith("Excess.") && Path.GetExtension(file) == ".dll");
 
-            var assemblies = files
+            assemblies = files
                 .Select(file => Assembly.LoadFrom(file));
 
             var found = false;

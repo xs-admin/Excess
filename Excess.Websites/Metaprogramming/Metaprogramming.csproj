@@ -32,15 +32,23 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Excess.Compiler, Version=1.0.0.0, Culture=neutral, PublicKeyToken=b0e2cc790a4c1b9e, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Compiler.0.46.18-alpha\lib\Net45\Excess.Compiler.dll</HintPath>
+      <HintPath>..\packages\Excess.Compiler.0.46.20-alpha\lib\Net45\Excess.Compiler.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Excess.Compiler.Mock, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Excess.Compiler.0.46.20-alpha\lib\Net45\Excess.Compiler.Mock.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Compiler.Razor, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Compiler.0.46.18-alpha\lib\Net45\Excess.Compiler.Razor.dll</HintPath>
+      <HintPath>..\packages\Excess.Compiler.0.46.20-alpha\lib\Net45\Excess.Compiler.Razor.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Excess.Runtime, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Excess.Runtime.0.46.4-alpha\lib\Net45\Excess.Runtime.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Server.Middleware, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Server.0.46.32-alpha\lib\Net45\Excess.Server.Middleware.dll</HintPath>
+      <HintPath>..\packages\Excess.Server.0.46.40-alpha\lib\Net45\Excess.Server.Middleware.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.AspNet.Razor, Version=4.0.0.0, Culture=neutral, processorArchitecture=MSIL">
@@ -103,6 +111,10 @@
       <HintPath>..\packages\Newtonsoft.Json.8.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="Ninject, Version=3.2.0.0, Culture=neutral, PublicKeyToken=c7192dc5380945e7, processorArchitecture=MSIL">
+      <HintPath>..\packages\Ninject.3.2.2.0\lib\net45-full\Ninject.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Owin, Version=1.0.0.0, Culture=neutral, PublicKeyToken=f0ebd12fd5e55cc5, processorArchitecture=MSIL">
       <HintPath>..\packages\Owin.1.0\lib\net40\Owin.dll</HintPath>
       <Private>True</Private>
@@ -112,7 +124,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Runtime, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Concurrent.0.46.15-alpha\lib\Net45\Runtime.dll</HintPath>
+      <HintPath>..\packages\Excess.Concurrent.0.46.16-alpha\lib\Net45\Runtime.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
@@ -149,11 +161,11 @@
     </Reference>
     <Reference Include="System.Xml" />
     <Reference Include="xslang, Version=1.0.0.0, Culture=neutral, PublicKeyToken=a8909f1e5623e4ea, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Compiler.0.46.18-alpha\lib\Net45\xslang.dll</HintPath>
+      <HintPath>..\packages\Excess.Compiler.0.46.20-alpha\lib\Net45\xslang.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="xss, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Server.0.46.32-alpha\lib\Net45\xss.exe</HintPath>
+      <HintPath>..\packages\Excess.Server.0.46.40-alpha\lib\Net45\xss.exe</HintPath>
       <Private>True</Private>
     </Reference>
   </ItemGroup>
@@ -163,6 +175,9 @@
     </Compile>
     <Compile Include="ITranspiler.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="server\Dependencies.xs.cs">
+      <DependentUpon>Dependencies.xs</DependentUpon>
+    </Compile>
     <Compile Include="server\Transpiler.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -195,6 +210,7 @@
     <None Include="packages.config">
       <SubType>Designer</SubType>
     </None>
+    <None Include="server\Dependencies.xs" />
   </ItemGroup>
   <ItemGroup>
     <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.1.1.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.Analyzers.dll" />

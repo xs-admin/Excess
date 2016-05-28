@@ -2,14 +2,15 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
         <id>Excess.Server</id>
-        <version>0.46.35-alpha</version>
+        <version>0.46.41-alpha</version>
         <authors>Excess</authors>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>Excess Web App</description>
 
         <dependencies>
+          <dependency id="Excess.Runtime" version="0.46.5-alpha"/>
           <dependency id="Excess.Concurrent" version="0.46.16-alpha"/>
-          <dependency id="Excess.Extensions.NInjector" version="0.46.5-alpha"/>
+          <dependency id="Excess.Extensions.NInjector" version="0.46.8-alpha"/>
           <dependency id="Newtonsoft.Json" version="8.0.0"/>
           <dependency id="Owin" version="1.0.0"/>
           <dependency id="Microsoft.Owin" version="3.0.0"/>

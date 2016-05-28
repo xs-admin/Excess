@@ -33,9 +33,19 @@ angular.module('metaprogramming', [
 
     $scope.transpileExample = function () {
         var text = sourceEditor.getValue();
+        var result = "";
+        for (var i = 0; i < Samples.MetaProgrammingSamples.length; i++)
+        {
+            if (text == Samples.MetaProgrammingSamples[i])
+            {
+                transpileEditor.setValue(Samples.MetaProgrammingResults[i]);
+                return; //cached
+            }
+        }
+
         Home.Transpile(text)
             .then(function (value){
-                transpileEditor.setValue(value);
+                transpileEditor.setValue(value.data.__res);
                 transpileEditor.focus();
             });
     }

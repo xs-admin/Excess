@@ -1,13 +1,15 @@
 ﻿using System;
 using System.Threading;
 using System.Collections.Generic;
+using System.IO;
 using Owin;
 using Microsoft.Owin.Hosting;
 using Excess.Concurrent.Runtime;
-using System.IO;
 using Microsoft.Owin.StaticFiles;
 using Microsoft.Owin.FileSystems;
 using Microsoft.Owin;
+using Excess.Runtime;
+using System.Reflection;
 
 namespace Middleware
 {
@@ -19,9 +21,16 @@ namespace Middleware
             int threads = 4,
             string staticFiles = null,
             int nodes = 0,
+            IEnumerable<Assembly> assemblies = null,
             IEnumerable<Type> classes = null,
             IEnumerable<KeyValuePair<Guid, Type>> instances = null)
         {
+            if (assemblies != null)
+                Application.Start(assemblies);
+
+            var instantiator = Application.GetService<IInstantiator>()
+                ?? new DefaultInstantiator();
+
             using (WebApp.Start(url, (builder) =>
             {
                 if (staticFiles != null)
@@ -60,7 +69,7 @@ namespace Middleware
                     {
                         foreach (var instance in instances)
                         {
-                            server.RegisterInstance(instance.Key, (IConcurrentObject)Activator.CreateInstance(instance.Value));
+                            server.RegisterInstance(instance.Key, (IConcurrentObject)instantiator.Create(instance.Value)); 
                         }
                     }
 

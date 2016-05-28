@@ -2,14 +2,14 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
         <id>Excess.Extensions.NInjector</id>
-        <version>0.46.5-alpha</version>
+        <version>0.46.8-alpha</version>
         <authors>Excess</authors>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>C# extensions for dependency injection using NInject</description>
 
         <dependencies>
           <dependency id="Ninject" version="3.2.2"/>
-          <dependency id="Excess.Runtime" version="0.46.2-alpha"/>
+          <dependency id="Excess.Runtime" version="0.46.5-alpha"/>
         </dependencies>
     </metadata>
     <files>

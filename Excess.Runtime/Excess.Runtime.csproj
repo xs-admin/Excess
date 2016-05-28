@@ -41,6 +41,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Application.cs" />
+    <Compile Include="Attributes.cs" />
+    <Compile Include="DefaultInstantiator.cs" />
     <Compile Include="Instantiator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
