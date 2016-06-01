@@ -17,8 +17,8 @@ namespace metaprogramming
 {
 #line hidden
 
-    [Service(id: "7c8e5b77-4c5b-4137-8551-2f2bfa561dc5")]
-    [Concurrent(id = "91bcaacf-fb50-4d9b-a7f8-ce670fd386d5")]
+    [Service(id: "b50d32d1-0b9f-4418-a4a7-defbe02be385")]
+    [Concurrent(id = "9b456878-dad4-4c99-a4d4-0d6eeb18d7c1")]
 
 #line 6
     public class Home : ConcurrentObject
@@ -64,7 +64,7 @@ Transpile(text, default (CancellationToken)).Result;
 
 #line 14
         {
-#line hidden
+#line default
 
             {
                 __dispatch("Transpile");
