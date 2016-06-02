@@ -53,6 +53,11 @@ namespace Excess.VS
                              )]
 
     [ProvideLanguageExtensionAttribute(typeof(ExcessLanguageService), ".xs")]
+
+    [ProvideXmlEditorChooserDesignerView("Excess Graph", "xsgraph", LogicalViewID.Designer, 0x60,
+        DesignerLogicalViewEditor = typeof(EditorFactory),
+        MatchExtensionAndNamespace = false)]
+
     [ProvideBindingPath]
     public sealed class VSPackage : Package, IOleComponent
     {

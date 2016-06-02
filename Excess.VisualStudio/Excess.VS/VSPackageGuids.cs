@@ -17,5 +17,9 @@ namespace Excess.VS
         /// VSPackage GUID string.
         /// </summary>
         public const string PackageGuidString = "d3c4166c-b9e0-48f3-a01d-c46d38c4ed2e";
+
+        public const string DesignerEditorFactoryString = "6bf3ea12-98bb-41e2-ba01-8662f713d293";
+        public static readonly Guid DesignerEditorFactory = new Guid(DesignerEditorFactoryString);
+
     }
 }
