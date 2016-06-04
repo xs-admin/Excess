@@ -39,8 +39,13 @@ namespace metaprogramming.server
 ITranspiler>().To<Transpiler>();
 #line hidden
 
+            Bind<
+#line 8
+IGraphTranspiler>().To<GraphTranspiler>();
+#line hidden
+
         }
     }
 
-#line 9
+#line 10
 }

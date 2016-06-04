@@ -20,6 +20,22 @@
                 return deferred.promise;
             }
 
+            this.TranspileGraph = function (text)
+            {
+                var deferred = $q.defer();
 
-                this.__ID = 'b50d32d1-0b9f-4418-a4a7-defbe02be385';
+                $http.post('/' + this.__ID + '/TranspileGraph', {
+                    text : text,
+
+                }).then(function(response) {
+                    deferred.resolve(response);
+                }, function(ex){
+                    deferred.reject(ex);
+                });
+
+                return deferred.promise;
+            }
+
+
+                this.__ID = 'd9042c75-1156-423a-8b38-caa4b870d704';
             }])

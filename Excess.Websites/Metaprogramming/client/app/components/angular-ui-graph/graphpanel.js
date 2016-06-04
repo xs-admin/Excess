@@ -1,4 +1,72 @@
 
+var createGraphPanel;
+
+(function(){
+
+createGraphPanel = function(canvas, style)
+{
+	return new GraphPanel(canvas, style);
+}
+
+function $$(item, thiz, a1, a2, a3, a4)
+{
+	return (typeof item == 'function') ? item.call(thiz, a1, a2, a3, a4) : item;
+}
+
+function $$menu(menu, thiz, a1, a2, a3, a4)
+{
+	if (menu === undefined)
+		return undefined;
+	
+	var newMenu = $$(menu, thiz, a1, a2, a3, a4);
+	newMenu = copyJSON(newMenu, false);
+	
+	if (typeof newMenu == 'string')
+		newMenu = { label: newMenu };
+	else
+	{
+		if (newMenu.label)
+			newMenu.label = $$(newMenu.label, thiz, a1, a2, a3, a4);
+		if ('disabled' in newMenu)
+			newMenu.disabled = $$(newMenu.disabled, thiz, a1, a2, a3, a4);
+	}
+	
+	if (newMenu.items)
+	{
+		newMenu.items = $$(newMenu.items, thiz, a1, a2, a3, a4);
+		
+		newMenu.items = newMenu.items.map(function(menuItem)
+		{
+			var newItem = $$menu(menuItem, thiz, a1, a2, a3, a4);
+			return newItem;
+		});
+	}
+		
+	return newMenu;
+}
+
+function concatMenu(menu1, menu2)
+{
+	var menuRes = { items: [], onClick: (menu1 && menu1.onClick) };
+	menuRes.items = menu1 && menu1.items.concat();
+	if (menuRes && menuRes.items.length > 0)
+	{
+		if (menu2 && menu2.items.length > 0)
+		{
+			menuRes.items = menuRes.items.concat('-', menu2.items.map(function(item)
+			{
+				newItem = copyJSON(item);
+				if (!item.onClick && menu2.onClick)
+					newItem.onClick = menu2.onClick;
+				return newItem;
+			}));
+		}
+	}
+	else
+		menuRes.items = menu2 && menu2.items.concat();
+	
+	return (menuRes && menuRes.items.length > 0) ? menuRes : undefined;
+}
 
 var GRAPH_SCROLL_MARGIN = 40;
 var GRAPH_SCROLL_SPEED = 0.4;
@@ -7,25 +75,46 @@ var GRAPH_MAX_ZOOM = 2.0;
 
 var __VALUE_CACHE = {};
 var __VALUE_CACHE_ID = 1;
+
 function getUniqueID()
 {
-	//__VALUE_CACHE.push(undefined);
 	return __VALUE_CACHE_ID++;
-	//return __VALUE_CACHE.length;
 }
 
 function resetCache()
 {
-	//__VALUE_CACHE_ID
-	console.log('cache reset');
+	//console.log('cache reset');
 	__VALUE_CACHE = {};
 }
 
 function arrayToJSON(array1)
-	{
+{
     return array1.map(function(item) { return item.toJSON() });
-	}
+}
 
+function copyJSON(source, deep)
+{
+	deep = deep === undefined ? true : false;
+	if (source instanceof Array)
+	{
+		var newArray = new Array(source.length);
+		for(var i=0; i<source.length; i++)
+			newArray[i] = deep ? copyJSON(source[i], true) : source[i];
+			
+		return newArray;
+	}
+	else if (typeof source == "object")
+	{
+		var dest = {};
+		for(var item in source)
+			dest[item] = deep ? copyJSON(source[item], true) : source[item];
+			
+		return dest;
+	}
+	else
+		return source;
+}
+	
 function getDefaultGraphStyle()
 {
 	return {
@@ -44,7 +133,7 @@ function getDefaultGraphStyle()
 			socket : 
 			{
 				radius : 5,
-				separation : 8,
+				vmargin : 8,
 				hitZoneBleed : 2,
 				font : "10px sans-serif",
 				textColor : "rgb(44, 44, 44)",
@@ -105,17 +194,19 @@ function mixStyles(style1, style2, style3)
 
 function getSocketHeight(socketStyle)
 {
-	return socketStyle.radius*2 + socketStyle.separation;
+	return socketStyle.radius*2;// + socketStyle.vmargin;
 }
 
 function getNodeTopMargin(nodeStyle)
 {
-	return (nodeStyle.headerSize > 0) ? nodeStyle.headerSize + GRAPH_NODE_EXTRA_VMARGIN : nodeStyle.cornerRadius + GRAPH_NODE_EXTRA_VMARGIN;
+	return (nodeStyle.headerSize > 0) 
+		? nodeStyle.headerSize + nodeStyle.socket.vmargin/2 + GRAPH_NODE_EXTRA_VMARGIN
+		: nodeStyle.cornerRadius + nodeStyle.socket.vmargin/2 + GRAPH_NODE_EXTRA_VMARGIN;
 }
 
 function getNodeBottomMargin(nodeStyle)
 {
-	return nodeStyle.cornerRadius + GRAPH_NODE_EXTRA_VMARGIN;
+	return nodeStyle.cornerRadius;// + GRAPH_NODE_EXTRA_VMARGIN;
 }
 
 function getElementPosition(element) 
@@ -256,6 +347,8 @@ function Rectangle(x, y, width, height)
 	
 Rectangle.prototype = 
 {
+	top: function() { return this.y; },
+	left: function() { return this.x; },
 	right: function() { return this.x + this.width; },
 	bottom: function() { return this.y + this.height; },
 	center: function() { return new Point(this.x + this.width/2, this.y + this.height/2); },
@@ -300,11 +393,13 @@ Rectangle.prototype =
 // GraphSocket
 //---------------------------------------------------------------------------------------------------
 
-function GraphSocket(name, parentNode, socketDir, dataType)
+function GraphSocket(name, label, parentNode, socketDir, dataType, def)
 {
 	this.parentNode = parentNode;
+	this.panel = parentNode.panel;
 	this.socketDir = socketDir;
 	this.uniqueID = getUniqueID();
+	this.def = def;
 	
 	Object.defineProperty(this, "name", 
 	{
@@ -314,11 +409,7 @@ function GraphSocket(name, parentNode, socketDir, dataType)
 				return;  // nothing to change
 			
 			this._name = x;
-			if (this.parentNode.panel)
-			{
-				//this.parentNode.customSockets = true;
-				this.parentNode.panel.update();
-			}
+			this.panel && this.panel.update();
 		},
 		get: function () 
 		{
@@ -344,12 +435,12 @@ function GraphSocket(name, parentNode, socketDir, dataType)
 			
 			this._dataType = newDataType;
 			
-			if (this.parentNode.panel)
+			if (this.panel)
 			{
 				//this.parentNode.customSockets = true;
 				if (this.socketDir == "output")
 				{
-					var inputs = this.parentNode.panel.getLinkedInputs(this)
+					var inputs = this.panel.getLinkedInputs(this)
 					for(var idx in inputs)
 					{
 						var input = inputs[idx];
@@ -361,106 +452,102 @@ function GraphSocket(name, parentNode, socketDir, dataType)
 				}
 				
 				this.parentNode.update();
-				this.parentNode.panel.update();
+				this.panel.update();
 			}
 		},
 		get: function () 
 		{
-			return this._dataType;
+			if (this.isGeneric)
+				return (this.linkedOutput && this.linkedOutput.dataType) || '*';
+			else
+				return $$(this._dataType, this.parentNode);
 		}
 	});
 	
 	this._dataType = dataType;
 	this.isGeneric = (dataType == '*');
 	this.name = name;
+	this.label = label;
 }
 
 GraphSocket.prototype = 
 {
 	toJSON: function()
 	{
-		return { name : this.name, dataType : this.dataType };
+		return { 'name' : this.name, 'dataType' : this.dataType };
 	},
 	
-	getArea: function()
+	disconnect: function()
 	{
-		var rect;
-		var nodeStyle = this.parentNode.getStyle();
-		var topMargin = getNodeTopMargin(nodeStyle);
-
-		if (this.socketDir == "input")
-		{
-			var socketIndex = this.parentNode.getInputIndex(this);
-			rect = new Rectangle(this.parentNode.x - nodeStyle.socket.radius, 
-				this.parentNode.y + topMargin + nodeStyle.socket.separation/2 + 
-				socketIndex * getSocketHeight(nodeStyle.socket),
-				nodeStyle.socket.radius*2, nodeStyle.socket.radius*2);
-		}
-		else
-		{
-			var socketIndex = this.parentNode.getOutputIndex(this);
-			rect = new Rectangle(this.parentNode.x + this.parentNode.width - nodeStyle.socket.radius,
-				this.parentNode.y + topMargin + nodeStyle.socket.separation/2 + 
-				socketIndex * getSocketHeight(nodeStyle.socket),
-				nodeStyle.socket.radius*2, nodeStyle.socket.radius*2);
-		}
-
-		return rect;
+		var panel = this.panel;
+		panel.getLinksBySocket(this).forEach(function(link) { panel.deleteLink(link) });
 	},
 	
-	connectToOutput: function(outputSocket)
+	_connectToOutput: function(outputSocket)
 	{
 		this.linkedOutput = outputSocket;
 	},
 	
 	evaluate: function()
 	{
-		var result = __VALUE_CACHE[this.uniqueID];
-		if (result)
-			return result;
+		if (this.uniqueID in __VALUE_CACHE)
+			return __VALUE_CACHE[this.uniqueID];
+		var result;
 		
         if (this.socketDir == "output")
-		{	// use the "evaluate" function from the socket definition
-			var nodeDef = this.parentNode.typeName && this.parentNode.panel.nodeTypes[this.parentNode.typeName];
-			if (nodeDef)
-			{
-				// evaluate all the inputs of the parent node
-				//this.parentNode.evaluate();
-				
-				var socketIndex = this.parentNode.getOutputIndex(this);
-				var fnEvaluate = socketIndex >= 0 && nodeDef.output[socketIndex].evaluate;
-				result = fnEvaluate && fnEvaluate(this.parentNode);
-			}
-		}
+			// use the "evaluate" function from the socket definition
+			result = this.def && this.def.onEvaluate && this.def.onEvaluate.call(this.parentNode);
 		else
-		{	// input socket, use the data from the linked conector
-			var linkedOutput = this.parentNode.panel.getLinkedOutput(this);
+		{	// input socket, use the data from the linked socket
+			var linkedOutput = this.panel.getLinkedOutput(this);
 			if (linkedOutput)
-				result = linkedOutput && linkedOutput.evaluate(this.parentNode);
+				result = linkedOutput.evaluate(this.parentNode);
 			else
-			{	// if the socket is not connected, use the default value
-				var nodeDef = this.parentNode.typeName && this.parentNode.panel.nodeTypes[this.parentNode.typeName];
-				if (nodeDef)
-				{
-					var socketIndex = this.parentNode.getInputIndex(this);
-					result = (socketIndex >= 0) ? nodeDef.input[socketIndex]["default"] : undefined;
-				}
-			}
+				// if the socket is not connected, use the default value
+				result = this.def && this.def.default;
 		}
 		
 		__VALUE_CACHE[this.uniqueID] = result;
 		return result;
 	},
 	
+	getMenu : function()
+	{
+		return this.def && this.def.menu;
+	},
+
+	getRect: function()
+	{
+		var rect;
+		var nodeStyle = this.parentNode.getStyle();
+		//var topMargin = getNodeTopMargin(nodeStyle);
+		var yc = (this.rc.top() + this.rc.bottom()) / 2;
+
+		if (this.socketDir == "input")
+		{
+			rect = new Rectangle(this.parentNode.x - nodeStyle.socket.radius, 
+				this.parentNode.y + yc - nodeStyle.socket.radius,
+				nodeStyle.socket.radius*2, nodeStyle.socket.radius*2);
+		}
+		else
+		{
+			rect = new Rectangle(this.parentNode.x + this.parentNode.width - nodeStyle.socket.radius, 
+				this.parentNode.y + yc - nodeStyle.socket.radius,
+				nodeStyle.socket.radius*2, nodeStyle.socket.radius*2);
+		}
+
+		return rect;
+	},
+	
 	getHitArea: function()
 	{
-		return this.getArea().inflate(this.parentNode.getStyle().socket.hitZoneBleed);
+		return this.getRect().inflate(this.parentNode.getStyle().socket.hitZoneBleed);
 	},
 	
     getTextPosition: function(context)
     {
         var ptText;
-		var rect = this.getArea();
+		var rect = this.getRect();
 
         if (this.socketDir == "input")
         {
@@ -468,11 +555,18 @@ GraphSocket.prototype =
         }
         else
         {
-            var measure = context.measureText(this.name);
+            var measure = context.measureText(this.getLabel());
             ptText = new Point(rect.x - 2 - measure.width, rect.y);
+			if (ptText.x < this.parentNode.x + 2)
+				ptText.x = this.parentNode.x + 2;
 		}
 
         return ptText;
+	},
+	
+	getLabel: function()
+	{
+		return this.label === undefined ? this.name : typeof(this.label) == 'function' ? this.label.call(this.parentNode) : this.label;
 	},
 	
 	draw: function(context, graphPanel)
@@ -487,14 +581,11 @@ GraphSocket.prototype =
 		}
 		
 		var socketStyle = this.parentNode.getStyle().socket;
-		var rect = this.getArea();
+		var rect = this.getRect();
 		context.beginPath();
+		context.lineWidth = 1;
 		var fillColor = typeDef ? typeDef.color : socketStyle.defaultColor;
 		context.fillStyle = fillColor;
-		//context.fillRect(rect.x, rect.y, rect.width, rect.height);
-		//drawRect(context, socketStyle.outlineColor, rect.x, rect.y, rect.width, rect.height);
-		
-		context.lineWidth = 1;
 		context.strokeStyle = socketStyle.outlineColor;
 		var ptCenter = rect.center();
 		context.arc(ptCenter.x, ptCenter.y, socketStyle.radius, 0, 2*Math.PI, true);
@@ -503,7 +594,15 @@ GraphSocket.prototype =
 		context.closePath();
 
 		if (graphPanel.zoom >= 0.5)
-		{
+		{	// draw the text of the socket
+			context.save();
+			context.beginPath();
+			if (this.socketDir == "output")
+				context.rect(this.parentNode.x+2, rect.top(), this.parentNode.width-rect.width/2-4, rect.height);
+			else
+				context.rect(rect.right()+2, rect.top(), this.parentNode.width-rect.width/2-4, rect.height);
+			context.clip();
+
 			var pt = this.getTextPosition(context);
 
 			if (socketStyle.textColor == "" || socketStyle.textColor == "dataType")
@@ -512,8 +611,10 @@ GraphSocket.prototype =
 				context.fillStyle = socketStyle.textColor;
 			context.font = socketStyle.font;
 			context.textBaseline = "middle";
-			context.fillText(this.name, pt.x, pt.y + socketStyle.radius);
+			context.fillText(this.getLabel(), pt.x, pt.y + socketStyle.radius);
 			context.textBaseline = "top";
+			
+			context.restore();
 		}
 	}
 }
@@ -538,7 +639,7 @@ GraphDragLink.prototype =
 	
 	draw: function(context, graphPanel)
 	{
-		var ptStart = this.socket.getArea().center();
+		var ptStart = this.socket.getRect().center();
 		
 		context.beginPath();
 		context.lineWidth = graphPanel.style.link.lineWidth;
@@ -586,15 +687,17 @@ GraphLink.prototype =
 		return { 
 			"outputNode": graphPanel.getNodeIndex(outputNode), 
 			"outputSocket": outputNode.getOutputIndex(this.outputSocket),
-			"inputNode": graphPanel.getNodeIndex(inputNode), 
-			"inputSocket": inputNode.getInputIndex(this.inputSocket)
+			"outputSocketName": this.outputSocket._name,
+			"inputNode": graphPanel.getNodeIndex(inputNode),
+			"inputSocket": inputNode.getInputIndex(this.inputSocket),
+			"inputSocketName": this.inputSocket._name,
 		}
 	},
 	
 	draw: function(context, graphPanel)
 	{
-		var ptOutput = this.outputSocket.getArea().center();
-		var ptInput = this.inputSocket.getArea().center();
+		var ptOutput = this.outputSocket.getRect().center();
+		var ptInput = this.inputSocket.getRect().center();
 		
 		var strokeStyle;
 		
@@ -636,45 +739,60 @@ function GraphNode(panel, typeName, name, x, y, width, height, style)
 {
 	//this.name = name;
 	this.panel = panel;
-	//this._onUpdate = undefined;
 	this.typeName = typeName;
-	var nodeDef = typeName && panel.nodeTypes && panel.nodeTypes[typeName];
-	//if (nodeDef && nodeDef.onUpdate)
-	//	this._onUpdate = nodeDef.onUpdate;
-	this._onUpdate = nodeDef && nodeDef.onUpdate
-	this.onPreDraw = nodeDef && nodeDef.onPreDraw;
-	this.onPostDraw = nodeDef && nodeDef.onPostDraw;
+	this.def = typeName && panel.nodeTypes && panel.nodeTypes[typeName];
+	this._onUpdate = this.def && this.def.onUpdate
+	this.onPreDraw = this.def && this.def.onPreDraw;
+	this.onPostDraw = this.def && this.def.onPostDraw;
 	this.x = x;
 	this.y = y;
 	this.width = width;
 	this.minHeight = height;
-	//this.autoHeight = height == undefined;
-	this.input = [];
-	this.output = [];
+
+	this.inputs = [];
+	this.outputs = [];
 	this.selected = false;
 	this.style = style;
 	this.updateStyle();
 	this.dirty = false;
 	//this.customSockets = false;
 
-	var thisNode = this;
 	Object.defineProperty(this, "name", 
 	{
 		set: function (x) 
 		{
-			this.value = x;
-			if (thisNode.panel)
-				thisNode.panel.update();
+			this._name = x;
+			if (this.panel)
+				this.panel.update();
 		},
 		get: function () 
 		{
-			return this.value;
+			return this._name;
 		}
 		//enumerable: true,
 		//configurable: true
 	});
 	
+	Object.defineProperty(this, "layout", 
+	{
+		set: function (x) 
+		{
+			if (this._layout === x)
+				return;  // nothing to change
+			
+			this._layout = x;
+			this.updateLayout();
+			this.panel && this.panel.update();
+		},
+		get: function () 
+		{
+			return this._layout;
+		}
+	});
+	
 	this.name = name;
+	
+	this.layout = (this.def && this.def.layout) || ['io'];
 }
 
 GraphNode.prototype = 
@@ -684,7 +802,7 @@ GraphNode.prototype =
 		var jsonObj;
 		
 		jsonObj = { name : this.name, x : this.x, y : this.y, width : this.width, height : this.height,
-			input: arrayToJSON(this.input), output: arrayToJSON(this.output) };
+			/*inputs: arrayToJSON(this.inputs), outputs: arrayToJSON(this.outputs)*/ };
 		
 		if (this.typeName)
 			jsonObj.typeName = this.typeName;
@@ -693,23 +811,28 @@ GraphNode.prototype =
 			jsonObj.style = this.customStyle;
 		
 		if (this.data)
-			jsonObj.data = this.data;
+			jsonObj.data = copyJSON(this.data);
 		
 		/*	{ typeName : this.typeName, x : this.x, y : this.y };
 			if (this.name != this.panel.nodeTypes[this.typeName].name)
 				jsonObj.name = this.name;
 			if (this.customSockets)
 			{
-				jsonObj.input = arrayToJSON(this.input);
-				jsonObj.output = arrayToJSON(this.output);
+				jsonObj.inputs = arrayToJSON(this.inputs);
+				jsonObj.outputs = arrayToJSON(this.outputs);
 			}
 		}
 		else
 			jsonObj = { name : this.name, x : this.x, y : this.y, width : this.width, height : this.height, 
-				input: arrayToJSON(this.input), output: arrayToJSON(this.output) };
+				inputs: arrayToJSON(this.inputs), outputs: arrayToJSON(this.outputs) };
 		*/
 		
 		return jsonObj;
+	},
+	
+	getMenu : function()
+	{
+		return this.def && this.def.menu;
 	},
 	
 	updateStyle: function()
@@ -717,18 +840,18 @@ GraphNode.prototype =
 		this.styleSelected = mixStyles(this.style.selected, this.style);
 	},
 	
-	addInput: function(socketName, dataType)
+	addInput: function(socketName, dataType, label, def)
 	{
-		this.input.push(new GraphSocket(socketName, this, "input", dataType));
+		this.inputs.push(new GraphSocket(socketName, label, this, "input", dataType, def));
 		
 		this.dirty = true;
 		//this.customSockets = true;
 		this.panel.update();
 	},
 	
-	addOutput: function(socketName, dataType)
+	addOutput: function(socketName, dataType, label, def)
 	{
-		this.output.push(new GraphSocket(socketName, this, "output", dataType));
+		this.outputs.push(new GraphSocket(socketName, label, this, "output", dataType, def));
 		
 		this.dirty = true;
 		//this.customSockets = true;
@@ -744,7 +867,7 @@ GraphNode.prototype =
 		else
 		{
 			index = socket;
-			socket = this.input[index];
+			socket = this.inputs[index];
 		}
 		
 		if (index >= 0)
@@ -753,7 +876,7 @@ GraphNode.prototype =
 			if (linkIdx >= 0)
 				this.panel.deleteLinkByIndex(linkIdx);
 			
-			this.input.splice(index, 1);
+			this.inputs.splice(index, 1);
 			
 			this.dirty = true;
 			//this.customSockets = true;
@@ -770,7 +893,7 @@ GraphNode.prototype =
 		else
 		{
 			index = socket;
-			socket = this.output[index];
+			socket = this.outputs[index];
 		}
 
 		if (index >= 0)
@@ -779,7 +902,7 @@ GraphNode.prototype =
 			if (linkIdx >= 0)
 				this.panel.deleteLinkByIndex(linkIdx);
 			
-			this.output.splice(index, 1);
+			this.outputs.splice(index, 1);
 			
 			this.dirty = true;
 			//this.customSockets = true;
@@ -789,12 +912,12 @@ GraphNode.prototype =
 	
 	getInputIndex: function(socket)
 	{
-		return this.input.indexOf(socket);
+		return this.inputs.indexOf(socket);
 	},
 	
 	getOutputIndex: function(socket)
 	{
-		return this.output.indexOf(socket);
+		return this.outputs.indexOf(socket);
 	},
 	
 	moveTo: function(point)
@@ -816,16 +939,16 @@ GraphNode.prototype =
 	
 	getSocketHit: function(point)
 	{
-		for(var idx in this.input)
+		for(var idx in this.inputs)
 		{
-			var socket = this.input[idx]
+			var socket = this.inputs[idx]
 			if (socket.getHitArea().contain(point))
 				return socket;
 		}
 		
-		for(var idx in this.output)
+		for(var idx in this.outputs)
 		{
-			var socket = this.output[idx]
+			var socket = this.outputs[idx]
 			if (socket.getHitArea().contain(point))
 				return socket;
 		}
@@ -836,24 +959,16 @@ GraphNode.prototype =
 		return this.selected ? this.styleSelected : this.style;
 	},
 
-	/*evaluate: function()
-	{
-		// evaluate all the inputs
-		for(var idx in this.input)
-		{
-			this.input[idx].evaluate();
-		}
-	},*/
-	
 	update: function()
 	{
-		for(var idx in this.input)
+		for(var idx in this.inputs)
 		{
-			var input = this.input[idx];
+			var input = this.inputs[idx];
 			if (input.isGeneric)
 			{	// in generic sockets, update the dataType based on the linked socket
 				var outputSocket = this.panel.getLinkedOutput(input);
 				//input.setGenericType(outputSocket ? outputSocket.dataType : '*');
+				// the array is to indicate generic type
 				input.dataType = [(outputSocket ? outputSocket.dataType : '*')];
 			}
 		}
@@ -865,12 +980,50 @@ GraphNode.prototype =
 		this.panel.update();
 	},
 	
-	adjustSize: function()
+	updateLayout: function()
 	{
-		var maxSockets = Math.max(this.input.length, this.output.length);
-
 		var style = this.getStyle();
-		this.height = getNodeTopMargin(style) + maxSockets*getSocketHeight(style.socket) + getNodeBottomMargin(style);
+		var topMargin = getNodeTopMargin(style);
+
+		y = topMargin;
+		
+		this.layout.forEach(function(item)
+		{
+			if (typeof item == 'string')
+			{
+				var inputMaxY = y;
+				var outputMaxY = y;
+				
+				if (item.indexOf('i') >= 0)
+					this.inputs.forEach(function(input, index)
+					{
+						var rc = new Rectangle(5, inputMaxY, this.width/2, getSocketHeight(this.style.socket));
+						input.rc = rc;
+						inputMaxY = rc.bottom() + this.style.socket.vmargin;
+					}, this);
+
+				if (item.indexOf('o') >= 0)
+					this.outputs.forEach(function(output, index)
+					{
+						var rc = new Rectangle(5, outputMaxY, this.width/2, getSocketHeight(this.style.socket));
+						output.rc = rc;
+						outputMaxY = rc.bottom() + this.style.socket.vmargin;
+					}, this);
+				
+				if (item == 'i')
+					y = inputMaxY;
+				else if (item == 'o')
+					y = outputMaxY;
+				else if (item == 'io')
+					y = Math.max(inputMaxY, outputMaxY);
+			}
+			else if (typeof item == 'number')
+				y += item;
+				
+		}, this);
+		
+		this.height = y + getNodeBottomMargin(style);
+
 		if (this.minHeight && this.height < this.minHeight)
 			this.height = this.minHeight;
 	},
@@ -879,7 +1032,7 @@ GraphNode.prototype =
 	{
 		if (this.height == undefined || this.dirty)
 		{
-			this.adjustSize();
+			this.updateLayout();
 			this.dirty = false;
 		}
 		
@@ -910,6 +1063,7 @@ GraphNode.prototype =
 		
 		if (style.headerSize > 0)
 		{
+			context.textBaseline = "top";
 			context.fillStyle = style.headerFillColor;
 			context.fillRect(this.x, this.y, this.width, style.headerSize);
 		}
@@ -931,7 +1085,7 @@ GraphNode.prototype =
 			context.fillStyle = style.headerTextColor;
 			var leftMargin = cornerRadius > 4 ? cornerRadius : 4;
 			var textWidth = this.width - cornerRadius*2;
-			context.fillText(this.name, this.x + leftMargin, this.y + 4, textWidth <= 0 ? 1 : textWidth);
+			context.fillText(this.name, this.x + leftMargin, this.y + 4.0, textWidth <= 0 ? 1 : textWidth);
 		}
 		
 		context.restore();
@@ -939,8 +1093,8 @@ GraphNode.prototype =
 		// paint the border again
 		context.stroke();
 		
-		this.input.forEach( function(socket) { socket.draw(context, this.panel) }, this);
-		this.output.forEach( function(socket) { socket.draw(context, this.panel) }, this);
+		this.inputs.forEach( function(socket) { socket.draw(context, this.panel) }, this);
+		this.outputs.forEach( function(socket) { socket.draw(context, this.panel) }, this);
 		
 		if (this.onPostDraw)
 			this.onPostDraw(context);
@@ -984,6 +1138,17 @@ function GraphPanel(canvas, graphStyle)
 	this.onChange = undefined;
 }
 
+var KEY_HOME = 36;
+var KEY_LEFT = 37;
+var KEY_UP = 38;
+var KEY_RIGHT = 39;
+var KEY_DOWN = 40;
+var KEY_DEL = 46;
+var KEY_PLUS = 107;
+var KEY_MINUS = 109;
+var KEY_a = 65;
+var KEY_z = 90;
+
 GraphPanel.prototype = 
 {
 	attachToCanvas: function(canvas)
@@ -991,21 +1156,63 @@ GraphPanel.prototype =
 		if (!canvas) return;
 		
 		this.canvas = canvas;
+		this.canvas.style.cursor = 'default';
 		this.windowPt = getElementPosition(canvas);
 		
 		var context = canvas.getContext("2d");
-		context.textBaseline = "top";
 		
-		// poner los eventos
+		// set the events
 		var thisPanel = this;
 		canvas.onmousedown = function(event) { thisPanel.onMouseDown(event) };
 		canvas.onmouseup = function(event) { thisPanel.onMouseUp(event) };
 		canvas.onmousemove = function(event) { thisPanel.onMouseMove(event) };
-		canvas.onwheel = function(event) { thisPanel.onMouseWheel(event) };
-		canvas.onmousewheel = function(event) { thisPanel.onMouseWheel(event) }; //for IE
+		canvas.onwheel = function(event) { return thisPanel.onMouseWheel(event) };
+		canvas.onmousewheel = function(event) { return thisPanel.onMouseWheel(event) }; //for IE
 		canvas.oncontextmenu = function(event) { return false };
-		//canvas.parentNode.onkeypress = function(event) { return thisPanel.onKeyPress(event) };
 		
+        /*
+		this.inputHandler = document.createElement('input');
+		this.inputHandler.style.cssText = "position:absolute; top:-1000px; left:-1000px; width:0px; height:0px";
+		//this.inputHandler.onkeypress = function(event) 
+		this.inputHandler.onkeydown = function(event) 
+		{ 
+			var key = (event.keyCode >= KEY_a && event.keyCode <= KEY_z) ? String.fromCharCode(event.keyCode).toLowerCase() : '';
+			console.log('keyCode: ' + event.keyCode + ' key: ' + key);
+			if (event.keyCode == KEY_HOME || key == 'f')
+				thisPanel.fit();
+			else if (event.keyCode == KEY_DEL)
+				thisPanel.delSelection();
+			else if (event.keyCode >= KEY_LEFT && event.keyCode <= KEY_DOWN)
+			{
+				var nodeSelected = false;
+				var delta = [
+					new Point(-1,0), new Point(0,-1), new Point(1,0), new Point(0,1)
+				][event.keyCode-KEY_LEFT];
+				
+				thisPanel.nodes.forEach(function(node)
+				{
+					if (node.selected)
+					{
+						nodeSelected = true;
+						node.x += delta.x;
+						node.y += delta.y;
+					}
+				});
+				
+				if (!nodeSelected)
+					thisPanel.scroll(delta.x*5, delta.y*5);
+				
+				thisPanel.invalidate();
+			}
+			else if (event.keyCode == KEY_MINUS)
+				thisPanel.zoomOut();
+			else if (event.keyCode == KEY_PLUS)
+				thisPanel.zoomIn();
+		};
+		
+		canvas.parentNode.insertBefore(this.inputHandler, canvas);
+		this.inputHandler.focus();
+        */
 		this.updateTransform();
 	},
 	
@@ -1078,24 +1285,24 @@ GraphPanel.prototype =
 		
 		node.typeName = typeName;
 		node.customStyle = customStyle;
-		node.data = (jsonpar && jsonpar.data) || (nodeDef && nodeDef.data);
+		node.data = copyJSON((jsonpar && jsonpar.data) || (nodeDef && nodeDef.data));
 		
-		var inputSockets = (jsonpar && jsonpar.input) || (nodeDef && nodeDef.input) || [];
-		var outputSockets = (jsonpar && jsonpar.output) || (nodeDef && nodeDef.output) || [];
+		var inputSockets = (jsonpar && jsonpar.inputs) || (nodeDef && nodeDef.inputs) || [];
+		var outputSockets = (jsonpar && jsonpar.outputs) || (nodeDef && nodeDef.outputs) || [];
 		
-		inputSockets.forEach( function(socket) 
+		inputSockets.forEach( function(socketDef) 
 		{
-			node.addInput(socket.name, socket.dataType) 
+			node.addInput(socketDef.name, socketDef.dataType, socketDef.label, socketDef);
 		});
 				
-		outputSockets.forEach( function(socket) 
+		outputSockets.forEach( function(socketDef) 
 		{
-			node.addOutput(socket.name, socket.dataType) 
+			node.addOutput(socketDef.name, socketDef.dataType, socketDef.label, socketDef);
 		});
 		
-		//node.customSockets = !nodeDef || nodeDef.input !== inputSockets || nodeDef.output !== outputSockets;
+		//node.customSockets = !nodeDef || nodeDef.inputs !== inputSockets || nodeDef.outputs !== outputSockets;
 		
-		node.adjustSize();
+		node.updateLayout();
 		
 		if (yUndefined)
 			node.y = this.viewRect.center().y - node.height/2;
@@ -1104,20 +1311,6 @@ GraphPanel.prototype =
 		
 		return node;
 	},
-
-	/*traverseInputs: function(node, fnCallback)
-	{
-		var inputs = [];
-	
-		for(var idx in node.input)
-		{
-			var linkedOutput = this.getLinkedOutput(node.input[idx]);
-			var nodeResult = linkedOutput && linkedOutput.evaluate();
-			inputs[idx] = nodeResult;
-		}
-		
-		return inputs[0];// fnCallback(node, inputs);
-	},*/
 
 	// set origin and zoom so all nodes fits nicely inside the canvas
 	fit: function()
@@ -1138,17 +1331,21 @@ GraphPanel.prototype =
 			this.originPanelPt.y = rc.y;
 			var scaleX = this.canvas.width / rc.width;
 			var scaleY = this.canvas.height / rc.height;
-			if (scaleX < scaleY)
-				this.zoom = Math.min(GRAPH_MAX_ZOOM, scaleX);
-			else
-				this.zoom = Math.min(GRAPH_MAX_ZOOM, scaleY);
+
+			if (scaleX !== 0 && scaleY !== 0)
+			{
+			    if (scaleX < scaleY)
+			        this.zoom = Math.min(GRAPH_MAX_ZOOM, scaleX);
+			    else
+			        this.zoom = Math.min(GRAPH_MAX_ZOOM, scaleY);
+			}
 			
 			this.updateTransform();
+			
 			this.originPanelPt.x = rc.center().x - this.viewRect.width/2;
 			this.originPanelPt.y = rc.center().y - this.viewRect.height/2;
 			
 			this.updateTransform();
-			this.draw();
 		}
 	},
 	
@@ -1163,7 +1360,7 @@ GraphPanel.prototype =
 		// get the first column
 		this.nodes.forEach(function(node)
 		{
-			if (!node.input.some(function(socket) { return socket.linkedOutput }))
+			if (!node.inputs.some(function(socket) { return socket.linkedOutput }))
 			{	// nodes without inputs connected
 				node._layout.idxColumn = 0;
 				firstColumn.push(node);
@@ -1173,12 +1370,12 @@ GraphPanel.prototype =
 		firstColumn.sort(function (first, second)
 		{
 			var firstNumOuputs = 0;
-			for(var i in first.output)
-				firstNumOuputs += thiz.getLinkedInputs(first.output[i]).length;
+			for(var i in first.outputs)
+				firstNumOuputs += thiz.getLinkedInputs(first.outputs[i]).length;
 			
 			var secondNumOuputs = 0;
-			for(var i in second.output)
-				secondNumOuputs += thiz.getLinkedInputs(second.output[i]).length;
+			for(var i in second.outputs)
+				secondNumOuputs += thiz.getLinkedInputs(second.outputs[i]).length;
 			
 			if (firstNumOuputs == secondNumOuputs)
 				return 0;
@@ -1193,7 +1390,7 @@ GraphPanel.prototype =
 		
 		firstColumn.forEach(function exploreNode(node)
 		{
-			node.output.forEach(function(output)
+			node.outputs.forEach(function(output)
 			{
 				thiz.getLinkedInputs(output).forEach(function(input)
 				{
@@ -1268,7 +1465,7 @@ GraphPanel.prototype =
 		return undefined;
 	},
 	
-	// If callback returns true, no more nodes are processed and the function exit.
+	// if callback returns true, no more nodes are processed and the function exit.
 	// return the last hitted node
 	hitNodes: function(rcHitTest, callback)
 	{
@@ -1301,7 +1498,7 @@ GraphPanel.prototype =
 	{
 		this.links.push(new GraphLink(outputSocket, inputSocket));
 		
-		inputSocket.connectToOutput(outputSocket);
+		inputSocket._connectToOutput(outputSocket);
 		
 		outputSocket.parentNode.update();
 		inputSocket.parentNode.update();
@@ -1333,6 +1530,19 @@ GraphPanel.prototype =
 		return inputs;
 	},
 	
+	getLinksBySocket: function(socket)
+	{
+		var links = [];
+		
+		this.links.forEach(function(link)
+		{
+			if (link.inputSocket == socket || link.outputSocket == socket)
+				links.push(link);
+		}, this);
+		
+		return links;
+	},
+	
 	// return the index of the link containing a socket
 	getLinkIndex: function(socket)
 	{
@@ -1346,12 +1556,21 @@ GraphPanel.prototype =
 		return -1;
 	},
 	
+	deleteLink: function(link)
+	{
+		this.deleteLinkByIndex(this.links.indexOf(link));
+	},
+	
 	deleteLinkByIndex: function(linkIdx)
 	{
+		if (linkIdx < 0 || linkIdx >= this.links.length)
+			return;
+		
 		var link = this.links[linkIdx];
+		
 		this.links.splice(linkIdx, 1);
 		
-		link.inputSocket.connectToOutput(undefined);
+		link.inputSocket._connectToOutput(undefined);
 		
 		link.outputSocket.parentNode.update();
 		link.inputSocket.parentNode.update();
@@ -1364,20 +1583,23 @@ GraphPanel.prototype =
 	
 	deleteNode: function(idxNode)
 	{
+		idxNode = idxNode instanceof GraphNode ? this.getNodeIndex(idxNode) : idxNode;
 		var node = this.nodes[idxNode];
 		
 		// delete all the node links
-		for(var idxLink=0; idxLink < this.links.length; idxLink++)
+		for(var idxLink=0; idxLink<this.links.length; idxLink++)
 		{
 			var link = this.links[idxLink];
 			if (link.inputSocket.parentNode == node || link.outputSocket.parentNode == node)
-				{
-				this.links.splice(idxLink, 1);
+			{
+				this.deleteLinkByIndex(idxLink);
 				idxLink--;
-				}
+			}
 		}
 
 		this.nodes.splice(idxNode, 1);
+		
+		this.update();
 	},
 	
 	delSelection: function()
@@ -1394,8 +1616,6 @@ GraphPanel.prototype =
 				idxNode--;
 				}
 		}
-		
-		this.update();
 	},
 
 	update: function()
@@ -1414,7 +1634,73 @@ GraphPanel.prototype =
 					thiz.onChange(thiz.toJSON())
 			}, 0);
 		}
+	},
+	
+	zoomIn: function(amount, ptZoomCenter)
+	{
+		amount = amount || 0.1;
+		ptZoomCenter = ptZoomCenter || new Point(this.canvas.width/2, this.canvas.height/2);
 		
+		var newCenterPanelPt = this.clientToPanel(ptZoomCenter);
+		
+		this.zoom += amount;
+		
+		if (this.zoom < 0.1) this.zoom = 0.1;
+		if (this.zoom > GRAPH_MAX_ZOOM) this.zoom = GRAPH_MAX_ZOOM;
+		
+		// ajust origin coordinates
+		this.originPanelPt.x = newCenterPanelPt.x - (1.0*ptZoomCenter.x)/this.zoom;
+		this.originPanelPt.y = newCenterPanelPt.y - (1.0*ptZoomCenter.y)/this.zoom;
+		
+		this.updateTransform();
+	},
+	
+	zoomOut: function(amount, ptZoomCenter)
+	{
+		amount = amount || 0.1;
+		this.zoomIn(-amount, ptZoomCenter);
+	},
+
+	scroll: function(dx, dy)
+	{
+		if (!this.options.scrollAndZoom)
+			return;
+		
+		this.originPanelPt.x += dx/this.zoom;
+		this.originPanelPt.y += dy/this.zoom;
+		
+		this.updateTransform();
+	},
+	
+	scrollIfNearBorder: function(clientPt)
+	{
+		if (!this.options.scrollAndZoom)
+			return;
+		
+		var delta = new Point(0,0);
+		if (clientPt.x + GRAPH_SCROLL_MARGIN > this.canvas.width)
+		{
+			delta.x = clientPt.x + GRAPH_SCROLL_MARGIN - this.canvas.width;
+			if (delta.x > 50) delta.x = 50;
+		}
+		else if (clientPt.x < GRAPH_SCROLL_MARGIN)
+		{
+			delta.x = clientPt.x - GRAPH_SCROLL_MARGIN;
+			if (delta.x < -50) delta.x = -50;
+		}
+		if (clientPt.y + GRAPH_SCROLL_MARGIN > this.canvas.height)
+		{
+			delta.y = clientPt.y + GRAPH_SCROLL_MARGIN - this.canvas.height;
+			if (delta.y > 50) delta.y = 50;
+		}
+		else if (clientPt.y < GRAPH_SCROLL_MARGIN)
+		{
+			delta.y = clientPt.y - GRAPH_SCROLL_MARGIN;
+			if (delta.y < -50) delta.y = -50;
+		}
+		
+		if (delta.x != 0 || delta.y != 0)
+			this.scroll(delta.x*GRAPH_SCROLL_SPEED, delta.y*GRAPH_SCROLL_SPEED);
 	},
 	
 	updateTransform: function()
@@ -1427,6 +1713,7 @@ GraphPanel.prototype =
 		this.viewRect = new Rectangle(this.originPanelPt, bottomRightPanelPt);
 		
 		context.setTransform(this.zoom, 0, 0, this.zoom, -this.originPanelPt.x*this.zoom, -this.originPanelPt.y*this.zoom);
+		this.invalidate();
 	},
 	
 	invalidate: function()
@@ -1509,8 +1796,8 @@ GraphPanel.prototype =
 	
 	onMouseDown: function(event)
 	{
-		if (this.onHideContextMenu)
-			this.onHideContextMenu();
+		this.hideContextMenu();
+		//this.inputHandler.focus();
 		
 		var clientPt = new Point(event.offsetX, event.offsetY);
 		var panelPt = this.clientToPanel(clientPt);
@@ -1571,6 +1858,7 @@ GraphPanel.prototype =
 	{
 		if (this.canvas.releaseCapture)
 			this.canvas.releaseCapture();
+		//this.inputHandler.focus();
 		
 		if (this.selRectangle)
 		{
@@ -1587,7 +1875,7 @@ GraphPanel.prototype =
 					if (event.ctrlKey)
 					{
 						if (this.dragElem.selected)
-							this.dragElem.selected = false
+							this.dragElem.selected = false;
 						else
 							this.dragElem.selected = true;
 					}
@@ -1615,6 +1903,7 @@ GraphPanel.prototype =
 			{	// create a new link
 				var socket = hitElem;
 				var typesMatch = socket.isGeneric || socket.dataType == this.dragElem.socket.dataType;
+				//var typesMatch = socket.dataType == '*' || socket.dataType == this.dragElem.socket.dataType;
 				if (this.dragElem.socket.socketDir == "input")
 				{
 					if (socket.socketDir == "output" && typesMatch)
@@ -1642,8 +1931,19 @@ GraphPanel.prototype =
 		if (!this.mouseMoving && event.button == 2)
 		{	// show the context menu
 			var panelPt = this.clientToPanel(new Point(event.offsetX, event.offsetY));
-			var hitElem = this.hitNodes(panelPt, function(node) { return true; });
-			this.showContextMenu(event, hitElem, panelPt);
+			//var hitElem = this.hitNodes(panelPt, function(node) { return true; });
+			var hitElem = this.hitAll(panelPt);
+			var hitSocket = hitElem instanceof GraphSocket ? hitElem : undefined;
+			var hitNode = hitSocket ? hitSocket.parentNode : hitElem;
+			if (hitNode && !hitNode.selected)
+			{
+				this.unselectAll();
+				hitNode.selected = true;
+				this.draw(); // to force selection update
+				//this.invalidate();
+			}
+			
+			this.showContextMenu(event, hitNode, hitSocket, panelPt);
 			//if (this.onChange)
 			//	this.onChange(this.toJSON());
 		}
@@ -1651,43 +1951,6 @@ GraphPanel.prototype =
 		this.mouseMoving = false;
 		this.dragElem = undefined;
 	},
-
-	scrollIfNearBorder: function(clientPt)
-	{
-		if (!this.options.scrollAndZoom)
-			return;
-		
-		var delta = new Point(0,0);
-		if (clientPt.x + GRAPH_SCROLL_MARGIN > this.canvas.width)
-		{
-			delta.x = clientPt.x + GRAPH_SCROLL_MARGIN - this.canvas.width;
-			if (delta.x > 50) delta.x = 50;
-		}
-		else if (clientPt.x < GRAPH_SCROLL_MARGIN)
-		{
-			delta.x = clientPt.x - GRAPH_SCROLL_MARGIN;
-			if (delta.x < -50) delta.x = -50;
-		}
-		if (clientPt.y + GRAPH_SCROLL_MARGIN > this.canvas.height)
-		{
-			delta.y = clientPt.y + GRAPH_SCROLL_MARGIN - this.canvas.height;
-			if (delta.y > 50) delta.y = 50;
-		}
-		else if (clientPt.y < GRAPH_SCROLL_MARGIN)
-		{
-			delta.y = clientPt.y - GRAPH_SCROLL_MARGIN;
-			if (delta.y < -50) delta.y = -50;
-		}
-		
-		if (delta.x != 0 || delta.y != 0)
-		{
-			this.originPanelPt.x += delta.x*GRAPH_SCROLL_SPEED/this.zoom;
-			this.originPanelPt.y += delta.y*GRAPH_SCROLL_SPEED/this.zoom;
-			
-			this.updateTransform();
-		}
-	},
-			
 
 	onMouseMove: function(event)
 	{
@@ -1771,8 +2034,6 @@ GraphPanel.prototype =
 				this.originPanelPt.y += this.mouseDownPanelPt.y - panelPt.y;
 				
 				this.updateTransform();
-				
-				this.draw();
 			}
 		}
 	},
@@ -1782,37 +2043,140 @@ GraphPanel.prototype =
 		if (!this.options.scrollAndZoom)
 			return;
 		
-		var context = this.canvas.getContext("2d");
-
+		var amount = ((event.wheelDelta === undefined ? event.deltaY : -event.wheelDelta) > 0) ? -0.1 : 0.1;
+		
 		if (this.options.zoomFromCursor)
-			var newCenterClientPt = new Point(event.offsetX, event.offsetY);
+			this.zoomIn(amount, new Point(event.offsetX, event.offsetY));
 		else
-			var newCenterClientPt = new Point(this.canvas.width/2, this.canvas.height/2);
+			this.zoomIn(amount);
 		
-		var newCenterPanelPt = this.clientToPanel(newCenterClientPt);
-		
-		if ((event.wheelDelta === undefined ? event.deltaY : -event.wheelDelta) > 0)
-			this.zoom -= 0.1;
-		else
-			this.zoom += 0.1;
-		
-		if (this.zoom < 0.1) this.zoom = 0.1;
-		if (this.zoom > GRAPH_MAX_ZOOM) this.zoom = GRAPH_MAX_ZOOM;
-		
-		
-		// ajust origin coordinates
-		this.originPanelPt.x = newCenterPanelPt.x - (1.0*newCenterClientPt.x)/this.zoom;
-		this.originPanelPt.y = newCenterPanelPt.y - (1.0*newCenterClientPt.y)/this.zoom;
-		
-		this.updateTransform();
-		
-		this.draw();
+		return false;
 	},
 	
-	showContextMenu: function(event, node, panelPt)
+	showContextMenu: function(event, node, socket, panelPt)
 	{
 		if (this.onContextMenu)
-			this.onContextMenu(event, node, panelPt);
+			this.onContextMenu(event, node, socket, panelPt);
+		else 
+		{
+			var params = { 'panel': this, 'node': node, 'socket': socket };
+			var menuSocket = $$menu(socket && (socket.getMenu() || this.options.menuSocket), node, params);
+			var menuNode = node && concatMenu(
+					$$menu(this.options.menuNode, node, params), 
+					$$menu(node.getMenu(), node, params));
+			var menu = menuSocket || menuNode || $$menu(this.options.menuGraph, this, params);
+			/*var menuItems = (socket && (socket.getMenu() || this.options.menuSocket)) 
+				|| (node && (node.getMenu() || this.options.menuNode)) 
+				|| this.options.menuGraph;*/
+			
+			if (menu)
+			{
+				//menu = $$menu(menu, this, params);
+				var clickPt = new Point(event.pageX, event.pageY);
+				this._showContextMenu(clickPt, node, socket, panelPt, menu, 0);
+			}
+		}
+	},
+	
+	_showContextMenu: function(clickPt, node, socket, panelPt, parentItem, nestLevel, parentOnClick)
+	{
+		var menuDiv = document.createElement('div');
+		this.menuDivList.push(menuDiv);
+		menuDiv.className = 'wn-menu';
+		menuDiv.oncontextmenu = function() { return false };
+		menuDiv.onmousedown = function() { return false } // to avoid text selection
+		var thiz = this;
+		var menuItems = parentItem.items;
+		menuItems.forEach(function(item)
+		{
+			var itemText = item.label ? item.label : item;
+			
+			if (itemText == '-')
+			{	// a separator
+				var div = document.createElement('div');
+				//div.style.height = '0px';
+				//div.style.borderTop = 'solid 1px';
+				
+				div.className = 'wn-menuSeparator';
+				menuDiv.appendChild(div);
+			}
+			else
+			{	// a normal menu item
+				var div = document.createElement('div');
+				
+				div.className = item.disabled == true ? 'wn-menuItemDisabled' : 'wn-menuItem';
+				div.innerHTML = '<table cellPadding="0px" cellSpacing="0px" style="width:100%"><tr><td></td>'
+					+ '<td style="font-size:10px;padding-left:10px;text-align:right">'
+					+ (item.items ? String.fromCharCode(0x25ba)/*'►'*/ : '') 
+					+ '</td></tr></table>';
+				var td = div.querySelector('table tr td');
+				var tn = document.createTextNode(itemText)
+				td.appendChild(tn);
+				
+				var onClick = item.onClick || parentItem.onClick || parentOnClick; 
+				if (!item.disabled && !item.items)
+					div.onclick = function() 
+					{
+						thiz.hideContextMenu();
+						if (onClick)
+						{
+							var param = { 'panel': thiz, 'node': node, 'socket': socket, 'item': item, 'pt': panelPt };
+							onClick.call(thiz, param);
+						}
+					};
+				
+				div.onmouseenter = function() 
+				{
+					if (thiz.onMenuMouseEnterID)
+						clearTimeout(thiz.onMenuMouseEnterID);
+					thiz.onMenuMouseEnterID = setTimeout(function()
+					{
+						// hide all submenus
+						thiz._hideContextMenu(nestLevel+1);
+						
+						if (item.items && !item.disabled)
+						{	// show the item submenu if it's not disabled
+							var newPt = new Point(clickPt.x + div.offsetLeft + div.offsetWidth, clickPt.y + div.offsetTop);
+							thiz._showContextMenu(newPt, node, socket, panelPt, item, nestLevel+1, onClick);
+						}
+					}, 200);
+				}
+				
+				menuDiv.appendChild(div);
+			}
+			
+		});
+		
+		menuDiv.style.left = clickPt.x + 'px';
+		menuDiv.style.top = clickPt.y + 'px';
+		menuDiv.panelPt = panelPt;
+		this.canvas.parentNode.appendChild(menuDiv);
+	},
+	
+	_hideContextMenu: function(nestLevel)
+	{
+		if (this.menuDivList)
+			this.menuDivList = this.menuDivList.filter(function(menuDiv, index)
+			{
+				if (index >= nestLevel)
+				{
+					this.canvas.parentNode.removeChild(menuDiv);
+					return false;
+				}
+				
+				return true;
+			}, this)
+		else
+			this.menuDivList = [];
+		
+	},
+	
+	hideContextMenu: function()
+	{
+		if (this.onHideContextMenu)
+			this.onHideContextMenu();
+		else 
+			this._hideContextMenu(0);
 	},
 	
 	onKeyPress: function(event)
@@ -1862,12 +2226,12 @@ GraphPanel.prototype =
 		{
 			var outputNode = thiz.nodes[link.outputNode];
 			var inputNode = thiz.nodes[link.inputNode];
-			var outputSocket = outputNode && outputNode.output && link.outputSocket && outputNode.output[link.outputSocket];
-			var inputSocket = inputNode && inputNode.input && link.inputSocket && inputNode.input[link.inputSocket];
+			var outputSocket = outputNode && outputNode.outputs && link.outputSocket && outputNode.outputs[link.outputSocket];
+			var inputSocket = inputNode && inputNode.inputs && link.inputSocket && inputNode.inputs[link.inputSocket];
 			if (outputSocket !== undefined && inputSocket !== undefined)
 			{
-				//link = new GraphLink(outputNode.output[link.outputSocket], inputNode.input[link.inputSocket]);
-				thiz.addLink(outputNode.output[link.outputSocket], inputNode.input[link.inputSocket]);
+				//link = new GraphLink(outputNode.outputs[link.outputSocket], inputNode.inputs[link.inputSocket]);
+				thiz.addLink(outputNode.outputs[link.outputSocket], inputNode.inputs[link.inputSocket]);
 			}
 			else
 			{
@@ -1930,3 +2294,14 @@ GraphPanel.prototype =
 	}
 	
 }
+
+var style = document.createElement('style');
+style.innerHTML = '.wn-menu{ position:absolute; border: solid 1px black; background-color: #FDFDFD; cursor:default; padding: 1px; min-width: 90px; font: normal 10pt Arial}'
+	+ '.wn-menuItem, .wn-menuItemDisabled{ border: solid 1px #FDFDFD; padding-left: 15px; padding-top: 0px; padding-bottom: 0px; margin: 0px; }'
+	+ '.wn-menuItem:hover{ border: solid 1px #7DA8F6; background-color: #BDE8E6; }'
+	+ '.wn-menuItemDisabled{ color: #B0B0B0; }'
+	+ '.wn-menuItemDisabled:hover{ border: solid 1px #B8B8B8; background-color: #E8E8E8; }'
+	+ '.wn-menuSeparator{ color: #C0C0C0; height: 0px; border-top: solid 1px; margin-left: 2px; margin-right: 2px; margin-top: 2px; margin-bottom: 2px; }';
+document.head.insertBefore(style, document.head.firstChild);
+
+})();

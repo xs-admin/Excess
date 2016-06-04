@@ -4,29 +4,32 @@ using System.Linq;
 using System.Diagnostics;
 using Excess.Compiler.Roslyn;
 using Excess.Compiler.Core;
+using System;
 
 namespace Excess.Compiler.GraphInstances
 {
-    public class Step
+    public class Node
     {
-        public Step(string owner)
+        public Node(string ownerId, object owner)
         {
+            OwnerId = ownerId;
             Owner = owner;
             Before = new List<StatementSyntax>();
             After = new List<StatementSyntax>();
             Execute = new List<StatementSyntax>();
             Accessors = new Dictionary<string, string>();
-            Inner = new Dictionary<string, StepContainer>();
+            Inner = new Dictionary<string, NodeList>();
             Types = new Dictionary<string, ClassDeclarationSyntax>();
         }
 
-        public string Owner { get; set; }
+        public string OwnerId { get; set; }
+        public object Owner { get; set; }
         public Dictionary<string, string> Accessors { get; set; }
 
         public ICollection<StatementSyntax> Before { get; set; }
         public ICollection<StatementSyntax> Execute { get; set; }
         public ICollection<StatementSyntax> After { get; set; }
-        public IDictionary<string, StepContainer> Inner { get; set; }
+        public IDictionary<string, NodeList> Inner { get; set; }
         public IDictionary<string, ClassDeclarationSyntax> Types { get; set; }
 
         public ClassDeclarationSyntax RegisteredType(string id, Template factory)
@@ -54,13 +57,13 @@ namespace Excess.Compiler.GraphInstances
         }
     }
 
-    public class StepContainer
+    public class NodeList
     {
-        public StepContainer(IEnumerable<Step> steps)
+        public NodeList(IEnumerable<Node> nodes)
         {
-            Steps = steps;
+            Nodes = nodes;
         }
 
-        public IEnumerable<Step> Steps { get; }
+        public IEnumerable<Node> Nodes { get; set; }
     }
 }

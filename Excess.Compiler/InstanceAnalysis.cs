@@ -55,6 +55,15 @@ namespace Excess.Compiler
             Action<InstanceConnector, object, object, Scope> dt = null,
             Action<InstanceConnector, InstanceConnection<TNode>, Scope> transform = null);
 
+        IInstanceMatch<TNode> input(
+            string connectorId,
+            Action<InstanceConnector, object, object, Scope> dt = null,
+            Action<InstanceConnector, InstanceConnection<TNode>, Scope> transform = null);
+        IInstanceMatch<TNode> output(
+            string connectorId,
+            Action<InstanceConnector, object, object, Scope> dt = null,
+            Action<InstanceConnector, InstanceConnection<TNode>, Scope> transform = null);
+
         IInstanceMatch<TNode> input(Action<InstanceConnection<TNode>, Scope> transform);
         IInstanceMatch<TNode> output(Action<InstanceConnection<TNode>, Scope> transform);
 

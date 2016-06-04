@@ -166,13 +166,21 @@ namespace Excess.Compiler.Roslyn
 
         protected override SyntaxNode addModules(SyntaxNode root, IEnumerable<string> modules)
         {
-            var compilationUnit = (CompilationUnitSyntax)root;
+            var compilationUnit = root.AncestorsAndSelf()
+                .Where(a => a is CompilationUnitSyntax)
+                .Select(a => a as CompilationUnitSyntax)
+                .FirstOrDefault()
+                ?? CSharp.CompilationUnit()
+                    .WithMembers(CSharp.List(new[] {
+                        (MemberDeclarationSyntax)root}));
+
             return compilationUnit
                 .WithUsings(CSharp.List(
                     compilationUnit.Usings.Union(
                     modules
                         .Select(module => CSharp.UsingDirective(
-                            CSharp.ParseName(module))))));
+                            CSharp.ParseName(module))))))
+                ?? root;
         }
 
         protected override SyntaxNode syntacticalTransform(SyntaxNode node, Scope scope, IEnumerable<Func<SyntaxNode, Scope, SyntaxNode>> transformers)

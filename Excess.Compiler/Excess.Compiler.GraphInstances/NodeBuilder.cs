@@ -5,22 +5,24 @@ using Excess.Compiler.Core;
 
 namespace Excess.Compiler.GraphInstances
 {
-    public class StepBuilder
+    public class NodeBuilder
     {
-        Dictionary<object, Step> _steps;
-        public StepBuilder(Dictionary<object, Step> steps)
+        IDictionary<string, object> _instances;
+        Dictionary<object, Node> _steps;
+        public NodeBuilder(Dictionary<object, Node> steps, IDictionary<string, object> instances)
         {
             _steps = steps;
+            _instances = instances;
         }
 
 
-        public StepContainer Result { get { return buildResult(); } }
+        public NodeList Result { get { return buildResult(); } }
 
-        List<StepChain> _chains = new List<StepChain>();
+        List<NodeChain> _chains = new List<NodeChain>();
         public void AddConnection(Connection connection)
         {
-            StepChain left = null;
-            StepChain right = null;
+            NodeChain left = null;
+            NodeChain right = null;
             foreach (var chain in _chains)
             {
                 if (chain.Append(connection))
@@ -45,26 +47,27 @@ namespace Excess.Compiler.GraphInstances
                     Debug.Assert(false);
             }
             else if (left == null && right == null)
-                _chains.Add(new StepChain(connection, this));
+                _chains.Add(new NodeChain(connection, this));
         }
 
         public void StartChain(Connection link)
         {
             var step = GetStep(link.Source);
-            _chains.Add(new StepChain(link, this, step, link.InputConnector));
+            _chains.Add(new NodeChain(link, this, step, link.InputConnector));
         }
 
-        private Step GetStep(string node)
+        private Node GetStep(string node)
         {
-            return _steps[node];
+            return _steps[_instances[node]];
         }
 
-        private StepContainer buildResult()
+        private NodeList buildResult()
         {
-            StepContainer result = null;
+            NodeList result = null;
+            HashSet<object> found = new HashSet<object>();
             foreach (var chain in _chains)
             {
-                var container = new StepContainer(chain.Steps);
+                var container = new NodeList(chain.Nodes);
                 if (chain.Parent == null)
                 {
                     Debug.Assert(result == null);
@@ -77,33 +80,41 @@ namespace Excess.Compiler.GraphInstances
             }
 
             Debug.Assert(result != null);
+            var unconnected = new List<Node>();
+            foreach (var node in _steps)
+            {
+                if (!found.Contains(node.Key))
+                    unconnected.Add(node.Value);
+            }
+
+            result.Nodes = result.Nodes.Union(unconnected);
             return result;
         }
 
-        private class StepChain
+        private class NodeChain
         {
-            StepBuilder _builder;
+            NodeBuilder _builder;
 
-            public Step Parent { get; private set; }
+            public Node Parent { get; private set; }
             public string ParentConnector { get; private set; }
 
             public string Left { get; private set; }
             public string Right { get; private set; }
-            public IEnumerable<Step> Steps { get { return _steps; } }
+            public IEnumerable<Node> Nodes { get { return _nodes; } }
 
-            List<Step> _steps = new List<Step>();
+            List<Node> _nodes = new List<Node>();
 
-            public StepChain(Connection link, StepBuilder builder)
+            public NodeChain(Connection link, NodeBuilder builder)
             {
                 Left = link.Source;
                 Right = link.Target;
 
                 _builder = builder;
-                _steps.Add(_builder.GetStep(Left));
-                _steps.Add(_builder.GetStep(Right));
+                _nodes.Add(_builder.GetStep(Left));
+                _nodes.Add(_builder.GetStep(Right));
             }
 
-            public StepChain(Connection link, StepBuilder builder, Step parent, string parentConnector)
+            public NodeChain(Connection link, NodeBuilder builder, Node parent, string parentConnector)
             {
                 Parent = parent;
                 ParentConnector = parentConnector;
@@ -112,7 +123,7 @@ namespace Excess.Compiler.GraphInstances
                 Right = link.Target;
 
                 _builder = builder;
-                _steps.Add(_builder.GetStep(Right));
+                _nodes.Add(_builder.GetStep(Right));
             }
 
             public bool Append(Connection link)
@@ -120,12 +131,12 @@ namespace Excess.Compiler.GraphInstances
                 if (checkLeft(link))
                 {
                     Left = link.Source;
-                    _steps.Insert(0, _builder.GetStep(Left));
+                    _nodes.Insert(0, _builder.GetStep(Left));
                 }
                 else if (checkRight(link))
                 {
                     Right = link.Target;
-                    _steps.Add(_builder.GetStep(Right));
+                    _nodes.Add(_builder.GetStep(Right));
                 }
                 else
                     return false;
@@ -133,13 +144,13 @@ namespace Excess.Compiler.GraphInstances
                 return true;
             }
 
-            public bool Append(StepChain chain)
+            public bool Append(NodeChain chain)
             {
                 if (chain.Left != Right)
                     return false;
 
                 Right = chain.Right;
-                _steps.AddRange(chain.Steps.Skip(1));
+                _nodes.AddRange(chain.Nodes.Skip(1));
 
                 return true;
             }

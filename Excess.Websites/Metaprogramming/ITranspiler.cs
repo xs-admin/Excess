@@ -10,4 +10,9 @@ namespace metaprogramming
     {
         string Process(string source); 
     }
+
+    public interface IGraphTranspiler
+    {
+        string Process(string source);
+    }
 }

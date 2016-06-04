@@ -67,6 +67,13 @@ namespace Excess.Compiler.Core
             return this;
         }
 
+        public IInstanceMatch<TNode> input(string connectorId, Action<InstanceConnector, object, object, Scope> dt, Action<InstanceConnector, InstanceConnection<TNode>, Scope> transform)
+        {
+            var connector = null as InstanceConnector;
+            _input.TryGetValue(connectorId, out connector);
+            return input(connector ?? new InstanceConnector { Id = connectorId }, dt, transform);
+        }
+
         public IInstanceMatch<TNode> input(InstanceConnector connector, Action<InstanceConnector, object, object, Scope> dt, Action<InstanceConnector, InstanceConnection<TNode>, Scope> transform)
         {
             var id = connector.Id;
@@ -81,6 +88,13 @@ namespace Excess.Compiler.Core
 
             _input[id] = connector;
             return this;
+        }
+
+        public IInstanceMatch<TNode> output(string connectorId, Action<InstanceConnector, object, object, Scope> dt, Action<InstanceConnector, InstanceConnection<TNode>, Scope> transform)
+        {
+            var connector = null as InstanceConnector;
+            _output.TryGetValue(connectorId, out connector);
+            return output(connector ?? new InstanceConnector { Id = connectorId }, dt, transform);
         }
 
         public IInstanceMatch<TNode> output(InstanceConnector connector, Action<InstanceConnector, object, object, Scope> dt, Action<InstanceConnector, InstanceConnection<TNode>, Scope> transform)
@@ -130,7 +144,9 @@ namespace Excess.Compiler.Core
         internal void apply(IInstanceDocument<TNode> document)
         {
             Debug.Assert(_match != null);
-            Debug.Assert(_transform != null);
+            if (_transform == null)
+                _transform = new FunctorInstanceTransform<TNode>(_input, _output, _dataTransform, _nodeTransform, _defaultInputTransform, _defaultOutputTransform, null);
+
             document.change(_match, _transform);
         }
     }
@@ -251,6 +267,9 @@ namespace Excess.Compiler.Core
 
         protected override TNode doTransform(string id, object instance, TNode node, IEnumerable<InstanceConnection<TNode>> connections, Scope scope)
         {
+            if (_handler == null)
+                return default(TNode);
+
             return _handler(id, instance, node, connections, scope);
         }
     }
@@ -284,6 +303,17 @@ namespace Excess.Compiler.Core
             foreach (var i in instances)
             {
                 Debug.Assert(i.Value != null);
+                var instance = new Instance<TNode>
+                {
+                    Id = i.Key,
+                    Value = i.Value
+                };
+
+                if (!_mt.Any())
+                {
+                    namedInstances[instance.Id] = instance;
+                    continue;
+                }
 
                 foreach (var mt in _mt)
                 {
@@ -292,16 +322,11 @@ namespace Excess.Compiler.Core
 
                     if (match(i.Key, i.Value, scope))
                     {
-                        var instance = new Instance<TNode>
-                        {
-                            Id = i.Key,
-                            Value = i.Value
-                        };
-
                         namedInstances[instance.Id] = instance;
 
                         Debug.Assert(instance.Transform == null);
                         instance.Transform = transform;
+                            break;
                     }
                 }
             }
@@ -325,13 +350,13 @@ namespace Excess.Compiler.Core
 
                 var outputDT = null as Action<InstanceConnector, object, object, Scope>;
                 var outputTransform = null as Action<InstanceConnector, InstanceConnection<TNode>, Scope>;
-                var output = source.Transform.output(connection.OutputConnector, out outputDT, out outputTransform);
+                var output = source.Transform?.output(connection.OutputConnector, out outputDT, out outputTransform);
                 if (output == null)
                     output = new InstanceConnector { Id = connection.OutputConnector };
 
                 var inputDT = null as Action<InstanceConnector, object, object, Scope>;
                 var inputTransform = null as Action<InstanceConnector, InstanceConnection<TNode>, Scope>;
-                var input = target.Transform.input(connection.InputConnector, out inputDT, out inputTransform);
+                var input = target.Transform?.input(connection.InputConnector, out inputDT, out inputTransform);
                 if (input == null)
                     input = new InstanceConnector { Id = connection.InputConnector };
 

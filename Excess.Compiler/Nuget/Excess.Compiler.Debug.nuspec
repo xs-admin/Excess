@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
         <id>Excess.Compiler</id>
-        <version>0.46.20-alpha</version>
+        <version>0.46.44-alpha</version>
         <authors>Excess</authors>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>Metaprogramming platform for C#</description>
@@ -19,7 +19,9 @@
         <file src="..\xslang\bin\Debug\xslang.pdb" target="lib\Net45\xslang.pdb" />
         <file src="..\Excess.Compiler.Mock\bin\Debug\Excess.Compiler.Mock.dll" target="lib\Net45\Excess.Compiler.Mock.dll" />
         <file src="..\Excess.Compiler.Mock\bin\Debug\Excess.Compiler.Mock.pdb" target="lib\Net45\Excess.Compiler.Mock.pdb" />
-        <file src="..\..\Excess.Compiler.Razor\bin\Release\Excess.Compiler.Razor.dll" target="lib\Net45\Excess.Compiler.Razor.dll" />
-        <file src="..\..\Excess.Compiler.Razor\bin\Release\Excess.Compiler.Razor.pdb" target="lib\Net45\Excess.Compiler.Razor.pdb" />
+        <file src="..\..\Excess.Compiler.Razor\bin\Debug\Excess.Compiler.Razor.dll" target="lib\Net45\Excess.Compiler.Razor.dll" />
+        <file src="..\..\Excess.Compiler.Razor\bin\Debug\Excess.Compiler.Razor.pdb" target="lib\Net45\Excess.Compiler.Razor.pdb" />
+        <file src="..\Excess.Compiler.GraphInstances\bin\Debug\Excess.Compiler.GraphInstances.dll" target="lib\Net45\Excess.Compiler.GraphInstances.dll" />
+        <file src="..\Excess.Compiler.GraphInstances\bin\Debug\Excess.Compiler.GraphInstances.pdb" target="lib\Net45\Excess.Compiler.GraphInstances.pdb" />
     </files>
 </package>

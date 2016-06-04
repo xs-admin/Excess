@@ -1,5 +1,7 @@
 ﻿using Excess.Compiler.Core;
 using Excess.Compiler.Roslyn;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +11,7 @@ using System.Xml.Linq;
 
 namespace Excess.Compiler.GraphInstances
 {
-    class GraphLoader
+    public class GraphLoader
     {
         public static RoslynInstanceDocument FromNodeGraphView(XElement xmlRoot, Func<string, string, object> serializer)
         {
@@ -55,43 +57,98 @@ namespace Excess.Compiler.GraphInstances
                     connections.Add(result);
                 }
 
-                var steps = BuildSteps(instances, connections);
-                return false;
+
+                BuildGraph(instances, connections, scope);
+                return true;
             });
         }
 
-        private static StepContainer BuildSteps(IDictionary<string, object> instances, IEnumerable<Connection> connections)
+        public static RoslynInstanceDocument FromWebNodes(JObject root, Scope docScope, IEnumerable<Type> types = null, IDictionary<string, Func<JToken, object>> serializers = null)
         {
-            var steps = new Dictionary<object, Step>();
-            var indices = new Dictionary<string, int>();
-            foreach (var node in instances)
+            if (serializers == null)
+                serializers = new Dictionary<string, Func<JToken, object>>();
+
+            if (types != null)
             {
-                var typeName = node.Value.GetType().Name;
-                if (!indices.ContainsKey(typeName))
-                    indices[typeName] = 1;
-
-                var idx = indices[typeName];
-                var iid = typeName + idx;
-
-                indices[typeName] = idx + 1;
-                instances[iid] = node.Key;
-                steps[node.Key] = new Step(iid);
-            }
-
-            StepBuilder builder = new StepBuilder(steps);
-            foreach (var link in connections)
-            {
-                if (link.OutputConnector == "Previous")
+                foreach (var type in types)
                 {
-                    if (link.InputConnector == "Next")
-                        builder.AddConnection(link);
-                    else
-                        builder.StartChain(link);
-                    continue;
+                    var typeName = type.Name;
+                    if (serializers.ContainsKey(typeName))
+                        throw new InvalidOperationException($"duplicate {typeName}");
+
+                    serializers[typeName] = jtoken => jtoken.ToObject(type);
                 }
             }
 
-            return builder.Result;
+            return new RoslynInstanceDocument((_, instances, connections, scope) =>
+            {
+                var nodes = root
+                    .Property("nodes")
+                    .Value as JArray;
+
+                var links = root
+                    .Property("links")
+                    .Value as JArray;
+
+                //load instances
+                var idx = 0;
+                foreach (var node in nodes
+                    .Children()
+                    .Select(n => (JObject)n))
+                {
+                    var id = idx.ToString(); idx++;
+                    var data = node.Property("data")?.Value
+                        ??     node.Property("name")?.Value;
+                    var type = node.Property("typeName")?.Value.ToString();
+                    var model = serializers[type](data);
+
+                    instances[id] = model;
+                }
+
+                //load connections
+                foreach (var link in links
+                    .Children()
+                    .Select(n => (JObject)n))
+                {
+                    var result = new Connection
+                    {
+                        InputConnector = link.Property("inputSocketName")?.Value.ToString(),
+                        OutputConnector = link.Property("outputSocketName")?.Value.ToString(),
+                        Source = link.Property("outputNode")?.Value.ToString(),
+                        Target = link.Property("inputNode")?.Value.ToString(),
+                    };
+
+                    connections.Add(result);
+                }
+
+                BuildGraph(instances, connections, scope);
+                return true;
+            }, docScope);
+        }
+
+        private static void BuildGraph(IDictionary<string, object> instances, IEnumerable<Connection> connections, Scope scope)
+        {
+            var allNodes = new Dictionary<object, Node>();
+            var indices = new Dictionary<string, int>();
+            foreach (var node in instances)
+            {
+                allNodes[node.Value] = new Node(node.Key, node.Value);
+            }
+
+            var builder = new NodeBuilder(allNodes, instances);
+            foreach (var link in connections)
+            {
+                if (link.InputConnector.ToLowerInvariant() == "previous")
+                {
+                    if (link.OutputConnector.ToLowerInvariant() == "next")
+                        builder.AddConnection(link);
+                    else
+                        builder.StartChain(link);
+                }
+            }
+
+
+            scope.InitGraph(allNodes, builder.Result.Nodes);
         }
     }
 }

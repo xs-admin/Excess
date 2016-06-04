@@ -19,7 +19,7 @@ MetaProgrammingSamples : [
 ],
 
 MetaProgrammingResults: [
-"//array sample" + '\n' + 
+//array sample
 "using System;" + '\n' + 
 "using System.Collections.Generic;" + '\n' + 
 "using System.Linq;" + '\n' + 
@@ -45,42 +45,53 @@ DataProgrammingDataTypes: {
     {
         color: "blue"
     },
-    string : 
+    flow : 
     {
         color: "green"
     },
 },
 
+getTypeOf: function(value)
+{
+	if (value[0] == '"' || value[0] == "'")
+        return 'string';
+    else if (value == 'true' || value == 'false')
+        return 'bool';
+    else if (!isNaN(value))
+        return 'number';
+    else
+		return 'string';
+},
+
 DataProgrammingNodeTypes: {
-    input:
+    parameter:
     {
-        name: "input",
+        name: "parameter",
         width: 100,
-        data: '5',
-        input:
+
+        inputs:
         [
         ],
-        output:
+        outputs:
         [
             {
-                name: "5",
+                name: "output",
                 dataType: "number",
+                label: function () { return "value" },
             },
-        ]
+        ],
     },
 
-    output:
+    result:
     {
-        name: "output",
+        name: "result",
         width: 100,
-        onPreDraw: function (context) {
-            this.input[0].name = $scope.eval(this.input[0].evaluate());
-        },
-        input:
+        inputs:
         [
-            { name: "", dataType: "*" },
+            { name: "previous", dataType: "flow" },
+            {name: "value", dataType: "*" },
         ],
-        output:
+        outputs:
         [
         ]
     },
@@ -90,13 +101,15 @@ DataProgrammingNodeTypes: {
         name: "sum",
         data: '+',
         width: 100,
-        input:
+        inputs:
         [
-            { name: "operand1", dataType: "number" },
-            { name: "operand2", dataType: "number" },
+            { name: "previous", dataType: "flow" },
+            { name: "left", dataType: "number" },
+            { name: "right", dataType: "number" },
         ],
-        output:
+        outputs:
         [
+            { name: "next", dataType: "flow" },
             { name: "result", dataType: "number" },
         ]
     },
@@ -106,13 +119,15 @@ DataProgrammingNodeTypes: {
         name: "substract",
         data: '-',
         width: 100,
-        input:
+        inputs:
         [
-            { name: "operand1", dataType: "number" },
-            { name: "operand2", dataType: "number" },
+            { name: "previous", dataType: "flow" },
+            { name: "left", dataType: "number" },
+            { name: "right", dataType: "number" },
         ],
-        output:
+        outputs:
         [
+            { name: "next", dataType: "flow" },
             { name: "result", dataType: "number" },
         ]
     },
@@ -122,13 +137,15 @@ DataProgrammingNodeTypes: {
         name: "multiply",
         width: 100,
         data: '*',
-        input:
+        inputs:
         [
-            { name: "operand1", dataType: "number" },
-            { name: "operand2", dataType: "number" },
+            { name: "previous", dataType: "flow" },
+            { name: "left", dataType: "number" },
+            { name: "right", dataType: "number" },
         ],
-        output:
+        outputs:
         [
+            { name: "next", dataType: "flow" },
             { name: "result", dataType: "number" },
         ],
     },
@@ -138,146 +155,32 @@ DataProgrammingNodeTypes: {
         name: "divide",
         width: 100,
         data: '/',
-        input:
+        inputs:
         [
-            { name: "operand1", dataType: "number" },
-            { name: "operand2", dataType: "number" },
+            { name: "previous", dataType: "flow" },
+            { name: "left", dataType: "number" },
+            { name: "right", dataType: "number" },
         ],
-        output:
+        outputs:
         [
+            { name: "next", dataType: "flow" },
             { name: "result", dataType: "number" },
         ]
     },
-
-    neg:
-    {
-        name: "negate",
-        width: 100,
-        data: '-',
-        input:
-        [
-            { name: "operand", dataType: "number" },
-        ],
-        output:
-        [
-            { name: "result", dataType: "number" },
-        ]
-    },
-
-    isEqual:
-    {
-        name: "is-equal",
-        width: 100,
-        data: '==',
-        onUpdate: function (node) {
-            node.input[1].dataType = node.input[0].dataType;
-        },
-        input:
-        [
-            { name: "operand1", dataType: "*" },
-            { name: "operand2", dataType: "*" },
-        ],
-        output:
-        [
-            { name: "result", dataType: "bool" },
-        ]
-    },
-
-    isLess:
-    {
-        name: "is-less",
-        width: 100,
-        data: '<',
-        onUpdate: function (node) {
-            node.input[1].dataType = node.input[0].dataType;
-        },
-        input:
-        [
-            { name: "operand1", dataType: "number" },
-            { name: "operand2", dataType: "number" },
-        ],
-        output:
-        [
-            { name: "result", dataType: "bool" },
-        ]
-    },
-
-    not:
-    {
-        name: "not",
-        width: 100,
-        data: '!',
-        input:
-        [
-            { name: "operand", dataType: "bool" },
-        ],
-        output:
-        [
-            { name: "result", dataType: "bool" },
-        ]
-    },
-
-    and:
-    {
-        name: "and",
-        width: 100,
-        data: '&&',
-        input:
-        [
-            { name: "operand1", dataType: "bool" },
-            { name: "operand2", dataType: "bool" },
-        ],
-        output:
-        [
-            { name: "result", dataType: "bool" },
-        ]
-    },
-
-    or:
-    {
-        name: "or",
-        width: 100,
-        data: '||',
-        input:
-        [
-            { name: "operand1", dataType: "bool" },
-            { name: "operand2", dataType: "bool" },
-        ],
-        output:
-        [
-            { name: "result", dataType: "bool" },
-        ]
-    },
-
-    ifThenElse:
-    {
-        name: "if-then-else",
-        width: 100,
-        onUpdate: function (node) {
-            var dataType = node.input[1].dataType;
-            node.input[2].dataType = dataType;
-            node.output[0].dataType = dataType;
-        },
-
-        input:
-        [
-            { name: "if", dataType: "bool" },
-            { name: "then", dataType: "*" },
-            { name: "else", dataType: "*" },
-        ],
-        output:
-        [
-            {
-                name: "result",
-                dataType: "*",
-            },
-        ]
-    }
 },
 
 DataProgrammingModel: {
-    "nodes":[{"name":"data1","x":87,"y":70,"width":100,"height":58,"input":[],"output":[{"name":3,"dataType":"number"}],"typeName":"input","data":3},{"name":"data2","x":90,"y":158,"width":100,"height":58,"input":[],"output":[{"name":5,"dataType":"number"}],"typeName":"input","data":5},{"name":"is-less","x":263,"y":103,"width":100,"height":76,"input":[{"name":"operand1","dataType":"number"},{"name":"operand2","dataType":"number"}],"output":[{"name":"result","dataType":"bool"}],"typeName":"isLess","data":"<"},{"name":"data3","x":93,"y":241,"width":100,"height":58,"input":[],"output":[{"name":6,"dataType":"number"}],"typeName":"input","data":6},{"name":"is-less","x":261,"y":197,"width":100,"height":76,"input":[{"name":"operand1","dataType":"number"},{"name":"operand2","dataType":"number"}],"output":[{"name":"result","dataType":"bool"}],"typeName":"isLess","data":"<"},{"name":"and","x":426,"y":138,"width":100,"height":76,"input":[{"name":"operand1","dataType":"bool"},{"name":"operand2","dataType":"bool"}],"output":[{"name":"result","dataType":"bool"}],"typeName":"and","data":"&&"},{"name":"if-then-else","x":570,"y":186,"width":100,"height":94,"input":[{"name":"if","dataType":"bool"},{"name":"then","dataType":"string"},{"name":"else","dataType":"string"}],"output":[{"name":"result","dataType":"string"}],"typeName":"ifThenElse"},{"name":"output","x":713,"y":203,"width":100,"height":58,"input":[{"name":"'ordered secuence'","dataType":"string"}],"output":[],"typeName":"output","data":5},{"name":"msg1","x":375,"y":246,"width":100,"height":58,"input":[],"output":[{"name":"'ordered secuence'","dataType":"string"}],"typeName":"input","data":"'ordered secuence'"},{"name":"msg2","x":373,"y":321,"width":100,"height":58,"input":[],"output":[{"name":"'incorrect order'","dataType":"string"}],"typeName":"input","data":"'incorrect order'"}],"links":[{"outputNode":1,"outputSocket":0,"inputNode":2,"inputSocket":1},{"outputNode":0,"outputSocket":0,"inputNode":2,"inputSocket":0},{"outputNode":1,"outputSocket":0,"inputNode":4,"inputSocket":0},{"outputNode":3,"outputSocket":0,"inputNode":4,"inputSocket":1},{"outputNode":2,"outputSocket":0,"inputNode":5,"inputSocket":0},{"outputNode":4,"outputSocket":0,"inputNode":5,"inputSocket":1},{"outputNode":5,"outputSocket":0,"inputNode":6,"inputSocket":0},{"outputNode":6,"outputSocket":0,"inputNode":7,"inputSocket":0},{"outputNode":8,"outputSocket":0,"inputNode":6,"inputSocket":1},{"outputNode":9,"outputSocket":0,"inputNode":6,"inputSocket":2}]
-}
+    "nodes":[
+        {"name":"velocity","x":25.5,"y":71.5,"width":100,"height":60,"typeName":"parameter"},
+        {"name":"mass","x":24.4,"y":182,"width":100,"height":60,"typeName":"parameter"},
+        {"name":"multiply","x":241,"y":113.5,"width":100,"height":92,"typeName":"mult","data":"*"},
+        {"name":"momentum","x":423.5,"y":113,"width":100,"height":74,"typeName":"result"}],
+    "links":[
+        { "outputNode": 2, "outputSocket": 0, "outputSocketName": "next", "inputNode": 3, "inputSocket": 0, "inputSocketName": "previous" },
+        { "outputNode": 2, "outputSocket": 1, "outputSocketName": "result", "inputNode": 3, "inputSocket": 1, "inputSocketName": "value" },
+        { "outputNode": 1, "outputSocket": 0, "outputSocketName": "value", "inputNode": 2, "inputSocket": 2, "inputSocketName": "right" },
+        { "outputNode": 0, "outputSocket": 0, "outputSocketName": "value", "inputNode": 2, "inputSocket": 1, "inputSocketName": "left"  }]
+},
 
 };
 

@@ -31,7 +31,6 @@ namespace NInjector
             var syntax = compiler.Syntax();
 
             lexical
-                //methods 
                 .match()
                     .token("injector", named: "keyword")
                     .enclosed('{', '}', end: "lastBrace")
