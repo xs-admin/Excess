@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json.Linq;
+﻿using Excess.Compiler;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -39,13 +40,13 @@ namespace metaprogramming.server
 
     internal class GraphModel
     {
-        public static IDictionary<string, Func<JToken, object>> Serializers { get; private set; }
+        public static IDictionary<string, Func<JToken, Scope, object>> Serializers { get; private set; }
 
         static GraphModel()
         {
-            Serializers = new Dictionary<string, Func<JToken, object>>();
-            Serializers["parameter"] = jtoken => new Parameter(jtoken.ToString());
-            Serializers["result"] = _ => new Return();
+            Serializers = new Dictionary<string, Func<JToken, Scope, object>>();
+            Serializers["parameter"] = (jtoken, _) => new Parameter(jtoken.ToString());
+            Serializers["result"] = (_, __) => new Return();
             Serializers["sum"] = OperatorSerializer;
             Serializers["sub"] = OperatorSerializer;
             Serializers["mult"] = OperatorSerializer;
@@ -53,6 +54,6 @@ namespace metaprogramming.server
         }
 
         private static int index = 0;
-        private static object OperatorSerializer(JToken jtoken) => new Operator(jtoken.ToString(), "v" + ++index);
+        private static object OperatorSerializer(JToken jtoken, Scope scope) => new Operator(jtoken.ToString(), scope.GetUniqueId("v"));
     }
 }

@@ -37,6 +37,34 @@ namespace Excess.Compiler
             return result;
         }
 
+        private class UniqueIdHolder
+        {
+            public int Value { get; set; }
+        }
+
+        public void AddUniqueId(string seed)
+        {
+            var key = "__uid_" + seed;
+            var result = get<UniqueIdHolder>(key);
+            if (result != null)
+                throw new ArgumentException("seed");
+
+            set(key, new UniqueIdHolder { Value = 0 });
+        }
+
+        public string GetUniqueId(string seed)
+        {
+            var key = "__uid_" + seed;
+            var result = get<UniqueIdHolder>(key);
+            if (result == null)
+            {
+                result = new UniqueIdHolder { Value = 1 };
+                set(key, result);
+            }
+
+            return seed + result.Value++;
+        }
+
         public Scope CreateScope<TToken, TNode, TModel>(TNode node)
         {
             var service = GetService<TToken, TNode, TModel>();

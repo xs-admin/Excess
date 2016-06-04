@@ -16,6 +16,31 @@ MetaProgrammingSamples : [
 "   }" + '\n' +
 "}",
 
+//match example
+"" + '\n' +
+"//demonstrates a match statement" + '\n' +
+"//where case clauses are general conditions" + '\n' +
+"class Demo" + '\n' +
+"{" + '\n' +
+"    public static void Start()" + '\n' +
+"    {" + '\n' +
+"        match(x)" + '\n' +
+"        {" + '\n' +
+"             case 0:" + '\n' +
+"             case 1:" + '\n' +
+"                 Console.Write(\"Zero or One\");" + '\n' +
+"                 break;" + '\n' +
+"             case > 5: " + '\n' +
+"                 Console.Write(\"Greater than 5\");" + '\n' +
+"                 break;" + '\n' +
+"             case < y: " + '\n' +
+"                 Console.Write(\"Less than y\");" + '\n' +
+"                 break;" + '\n' +
+"             default:" + '\n' +
+"                Console.Write(\"Otherwise\");" + '\n' +
+"        }" + '\n' +
+"    }" + '\n' +
+"}",
 ],
 
 MetaProgrammingResults: [
@@ -33,6 +58,40 @@ MetaProgrammingResults: [
 "        var intArray = new[]{1, 2, 3};" + '\n' + 
 "    }" + '\n' + 
 "}",
+
+//match example
+"using System;                                  " + '\n' +
+"using System.Collections.Generic;              " + '\n' +
+"using System.Linq;                             " + '\n' +
+"                                               " + '\n' +
+"//demonstrates a match statement               " + '\n' +
+"//where case clauses are general conditions    " + '\n' +
+"class Demo                                     " + '\n' +
+"{                                              " + '\n' +
+"    public static void Start()                 " + '\n' +
+"    {                                          " + '\n' +
+"        if (x == 0 || x == 1)                  " + '\n' +
+"        {                                      " + '\n' +
+"            Console.Write(\"Zero or One\");    " + '\n' +
+"            break;                             " + '\n' +
+"        }                                      " + '\n' +
+"        else if (x > 5)                        " + '\n' +
+"        {                                      " + '\n' +
+"            Console.Write(\"Greater than 5\"); " + '\n' +
+"            break;                             " + '\n' +
+"        }                                      " + '\n' +
+"        else if (x < y)                        " + '\n' +
+"        {                                      " + '\n' +
+"            Console.Write(\"Less than y\");    " + '\n' +
+"            break;                             " + '\n' +
+"        }                                      " + '\n' +
+"        else                                   " + '\n' +
+"        {                                      " + '\n' +
+"            Console.Write(\"Otherwise\");      " + '\n' +
+"            break;                             " + '\n' +
+"        }                                      " + '\n' +
+"    }                                          " + '\n' +
+"}                                              ",
 
 ],
 

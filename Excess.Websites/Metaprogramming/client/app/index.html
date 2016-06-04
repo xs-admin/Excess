@@ -65,6 +65,15 @@
                             </div>
                         </div>
                         <div class="item">
+                            <h2>Extensions as Libraries</h2>
+                            <div class="desc">
+                                <p>
+                                    Install language extensions as Nuget Packages <br>
+                                    Reference them per source.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="item">
                             <h2>Democratizes programming languages</h2>
                             <div class="desc">
                                 <p>You no longer wait years for language designers <br> We decide</p>
@@ -86,47 +95,71 @@
             <div class="container">
                 <div class="row">
                     <div class="feature-item col-md-4 text-center">
-                        <div class="icon-container"><span class="ti-palette"></span></div>
+                        <div class="icon-container"><span class="ti-control-shuffle"></span></div>
                         <h3>Transpiled</h3>
                         <div class="desc">
-                            <p>18 predefined color schemes</p>
+                            <p>
+                                It is just <strong>C#</strong>, with generated boilerplate. <br>
+                                It was already a great language, <br>
+                                Now you drive it.
+                            </p>
                         </div>
                     </div>
                     <div class="feature-item col-md-4 text-center">
-                        <div class="icon-container"><span class="ti-layout"></span></div>
-                        <h3>Integrated</h3>
+                        <div class="icon-container"><span class="ti-palette"></span></div>
+                        <h3>Expressive</h3>
                         <div class="desc">
-                            <p>multiple layouts to choose from</p>
+                            <p>
+                                Say less to your compiler, get more back. <br>
+                                Your domain has its own lingo, <br>
+                                Use it.
+                            </p>
                         </div>
                     </div>
                     <div class="feature-item col-md-4 text-center">
-                        <div class="icon-container"><span class="ti-desktop"></span></div>
+                        <div class="icon-container"><span class="ti-unlink"></span></div>
                         <h3>Unobstrusive</h3>
                         <div class="desc">
-                            <p>add it to your existing projects, <br> extensions are Nugte packages</p>
+                            <p>
+                                Add a <strong>.xs</strong> file, compile, be happy. <br>
+                                Visual studio, command line, <br>
+                                Everywhere.
+                            </p>
                         </div>
                     </div>
                 </div>
                 <div class="row">
                     <div class="feature-item col-md-4 text-center">
-                        <div class="icon-container"><span class="ti-arrows-corner"></span></div>
-                        <h3>Responsive Design</h3>
+                        <div class="icon-container"><span class="ti-comments"></span></div>
+                        <h3>Community Oriented</h3>
                         <div class="desc">
-                            <p>mobile-ready design adopt to any device</p>
+                            <p>
+                                The many always better than the few.<br>
+                                We get to create our dialects. <br>
+                                And choose the best.
+                            </p>
                         </div>
                     </div>
                     <div class="feature-item col-md-4 text-center">
-                        <div class="icon-container"><span class="ti-pencil"></span></div>
-                        <h3>Clean code</h3>
+                        <div class="icon-container"><span class="ti-face-smile"></span></div>
+                        <h3>Easy</h3>
                         <div class="desc">
-                            <p>simple and clean JavaScript code</p>
+                            <p>
+                                Simple extensions in 200 lines of code. <br>
+                                Complex ones in 2000. <br>
+                                Easy to publish.
+                            </p>
                         </div>
                     </div>
                     <div class="feature-item col-md-4 text-center">
-                        <div class="icon-container"><span class="ti-world"></span></div>
-                        <h3>Internationalization</h3>
+                        <div class="icon-container"><span class="ti-book"></span></div>
+                        <h3>Open</h3>
                         <div class="desc">
-                            <p>internationalization and localization</p>
+                            <p>
+                                Long ways to go, but we can get it there. <br>
+                                Get it, use it, make it better. <br>
+                                Make it yours.
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -148,7 +181,7 @@
                                 </div>
                             </div>
                             <div class="examples-item col-md-2 text-center">
-                                <a class="btn"><span class="ti-settings example-icon"></span></a>
+                                <a class="btn" ng-click="setSample(1)"><span class="ti-settings example-icon"></span></a>
                                 <div class="desc">
                                     <p> <b>statement extensions</b><br> match, an advanced switch</p>
                                 </div>
@@ -195,20 +228,20 @@
             </div>
         </div>
 
-        <div id="visual" class="container visual features" ng-controller="ctrlVisual">
+        <div id="visual" class="container visual features" ng-controller="ctrlGraphModel">
             <div ui-layout="{dividerSize : 0, flow : 'row'}">
                 <div ui-layout-container size="230px" style="overflow:hidden">
                     <header>
-                        <h2 class="section-heading-underline app-link"><a href="#visual">Data Programming</a></h2>
+                        <h2 class="section-heading-underline app-link"><a href="#visual">Model Programming</a></h2>
                     </header>
                     <div class="container">
                         <div class="row">
                             <div class="examples-item col-md-4 text-center">
-                                <p class="desc" style="margin-top:15px;text-align:left">
-                                    A picture is worth 1000 LOC. <br>
-                                    Transform your data into code. <br>
+                                <blockquote class="desc" style="margin-top:15px;text-align:left">
+                                    A picture is worth 1000 lines of code. <br>
+                                    Model your systems in to code. <br>
                                     Get more done.
-                                </p>
+                                </blockquote>
                             </div>
 
                             <div class="col-md-4 text-center">
@@ -219,11 +252,11 @@
                             </div>
 
                             <div class="examples-item col-md-4" style="text-align:right">
-                                <p class="desc" style="margin-top:15px">
+                                <blockquote class="desc blockquote-reverse" style="margin-top:15px">
                                     Directed graphs are not the only<br>
                                     data models. But they are good.<br>
                                     See demo below.
-                                </p>
+                                </blockquote>
                             </div>
                         </div>
                     </div>
@@ -239,8 +272,8 @@
                                  xgraphstyle="backgroundColor:'darkblue', node:{fillColor:'lightgray'}"
                                  nodes="Model"
                                  ui-graph-panel="Options">
-                                 <!--data-context-event="contextmenu"
-                                 data-context-menu="components/menus/message.html">-->
+                                <!--data-context-event="contextmenu"
+                                data-context-menu="components/menus/message.html">-->
                             </div>
                         </div>
                         <div ui-layout-container size="40%">
@@ -264,7 +297,7 @@
                         <div class="icon-container"><span class="ti-github"></span></div>
                         <h3>Source Code</h3>
                         <div class="desc">
-                            <p>Fork our repo, we will accept pull requests.</p>
+                            <a href="https://github.com/xs-admin/Excess" target="_blank">Fork our repo, we will accept pull requests.</a>
                         </div>
                     </div>
                     <div class="feature-item col-md-4 text-center">

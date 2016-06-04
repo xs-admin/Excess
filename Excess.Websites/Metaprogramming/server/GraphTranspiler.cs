@@ -23,6 +23,8 @@ namespace metaprogramming.server
         public string Process(string source)
         {
             var scope = new Scope(_compiler.Scope);
+            scope.AddUniqueId("v");
+
             var jobject = JObject.Parse(source);
             var doc = GraphLoader.FromWebNodes(jobject, scope, serializers : GraphModel.Serializers);
 
@@ -40,16 +42,18 @@ namespace metaprogramming.server
             instance.match<Parameter>()
                 .output("value");
             instance.match<Return>()
-                .input("value", SetupReturn);
+                .input("value", ReturnValue)
+                .then<Return>(ReturnExec);
             instance.match<Operator>()
-                .input("left",  SetupOperatorInput(true))
-                .input("right", SetupOperatorInput(false));
+                .input("left",  Operand(true))
+                .input("right", Operand(false))
+                .then<Operator>(OperatorExec);
             instance.then(GenerateCode);
 
             return compiler;
         }
 
-        private void SetupReturn(InstanceConnector connector, object source, object target, Scope scope)
+        private void ReturnValue(InstanceConnector connector, object source, object target, Scope scope)
         {
             var @return = (Return)target;
             @return.Value = source is Parameter
@@ -57,7 +61,7 @@ namespace metaprogramming.server
                 : (source as Operator).Result;
         }
 
-        private Action<InstanceConnector, object, object, Scope> SetupOperatorInput(bool left)
+        private Action<InstanceConnector, object, object, Scope> Operand(bool left)
         {
             return (connector, source, target, scope) =>
             {
@@ -73,7 +77,7 @@ namespace metaprogramming.server
             };
         }
 
-        //rendering
+        //rendering templates
         public static ClassDeclarationSyntax FormulaClass = Template.Parse(@"
             class Formula
             {
@@ -83,6 +87,25 @@ namespace metaprogramming.server
             }").Get<ClassDeclarationSyntax>();
 
         public static TypeSyntax DoubleType = CSharp.ParseTypeName("double");
+
+        private void ReturnExec(Node graphNode, Return value, Scope scope)
+        {
+            if (value == null || value.Value == null)
+                throw new ArgumentException("value");
+
+            graphNode.Execute
+                .Add(CSharp.ReturnStatement(CSharp.ParseExpression(value.Value)));
+        }
+
+        private void OperatorExec(Node graphNode, Operator value, Scope scope)
+        {
+            if (value == null || value.LeftOperand == null || value.RightOperand == null || value.Result == null)
+                throw new ArgumentException("value");
+
+            var variable = $"var {value.Result} = {value.LeftOperand} {value.OperatorString} {value.RightOperand};";
+            graphNode.Execute
+                .Add(CSharp.ParseStatement(variable));
+        }
 
         private static SyntaxNode GenerateCode(IDictionary<string, Tuple<object, SyntaxNode>> instances, Scope scope)
         {

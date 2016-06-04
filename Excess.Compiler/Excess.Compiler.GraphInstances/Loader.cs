@@ -63,10 +63,10 @@ namespace Excess.Compiler.GraphInstances
             });
         }
 
-        public static RoslynInstanceDocument FromWebNodes(JObject root, Scope docScope, IEnumerable<Type> types = null, IDictionary<string, Func<JToken, object>> serializers = null)
+        public static RoslynInstanceDocument FromWebNodes(JObject root, Scope docScope, IEnumerable<Type> types = null, IDictionary<string, Func<JToken, Scope, object>> serializers = null)
         {
             if (serializers == null)
-                serializers = new Dictionary<string, Func<JToken, object>>();
+                serializers = new Dictionary<string, Func<JToken, Scope, object>>();
 
             if (types != null)
             {
@@ -76,7 +76,7 @@ namespace Excess.Compiler.GraphInstances
                     if (serializers.ContainsKey(typeName))
                         throw new InvalidOperationException($"duplicate {typeName}");
 
-                    serializers[typeName] = jtoken => jtoken.ToObject(type);
+                    serializers[typeName] = (jtoken, scope) => jtoken.ToObject(type);
                 }
             }
 
@@ -100,7 +100,7 @@ namespace Excess.Compiler.GraphInstances
                     var data = node.Property("data")?.Value
                         ??     node.Property("name")?.Value;
                     var type = node.Property("typeName")?.Value.ToString();
-                    var model = serializers[type](data);
+                    var model = serializers[type](data, scope);
 
                     instances[id] = model;
                 }

@@ -29,6 +29,7 @@ angular.module('metaprogramming', [
 
     $scope.setSample = function (index){
         sourceEditor.setValue(Samples.MetaProgrammingSamples[index], -1);
+        transpileEditor.setValue("", -1);
         sourceEditor.focus();
     }
 
@@ -40,6 +41,7 @@ angular.module('metaprogramming', [
             if (text == Samples.MetaProgrammingSamples[i])
             {
                 transpileEditor.setValue(Samples.MetaProgrammingResults[i]);
+                transpileEditor.clearSelection();
                 return; //cached
             }
         }
@@ -47,14 +49,14 @@ angular.module('metaprogramming', [
         Home.Transpile(text)
             .then(function (value){
                 transpileEditor.setValue(value.data.__res);
-                transpileEditor.focus();
+                transpileEditor.clearSelection();
             });
     }
     
 }])
 
 //graph
-.controller("ctrlVisual", ['$scope', '$timeout', 'Home', function ($scope, $timeout, Home) {
+.controller("ctrlGraphModel", ['$scope', '$timeout', 'Home', function ($scope, $timeout, Home) {
     $scope.Model = Samples.DataProgrammingModel;
 
     var graphEditor;
@@ -89,7 +91,7 @@ angular.module('metaprogramming', [
         Home.TranspileGraph(JSON.stringify(graphEditor.toJSON()))
             .then(function (value) {
                 sourceEditor.setValue(value.data.__res);
-                sourceEditor.focus();
+                sourceEditor.clearSelection();
             });
     }
 }]);
