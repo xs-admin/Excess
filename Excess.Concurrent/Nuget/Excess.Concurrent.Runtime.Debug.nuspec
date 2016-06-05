@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>Excess.Concurrent.Runtime</id>
+    <version>0.46.1-alpha</version>
+    <authors>Excess</authors>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>C# extensions for concurrency</description>
+  </metadata>
+  <files>
+    <file src="..\..\Excess.Extensions.Concurrent\bin\Debug\Excess.Extensions.Concurrent.dll" target="lib\Net45\Excess.Extensions.Concurrent.dll" />
+    <file src="..\Runtime\bin\Debug\Runtime.dll" target="lib\Net45\Runtime.dll" />
+  </files>
+</package>

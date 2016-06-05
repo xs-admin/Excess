@@ -27,6 +27,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Nuget", "Nuget", "{A43B47AC
 	ProjectSection(SolutionItems) = preProject
 		Nuget\Excess.Concurrent.Debug.nuspec = Nuget\Excess.Concurrent.Debug.nuspec
 		Nuget\Excess.Concurrent.nuspec = Nuget\Excess.Concurrent.nuspec
+		Nuget\Excess.Concurrent.Runtime.Debug.nuspec = Nuget\Excess.Concurrent.Runtime.Debug.nuspec
+		Nuget\Excess.Concurrent.Runtime.nuspec = Nuget\Excess.Concurrent.Runtime.nuspec
 		Nuget\publish.bat = Nuget\publish.bat
 	EndProjectSection
 EndProject

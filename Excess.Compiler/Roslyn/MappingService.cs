@@ -9,6 +9,8 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace Excess.Compiler.Roslyn
 {
+    using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
+
     public class MappingService : IMappingService<SyntaxToken, SyntaxNode>
     {
         Dictionary<SyntaxNode, SyntaxNode> _map = new Dictionary<SyntaxNode, SyntaxNode>();
@@ -94,174 +96,103 @@ namespace Excess.Compiler.Roslyn
             return token.WithAdditionalAnnotations(new SyntaxAnnotation("xs", idx.ToString()));
         }
 
-        public string RenderMapping(SyntaxNode node, string fileName)
+        private void appendTrivia(SyntaxTriviaList triviaList, StringBuilder file, StringBuilder line, ref int lineNumber)
         {
-            var result = new StringBuilder($"#line 1 \"{fileName}\"{Environment.NewLine}");
-            var lineNumber = 1;
-            var inHiddenPragma = false;
-            foreach (var token in node.DescendantTokens())
-            {
-                var annotation = token
-                    .GetAnnotations("xs")
-                    .FirstOrDefault();
-
-                var id = -1;
-                var original = -1;
-                var lastLine = lineNumber;
-                if (annotation != null
-                    && int.TryParse(annotation.Data, out id)
-                    && _originalTokens.TryGetValue(id, out original))
-                {
-                    lineNumber = original;
-                }
-                else
-                {
-                    lineNumber = 0;
-                }
-
-                lineNumber = addToken(result, token, lastLine, lineNumber, ref inHiddenPragma);
-            }
-
-            return result.ToString();
-        }
-
-        private bool assureHiddenPragma(StringBuilder result, bool inHiddenPragma)
-        {
-            if (!inHiddenPragma)
-            {
-                result.AppendLine($"#line hidden{Environment.NewLine}");
-                inHiddenPragma = true;
-            }
-
-            return inHiddenPragma;
-        }
-
-        private int addToken(StringBuilder result, SyntaxToken token, int oldLine, int newLine, ref bool inHiddenPragma)
-        {
-            var linePragma = $"#line {newLine}";
-            //var hiddenPragma = $"#line hidden";
-            var afterLineChange = string.Empty;
             var lineChanged = false;
-
-            if (oldLine <= 0 && newLine <= 0) //not actively on an original line
-            {
-                inHiddenPragma = assureHiddenPragma(result, inHiddenPragma);
-                result.Append(token.ToFullString());
-                return 0;
-            }
-            else if (newLine <= 0) //non-original token while rendering original line
-            {
-                afterLineChange = addTrivia(result, token.LeadingTrivia);
-                lineChanged = afterLineChange != null;
-                if (lineChanged)
-                {
-                    result.Append(afterLineChange);
-                    inHiddenPragma = assureHiddenPragma(result, inHiddenPragma);
-                }
-
-                restOfToken(result, token, ref lineChanged);
-
-                if (lineChanged)
-                    inHiddenPragma = assureHiddenPragma(result, inHiddenPragma);
-                return lineChanged ? 0 : oldLine;
-            }
-            else if (oldLine <= 0) //just found an original line
-            {
-                inHiddenPragma = false;
-                afterLineChange = addTrivia(result, token.LeadingTrivia, linePragma);
-                if (afterLineChange != null)
-                    result.Append(afterLineChange);
-
-                restOfToken(result, token, ref lineChanged);
-                return lineChanged ? 0 : newLine;
-            }
-            else //found original line while rendering another
-            {
-                inHiddenPragma = false;
-                if (oldLine == newLine) //on the same line
-                {
-                    addTrivia(result, token.LeadingTrivia);
-                    result.Append(token.ToString());
-                    afterLineChange = addTrivia(result, token.TrailingTrivia);
-                    if (afterLineChange != null)
-                    {
-                        result.Append(afterLineChange);
-                        return 0;
-                    }
-
-                    return newLine;
-                }
-                else
-                {
-                    afterLineChange = addTrivia(result, token.LeadingTrivia, linePragma);
-                    if (afterLineChange != null)
-                        result.Append(afterLineChange);
-
-                    result.Append(token.ToString());
-                    afterLineChange = addTrivia(result, token.TrailingTrivia);
-                    if (afterLineChange != null)
-                    {
-                        result.Append(afterLineChange);
-                        return 0;
-                    }
-
-                    return newLine;
-                }
-            }
-        }
-
-        private void restOfToken(StringBuilder result, SyntaxToken token, ref bool lineChanged)
-        {
-            result.Append(token.ToString());
-            if (token.HasTrailingTrivia)
-            {
-                foreach (var trivia in token.TrailingTrivia)
-                {
-                    if (trivia.IsKind(SyntaxKind.EndOfLineTrivia))
-                        lineChanged = true;
-
-                    result.Append(trivia.ToString());
-                }
-            }
-        }
-
-        private string addTrivia(StringBuilder result, SyntaxTriviaList triviaList, string pragma = null)
-        {
-            var line = new StringBuilder();
-            var lineChanged = false;
+            var tmpLine = default(StringBuilder);
             foreach (var trivia in triviaList)
             {
-                if (trivia.IsKind(SyntaxKind.EndOfLineTrivia))
+                var endOfLine = trivia.IsKind(SyntaxKind.EndOfLineTrivia);
+
+                if (lineChanged)
                 {
-                    lineChanged = true;
-                    result.Append(line.ToString() + Environment.NewLine); line.Clear();
+                    if (endOfLine)
+                    {
+                        file.AppendLine(tmpLine.ToString());
+                        tmpLine.Clear();
+                    }
+                    else
+                        tmpLine.Append(trivia.ToString());
+
+                    continue;
                 }
-                else 
-                    line.Append(trivia.ToString());
+
+                if (endOfLine)
+                {
+                    //insert our current line
+                    lineChanged = true;
+                    tmpLine = new StringBuilder();
+
+                    if (lineNumber > 0)
+                    {
+                        file.AppendLine($"#line {lineNumber}");
+                        lineNumber = -1;
+                    }
+                    else if (lineNumber < 0)
+                    {
+                        file.AppendLine($"#line hidden");
+                        lineNumber = 0;
+                    }
+
+                    file.AppendLine(line.ToString());
+                    line.Clear();
+                }
+                else line.Append(trivia.ToString());
             }
 
-            if (lineChanged)
-            {
-                if (pragma != null)
-                    result.Append(pragma + Environment.NewLine);
-                return line.ToString();
-            }
-
-            if (pragma != null)
-                result.Append(Environment.NewLine + pragma + Environment.NewLine);
-
-            result.Append(line.ToString());
-            return null;
+            if (tmpLine != null)
+                line.Append(tmpLine);
         }
 
-        private void AppendCurrent(StringBuilder result, StringBuilder line, bool asLine)
+        private bool isOriginalToken(SyntaxToken token, out int originalLine)
         {
-            if (asLine)
-                result.AppendLine(line.ToString());
-            else
-                result.Append(line.ToString());
+            var annotation = token
+                .GetAnnotations("xs")
+                .FirstOrDefault();
 
-            line.Clear();
+            var id = -1;
+            originalLine = 0;
+            if (annotation != null
+                && int.TryParse(annotation.Data, out id))
+                return _originalTokens.TryGetValue(id, out originalLine);
+            return false;
+        }
+
+        public string RenderMapping(SyntaxNode node, string fileName)
+        {
+            //make sure we're normalized
+            node = node.NormalizeWhitespace();
+
+            var file = new StringBuilder();
+            var line = new StringBuilder();
+            var lineNumber = -1;
+            foreach (var token in node.DescendantTokens())
+            {
+                if (token.HasLeadingTrivia)
+                    appendTrivia(token.LeadingTrivia, file, line, ref lineNumber);
+
+                var originalLine = 0;
+                if (isOriginalToken(token, out originalLine) && originalLine != lineNumber)
+                {
+                    if (lineNumber > 0)
+                    {
+                        //2 originals on a line
+                        appendTrivia(CSharp.TriviaList(CSharp.SyntaxTrivia(
+                            SyntaxKind.EndOfLineTrivia, string.Empty)),
+                            file, line, ref lineNumber);
+                    }
+
+                    lineNumber = originalLine;
+                }
+
+                //append the rest
+                line.Append(token.ToString());
+
+                if (token.HasTrailingTrivia)
+                    appendTrivia(token.TrailingTrivia, file, line, ref lineNumber);
+            }
+
+            return file.ToString();
         }
 
         public SyntaxNode AppyMappings(SyntaxNode root, Dictionary<int, string> mappings)

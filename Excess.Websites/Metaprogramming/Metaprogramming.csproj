@@ -47,6 +47,10 @@
       <HintPath>..\packages\Excess.Compiler.0.46.47-alpha\lib\Net45\Excess.Compiler.Razor.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="Excess.Extensions.Concurrent, Version=0.46.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Excess.Concurrent.Runtime.0.46.1-alpha\lib\Net45\Excess.Extensions.Concurrent.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Excess.Runtime, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Excess.Runtime.0.46.4-alpha\lib\Net45\Excess.Runtime.dll</HintPath>
       <Private>True</Private>
@@ -128,7 +132,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Runtime, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Concurrent.0.46.16-alpha\lib\Net45\Runtime.dll</HintPath>
+      <HintPath>..\packages\Excess.Concurrent.Runtime.0.46.1-alpha\lib\Net45\Runtime.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />

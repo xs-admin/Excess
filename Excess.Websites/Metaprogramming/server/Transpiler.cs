@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Excess.Compiler.Roslyn;
 using xslang;
+using Excess.Extensions.Concurrent;
 
 namespace metaprogramming.server
 {
@@ -14,6 +15,7 @@ namespace metaprogramming.server
         public Transpiler()
         {
             XSLanguage.Apply(_compiler);
+            ConcurrentExtension.Apply(_compiler);
         }
 
         public string Process(string source)

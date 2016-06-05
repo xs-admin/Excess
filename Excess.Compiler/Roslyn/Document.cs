@@ -178,8 +178,10 @@ namespace Excess.Compiler.Roslyn
                 .WithUsings(CSharp.List(
                     compilationUnit.Usings.Union(
                     modules
-                        .Select(module => CSharp.UsingDirective(
-                            CSharp.ParseName(module))))))
+                        .Select(module => CSharp
+                            .UsingDirective(CSharp
+                                .ParseName(module))
+                            .WithTrailingTrivia(CSharp.EndOfLine(string.Empty))))))
                 ?? root;
         }
 

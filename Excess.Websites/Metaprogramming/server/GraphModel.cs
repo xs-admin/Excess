@@ -53,7 +53,6 @@ namespace metaprogramming.server
             Serializers["div"] = OperatorSerializer;
         }
 
-        private static int index = 0;
         private static object OperatorSerializer(JToken jtoken, Scope scope) => new Operator(jtoken.ToString(), scope.GetUniqueId("v"));
     }
 }

@@ -7125,13 +7125,13 @@ h1, h2, h3 {
   font-weight: 300;
 }
 
-.btn-download {
+.btn-download, .btn-download:focus, .btn-download:active, .btn-download.active {
   color: #fff;
   background-color: transparent;
   border-color: #fff;
   min-width: 200px;
 }
-.btn-download:hover, .btn-download:focus, .btn-download:active, .btn-download.active {
+.btn-download:hover {
   color: #425162;
   background-color: #fff;
 }
@@ -7193,7 +7193,8 @@ h1, h2, h3 {
   display: inline-block;
   width: 40px;
   height: 40px;
-  font-size: 24px;
+  font-size: 18px;
+  font-weight:bold;
   line-height: 40px;
   text-align: center;
   letter-spacing: normal;
@@ -7277,7 +7278,7 @@ h1, h2, h3 {
 }
 
 .features {
-  padding: 80px 0 80px;
+  padding: 80px 0 40px;
   border-bottom: 1px solid #eeeeee;
 }
 .features > header {
