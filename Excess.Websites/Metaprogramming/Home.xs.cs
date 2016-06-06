@@ -17,8 +17,8 @@ namespace metaprogramming
 {
 #line hidden
 
-    [Service(id: "509ade34-c3b9-492e-b584-a87420429ab7")]
-    [Concurrent(id = "707f3a16-67d7-4153-8216-8b78fb75a35a")]
+    [Service(id: "aab3dd46-57cd-423f-a721-8e989a588606")]
+    [Concurrent(id = "9ff98a92-98cf-4458-9b84-1d9388af63db")]
 
 #line 6
     public class Home : ConcurrentObject
@@ -53,13 +53,13 @@ IGraphTranspiler ___graphTranspiler)
 
         [Concurrent]
 
-#line 14
+#line 15
         public string Transpile(string text)
 #line hidden
 
         {
             return 
-#line 14
+#line 15
 Transpile(text, default (CancellationToken)).Result;
 #line hidden
 
@@ -80,10 +80,10 @@ TranspileGraph(text, default (CancellationToken)).Result;
         }
 
         private IEnumerable<Expression> __concurrentTranspile
-#line 14
+#line 15
 (string text, CancellationToken __cancellation, Action<object> __success, Action<Exception> __failure)
 
-#line 15
+#line 16
         {
 #line hidden
 
@@ -104,25 +104,25 @@ _transpiler.Process(text));
 #line hidden
 
         public Task<
-#line 14
+#line 15
 string> Transpile(string text, CancellationToken cancellation)
 #line hidden
 
         {
             var completion = new TaskCompletionSource<
-#line 14
+#line 15
 string>();
 #line hidden
 
             Action<object> __success = (__res) => completion.SetResult((
-#line 14
+#line 15
 string)__res);
 #line hidden
 
             Action<Exception> __failure = (__ex) => completion.SetException(__ex);
             var __cancellation = cancellation;
             __enter(() => __advance(__concurrentTranspile(
-#line 14
+#line 15
 text, __cancellation, __success, __failure).GetEnumerator()), __failure);
 #line hidden
 
@@ -130,7 +130,7 @@ text, __cancellation, __success, __failure).GetEnumerator()), __failure);
         }
 
         public void Transpile(
-#line 14
+#line 15
 string text, CancellationToken cancellation, Action<object> success, Action<Exception> failure)
 #line hidden
 
@@ -139,7 +139,7 @@ string text, CancellationToken cancellation, Action<object> success, Action<Exce
             var __failure = failure;
             var __cancellation = cancellation;
             __enter(() => __advance(__concurrentTranspile(
-#line 14
+#line 15
 text, __cancellation, __success, __failure).GetEnumerator()), failure);
 #line hidden
 

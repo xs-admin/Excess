@@ -11,15 +11,15 @@ namespace metaprogramming
 			IGraphTranspiler _graphTranspiler;
 		}   
 
+
 		public string Transpile(string text)
 		{
-			//Hello
 			return _transpiler.Process(text);    
 		}
 
 		public string TranspileGraph(string text)
 		{
-			return _graphTranspiler.Process(text);    
+			return _graphTranspiler.Process(text);      
 		} 
 	} 
 }

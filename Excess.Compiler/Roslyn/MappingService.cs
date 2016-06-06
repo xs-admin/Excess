@@ -192,6 +192,7 @@ namespace Excess.Compiler.Roslyn
                     appendTrivia(token.TrailingTrivia, file, line, ref lineNumber);
             }
 
+            file.Append(line);
             return file.ToString();
         }
 
