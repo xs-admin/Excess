@@ -1,0 +1,134 @@
+/* app css stylesheet */
+
+.menu {
+  list-style: none;
+  border-bottom: 0.1em solid black;
+  margin-bottom: 2em;
+  padding: 0 0 0.5em;
+}
+
+.menu:before {
+  content: "[";
+}
+
+.menu:after {
+  content: "]";
+}
+
+.menu > li {
+  display: inline;
+}
+
+.menu > li:before {
+  content: "|";
+  padding-right: 0.3em;
+}
+
+.menu > li:nth-child(1):before {
+  content: "";
+  padding: 0;
+}
+
+.ace-editor {
+    margin-left: 3px;
+    margin-right: 3px;
+    height: 100%;
+    border-radius: 10px;
+}
+
+.example-icon {
+    height: 52px;
+    width: 52px;
+    line-height:56px;
+    font-size: 30px;
+    color: #A9DC8E;
+    text-decoration:none;
+}
+
+.app-buttons {
+    margin-top: 85px
+}
+
+.app-link a {
+    text-decoration: none !important;
+    color: rgb(98, 98, 98);
+}
+
+.app-link a:hover {
+    color: rgb(98, 98, 98);
+}
+
+.app-link a:visited {
+    color: rgb(98, 98, 98);
+}
+
+.social-bar a {
+  margin-right: 5px;
+  background-color: #384453;
+  color: #b3b3b3;
+}
+
+.examples {
+    position: relative;
+    min-height: 840px;
+}
+
+.examples .examples-item {
+  margin-bottom: 40px;
+}
+
+.examples .examples-item .icon-container {
+  margin: auto;
+  height: 52px;
+  width: 52px;
+  line-height: 52px;
+  padding: 0;
+  border: 2px solid #A9DC8E;
+  font-size: 30px;
+  color: #A9DC8E;
+  border-radius: 26px;
+}
+
+.visual {
+    position: relative;
+    min-height: 760px;
+}
+
+.visual-icon {
+    height: 96px;
+    width: 96px;
+    line-height:96px;
+    font-size: 66px;
+    color: #A9DC8E;
+}
+
+.download {
+  background-color: #f5f5f5;
+  padding-top: 70px !important;
+}
+
+.download li {
+  list-style-type: none;
+  margin-bottom: 1.6em;
+  padding: 1em 3em;
+}
+
+@media (min-width: 47.5em) {
+  .download li {
+    width: 49%;
+    display: inline-block;
+    vertical-align: top;
+  }
+}
+
+.download h4 {
+  margin-bottom: .6em;
+  font-size: 21px;
+  line-height: 1.6em;
+}
+
+.download .download-a {
+  font-family: Georgia, "Times New Roman", Times, serif;
+  font-size: 16px;
+  line-height: 1.6em;
+}

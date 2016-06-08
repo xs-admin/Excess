@@ -180,7 +180,7 @@ namespace Excess.Compiler.Roslyn
 
             if (_environment == null)
             {
-                _environment = new RoslynEnvironment(_scope, null);
+                _environment = new RoslynEnvironment(_scope, null, null);
                 _scope.set<ICompilerEnvironment>(_environment);
             }
         }

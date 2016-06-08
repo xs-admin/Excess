@@ -56,6 +56,11 @@ namespace Excess.Compiler.Roslyn
 
         public SemanticModel GetSemanticModel(SyntaxNode node) => getSemanticModel(node.SyntaxTree);
 
+        public string GetContent(string path)
+        {
+            return null;
+        }
+
         public void AddContent(string path, string contents)
         {
             throw new NotImplementedException();
@@ -626,7 +631,7 @@ namespace Excess.Compiler.Roslyn
 
         protected virtual RoslynEnvironment createEnvironment(IPersistentStorage storage)
         {
-            var result = new RoslynEnvironment(_scope, storage);
+            var result = new RoslynEnvironment(_scope, storage, null);
             result.dependency<object>(new[] { "System", "System.Collections" });
             result.dependency<Queue<object>>(new[] { "System.Collections.Generic" });
             result.dependency<Expression>(new[] { "System.Linq" });

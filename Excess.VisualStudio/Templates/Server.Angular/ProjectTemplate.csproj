@@ -73,6 +73,7 @@
     <None Include="server\Dependencies.xs" />
     <None Include="Service1.xs" />
     <None Include="xs.packages" />
+    <None Include="app.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

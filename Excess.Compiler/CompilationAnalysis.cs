@@ -6,6 +6,7 @@ namespace Excess.Compiler
     {
         Scope Scope { get; }
         TModel GetSemanticModel(TNode node);
+        string GetContent(string path);
         void AddContent(string path, string contents);
         void AddNativeDocument(string path, TNode root);
         void AddNativeDocument(string path, string contents);

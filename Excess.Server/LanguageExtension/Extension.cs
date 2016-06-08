@@ -471,7 +471,11 @@ namespace LanguageExtension
                 throw new ArgumentException("IServerConfiguration");
 
             var clientCode = serverConfig.GetClientInterface();
-            compilation.AddContent(@"client\app\services\__services.js", Templates
+            var servicePath = serverConfig.GetServicePath();
+            if (servicePath == null)
+                throw new InvalidOperationException("cannot find the path");
+
+            compilation.AddContent(servicePath, Templates
                 .servicesFile
                 .Render( new
                 {

@@ -9,6 +9,10 @@ using System.IO;
 using Excess.Compiler.Core;
 using Excess.Compiler.Roslyn;
 using Microsoft.CodeAnalysis.Text;
+using Microsoft.VisualStudio.Settings;
+using Microsoft.VisualStudio.Shell.Settings;
+using System.Runtime.CompilerServices;
+using System.Xml.Linq;
 
 namespace Excess.VS
 {
@@ -16,10 +20,14 @@ namespace Excess.VS
     {
         Project _project;
         Scope _scope;
+        Dictionary<string, object> _settings;
         public VSCompilation(Project project, Scope scope)
         {
             _project = project;
             _scope = scope;
+
+            _settings = new Dictionary<string, object>();
+            _scope.set<ICompilerEnvironment>(new RoslynEnvironment(_scope, new SolutionStorage(project), _settings));
         }
 
         public Project Project
@@ -37,6 +45,17 @@ namespace Excess.VS
             {
                 return _scope;
             }
+        }
+
+        public string GetContent(string path)
+        {
+            var file = _project.AdditionalDocuments
+                .Where(doc => doc.FilePath.EndsWith(path))
+                .FirstOrDefault();
+
+            var result = default(SourceText);
+            file?.TryGetText(out result);
+            return result?.ToString();
         }
 
         public void AddContent(string path, string contents)
@@ -92,6 +111,28 @@ namespace Excess.VS
 
         public void PerformAnalysis(CompilationAnalysisBase<SyntaxToken, SyntaxNode, SemanticModel> analysis)
         {
+            if (!_settings.Any())
+            {
+                var appConfig = Path.Combine(
+                    Path.GetDirectoryName(_project.FilePath),
+                    "app.config");
+
+                if (File.Exists(appConfig))
+                {
+                    var xmlDocument = XDocument.Load(appConfig);
+                    var xsSettings = xmlDocument
+                        .Element("configuration")
+                        .Element("xs")
+                        .Elements("setting");
+
+                    foreach (var xsSetting in xsSettings)
+                    {
+                        var settingId = xsSetting.Attribute("id").Value;
+                        _settings[settingId] = xsSetting.Attribute("value").Value;
+                    }
+                }
+            }
+
             foreach (var doc in _project.Documents)
             {
                 var root = doc.GetSyntaxRootAsync().Result;

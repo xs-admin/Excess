@@ -42,6 +42,7 @@ namespace Excess.Compiler
         IEnumerable<string> keywords();
         dynamic path();
         IPersistentStorage storage();
+        object setting(string id);
     }
 
     public interface ICompiler<TToken, TNode, TModel>

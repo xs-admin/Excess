@@ -1,0 +1,421 @@
+﻿<!DOCTYPE html>
+<!--[if lt IE 7]>      <html lang="en" ng-app="metaprogramming" class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html lang="en" ng-app="metaprogramming" class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html lang="en" ng-app="metaprogramming" class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]><!-->
+<html lang="en" ng-app="metaprogramming" class="no-js">
+<!--<![endif]-->
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>metaprogramming</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="lib/html5-boilerplate/dist/css/normalize.css">
+    <link rel="stylesheet" href="lib/html5-boilerplate/dist/css/main.css">
+    <link rel="stylesheet" href="app.css">
+    <link href="fonts/themify-icons/themify-icons.min.css" rel="stylesheet">
+    <link href="css/main.css" rel="stylesheet">
+
+    <link rel="stylesheet" type="text/css" href="lib/angular-ui-layout/src/ui-layout.css" />
+    <script src="lib/html5-boilerplate/dist/js/vendor/modernizr-2.8.3.min.js"></script>
+</head>
+<body data-spy="scroll" data-target=".header">
+    <header id="header" class="header navbar navbar-default">
+        <div class="container">
+            <div class="row">
+                <div class="navbar-header">
+                    <button type="button" data-toggle="collapse" data-target="#navbar-collapse-1" class="navbar-toggle">
+                        <span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span>
+                    </button>
+                    <a href="javascript:;" class="navbar-brand"> <span class="logo">XS</span><span>Excess</span></a>
+                </div>
+                <div id="navbar-collapse-1" class="collapse navbar-collapse">
+                    <ul id="nav" class="nav navbar-nav navbar-right">
+                        <li><a href="#banner">Home</a></li>
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="#examples">Examples</a></li>
+                        <li class="highlight"><a href="#download" target="_blank">Download</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </header>
+    <div class="main-content">
+        <div id="banner" class="banner">
+            <div class="container">
+                <div class="social-bar">
+                    <a href="http://twitter.com/meta_ninja" target="_blank" class="btn btn-icon"><i class="ti-twitter"></i></a>
+                    <a href="http://www.facebook.com/metaninja" target="_blank" class="btn btn-icon"><i class="ti-facebook"></i></a>
+                    <a href="https://plus.google.com/u/0/b/115865877602133760249/115865877602133760249/posts" target="_blank" class="btn btn-icon"><i class="ti-google"></i></a>
+                    <a href="https://github.com/xs-admin/Excess" target="_blank" class="btn btn-icon"><i class="ti-github"></i></a>
+                </div>
+                <div id="testimonials-carousel" data-ride="carousel" data-interval="10000" class="carousel slide">
+                    <div class="carousel-inner text-center">
+                        <div class="item active">
+                            <h2>Excess: a meta-programming platform</h2>
+                            <div class="desc">
+                                <p>The community adds extensions to the C# language <br> And so can you</p>
+                            </div>
+                        </div>
+                        <div class="item">
+                            <h2>Makes your language better</h2>
+                            <div class="desc">
+                                <p>Streamline <strong>your</strong> processes at the language level <br> Drastically reducing the learning curves and bugs</p>
+                            </div>
+                        </div>
+                        <div class="item">
+                            <h2>Extensions as Libraries</h2>
+                            <div class="desc">
+                                <p>
+                                    Install language extensions as Nuget Packages <br>
+                                    Reference them per source.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="item">
+                            <h2>Democratizes programming languages</h2>
+                            <div class="desc">
+                                <p>You no longer wait years for language designers <br> We decide</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="app-buttons">
+                    <a href="#examples" class="btn btn-download btn-lg">Try it</a>
+                    <a href="#visual" class="btn btn-download btn-lg">Visualize it</a>
+                    <a href="#download" class="btn btn-download btn-lg">Get it</a>
+                </div>
+            </div>
+        </div>
+        <div id="features" class="features">
+            <header>
+                <h2 class="section-heading-underline app-link"><a href="#features">Key Features</a></h2>
+            </header>
+            <div class="container">
+                <div class="row">
+                    <div class="feature-item col-md-4 text-center">
+                        <div class="icon-container"><span class="ti-control-shuffle"></span></div>
+                        <h3>Transpiled</h3>
+                        <div class="desc">
+                            <p>
+                                It is just <strong>C#</strong>, with generated boilerplate. <br>
+                                It was already a great language, <br>
+                                Now you drive it.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="feature-item col-md-4 text-center">
+                        <div class="icon-container"><span class="ti-palette"></span></div>
+                        <h3>Expressive</h3>
+                        <div class="desc">
+                            <p>
+                                Say less to your compiler, get more back. <br>
+                                Your domain has its own lingo, <br>
+                                Use it.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="feature-item col-md-4 text-center">
+                        <div class="icon-container"><span class="ti-unlink"></span></div>
+                        <h3>Unobstrusive</h3>
+                        <div class="desc">
+                            <p>
+                                Add a <strong>.xs</strong> file, compile, be happy. <br>
+                                Visual studio, command line, <br>
+                                Everywhere.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="feature-item col-md-4 text-center">
+                        <div class="icon-container"><span class="ti-comments"></span></div>
+                        <h3>Community Oriented</h3>
+                        <div class="desc">
+                            <p>
+                                The many always better than the few.<br>
+                                We get to create our dialects. <br>
+                                And choose the best.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="feature-item col-md-4 text-center">
+                        <div class="icon-container"><span class="ti-face-smile"></span></div>
+                        <h3>Easy</h3>
+                        <div class="desc">
+                            <p>
+                                Simple extensions in 200 lines of code. <br>
+                                Complex ones in 2000. <br>
+                                Easy to publish.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="feature-item col-md-4 text-center">
+                        <div class="icon-container"><span class="ti-book"></span></div>
+                        <h3>Open</h3>
+                        <div class="desc">
+                            <p>
+                                Long ways to go, but we can get it there. <br>
+                                Get it, use it, make it better. <br>
+                                Make it yours.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="examples" class="container examples" ng-controller="ctrlExamples">
+            <div ui-layout="{dividerSize : 0, flow : 'row'}">
+                <div ui-layout-container size="230px" style="overflow:hidden">
+                    <header>
+                        <h2 class="section-heading-underline app-link"><a href="#examples">Examples</a></h2>
+                    </header>
+                    <div class="container">
+                        <div class="row">
+                            <div class="examples-item col-md-2 text-center">
+                                <a class="btn" ng-click="setSample(0)"><span class="ti-settings example-icon"></span></a>
+                                <div class="desc">
+                                    <p>
+                                        <b>EXPRESSIONS</b> <br>
+                                        javascript style arrays <br>
+                                        <a href="https://github.com/xs-admin/Excess/blob/master/Excess.Entensions.XS/Arrays.cs" target="_blank">learn more...</a> <br />
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="examples-item col-md-2 text-center">
+                                <a class="btn" ng-click="setSample(1)"><span class="ti-settings example-icon"></span></a>
+                                <div class="desc">
+                                    <p>
+                                        <b>STATEMENTS</b><br>
+                                        <b>match</b>, an advanced switch
+                                        <a href="https://github.com/xs-admin/Excess/blob/master/Excess.Entensions.XS/Arrays.cs" target="_blank">learn more...</a> <br />
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="col-md-4 text-center">
+                                <a class="btn" style="font-size:50px" ng-click="transpileExample()"><span class="ti-arrow-circle-right"></span></a>
+                                <div class="desc">
+                                    <p>click here to transpile</p>
+                                </div>
+                            </div>
+
+                            <div class="examples-item col-md-2 text-center">
+                                <a class="btn" ng-click="setSample(2)"><span class="ti-settings example-icon"></span></a>
+                                <div class="desc">
+                                    <p>
+                                        <b>MEMBERS</b> <br>
+                                        constructors, methods, etc <br>
+                                        <a href="https://github.com/xs-admin/Excess/blob/master/Excess.Entensions.XS/Members.cs" target="_blank">learn more...</a> <br />
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="examples-item col-md-2 text-center">
+                                <a class="btn" ng-click="setSample(3)"><span class="ti-settings example-icon"></span></a>
+                                <div class="desc">
+                                    <p>
+                                        <b>SUPER-OBJECTS</b> <br>
+                                        concurrency, done right <br>
+                                        <a href="https://github.com/xs-admin/Excess/tree/master/Excess.Extensions.Concurrent" target="_blank">learn more...</a> <br />
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div ui-layout-container>
+                    <div ui-layout="{flow : 'column'}">
+                        <div ui-layout-container size="50%">
+                            <div ui-ace="{
+                                  useWrapMode : true,
+                                  mode: 'csharp',
+                                  onLoad: sourceLoaded}" class="ace-editor"></div>
+                        </div>
+                        <div ui-layout-container size="50%">
+                            <div ui-ace="{
+                                  useWrapMode : true,
+                                  mode: 'csharp',
+                                  onLoad: transpileLoaded}" class="ace-editor"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="visual" class="container visual features" ng-controller="ctrlGraphModel">
+            <div ui-layout="{dividerSize : 0, flow : 'row'}">
+                <div ui-layout-container size="230px" style="overflow:hidden">
+                    <header>
+                        <h2 class="section-heading-underline app-link"><a href="#visual">Model Programming</a></h2>
+                    </header>
+                    <div class="container">
+                        <div class="row">
+                            <div class="examples-item col-md-4 text-center">
+                                <blockquote class="desc" style="margin-top:15px;text-align:left">
+                                    A picture is worth 1000 lines of code. <br>
+                                    Model your systems in to code. <br>
+                                    Get more done.
+                                </blockquote>
+                            </div>
+
+                            <div class="col-md-4 text-center">
+                                <a class="btn" style="font-size:50px" ng-click="transpileGraph()"><span class="ti-arrow-circle-right"></span></a>
+                                <div class="desc">
+                                    <p>click here to transpile</p>
+                                </div>
+                            </div>
+
+                            <div class="examples-item col-md-4" style="text-align:right">
+                                <blockquote class="desc blockquote-reverse" style="margin-top:15px">
+                                    Directed graphs are not the only<br>
+                                    data models. But they are good.<br>
+                                    See demo below.
+                                </blockquote>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div ui-layout-container>
+                    <div ui-layout="{flow : 'column'}">
+                        <div ui-layout-container
+                             size="60%"
+                             style="overflow:hidden">
+                            <!--<div ui-graph-panel="{nodeTypes : NodeTypes, dataTypes: DataTypes}" nodes="Model">
+                            </div>-->
+                            <div name="Graph1" xstyle="xwidth:300px; height:300px" ystyle="width:100%; height:500px"
+                                 xgraphstyle="backgroundColor:'darkblue', node:{fillColor:'lightgray'}"
+                                 nodes="Model"
+                                 ui-graph-panel="Options">
+                                <!--data-context-event="contextmenu"
+                                data-context-menu="components/menus/message.html">-->
+                            </div>
+                        </div>
+                        <div ui-layout-container size="40%">
+                            <div ui-ace="{
+                                  useWrapMode : true,
+                                  mode: 'csharp',
+                                  onLoad: sourceLoaded}" class="ace-editor"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="download" class="features download">
+            <header>
+                <h2 class="section-heading-underline app-link"><a href="#download">Download</a></h2>
+                <p class="download-a text-center">Get our prototype. </p>
+            </header>
+            <div class="container">
+                <div class="row">
+                    <div class="feature-item col-md-4 text-center">
+                        <div class="icon-container"><span class="ti-github"></span></div>
+                        <h3>Source Code</h3>
+                        <div class="desc">
+                            <a href="https://github.com/xs-admin/Excess" target="_blank">Fork our repo, we will accept pull requests.</a>
+                        </div>
+                    </div>
+                    <div class="feature-item col-md-4 text-center">
+                        <div class="icon-container"><span class="ti-book"></span></div>
+                        <h3>Documentation</h3>
+                        <div class="desc">
+                            <a href="https://github.com/xs-admin/Excess/wiki" target="_blank">Still working on it</a>
+                        </div>
+                    </div>
+                    <div class="feature-item col-md-4 text-center">
+                        <div class="icon-container"><span class="ti-cloud"></span></div>
+                        <h3>Binaries</h3>
+                        <div class="desc">
+                            <a href="https://www.nuget.org/packages?q=emilio.santos" target="_blank">Get our Nuget packages.</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="feature-item col-md-4 text-center">
+                        <div class="icon-container"><span class="ti-microsoft-alt"></span></div>
+                        <h3>Visual Studio</h3>
+                        <div class="desc">
+                            <a href="https://visualstudiogallery.msdn.microsoft.com/cd919843-7e02-4ed7-b163-eee591a0ef05" target="_blank">Install our Visual Studio Extension</a>
+                        </div>
+                    </div>
+                    <div class="feature-item col-md-4 text-center">
+                        <div class="icon-container"><span class="ti-linux"></span></div>
+                        <h3>Command Line</h3>
+                        <div class="desc">
+                            <p>Or download out command line interface</p>
+                        </div>
+                    </div>
+                    <div class="feature-item col-md-4 text-center">
+                        <div class="icon-container"><span class="ti-world"></span></div>
+                        <h3>Contribute</h3>
+                        <div class="desc">
+                            <p>Please.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <section id="footer">
+        <section class="footer">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="footer-menu">
+                            <ul class="nav nav-pills">
+                                <li><a href="#home">Home</a></li>
+                                <li><a href="#features">Features</a></li>
+                                <li><a href="#examples">Examples</a></li>
+                            </ul>
+                        </div>
+                        <div class="info">
+                            <p><i class="ti-mobile"> </i> (786) 556-7562</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="connect">
+                            <p data-i18n="Connect with us">Connect with us</p>
+                        </div>
+                        <div class="social-icons clearfix">
+                            <a href="http://twitter.com/meta_ninja" target="_blank" class="btn-icon"><i class="ti-twitter"></i></a>
+                            <a href="http://www.facebook.com/metaninja" target="_blank" class="btn-icon"><i class="ti-facebook"></i></a>
+                            <a href="https://plus.google.com/u/0/b/115865877602133760249/115865877602133760249/posts" target="_blank" class="btn-icon"><i class="ti-google"></i></a>
+                            <a href="https://github.com/xs-admin/Excess" target="_blank" class="btn-icon"><i class="ti-github"></i></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section class="copyright">
+            <div class="container"><span>© Copyright <span id="copyright"></span> Excess</span></div>
+        </section>
+    </section>
+    <!--if lt IE 8
+    <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="http://browsehappy.com/">upgrade your browser</a> to improve your experience.</p>
+    -->
+    <!-- Scripts-->
+    <script src="scripts/jquery.min.js"></script>
+    <script src="scripts/bootstrap.min.js"></script>
+    <script src="scripts/jquery.smooth-scroll.min.js"></script>
+    <script src="scripts/main.js"></script>
+    <!-- In production use:
+    <script src="//ajax.googleapis.com/ajax/libs/angularjs/x.x.x/angular.min.js"></script>
+    -->
+    <script src="lib/angular/angular.js"></script>
+    <script src="lib/angular-route/angular-route.js"></script>
+    <script src="lib/angular-ui-layout/src/ui-layout.js"></script>
+    <script src="lib/ace-builds/src-min-noconflict/ace.js"></script>
+    <script src="lib/angular-ui-ace/ui-ace.js"></script>
+
+    <script src="components/angular-ui-graph/graphpanel.js"></script>
+    <script src="components/angular-ui-graph/ui-graphpanel.js"></script>
+
+    <script src="app.js"></script>
+    <script src="samples.js"></script>
+    <script src="components/version/version.js"></script>
+    <script src="components/version/version-directive.js"></script>
+    <script src="components/version/interpolate-filter.js"></script>
+    <script src="services/__services.js"></script>
+</body>
+</html>

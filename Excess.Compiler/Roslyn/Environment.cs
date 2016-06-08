@@ -10,11 +10,13 @@ namespace Excess.Compiler.Roslyn
 {
     public class RoslynEnvironment : ICompilerEnvironment
     {
-        private Scope _root;
-        public RoslynEnvironment(Scope root, IPersistentStorage storage)
+        Scope _root;
+        IDictionary<string, object> _settings;
+        public RoslynEnvironment(Scope root, IPersistentStorage storage, IDictionary<string, object> settings)
         {
             _root = root;
             _storage = storage;
+            _settings = settings ?? new Dictionary<string, object>();
         }
 
 
@@ -119,6 +121,13 @@ namespace Excess.Compiler.Roslyn
         public IPersistentStorage storage()
         {
             return _storage;
+        }
+
+        public object setting(string id)
+        {
+            var result = default(object);
+            _settings.TryGetValue(id, out result);
+            return result;
         }
     }
 }

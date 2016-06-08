@@ -87,6 +87,7 @@
     <Compile Include="HttpServer.cs" />
     <Compile Include="NetMQServers.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Reflection.cs" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Owin.cs" />

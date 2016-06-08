@@ -178,7 +178,7 @@ namespace Excess.Compiler.Roslyn
             var source = File.ReadAllText(fileName);
             var document = new RoslynDocument(new Scope(_scope), source, fileName);
 
-            var enviroment = new RoslynEnvironment(_scope, new SolutionStorage(project));
+            var enviroment = new RoslynEnvironment(_scope, new SolutionStorage(project), null); //td: settings
             var compilerResult = new RoslynCompiler(enviroment, _scope);
             var tree = CSharpSyntaxTree.ParseText(source);
             var usings = (tree.GetRoot() as CompilationUnitSyntax)

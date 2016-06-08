@@ -8,10 +8,17 @@ namespace LanguageExtension
     {
         void AddClientInterface(SyntaxTree document, string contents);
         string GetClientInterface();
+        string GetServicePath();
     }
 
     public class ServerConfiguration : IServerConfiguration
     {
+        ICompilerEnvironment _environment;
+        public ServerConfiguration(ICompilerEnvironment environment)
+        {
+            _environment = environment;
+        }
+
         StringBuilder _jsObject = new StringBuilder();
         public void AddClientInterface(SyntaxTree document, string contents)
         {
@@ -22,6 +29,11 @@ namespace LanguageExtension
         {
             return _jsObject.ToString();
         }
+
+        public string GetServicePath()
+        {
+            return _environment?.setting("servicePath") as string;
+        }
     }
 
     public static class ScopeExtensions
@@ -31,7 +43,7 @@ namespace LanguageExtension
             var result = scope.get<IServerConfiguration>();
             if (result == null)
             {
-                result = new ServerConfiguration();
+                result = new ServerConfiguration(scope.get<ICompilerEnvironment>());
                 scope.set(result);
             }
 

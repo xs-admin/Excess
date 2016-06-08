@@ -78,6 +78,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <None Include="app.template.config" />
     <None Include="server\Dependencies.xs.cs">
       <DependentUpon>Dependencies.xs</DependentUpon>
     </None>
