@@ -2,7 +2,7 @@
 
 namespace metaprogramming.server
 {
-	injector  
+	injector     
 	{
 		ITranspiler = Transpiler;   
 		IGraphTranspiler = GraphTranspiler;

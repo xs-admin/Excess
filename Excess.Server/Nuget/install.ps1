@@ -6,7 +6,8 @@ function HasStartAction ($item)
     {
        if ($property.Name -eq "StartAction")
        {
-           return $true
+           write-host "StartAction - " $property.Value
+           return [string]::IsNullOrEmpty($property.Value)
        }            
     } 
 
