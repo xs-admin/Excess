@@ -104,8 +104,10 @@
   <ItemGroup>
     <Compile Include="Arrays.cs" />
     <Compile Include="Events.cs" />
+    <Compile Include="Functions.cs" />
     <Compile Include="Match.cs" />
     <Compile Include="Members.cs" />
+    <Compile Include="Templates.cs" />
     <Compile Include="XSLanguage.cs" />
     <Compile Include="Injection.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

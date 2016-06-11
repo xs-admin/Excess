@@ -10,7 +10,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Excess.Entensions.XS
+namespace xslang
 {
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
     using ExcessCompiler = ICompiler<SyntaxToken, SyntaxNode, SemanticModel>;
@@ -39,8 +39,10 @@ namespace Excess.Entensions.XS
                     .then(lexical.transform()
                         .remove("fn")
                         .then(ProcessMemberFunction, referenceToken: "id"));
-            semantics
-                .error("CS0246", FunctionType);
+            
+            //td: do we need this?
+            //semantics
+            //    .error("CS0246", FunctionType);
         }
 
         private static SyntaxNode ProcessMemberFunction(SyntaxNode node, Scope scope)
@@ -49,14 +51,31 @@ namespace Excess.Entensions.XS
 
             if (node is MethodDeclarationSyntax)
             {
-                var method = node as MethodDeclarationSyntax;
-                var calculateType = false;
+                var method = (node as MethodDeclarationSyntax)
+                    .AddParameterListParameters(CSharp
+                        .Parameter(Templates.ScopeToken)
+                        .WithType(Templates.ScopeType));
+
                 if (method.ReturnType.IsMissing)
                 {
-                    calculateType = true;
                     method = method.WithReturnType(RoslynCompiler.@void);
 
-                    document.change(method, ReturnType);
+                    var calculateType = method.Body
+                        .DescendantNodes()
+                        .OfType<ReturnStatementSyntax>()
+                        .Any();
+
+                    var isMember = method.Parent is TypeDeclarationSyntax;
+                    if (!isMember)
+                        return Templates
+                            .NamespaceFunction
+                            .AddMembers((MemberDeclarationSyntax)document.change(
+                                method, 
+                                LinkNamespaceFunction(calculateType)));
+
+                    return calculateType
+                        ? document.change(method, CalculateReturnType)
+                        : method;
                 }
 
                 return node;
@@ -95,7 +114,29 @@ namespace Excess.Entensions.XS
             return node;
         }
 
-        private static SyntaxNode ReturnType(SyntaxNode node, SyntaxNode newNode, SemanticModel model, Scope scope)
+        private static Func<SyntaxNode, SyntaxNode, SemanticModel, Scope, SyntaxNode> LinkNamespaceFunction(bool calculateType)
+        {
+            return (original, node, model, scope) =>
+            {
+                if (calculateType)
+                    node = CalculateReturnType(original, node, model, scope);
+
+                var calls = node
+                    .DescendantNodes()
+                    .OfType<ExpressionStatementSyntax>()
+                    .Where(statement =>
+                        statement.Expression is InvocationExpressionSyntax
+                        && (statement.Expression as InvocationExpressionSyntax)
+                            .Expression is IdentifierNameSyntax)
+                    .Select(statement => (InvocationExpressionSyntax)statement.Expression);
+
+                return node.ReplaceNodes(calls,
+                    (on, nn) => nn.AddArgumentListArguments(
+                        CSharp.Argument(Templates.ScopeIdentifier)));
+            };
+        }
+
+        private static SyntaxNode CalculateReturnType(SyntaxNode node, SyntaxNode newNode, SemanticModel model, Scope scope)
         {
             var method = node as MethodDeclarationSyntax;
             if (method == null)
