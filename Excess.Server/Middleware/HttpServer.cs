@@ -11,7 +11,7 @@ using Microsoft.Owin;
 using Excess.Runtime;
 using System.Reflection;
 
-namespace Middleware
+namespace Excess.Server.Middleware
 {
     public class HttpServer
     {

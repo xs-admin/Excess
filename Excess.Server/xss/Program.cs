@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using Middleware;
+using Excess.Server.Middleware;
 using Excess.Concurrent.Runtime;
 
 namespace xss

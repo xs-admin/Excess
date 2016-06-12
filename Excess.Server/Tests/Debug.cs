@@ -11,7 +11,7 @@ namespace SomeNS
     using System.Threading;
     using System.Threading.Tasks;
     using Excess.Concurrent.Runtime;
-    using Middleware;
+    using Excess.Server.Middleware;
 
     public struct HelloModel
     {

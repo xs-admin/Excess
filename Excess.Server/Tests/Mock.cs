@@ -12,7 +12,7 @@ using Excess.Compiler;
 using Excess.Compiler.Roslyn;
 using Excess.Compiler.Core;
 using Excess.Concurrent.Runtime;
-using Middleware;
+using Excess.Server.Middleware;
 using Newtonsoft.Json.Linq;
 
 namespace Tests

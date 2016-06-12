@@ -63,7 +63,7 @@ namespace LanguageExtension
                     .then(CompileService));
 
             compiler.Environment()
-                .dependency("Middleware");
+                .dependency("Excess.Server.Middleware");
         }
 
         //server information

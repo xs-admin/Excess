@@ -10,7 +10,7 @@ using NetMQ.Sockets;
 using System.Linq;
 using Newtonsoft.Json.Linq;
 
-namespace Middleware
+namespace Excess.Server.Middleware
 {
     public static class NetMQFunctions
     {

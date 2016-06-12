@@ -8,7 +8,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Excess.Concurrent.Runtime;
 
-namespace Middleware
+namespace Excess.Server.Middleware
 {
     using System.Threading;
     using MethodFunc = Action<IConcurrentObject, JObject, Action<object>, Action<Exception>>;

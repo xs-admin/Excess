@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Middleware
+namespace Excess.Server.Middleware
 {
     [AttributeUsage(AttributeTargets.Class)]
     public class ServerConfiguration : Attribute

@@ -7,7 +7,7 @@
     <ProjectGuid>{ED3D63D8-7C35-4F77-8430-7BC6BBFE56B9}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Middleware</RootNamespace>
+    <RootNamespace>Excess.Server.Middleware</RootNamespace>
     <AssemblyName>Excess.Server.Middleware</AssemblyName>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -90,7 +90,7 @@
     <Compile Include="Reflection.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Owin.cs" />
+    <Compile Include="ServiceMiddleware.cs" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
