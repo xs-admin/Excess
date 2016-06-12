@@ -114,6 +114,7 @@
     <Compile Include="InjectionTests.cs" />
     <Compile Include="InstanceTests.cs" />
     <Compile Include="MappingTests.cs" />
+    <Compile Include="MatchTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

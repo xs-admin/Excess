@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 namespace xslang
 {
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
+    using Roslyn = RoslynCompiler;
     using ExcessCompiler = ICompiler<SyntaxToken, SyntaxNode, SemanticModel>;
 
     public class Functions
@@ -38,8 +39,15 @@ namespace xslang
                     .token('{')
                     .then(lexical.transform()
                         .remove("fn")
-                        .then(ProcessMemberFunction, referenceToken: "id"));
-            
+                        .then(ProcessMemberFunction, referenceToken: "id"))
+
+                .match()
+                    .token("scope", named: "keyword")
+                    .token('{', named: "ref")
+                    .then(lexical.transform()
+                        .remove("keyword")
+                        .then(ProcessScope, "ref"));
+
             //td: do we need this?
             //semantics
             //    .error("CS0246", FunctionType);
@@ -131,8 +139,19 @@ namespace xslang
                     .Select(statement => (InvocationExpressionSyntax)statement.Expression);
 
                 return node.ReplaceNodes(calls,
-                    (on, nn) => nn.AddArgumentListArguments(
-                        CSharp.Argument(Templates.ScopeIdentifier)));
+                    (on, nn) =>
+                    {
+                        var lastArgument = nn
+                            .ArgumentList
+                            .Arguments
+                            .LastOrDefault();
+
+                        if (lastArgument != null && lastArgument.ToString() == "__newScope")
+                            return nn;
+
+                        return nn.AddArgumentListArguments(
+                            CSharp.Argument(Templates.ScopeIdentifier));
+                    });
             };
         }
 
@@ -216,6 +235,75 @@ namespace xslang
                                             //.WithParameterList(invocation.ArgumentList) //td: extension arguments
                                             .WithBody(body)))})));
             };
+        }
+
+        private static SyntaxNode ProcessScope(SyntaxNode node)
+        {
+            var block = node as BlockSyntax;
+            if (block == null)
+            {
+                //td: error
+                return node;
+            }
+
+            return block.WithStatements(CSharp.List(
+                ProcessScopeStatements(block.Statements)));
+        }
+
+        private static IEnumerable<StatementSyntax> ProcessScopeStatements(SyntaxList<StatementSyntax> statements)
+        {
+            yield return Templates.NewScope;
+
+            foreach (var statement in statements)
+            {
+                if (statement is LocalDeclarationStatementSyntax)
+                {
+                    //changes to the scope, again expressed as variables
+                    var localDeclaration = statement as LocalDeclarationStatementSyntax;
+                    var type = localDeclaration.Declaration.Type;
+
+                    Debug.Assert(localDeclaration.Declaration.Variables.Count == 1); //td: for now
+                    var variable = localDeclaration.Declaration.Variables.Single();
+                    if (variable.Initializer != null)
+                    {
+                        yield return statement;
+                        yield return Templates.AddToNewScope
+                            .Get<StatementSyntax>(
+                                Roslyn.Quoted(variable.Identifier.ToString()),
+                                CSharp.IdentifierName(variable.Identifier));
+                    }
+                    else
+                    {
+                        //td: error, should set values
+                    }
+                }
+                else if (statement is ExpressionStatementSyntax)
+                {
+                    //invocations to happen on a different context
+                    var invocation = (statement as ExpressionStatementSyntax)
+                        .Expression as InvocationExpressionSyntax;
+
+                    if (invocation != null)
+                    {
+                        if (invocation.Expression is MemberAccessExpressionSyntax)
+                        {
+                            //td: error, only namspace function calls?
+                        }
+                        else
+                            yield return statement.ReplaceNode(invocation, invocation
+                                .AddArgumentListArguments(CSharp.Argument(Templates
+                                .NewScopeValue)));
+                    }
+                    else
+                    {
+                        //td: error, bad invocation
+                    }
+                }
+                else
+                {
+                    //td: error, only variables and invocations
+                }
+            }
         }
     }
 }

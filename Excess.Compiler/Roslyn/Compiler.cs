@@ -526,6 +526,18 @@ namespace Excess.Compiler.Roslyn
                 .WithAdditionalAnnotations(result);
         }
 
+        public static bool SameNode(SyntaxNode node1, SyntaxNode node2)
+        {
+            if (node1 == node2)
+                return true;
+
+            var id = NodeMark(node1);
+            if (id == null)
+                return false;
+
+            return id == NodeMark(node2);
+        }
+
         public static IEnumerable<SyntaxToken> ParseTokens(string text)
         {
             var tokens = CSharp.ParseTokens(text);

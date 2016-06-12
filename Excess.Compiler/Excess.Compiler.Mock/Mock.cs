@@ -48,7 +48,7 @@ namespace Excess.Compiler.Mock
             return document.SyntaxRoot.SyntaxTree;
         }
 
-        public static SyntaxTree Build(string code, Action<Compiler> builder = null, Mapper mapper = null)
+        public static SyntaxTree Link(string code, Action<Compiler> builder = null, Mapper mapper = null)
         {
             //build a compiler
             var compiler = new RoslynCompiler();
@@ -64,23 +64,28 @@ namespace Excess.Compiler.Mock
 
             //do the compilation
             compiler.apply(document);
-            document.applyChanges();
+            document.applyChanges(CompilerStage.Syntactical);
 
             var node = document.SyntaxRoot;
-
             if (mapper != null)
             {
                 var translated = mapper.RenderMapping(node, string.Empty);
                 node = CSharp.ParseCompilationUnit(translated);
             }
 
-            var compilation = CSharpCompilation.Create("",
-                syntaxTrees: new[] { node.SyntaxTree } );
+            var compilation = CSharpCompilation.Create("mock-assembly",
+                syntaxTrees: new[] { node.SyntaxTree },
+                references: new[]
+                {
+                    MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
+                    MetadataReference.CreateFromFile(typeof(Enumerable).Assembly.Location),
+                    MetadataReference.CreateFromFile(typeof(Dictionary<int, int>).Assembly.Location),
+                });
 
+            document.SyntaxRoot = node;
             document.Model = compilation.GetSemanticModel(node.SyntaxTree);
-            document.applyChanges(CompilerStage.Semantical);
-
-            return node.SyntaxTree;
+            document.applyChanges(CompilerStage.Finished);
+            return document.SyntaxRoot.SyntaxTree;
         }
     }
 }

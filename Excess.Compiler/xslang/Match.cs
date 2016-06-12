@@ -8,6 +8,7 @@ using Excess.Compiler.Roslyn;
 
 namespace xslang
 {
+    using System;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
     using ExcessCompiler = ICompiler<SyntaxToken, SyntaxNode, SemanticModel>;
 
@@ -91,12 +92,19 @@ namespace xslang
 
         private static StatementSyntax caseStatement(SyntaxList<StatementSyntax> statements)
         {
-            Debug.Assert(statements.Any());
+            return CSharp.Block(
+                validCaseStatements(statements));
+        }
 
-            if (statements.Count == 1)
-                return statements.First();
+        private static IEnumerable<StatementSyntax> validCaseStatements(SyntaxList<StatementSyntax> statements)
+        {
+            foreach (var statement in statements)
+            {
+                if (statement is BreakStatementSyntax)
+                    continue;
 
-            return CSharp.Block(statements);
+                yield return statement;
+            }
         }
 
         private static ExpressionSyntax caseExpression(SyntaxList<SwitchLabelSyntax> labels, ExpressionSyntax control, out bool isDefault)

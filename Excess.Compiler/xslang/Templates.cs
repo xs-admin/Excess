@@ -20,6 +20,10 @@ namespace xslang
 
         public static SyntaxToken ScopeToken = CSharp.ParseToken("__scope");
         public static IdentifierNameSyntax ScopeIdentifier = CSharp.IdentifierName("__scope");
-        public static TypeSyntax ScopeType = CSharp.ParseTypeName("__scope");
+        public static TypeSyntax ScopeType = CSharp.ParseTypeName("__Scope");
+        public static Template ScopeGet = Template.ParseExpression("__scope.get<__0>(__1)");
+        public static StatementSyntax NewScope = CSharp.ParseStatement("var __newScope = new Scope(__scope);");
+        public static ExpressionSyntax NewScopeValue = CSharp.IdentifierName("__newScope");
+        public static Template AddToNewScope = Template.ParseStatement("__newScope.set(__0, __1);");
     }
 }
