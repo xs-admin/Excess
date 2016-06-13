@@ -87,11 +87,18 @@ namespace Excess.Concurrent.Runtime
                         {
                             if (_blockUntilNextEvent != null)
                             {
-                                WaitHandle.WaitAny(new WaitHandle[]
+                                try
                                 {
-                                    _blockUntilNextEvent,
-                                    cancellation.WaitHandle
-                                });
+                                    WaitHandle.WaitAny(new WaitHandle[]
+                                    {
+                                        _blockUntilNextEvent,
+                                        cancellation.WaitHandle
+                                    });
+                                }
+                                catch (ThreadAbortException)
+                                {
+                                    break;
+                                }
 
                                 _blockUntilNextEvent.Reset();
                             }

@@ -37,23 +37,27 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Excess.Compiler, Version=1.0.0.0, Culture=neutral, PublicKeyToken=b0e2cc790a4c1b9e, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Compiler.0.46.57-alpha\lib\Net45\Excess.Compiler.dll</HintPath>
+      <HintPath>..\packages\Excess.Compiler.0.46.59-alpha\lib\Net45\Excess.Compiler.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Compiler.GraphInstances, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Compiler.0.46.57-alpha\lib\Net45\Excess.Compiler.GraphInstances.dll</HintPath>
+      <HintPath>..\packages\Excess.Compiler.0.46.59-alpha\lib\Net45\Excess.Compiler.GraphInstances.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Compiler.Mock, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Compiler.0.46.57-alpha\lib\Net45\Excess.Compiler.Mock.dll</HintPath>
+      <HintPath>..\packages\Excess.Compiler.0.46.59-alpha\lib\Net45\Excess.Compiler.Mock.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Compiler.Razor, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Compiler.0.46.57-alpha\lib\Net45\Excess.Compiler.Razor.dll</HintPath>
+      <HintPath>..\packages\Excess.Compiler.0.46.59-alpha\lib\Net45\Excess.Compiler.Razor.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Extensions.Concurrent">
       <HintPath>..\..\Excess.Extensions.Concurrent\bin\Debug\Excess.Extensions.Concurrent.dll</HintPath>
+    </Reference>
+    <Reference Include="Excess.Runtime, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Excess.Runtime.0.46.6-alpha\lib\Net45\Excess.Runtime.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.CodeAnalysis, Version=1.2.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.CodeAnalysis.Common.1.2.2\lib\net45\Microsoft.CodeAnalysis.dll</HintPath>
@@ -151,7 +155,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="xslang, Version=1.0.0.0, Culture=neutral, PublicKeyToken=a8909f1e5623e4ea, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Compiler.0.46.57-alpha\lib\Net45\xslang.dll</HintPath>
+      <HintPath>..\packages\Excess.Compiler.0.46.59-alpha\lib\Net45\xslang.dll</HintPath>
       <Private>True</Private>
     </Reference>
   </ItemGroup>
@@ -169,6 +173,7 @@
   </Choose>
   <ItemGroup>
     <Compile Include="Debug.cs" />
+    <Compile Include="FunctionalTests.cs" />
     <Compile Include="LanguageExtensionTests.cs" />
     <Compile Include="HttpServerTests.cs" />
     <Compile Include="MockStorage.cs" />

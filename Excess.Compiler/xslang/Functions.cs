@@ -64,6 +64,8 @@ namespace xslang
                         .Parameter(Templates.ScopeToken)
                         .WithType(Templates.ScopeType));
 
+                method = MemberFunctionModifiers(method);
+
                 if (method.ReturnType.IsMissing)
                 {
                     method = method.WithReturnType(RoslynCompiler.@void);
@@ -120,6 +122,15 @@ namespace xslang
             document.change(parent, RoslynCompiler.RemoveStatement(body));
             document.change(statement, ProcessCodeFunction(function, body));
             return node;
+        }
+
+        private static MethodDeclarationSyntax MemberFunctionModifiers(MethodDeclarationSyntax method)
+        {
+            var modifiers = method.Modifiers;
+            if (!modifiers.Any(m => m.IsKind(SyntaxKind.StaticKeyword)))
+                method = method.AddModifiers(CSharp.Token(SyntaxKind.StaticKeyword));
+
+            return method;
         }
 
         private static Func<SyntaxNode, SyntaxNode, SemanticModel, Scope, SyntaxNode> LinkNamespaceFunction(bool calculateType)

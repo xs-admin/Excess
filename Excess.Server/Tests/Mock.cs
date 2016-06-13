@@ -22,7 +22,8 @@ namespace Tests
     using FactoryMethod = Func<IConcurrentApp, object[], IConcurrentObject>;
     using Compilation = Excess.Compiler.Roslyn.RoslynCompilation;
     using CompilationAnalysis = Excess.Compiler.ICompilationAnalysis<SyntaxToken, SyntaxNode, SemanticModel>;
-
+    using xslang;
+    using Excess.Runtime;
     public static class Mock
     {
         public static SyntaxTree Compile(string code, out string output)
@@ -71,6 +72,23 @@ namespace Tests
             return TestServer.Create(appBuilder =>
             {
                 appBuilder.UseExcess(app);
+            });
+        }
+
+        public static TestServer CreateFunctionalServer(string code)
+        {
+            var errors = new List<Diagnostic>();
+            var assembly = buildServer(code, errors: errors);
+            if (errors.Any())
+                return null;
+
+            var functionTypes = assembly
+                .ExportedTypes
+                .Where(type => type.Name == "Functions");
+
+            return TestServer.Create(appBuilder =>
+            {
+                appBuilder.UseExcess(functional: functionTypes);
             });
         }
 
@@ -218,18 +236,18 @@ namespace Tests
             {
                 new DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel>(compiler => compiler
                     .Environment()
-                        .dependency<ExcessOwinMiddleware>("Middleware")
-                        .dependency<IAppBuilder>("Owin")),
+                        .dependency<ExcessOwinMiddleware>("Excess.Server.Middleware")
+                        .dependency<IAppBuilder>("Owin")
+                        .dependency<__Scope>("Excess.Runtime")),
 
-                new DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel>(compiler => Excess
-                    .Extensions
-                    .Concurrent
-                    .ConcurrentExtension
-                        .Apply((RoslynCompiler)compiler)),
+                new DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel>(
+                    compiler => ConcurrentExtension.Apply((RoslynCompiler)compiler)),
 
-                new DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel>(compiler => LanguageExtension
-                    .ServerExtension
-                        .Apply(compiler, new Scope(null)))
+                new DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel>(
+                    compiler => ServerExtension.Apply(compiler, new Scope(null))),
+
+                new DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel>(
+                    compiler => Functions.Apply(compiler))
             });
 
             if (analysis != null)

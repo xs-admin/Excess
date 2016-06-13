@@ -36,7 +36,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Runtime, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Runtime.0.46.5-alpha\lib\Net45\Excess.Runtime.dll</HintPath>
+      <HintPath>..\packages\Excess.Runtime.0.46.6-alpha\lib\Net45\Excess.Runtime.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Owin, Version=3.0.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
@@ -90,7 +90,7 @@
     <Compile Include="Reflection.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ServiceMiddleware.cs" />
+    <Compile Include="ExcessMiddleware.cs" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

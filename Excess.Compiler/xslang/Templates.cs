@@ -14,7 +14,7 @@ namespace xslang
     internal static class Templates
     {
         public static ClassDeclarationSyntax NamespaceFunction = Template.Parse(@"
-            public partial static class Functions
+            public static partial class Functions
             {
             }").Get<ClassDeclarationSyntax>();
 

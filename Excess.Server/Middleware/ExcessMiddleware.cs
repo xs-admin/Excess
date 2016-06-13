@@ -7,7 +7,12 @@ using System.Collections.Generic;
 
 namespace Excess.Server.Middleware
 {
+    using Newtonsoft.Json;
+    using Newtonsoft.Json.Linq;
+    using Runtime;
     using System.Diagnostics;
+    using System.Linq;
+    using System.Reflection;
     using FunctionAction = Action<string, IOwinResponse, TaskCompletionSource<bool>>;
 
     public class ExcessOwinMiddleware : OwinMiddleware
@@ -71,18 +76,64 @@ namespace Excess.Server.Middleware
                 var path = new StringBuilder();
                 foreach (var ns in @namespace)
                 {
-                    if (path.Length > 0)
-                        path.Append("/");
-
+                    path.Append("/");
                     path.Append(ns);
                 }
 
                 Debug.Assert(path.Length > 0);
-
-                result[path.ToString()] = (data, response, continuation) =>
+                foreach (var method in functionObject.GetTypeInfo().DeclaredMethods)
                 {
-                    throw new NotImplementedException();
-                };
+                    if (method.IsPublic)
+                    {
+                        var methodPath = $"{path}/{method.Name}";
+
+                        var parameters = method
+                            .GetParameters();
+
+                        var paramCount = parameters.Length;
+                        var paramNames = parameters
+                            .Take(paramCount)
+                            .Select(param => param.Name)
+                            .ToArray();
+
+                        var paramTypes = parameters
+                            .Take(paramCount)
+                            .Select(param => param.ParameterType)
+                            .ToArray();
+
+                        var instantiator = Application.GetService<IInstantiator>();
+                        result[methodPath] = (data, response, continuation) =>
+                        {
+                            var args = JObject
+                                .Parse(data);
+
+                            var arguments = new object[paramCount]; 
+                            for (int i = 0; i < paramCount - 1; i++)
+                            {
+                                arguments[i] = args
+                                    .Property(paramNames[i])
+                                    .Value
+                                    .ToObject(paramTypes[i]);
+                            }
+
+                            //add the scope
+                            arguments[paramCount - 1] = new __Scope(instantiator);
+
+                            try
+                            {
+                                var responseValue = method.Invoke(null, arguments);
+                                SendResponse(response, 
+                                    $"{{\"__res\": {JsonConvert.SerializeObject(responseValue)}}}",
+                                    continuation);
+                            }
+                            catch (Exception ex)
+                            {
+                                SendError(response, ex, continuation);
+                            }
+                        };
+                    }
+                }
+
             }
 
             return result;
@@ -90,7 +141,7 @@ namespace Excess.Server.Middleware
 
         private bool TryParseFunctional(string path, out Action<string, IOwinResponse, TaskCompletionSource<bool>> function)
         {
-            throw new NotImplementedException();
+            return _functions.TryGetValue(path, out function);
         }
 
         private static void SendResponse(IOwinResponse response, string data, TaskCompletionSource<bool> waiter)

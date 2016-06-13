@@ -28,7 +28,8 @@ namespace Excess.Server.Middleware
     {
         public static void UseExcess(this IAppBuilder app, 
             Action<ConcurrentAppSettings> initializeSettings = null,
-            Action<IDistributedApp> initializeApp = null)
+            Action<IDistributedApp> initializeApp = null,
+            IEnumerable<Type> functional = null)
         {
             var settings = new ConcurrentAppSettings();
             initializeSettings?.Invoke(settings);
@@ -40,7 +41,7 @@ namespace Excess.Server.Middleware
 
             initializeApp?.Invoke(server);
 
-            app.Use<ExcessOwinMiddleware>(server);
+            app.Use<ExcessOwinMiddleware>(server, functional);
             server.Start();
         }
 
