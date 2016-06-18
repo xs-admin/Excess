@@ -1,14 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Excess.Compiler.Roslyn;
-using xslang;
+﻿using Excess.Compiler.Roslyn;
 using Excess.Extensions.Concurrent;
+using xslang;
 
-namespace metaprogramming.server
+namespace demo_transpiler
 {
+    public interface ITranspiler
+    {
+        string Process(string source);
+    }
+
     public class Transpiler : ITranspiler
     {
         RoslynCompiler _compiler = new RoslynCompiler();

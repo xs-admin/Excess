@@ -60,6 +60,7 @@ namespace Excess.Server.Middleware
                         SendError(response, ex, null);
                     }
 
+                    await completion.Task;
                     return;
                 }
             }
@@ -69,6 +70,9 @@ namespace Excess.Server.Middleware
 
         private IDictionary<string, FunctionAction> BuildFunctions(IEnumerable<Type> functions)
         {
+            if (functions == null)
+                return null;
+
             var result = new Dictionary<string, FunctionAction>();
             foreach (var functionObject in functions)
             {
@@ -141,7 +145,9 @@ namespace Excess.Server.Middleware
 
         private bool TryParseFunctional(string path, out Action<string, IOwinResponse, TaskCompletionSource<bool>> function)
         {
-            return _functions.TryGetValue(path, out function);
+            function = null;
+            return _functions != null
+                    && _functions.TryGetValue(path, out function);
         }
 
         private static void SendResponse(IOwinResponse response, string data, TaskCompletionSource<bool> waiter)

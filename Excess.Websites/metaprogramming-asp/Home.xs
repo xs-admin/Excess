@@ -1,25 +1,27 @@
 ﻿using xs.server;
 using xs.concurrent;
 
-namespace metaprogramming_asp
-{
-	public service Home 
+using demo_transpiler;
+
+namespace Home
+{ 
+	public function Transpile(string text)   
 	{
 		inject 
 		{
-			ITranspiler		 _transpiler;
-			IGraphTranspiler _graphTranspiler;
-		}   
+			ITranspiler	_transpiler;
+		}      
 
-
-		public string Transpile(string text)
-		{
-			return _transpiler.Process(text);    
-		}
-
-		public string TranspileGraph(string text)
-		{
-			return _graphTranspiler.Process(text);      
-		} 
+		return _transpiler.Process(text);         
 	}
+
+	public function TranspileGraph(string text)
+	{
+		inject 
+		{
+			IGraphTranspiler _graphTranspiler;
+		}      
+
+		return _graphTranspiler.Process(text);      
+	} 
 }

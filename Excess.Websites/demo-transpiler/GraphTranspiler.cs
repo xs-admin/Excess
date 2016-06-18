@@ -7,12 +7,17 @@ using Excess.Compiler;
 using Excess.Compiler.Roslyn;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace metaprogramming.server
+namespace demo_transpiler
 {
     using Excess.Compiler.GraphInstances;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
-    class GraphTranspiler : IGraphTranspiler
+    public interface IGraphTranspiler
+    {
+        string Process(string source);
+    }
+
+    public class GraphTranspiler : IGraphTranspiler
     {
         RoslynCompiler _compiler = new RoslynCompiler();
         public GraphTranspiler()

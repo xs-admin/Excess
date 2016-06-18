@@ -1,153 +1,155 @@
-﻿#line hidden
+﻿#line 4
+using demo_transpiler;
+#line hidden
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Middleware;
+using Excess.Server.Middleware;
 using System.Threading;
 using System.Threading.Tasks;
 using Excess.Concurrent.Runtime;
 
-#line 4
+#line 6
 namespace metaprogramming
-#line 5
+#line 7
 {
 #line hidden
-    [Service(id: "68bdd425-a341-4a88-914c-dcf9671765a7")]
-    [Concurrent(id = "6ee41b74-cd7c-4912-9e15-a781e8c88ae7")]
-#line 6
+    [Service(id: "027aaf98-bf95-4692-a6b7-80d71c2f091c")]
+    [Concurrent(id = "d0a7995b-f20b-477a-aaea-42d6e5626968")]
+#line 8
     public class Home : ConcurrentObject
-#line 7
+#line 9
     {
-#line 6
+#line 8
         public Home(
-#line 10
+#line 12
 ITranspiler ___transpiler, 
-#line 11
+#line 13
 IGraphTranspiler ___graphTranspiler)
 #line hidden
         {
-#line 10
+#line 12
             _transpiler = ___transpiler;
-#line 11
+#line 13
             _graphTranspiler = ___graphTranspiler;
 #line hidden
         }
 
         [Concurrent]
-#line 15
+#line 16
         public string Transpile(string text)
 #line hidden
         {
-#line 15
+#line 16
             return Transpile(text, default (CancellationToken)).Result;
 #line hidden
         }
 
         [Concurrent]
-#line 20
+#line 21
         public string TranspileGraph(string text)
 #line hidden
         {
-#line 20
+#line 21
             return TranspileGraph(text, default (CancellationToken)).Result;
 #line hidden
         }
 
-#line 15
-        private IEnumerable<Expression> __concurrentTranspile(string text, CancellationToken __cancellation, Action<object> __success, Action<Exception> __failure)
 #line 16
+        private IEnumerable<Expression> __concurrentTranspile(string text, CancellationToken __cancellation, Action<object> __success, Action<Exception> __failure)
+#line 17
         {
 #line hidden
             {
                 __dispatch("Transpile");
                 if (__success != null)
-#line 17
+#line 18
                     __success(_transpiler.Process(text));
 #line hidden
                 yield break;
             }
-#line 18
+#line 19
         }
 
-#line 15
+#line 16
         public Task<string> Transpile(string text, CancellationToken cancellation)
 #line hidden
         {
-#line 15
+#line 16
             var completion = new TaskCompletionSource<string>();
-#line 15
+#line 16
             Action<object> __success = (__res) => completion.SetResult((string)__res);
 #line hidden
             Action<Exception> __failure = (__ex) => completion.SetException(__ex);
             var __cancellation = cancellation;
-#line 15
+#line 16
             __enter(() => __advance(__concurrentTranspile(text, __cancellation, __success, __failure).GetEnumerator()), __failure);
 #line hidden
             return completion.Task;
         }
 
-#line 15
+#line 16
         public void Transpile(string text, CancellationToken cancellation, Action<object> success, Action<Exception> failure)
 #line hidden
         {
             var __success = success;
             var __failure = failure;
             var __cancellation = cancellation;
-#line 15
+#line 16
             __enter(() => __advance(__concurrentTranspile(text, __cancellation, __success, __failure).GetEnumerator()), failure);
 #line hidden
         }
 
-#line 20
-        private IEnumerable<Expression> __concurrentTranspileGraph(string text, CancellationToken __cancellation, Action<object> __success, Action<Exception> __failure)
 #line 21
+        private IEnumerable<Expression> __concurrentTranspileGraph(string text, CancellationToken __cancellation, Action<object> __success, Action<Exception> __failure)
+#line 22
         {
 #line hidden
             {
                 __dispatch("TranspileGraph");
                 if (__success != null)
-#line 22
+#line 23
                     __success(_graphTranspiler.Process(text));
 #line hidden
                 yield break;
             }
-#line 23
+#line 24
         }
 
-#line 20
+#line 21
         public Task<string> TranspileGraph(string text, CancellationToken cancellation)
 #line hidden
         {
-#line 20
+#line 21
             var completion = new TaskCompletionSource<string>();
-#line 20
+#line 21
             Action<object> __success = (__res) => completion.SetResult((string)__res);
 #line hidden
             Action<Exception> __failure = (__ex) => completion.SetException(__ex);
             var __cancellation = cancellation;
-#line 20
+#line 21
             __enter(() => __advance(__concurrentTranspileGraph(text, __cancellation, __success, __failure).GetEnumerator()), __failure);
 #line hidden
             return completion.Task;
         }
 
-#line 20
+#line 21
         public void TranspileGraph(string text, CancellationToken cancellation, Action<object> success, Action<Exception> failure)
 #line hidden
         {
             var __success = success;
             var __failure = failure;
             var __cancellation = cancellation;
-#line 20
+#line 21
             __enter(() => __advance(__concurrentTranspileGraph(text, __cancellation, __success, __failure).GetEnumerator()), failure);
 #line hidden
         }
 
         public readonly Guid __ID = Guid.NewGuid();
-#line 10
+#line 12
         ITranspiler _transpiler;
-#line 11
+#line 13
         IGraphTranspiler _graphTranspiler;
-#line 24
+#line 25
     }
 }

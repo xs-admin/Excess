@@ -1,5 +1,7 @@
 ﻿using xs.ninject;
 
+using demo_transpiler;
+
 namespace metaprogramming.server
 {
 	injector     

@@ -284,6 +284,8 @@ namespace LanguageExtension
                 var serverType = getNodeServer(creation.Type);
                 if (serverType != null)
                 {
+                    Debug.Assert(result.Identity != null); //td: error
+
                     result
                         .StartStatements
                         .AddRange(new StatementSyntax[]
@@ -361,7 +363,7 @@ namespace LanguageExtension
         private static bool isService(ClassDeclarationSyntax @class, ExcessCompilation compilation, Scope scope)
         {
             if (!isConcurrentClass(@class, compilation, scope))
-                return false;
+                return @class.Identifier.ToString() == "Functions" && Roslyn.IsStatic(@class);
 
             return @class
                 .AttributeLists
@@ -380,29 +382,51 @@ namespace LanguageExtension
                 .Where(attrList => attrList
                     .Attributes
                     .Any(attr => attr.Name.ToString() == "Service"))
-                .Single()
-                .Attributes
-                .First();
+                .SingleOrDefault()
+                    ?.Attributes
+                    .FirstOrDefault(attr => attr.Name.ToString() == "Service");
 
-            var guidString = serviceAttribute
-                .ArgumentList
-                .Arguments
-                .Single(attr => attr.NameColon.Name.ToString() == "id")
-                .Expression
-                .ToString();
-
-            var id = guidString.Substring(1, guidString.Length - 2);
             var model = compilation.GetSemanticModel(node);
             var config = scope.GetServerConfiguration();
-            Debug.Assert(config != null);
+            var name = @class.Identifier.ToString();
+            var id = Guid.NewGuid();
+            var body = string.Empty;
 
-            var body = renderObjectMembers(@class, config, model);
+            Debug.Assert(config != null);
+            if (serviceAttribute == null)
+            {
+                //functions
+                var @namespace = @class.FirstAncestorOrSelf<NamespaceDeclarationSyntax>(
+                    ancestor => ancestor is NamespaceDeclarationSyntax);
+
+                Debug.Assert(@namespace != null); //td: error
+                name = @namespace.Name.ToString();
+
+                var path = $@"'/{string.Join("/", @namespace.Name.ToString().Split('.'))}'";
+                body = functionalBody(@class, path, model);
+
+                config.AddFunctionalContainer(name, body);
+                return; //td: separate
+            }
+            else
+            {
+                var guidString = serviceAttribute
+                    .ArgumentList
+                    .Arguments
+                    .Single(attr => attr.NameColon.Name.ToString() == "id")
+                    .Expression
+                    .ToString();
+
+                id = Guid.Parse(guidString.Substring(1, guidString.Length - 2));
+                body = concurrentBody(@class, config, model);
+            }
+
             config.AddClientInterface(node.SyntaxTree, Templates
                 .jsService
                 .Render(new
                 {
-                    Name = @class.Identifier.ToString(),
-                    Body = body.ToString(),
+                    Name = name,
+                    Body = body,
                     ID = id
                 }));
         }
@@ -424,7 +448,7 @@ namespace LanguageExtension
             var config = scope.GetServerConfiguration();
             Debug.Assert(config != null);
 
-            var body = renderObjectMembers(@class, config, model);
+            var body = concurrentBody(@class, config, model);
             config.AddClientInterface(node.SyntaxTree, Templates
                 .jsConcurrentClass
                 .Render(new
@@ -434,7 +458,7 @@ namespace LanguageExtension
                 }));
         }
 
-        private static string renderObjectMembers(ClassDeclarationSyntax @class, IServerConfiguration config, SemanticModel model)
+        private static string concurrentBody(ClassDeclarationSyntax @class, IServerConfiguration config, SemanticModel model)
         {
             var result = new StringBuilder();
             ConcurrentExtension.Visit(@class,
@@ -447,11 +471,13 @@ namespace LanguageExtension
                             Name = name.ToString(),
                             Arguments = argumentsFromParameters(parameters),
                             Data = objectFromParameters(parameters),
+                            Path = "'/' + this.__ID",
                             Response = calculateResponse(type, model),
                         }));
                 },
                 fields: (name, type, value) =>
                 {
+                    //td: shall we transmit properties?
                     //result.AppendLine(Templates
                     //    .jsProperty
                     //    .Render(new
@@ -460,6 +486,36 @@ namespace LanguageExtension
                     //        Value = valueString(value, type, model)
                     //    }));
                 });
+
+            return result.ToString();
+        }
+
+        private static string functionalBody(ClassDeclarationSyntax @class, string path, SemanticModel model)
+        {
+            var result = new StringBuilder();
+            var methods = @class
+                .Members
+                .Select(member => (MethodDeclarationSyntax)member) //functional is only to have members
+                .Where(method => Roslyn.IsVisible(method)); //only publics
+
+            foreach (var method in methods)
+            {
+                var parameters = method
+                    .ParameterList
+                    .Parameters
+                    .Where(param => param.Identifier.ToString() != "__scope"); //account for 
+
+                result.AppendLine(Templates
+                    .jsMethod
+                    .Render(new
+                    {
+                        Name = method.Identifier.ToString(),
+                        Arguments = argumentsFromParameters(parameters),
+                        Data = objectFromParameters(parameters),
+                        Path = path,
+                        Response = calculateResponse(method.ReturnType, model),
+                    }));
+            }
 
             return result.ToString();
         }

@@ -15,7 +15,7 @@ namespace Tests
         {
             //setup
             const string SourceCode = @"
-            public TestService
+            public service TestService
             {
                 public string Hello(string what)
                 {

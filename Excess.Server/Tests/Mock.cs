@@ -8,12 +8,14 @@ using System.Net.Http;
 using Owin;
 using Microsoft.Owin.Testing;
 using Microsoft.CodeAnalysis;
+using Newtonsoft.Json.Linq;
 using Excess.Compiler;
 using Excess.Compiler.Roslyn;
 using Excess.Compiler.Core;
 using Excess.Concurrent.Runtime;
 using Excess.Server.Middleware;
-using Newtonsoft.Json.Linq;
+using Excess.Runtime;
+using xslang;
 
 namespace Tests
 {
@@ -22,8 +24,7 @@ namespace Tests
     using FactoryMethod = Func<IConcurrentApp, object[], IConcurrentObject>;
     using Compilation = Excess.Compiler.Roslyn.RoslynCompilation;
     using CompilationAnalysis = Excess.Compiler.ICompilationAnalysis<SyntaxToken, SyntaxNode, SemanticModel>;
-    using xslang;
-    using Excess.Runtime;
+    using Microsoft.VisualStudio.TestTools.UnitTesting;
     public static class Mock
     {
         public static SyntaxTree Compile(string code, out string output)
@@ -38,11 +39,25 @@ namespace Tests
         public static Compilation Build(string code, 
             IPersistentStorage storage = null, 
             List<string> errors = null,
-            CompilationAnalysis analysis = null)
+            bool generateJSFiles = false)
         {
+            var analysis = generateJSFiles
+                ? new CompilationAnalysisBase<SyntaxToken, SyntaxNode, SemanticModel>()
+                : null;
+
             var compilation = createCompilation(code, 
-                storage: storage,
+                storage: storage ?? (generateJSFiles
+                    ? new MockStorage()
+                    : null),
                 analysis: analysis);
+
+            if (generateJSFiles)
+            {
+                var environment = compilation.Scope.get<ICompilerEnvironment>();
+                Assert.IsNotNull(environment);
+
+                environment.setting("servicePath", "");
+            }
 
             if (compilation.build() == null && errors != null)
             {

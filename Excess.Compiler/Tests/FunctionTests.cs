@@ -183,5 +183,31 @@ namespace Tests
                 .Where(statement => statement.ToString() == "__newScope.set(\"InjectedValue\", InjectedValue);")
                 .Any());
         }
+
+        [TestMethod]
+        public void Debug()
+        {
+            var tree = ExcessMock.Compile(@"
+                using xs.server;
+                using xs.concurrent;
+
+                using demo_transpiler;
+
+                namespace Home
+                { 
+	                function Transpile(string text)
+	                {
+		                return _transpiler.Process(text);       
+	                }
+
+	                public function TranspileGraph(string text)
+	                {
+		                return _graphTranspiler.Process(text);      
+	                } 
+                }", (compiler) => DependencyInjection.Apply(compiler));
+
+            //this is a placeholder to do some debuggin'
+            Assert.AreNotEqual(null, tree);
+        }
     }
 }

@@ -3,6 +3,7 @@ using Owin;
 using Excess.Concurrent.Runtime;
 using System.Reflection;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Excess.Server.Middleware
 {
@@ -55,7 +56,11 @@ namespace Excess.Server.Middleware
                     if (settings != null)
                         _settings.From(settings);
                 },
-                initializeApp: app => Loader.FromAssemblies(app, assemblies));
+                initializeApp: app => Loader.FromAssemblies(app, assemblies),
+                functional: assemblies
+                    .SelectMany(assembly => assembly
+                        .GetTypes()
+                        .Where(type => type.Name == "Functions")));
         }
 
         public static void UseExcess<T>(this IAppBuilder builder, ConcurrentAppSettings settings = null)

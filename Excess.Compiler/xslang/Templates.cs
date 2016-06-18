@@ -25,5 +25,7 @@ namespace xslang
         public static StatementSyntax NewScope = CSharp.ParseStatement("var __newScope = new Scope(__scope);");
         public static ExpressionSyntax NewScopeValue = CSharp.IdentifierName("__newScope");
         public static Template AddToNewScope = Template.ParseStatement("__newScope.set(__0, __1);");
+
+        public static Template InjectionMember = Template.Parse("__0 __1;");
     }
 }

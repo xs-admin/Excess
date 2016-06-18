@@ -43,6 +43,7 @@ namespace Excess.Compiler
         dynamic path();
         IPersistentStorage storage();
         object setting(string id);
+        void setting(string id, object value);
     }
 
     public interface ICompiler<TToken, TNode, TModel>

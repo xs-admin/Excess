@@ -10,13 +10,15 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis;
 
+using Excess.Compiler.Core;
+
 namespace Excess.Compiler.Roslyn
 {
     using LoaderFunc = Action<RoslynCompiler, Scope>;
     using CompilationAnalysis = ICompilationAnalysis<SyntaxToken, SyntaxNode, SemanticModel>;
     using Compilation = ICompilation<SyntaxToken, SyntaxNode, SemanticModel>;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
-    using Core;
+
     public interface ICompilationTool //td: get rid of this
     {
         string displayName { get; }
@@ -63,7 +65,8 @@ namespace Excess.Compiler.Roslyn
 
         public void AddContent(string path, string contents)
         {
-            throw new NotImplementedException();
+            var storage = _environment.storage();
+            storage.addFile(path, contents, false);
         }
 
         public void AddNativeDocument(string path, SyntaxNode root)

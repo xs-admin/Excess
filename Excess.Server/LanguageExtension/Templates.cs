@@ -59,11 +59,11 @@ namespace LanguageExtension
             .Get<ArrayCreationExpressionSyntax>();
 
         public static RazorTemplate jsConcurrentClass = RazorTemplate.Parse(@"
-            xsServices.@Model.Name = function (__init, $http, $q)
+            @Model.Name = function (__ID)
             {
                 @Model.Body
 
-                this.__ID = __init.__ID;
+                this.__ID = __ID;
             }");
 
         public static RazorTemplate jsMethod = RazorTemplate.Parse(@"
@@ -71,7 +71,7 @@ namespace LanguageExtension
             {
                 var deferred = $q.defer();
 
-                $http.post('/' + this.__ID + '/@Model.Name', {
+                $http.post(@Model.Path + '/@Model.Name', {
                     @Model.Data
                 }).then(function(response) {
                     deferred.resolve(response);

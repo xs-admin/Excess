@@ -3,16 +3,11 @@
 // Declare app level module which depends on views, and components
 angular.module('metaprogramming', [
     'ngRoute',
-    'metaprogramming.view1',
     'metaprogramming.version',
     'xs.Services',
     'ui.layout',
     'ui.ace',
     'ui.graphpanel'])
-
-.config(['$routeProvider', function ($routeProvider) {
-    $routeProvider.otherwise({ redirectTo: '/view1' });
-}])
 
 //examples
 .controller("ctrlExamples", ['$scope', 'Home', function ($scope, Home) {

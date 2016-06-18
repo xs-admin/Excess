@@ -2,6 +2,7 @@
 using Excess.Compiler.Roslyn;
 using LanguageExtension;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,23 +13,22 @@ namespace Tests
     public class LanguageExtensionTests
     {
         [TestMethod]
-        public void Usage()
+        public void Server_Usage()
         {
             //setup
             const string Code = @"
-            using XS.Extensions.Server;
-
             namespace SomeNS            
             {
                 server SomeServer()
                 {
                     Url = ""http://*.1080"";
-                
-                    Node someNode = new NetMQ.RequestResponse
+                    Identity = ""tcp://*.10800""                    
+
+                    Node someNode = new NetMQ.Node
                     {
                         Url = ""http://*.2080"",
                         Threads = 25,
-                        Hosts = new []
+                        Services = new []
                         {
                             SomeService
                         }
@@ -39,15 +39,118 @@ namespace Tests
             string output;
             var tree = Mock.Compile(Code, out output);
 
-            Assert.IsNotNull(tree);
+            //should have a class marked as [ServerConfiguration]
+            Assert.AreEqual(1, tree
+                .GetRoot()
+                .DescendantNodes()
+                .OfType<ClassDeclarationSyntax>()
+                .Where(@class => @class
+                    .AttributeLists
+                    .Any(attrList => attrList
+                        .Attributes
+                        .Any(attr => attr.Name.ToString() == "ServerConfiguration")))
+                .Count());
+
+            //should have a "start" method 
+            Assert.AreEqual(1, tree
+                .GetRoot()
+                .DescendantNodes()
+                .OfType<MethodDeclarationSyntax>()
+                .Where(method => method.Identifier.ToString() == "Start")
+                .Count());
+
+            //should have a "someNode" method, which starts the node 
+            Assert.AreEqual(1, tree
+                .GetRoot()
+                .DescendantNodes()
+                .OfType<MethodDeclarationSyntax>()
+                .Where(method => method.Identifier.ToString() == "someNode")
+                .Count());
         }
 
         [TestMethod]
-        public void WithNodes()
+        public void Service_Usage()
         {
             //setup
-            const string Source = @"
-            concurrent class HelloService
+            const string Code = @"
+            namespace SomeNS            
+            {
+                public service SomeService
+                {
+                    public void someMethod()
+                    {
+                    }
+                }
+            }";
+
+            string output;
+            var tree = Mock.Compile(Code, out output);
+
+            //should have a class marked as [Service]
+            Assert.AreEqual(1, tree
+                .GetRoot()
+                .DescendantNodes()
+                .OfType<ClassDeclarationSyntax>()
+                .Where(@class => @class
+                    .AttributeLists
+                    .Any(attrList => attrList
+                        .Attributes
+                        .Any(attr => attr.Name.ToString() == "Service")))
+                .Count());
+
+            //should have inherit ConcurrentObject
+            Assert.AreEqual(1, tree
+                .GetRoot()
+                .DescendantNodes()
+                .OfType<ClassDeclarationSyntax>()
+                .Where(method => method
+                    .BaseList
+                    .Types
+                    .Any(type => type.Type.ToString() == "ConcurrentObject"))
+                .Count());
+        }
+
+        [TestMethod]
+        public void Services_ShouldGenerateAngularServices()
+        {
+            //setup
+            const string Code = @"
+            namespace SomeNS            
+            {
+                public service SomeService
+                {
+                    public void someMethod()
+                    {
+                    }
+                }
+            }";
+
+            var errorList = new List<string>();
+            var compilation = Mock.Build(Code, errors: errorList, generateJSFiles: true);
+
+            Assert.IsFalse(errorList.Any());
+
+            var serverConfig = compilation.Scope.get<IServerConfiguration>();
+            Assert.IsNotNull(serverConfig);
+
+            var clientCode = serverConfig.GetClientInterface();
+
+            //should generate an angular service
+            Assert.IsTrue(clientCode.Contains("xsServices.service('SomeService', ['$http', '$q', function($http, $q)"));
+
+            //should generate internal methods
+            Assert.IsTrue(clientCode.Contains("this.someMethod = function ()"));
+
+            //should generate the post method
+            Assert.IsTrue(clientCode.Contains("$http.post('/' + this.__ID + '/someMethod'"));
+        }
+
+        [TestMethod]
+        public void ConcurrentClasses_ShouldGenerateJavaScriptClasses()
+        {
+            //setup
+            const string Code = @"
+            concurrent class someConcurrentClass
             {
                 public string Hello(string what)
                 {
@@ -55,42 +158,16 @@ namespace Tests
                 }
             }
 
-            concurrent class GoodbyeService
+            concurrent class otherConcurrentClass
             {
                 public string Goodbye(string what)
                 {
                     return ""Goodbye "" + what;
                 }
-            }
-
-            namespace Servers
-            {
-                server Default()
-                {
-                    Url = ""http://localhost:1080"";
-
-                    Node node1 = new NetMQ.RequestResponse
-                    {
-                        Url = ""http://localhost:1081"",
-                        Hosts = new []
-                        {
-                            HelloService
-                        }
-                    };
-
-                    Node node2 = new NetMQ.RequestResponse
-                    {
-                        Url = ""http://localhost:1082"",
-                        Hosts = new []
-                        {
-                            GoodbyeService
-                        }
-                    };
-                }
             }";
 
             var errorList = new List<string>();
-            var compilation = Mock.Build(Source, errors: errorList);
+            var compilation = Mock.Build(Code, errors: errorList, generateJSFiles: true);
             
             Assert.IsFalse(errorList.Any());
 
@@ -99,90 +176,52 @@ namespace Tests
 
             var clientCode = serverConfig.GetClientInterface();
 
-            Assert.IsTrue(
-                clientCode.Contains("function HelloService (__init)")
-                && clientCode.Contains("function GoodbyeService (__init)")
-                && clientCode.Contains("Hello = function (who)")
-                && clientCode.Contains("Goodbye = function (what)"));
+            //should generate a constructor for the clases
+            Assert.IsTrue(clientCode.Contains("someConcurrentClass = function (__ID)")
+                && clientCode.Contains("otherConcurrentClass = function (__ID)"));
+
+            //should internal methods
+            Assert.IsTrue(clientCode.Contains("this.Hello = function (what)")
+                && clientCode.Contains("this.Goodbye = function (what)"));
         }
 
         [TestMethod]
-        public void WithComplexTypes()
-        {
-            //setup
-            const string Source = @"
-            struct HelloModel
-            {
-                public string Greeting;                
-                public int Times;
-                public GoodbyeService Goodbye;
-            }
-
-            concurrent class HelloService
-            {
-                int _times = 0;
-                public HelloModel Hello(string who)
-                {
-                    return new HelloModel
-                    {
-                        Greeting = ""greetings, "" + who,
-                        Times = _times++,
-                        Goodbye = spawn<GoodbyeService>()
-                    };
-                }
-            }
-
-            concurrent class GoodbyeService
-            {
-                public string Name = ""GoodbyeService""; 
-
-                public string Goodbye(string what)
-                {
-                    return ""Goodbye "" + what;
-                }
-            }";
-
-            var storage = new MockStorage();
-            var errors = new List<string>();
-            var analysis = new CompilationAnalysisBase<SyntaxToken, SyntaxNode, SemanticModel>();
-            var compilation = Mock.Build(Source, storage, errors, analysis);
-
-            Assert.IsFalse(errors.Any());
-
-            var serverConfig = compilation.Scope.GetServerConfiguration();
-            Assert.IsNotNull(serverConfig);
-
-            compilation.PerformAnalysis();
-
-            var clientCode = serverConfig.GetClientInterface();
-
-            Assert.IsTrue(
-                clientCode.Contains("function HelloService (__init)")
-                && clientCode.Contains("function GoodbyeService (__init)")
-                && clientCode.Contains("Hello = function (who)")
-                && clientCode.Contains("Goodbye = function (what)"));
-        }
-
-        [TestMethod]
-        public void ServiceUsage()
+        public void Functional_ShouldGenerateAngularServices()
         {
             //setup
             const string Code = @"
-            service SomeService
+            namespace Some.Namespace
             {
-                public void someMethod()
+                public function SomeFunction(string what)
                 {
+                    return ""Hello "" + what;
+                }
+
+                public function SomeOtherFunction(string what)
+                {
+                    return ""Other "" + what;
                 }
             }";
 
-            string output;
-            var tree = Mock.Compile(Code, out output);
+            var errorList = new List<string>();
+            var compilation = Mock.Build(Code, errors: errorList, generateJSFiles: true);
 
-            Assert.IsNotNull(tree);
+            Assert.IsFalse(errorList.Any());
+
+            var serverConfig = compilation.Scope.get<IServerConfiguration>();
+            Assert.IsNotNull(serverConfig);
+
+            var clientCode = serverConfig.GetClientInterface();
+
+            //should generate an angular service naed as the namespace
+            Assert.IsTrue(clientCode.Contains("xsServices.service('Some.Namespace', ['$http', '$q', function($http, $q)"));
+
+            //should generate a post to /Some/Namespace/SomeFunction
+            Assert.IsTrue(clientCode.Contains("$http.post('/Some/Namespace' + '/SomeFunction'"));
         }
 
         [TestMethod]
-        public void DebugPrint()
+        public void Debug()
         {
             string text;
             Mock.Compile(@"

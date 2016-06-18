@@ -32,31 +32,31 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Excess.Compiler, Version=1.0.0.0, Culture=neutral, PublicKeyToken=b0e2cc790a4c1b9e, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Compiler.0.46.57-alpha\lib\Net45\Excess.Compiler.dll</HintPath>
+      <HintPath>..\packages\Excess.Compiler.0.46.69-alpha\lib\Net45\Excess.Compiler.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Compiler.GraphInstances, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Compiler.0.46.57-alpha\lib\Net45\Excess.Compiler.GraphInstances.dll</HintPath>
+      <HintPath>..\packages\Excess.Compiler.0.46.69-alpha\lib\Net45\Excess.Compiler.GraphInstances.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Compiler.Mock, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Compiler.0.46.57-alpha\lib\Net45\Excess.Compiler.Mock.dll</HintPath>
+      <HintPath>..\packages\Excess.Compiler.0.46.69-alpha\lib\Net45\Excess.Compiler.Mock.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Compiler.Razor, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Compiler.0.46.57-alpha\lib\Net45\Excess.Compiler.Razor.dll</HintPath>
+      <HintPath>..\packages\Excess.Compiler.0.46.69-alpha\lib\Net45\Excess.Compiler.Razor.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Extensions.Concurrent, Version=0.46.2.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Excess.Concurrent.Runtime.0.46.5-alpha\lib\Net45\Excess.Extensions.Concurrent.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Excess.Runtime, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Runtime.0.46.4-alpha\lib\Net45\Excess.Runtime.dll</HintPath>
+    <Reference Include="Excess.Runtime, Version=1.0.0.0, Culture=neutral, PublicKeyToken=270b7f55f5ad09f8, processorArchitecture=MSIL">
+      <HintPath>..\packages\Excess.Runtime.0.46.8-alpha\lib\Net45\Excess.Runtime.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Server.Middleware, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Server.0.46.48-alpha\lib\Net45\Excess.Server.Middleware.dll</HintPath>
+      <HintPath>..\packages\Excess.Server.0.46.56-alpha\lib\Net45\Excess.Server.Middleware.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.CodeAnalysis, Version=1.2.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
@@ -128,7 +128,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Runtime, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Concurrent.Runtime.0.46.5-alpha\lib\Net45\Runtime.dll</HintPath>
+      <HintPath>..\packages\Excess.Concurrent.0.46.25-alpha\lib\Net45\Runtime.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />
@@ -169,11 +169,11 @@
     </Reference>
     <Reference Include="System.Xml" />
     <Reference Include="xslang, Version=1.0.0.0, Culture=neutral, PublicKeyToken=a8909f1e5623e4ea, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Compiler.0.46.57-alpha\lib\Net45\xslang.dll</HintPath>
+      <HintPath>..\packages\Excess.Compiler.0.46.69-alpha\lib\Net45\xslang.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="xss, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Server.0.46.48-alpha\lib\Net45\xss.exe</HintPath>
+      <HintPath>..\packages\Excess.Server.0.46.56-alpha\lib\Net45\xss.exe</HintPath>
       <Private>True</Private>
     </Reference>
   </ItemGroup>
@@ -181,14 +181,10 @@
     <Compile Include="Home.xs.cs">
       <DependentUpon>Home.xs</DependentUpon>
     </Compile>
-    <Compile Include="ITranspiler.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="server\Dependencies.xs.cs">
       <DependentUpon>Dependencies.xs</DependentUpon>
     </Compile>
-    <Compile Include="server\GraphModel.cs" />
-    <Compile Include="server\GraphTranspiler.cs" />
-    <Compile Include="server\Transpiler.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="client\app\app.css" />
@@ -205,9 +201,6 @@
     <Content Include="client\app\index.html" />
     <Content Include="client\app\samples.js" />
     <Content Include="client\app\services\__services.js" />
-    <Content Include="client\app\view1\view1.html" />
-    <Content Include="client\app\view1\view1.js" />
-    <Content Include="client\app\view1\view1_test.js" />
     <Content Include="client\e2e-tests\protractor.conf.js" />
     <Content Include="client\e2e-tests\scenarios.js" />
   </ItemGroup>
@@ -226,6 +219,12 @@
   <ItemGroup>
     <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.1.1.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.Analyzers.dll" />
     <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.1.1.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.CSharp.Analyzers.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\demo-transpiler\demo-transpiler.csproj">
+      <Project>{49e968f9-3cea-4ed2-abb4-e1e6c9887b76}</Project>
+      <Name>demo-transpiler</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

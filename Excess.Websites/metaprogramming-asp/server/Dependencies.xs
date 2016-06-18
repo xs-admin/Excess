@@ -1,8 +1,9 @@
 ﻿using xs.ninject;
+using demo_transpiler;
 
 namespace metaprogramming_asp.server  
 {
-	injector    
+	injector     
 	{
 		ITranspiler = Transpiler;   
 		IGraphTranspiler = GraphTranspiler;

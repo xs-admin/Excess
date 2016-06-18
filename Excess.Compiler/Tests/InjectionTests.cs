@@ -14,7 +14,7 @@ namespace Tests
     public class InjectionTests
     {
         [TestMethod]
-        public void InjectionUsage()
+        public void Injection_Usage()
         {
             var tree = ExcessMock.Compile(@"
                 class TestClass
@@ -22,7 +22,7 @@ namespace Tests
                     inject
                     {
                         IInterface1 _1;
-                        public IInterface2 _2 {get; private set;}
+                        IInterface2 _2;
                     }
                 }", (compiler) => DependencyInjection.Apply(compiler));
 
@@ -42,17 +42,52 @@ namespace Tests
             //one parameter per injection
             Assert.AreEqual(2, ctor.ParameterList.Parameters.Count);
 
-            //a private field ought to be added
-            Assert.AreEqual(1, tree
+            //a private field ought to be added per injection
+            Assert.AreEqual(2, tree
                 .GetRoot()
                 .DescendantNodes()
                 .Count(node => node is FieldDeclarationSyntax));
+        }
 
-            //and a public property
-            Assert.AreEqual(1, tree
-                .GetRoot()
-                .DescendantNodes()
-                .Count(node => node is PropertyDeclarationSyntax));
+        [TestMethod]
+        public void Debug()
+        {
+            var tree = ExcessMock.Link(@"
+                using xs.server;
+                using xs.concurrent;
+
+                using demo_transpiler;
+
+                namespace Home
+                { 
+	                public function Transpile(string text)
+	                {
+		                inject 
+		                {
+			                ITranspiler	_transpiler;
+		                }      
+
+		                return _transpiler.Process(text);       
+	                }
+
+	                public function TranspileGraph(string text)
+	                {
+		                inject 
+		                {
+			                IGraphTranspiler _graphTranspiler;
+		                }      
+
+		                return _graphTranspiler.Process(text);      
+	                } 
+                }", 
+                (compiler) => 
+                {
+                    DependencyInjection.Apply(compiler);
+                    Functions.Apply(compiler);
+                });
+
+            //the result must contain one class (testing the temp class is removed)
+            Assert.AreNotEqual(null, tree);
         }
     }
 }

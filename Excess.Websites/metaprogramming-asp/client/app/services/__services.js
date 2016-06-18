@@ -8,7 +8,7 @@
             {
                 var deferred = $q.defer();
 
-                $http.post('/' + this.__ID + '/Transpile', {
+                $http.post('/Home' + '/Transpile', {
                     text : text,
 
                 }).then(function(response) {
@@ -19,12 +19,13 @@
 
                 return deferred.promise;
             }
+
 
             this.TranspileGraph = function (text)
             {
                 var deferred = $q.defer();
 
-                $http.post('/' + this.__ID + '/TranspileGraph', {
+                $http.post('/Home' + '/TranspileGraph', {
                     text : text,
 
                 }).then(function(response) {
@@ -37,5 +38,6 @@
             }
 
 
-                this.__ID = 'b1f32524-0402-4721-9492-c7db004fb252';
+
+                this.__ID = '9a54e6fb-6f9c-49ba-b698-c9318adddddd';
             }])

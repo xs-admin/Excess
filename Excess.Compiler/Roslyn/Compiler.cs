@@ -869,25 +869,42 @@ namespace Excess.Compiler.Roslyn
             });
         }
 
+        public static SyntaxTokenList MemberModifiers(MemberDeclarationSyntax member)
+        {
+            if (member is ClassDeclarationSyntax)
+                return (member as ClassDeclarationSyntax).Modifiers;
+            else if (member is StructDeclarationSyntax)
+                return (member as StructDeclarationSyntax).Modifiers;
+            else if (member is InterfaceDeclarationSyntax)
+                return (member as InterfaceDeclarationSyntax).Modifiers;
+            else if (member is MethodDeclarationSyntax)
+                return (member as MethodDeclarationSyntax).Modifiers;
+            else if (member is PropertyDeclarationSyntax)
+                return (member as PropertyDeclarationSyntax).Modifiers;
+            else if (member is FieldDeclarationSyntax)
+                return (member as FieldDeclarationSyntax).Modifiers;
+            else if (member is ConstructorDeclarationSyntax)
+                return (member as ConstructorDeclarationSyntax).Modifiers;
+            else if (member is EnumDeclarationSyntax)
+                return (member as EnumDeclarationSyntax).Modifiers;
+
+            throw new NotImplementedException();
+        }
+
         public static bool IsVisible(MemberDeclarationSyntax member)
         {
-            var modifiers = default(SyntaxTokenList);
-            if (member is MethodDeclarationSyntax)
-                modifiers = (member as MethodDeclarationSyntax).Modifiers;
-            else if (member is PropertyDeclarationSyntax)
-                modifiers = (member as PropertyDeclarationSyntax).Modifiers;
-            else if (member is FieldDeclarationSyntax)
-                modifiers = (member as FieldDeclarationSyntax).Modifiers;
-            else if (member is ConstructorDeclarationSyntax)
-                modifiers = (member as ConstructorDeclarationSyntax).Modifiers;
-            else if (member is EnumDeclarationSyntax)
-                modifiers = (member as EnumDeclarationSyntax).Modifiers;
-            else
-                throw new NotImplementedException();
-
+            var modifiers = MemberModifiers(member);
             return modifiers
                 .Where(modifier => modifier.Kind() == SyntaxKind.PublicKeyword
                                 || modifier.Kind() == SyntaxKind.InternalKeyword)
+                .Any();
+        }
+
+        public static bool IsStatic(MemberDeclarationSyntax member)
+        {
+            var modifiers = MemberModifiers(member);
+            return modifiers
+                .Where(modifier => modifier.Kind() == SyntaxKind.StaticKeyword)
                 .Any();
         }
 

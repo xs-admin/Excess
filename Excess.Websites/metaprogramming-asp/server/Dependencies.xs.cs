@@ -1,13 +1,15 @@
-﻿#line hidden
+﻿#line 2
+using demo_transpiler;
+#line hidden
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using Excess.Runtime;
 using Ninject;
 
-#line 3
-namespace metaprogramming_asp.server
 #line 4
+namespace metaprogramming_asp.server
+#line 5
 {
 #line hidden
     [AutoInit]
@@ -29,9 +31,9 @@ namespace metaprogramming_asp.server
 
         public override void Load()
         {
-#line 7
-            Bind<ITranspiler>().To<Transpiler>();
 #line 8
+            Bind<ITranspiler>().To<Transpiler>();
+#line 9
             Bind<IGraphTranspiler>().To<GraphTranspiler>();
 #line hidden
         }

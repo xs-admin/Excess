@@ -1,6 +1,8 @@
 ﻿using xs.server;
 using xs.concurrent;
 
+using demo_transpiler;
+
 namespace metaprogramming
 {
 	public service Home  
@@ -8,9 +10,8 @@ namespace metaprogramming
 		inject 
 		{
 			ITranspiler		 _transpiler;
-			IGraphTranspiler _graphTranspiler;
+			IGraphTranspiler _graphTranspiler; 
 		}   
-
 
 		public string Transpile(string text)
 		{
@@ -19,7 +20,7 @@ namespace metaprogramming
 
 		public string TranspileGraph(string text)
 		{
-			return _graphTranspiler.Process(text);      
+			return _graphTranspiler.Process(text);       
 		} 
 	} 
 }

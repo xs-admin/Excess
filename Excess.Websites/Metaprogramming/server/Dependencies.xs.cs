@@ -1,20 +1,17 @@
-﻿#line 1 "C:\dev\Excess\Excess.Websites\metaprogramming\server\Dependencies.xs"
-using System;
+﻿#line 3
+using demo_transpiler;
 #line hidden
-
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Excess.Runtime;
 using Ninject;
 
-
-#line 3
+#line 5
 namespace metaprogramming.server
-
-#line 4
+#line 6
 {
 #line hidden
-
     [AutoInit]
     public class NinjectExcessModule : Ninject.Modules.NinjectModule
     {
@@ -34,18 +31,11 @@ namespace metaprogramming.server
 
         public override void Load()
         {
-            Bind<
-#line 7
-ITranspiler>().To<Transpiler>();
+#line 9
+            Bind<ITranspiler>().To<Transpiler>();
+#line 10
+            Bind<IGraphTranspiler>().To<GraphTranspiler>();
 #line hidden
-
-            Bind<
-#line 8
-IGraphTranspiler>().To<GraphTranspiler>();
-#line hidden
-
         }
     }
-
-#line 10
 }

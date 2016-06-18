@@ -29,6 +29,11 @@ namespace Excess.Runtime
             return (T)get(key<T>()) ?? set<T>();
         }
 
+        public T get<T>(string id) where T : class
+        {
+            return (T)get(id) ?? get<T>();
+        }
+
         public object get(string key)
         { 
             object result;

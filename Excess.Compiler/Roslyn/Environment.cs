@@ -129,5 +129,10 @@ namespace Excess.Compiler.Roslyn
             _settings.TryGetValue(id, out result);
             return result;
         }
+
+        public void setting(string id, object value)
+        {
+            _settings[id] = value;
+        }
     }
 }

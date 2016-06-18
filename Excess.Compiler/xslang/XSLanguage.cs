@@ -43,6 +43,7 @@ namespace xslang
             DependencyInjection.Apply(compiler);
             Match.Apply(compiler);
             Members.Apply(compiler);
+            Functions.Apply(compiler);
         }
     }
 }

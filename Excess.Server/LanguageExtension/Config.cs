@@ -1,12 +1,16 @@
 ﻿using System.Text;
 using Microsoft.CodeAnalysis;
 using Excess.Compiler;
+using System.Collections.Generic;
+using System;
+using System.Linq;
 
 namespace LanguageExtension
 {
     public interface IServerConfiguration
     {
         void AddClientInterface(SyntaxTree document, string contents);
+        void AddFunctionalContainer(string name, string body);
         string GetClientInterface();
         string GetServicePath();
     }
@@ -27,12 +31,43 @@ namespace LanguageExtension
 
         public string GetClientInterface()
         {
-            return _jsObject.ToString();
+            var services = _jsObject.ToString();
+            if (_functions.Any())
+            {
+                var functionals = new StringBuilder();
+                foreach (var function in _functions)
+                {
+                    functionals.AppendLine(Templates.jsService
+                        .Render(new
+                        {
+                            Name = function.Key,
+                            Body = function.Value.ToString(),
+                            ID = Guid.NewGuid() //lol
+                    }));
+                }
+
+                return services + functionals.ToString();
+            }
+
+            return services;
         }
 
         public string GetServicePath()
         {
             return _environment?.setting("servicePath") as string;
+        }
+
+        Dictionary<string, StringBuilder> _functions = new Dictionary<string, StringBuilder>();
+        public void AddFunctionalContainer(string name, string body)
+        {
+            var builder = default(StringBuilder);
+            if (!_functions.TryGetValue(name, out builder))
+            {
+                builder = new StringBuilder();
+                _functions[name] = builder;
+            }
+
+            builder.AppendLine(body);
         }
     }
 

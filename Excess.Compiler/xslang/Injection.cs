@@ -13,29 +13,30 @@ namespace xslang
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
     using Roslyn = RoslynCompiler;
     using ExcessCompiler = ICompiler<SyntaxToken, SyntaxNode, SemanticModel>;
-
+    using Excess.Runtime;
     public class DependencyInjection
     {
         static public void Apply(ExcessCompiler compiler)
         {
             var lexical = compiler.Lexical();
-            var syntax = compiler.Syntax();
-
             lexical
-                //methods 
                 .match()
                     .token("inject", named: "keyword")
-                    .token('{')
+                    .enclosed('{', '}', end: "lastBrace")
                     .then(lexical.transform()
                         .replace("keyword", "__injectFunction __inject = _ => ")
+                        .insert(";", after: "lastBrace")
                         .then(ProcessInjection));
+
+            compiler.Environment()
+                .dependency<__Scope>("Excess.Runtime");
         }
 
         private static SyntaxNode ProcessInjection(SyntaxNode node, Scope scope)
         {
             var document = scope.GetDocument<SyntaxToken, SyntaxNode, SemanticModel>();
-            var @class = node as ClassDeclarationSyntax;
-            if (@class == null)
+            var field = node as FieldDeclarationSyntax;
+            if (field == null)
             {
                 //must be injecting on a function
                 var toInject = (((node as LocalDeclarationStatementSyntax)
@@ -59,10 +60,25 @@ namespace xslang
 
             //otherwise, class injection
             var parentClass = null as ClassDeclarationSyntax;
-            if (!ParseInjection(@class, scope, out parentClass))
+            if (!ParseInjection(field, scope, out parentClass))
                 return node;
 
-            var members = @class.Members;
+            var memberStatements = (((node as FieldDeclarationSyntax)
+                ?.Declaration
+                .Variables
+                .SingleOrDefault()
+                    ?.Initializer
+                    ?.Value as SimpleLambdaExpressionSyntax)
+                        ?.Body as BlockSyntax)
+                        ?.Statements;
+
+            if (memberStatements == null)
+            {
+                //td: error
+                return node;
+            }
+
+            var members = membersFromStatements(memberStatements);
             document.change(parentClass, AddFields(members));
 
             return CSharp.ConstructorDeclaration(parentClass.Identifier)
@@ -73,6 +89,44 @@ namespace xslang
                 .WithBody(CSharp.Block(
                     members
                     .Select(member => InjectionAssignment(member))));
+        }
+
+        private static IEnumerable<MemberDeclarationSyntax> membersFromStatements(SyntaxList<StatementSyntax>? memberStatements)
+        {
+            Debug.Assert(memberStatements.HasValue);
+            foreach (var injectionStatement in memberStatements.Value)
+            {
+                var injectionDeclaration = (injectionStatement as LocalDeclarationStatementSyntax);
+
+                if (injectionDeclaration == null)
+                {
+                    //td: error
+                    continue;
+                }
+
+                if (injectionDeclaration.Declaration.Variables.Count != 1)
+                {
+                    //td: error
+                    continue;
+                }
+
+                var injectionVariable = injectionDeclaration
+                    .Declaration
+                    .Variables
+                    .Single();
+
+                var type = injectionDeclaration.Declaration.Type;
+                if (type.ToString() == "var")
+                {
+                    //td: error
+                    continue;
+                }
+
+                var name = injectionVariable.Identifier;
+                yield return Templates
+                    .InjectionMember
+                    .Get<MemberDeclarationSyntax>(type, name);
+            }
         }
 
         private static Func<SyntaxNode, Scope, SyntaxNode> FunctionInjection(SyntaxNode toReplace, SyntaxList<StatementSyntax>? toInject)
@@ -200,27 +254,17 @@ namespace xslang
                 .AddMembers(members.ToArray());
         }
 
-        private static bool ParseInjection(ClassDeclarationSyntax @class, Scope scope, out ClassDeclarationSyntax parentClass)
+        private static bool ParseInjection(FieldDeclarationSyntax field, Scope scope, out ClassDeclarationSyntax parentClass)
         {
-            if (@class == null)
+            if (field == null)
             {
                 //td: error
                 parentClass = null;
                 return false;
             }
 
-            parentClass = @class.Parent as ClassDeclarationSyntax;
+            parentClass = field.Parent as ClassDeclarationSyntax;
             if (parentClass == null)
-            {
-                //td: error
-                return false;
-            }
-
-            if (@class
-                .Members
-                .Any(member => !(
-                    member is FieldDeclarationSyntax
-                    || member is PropertyDeclarationSyntax)))
             {
                 //td: error
                 return false;
