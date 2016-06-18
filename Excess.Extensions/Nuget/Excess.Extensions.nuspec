@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+  <metadata>
+    <id>Excess.Extensions</id>
+    <version>0.47.0-alpha</version>
+    <authors>Excess</authors>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Official Excess Extension Package</description>
+
+    <dependencies>
+      <dependency id="Excess.Extensions.NInjector" version="0.46.12-alpha"/>
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="..\Contract\bin\Release\Contract.dll" target="tools\Contract.dll" />
+    <file src="..\NInjector\bin\Release\NInjector.pdb" target="tools\NInjector.pdb" />
+  </files>
+</package>

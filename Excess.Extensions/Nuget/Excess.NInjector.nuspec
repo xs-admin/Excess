@@ -13,6 +13,5 @@
   </metadata>
   <files>
     <file src="..\NInjector\bin\Release\NInjector.dll" target="tools\NInjector.dll" />
-    <file src="..\NInjector\bin\Release\NInjector.pdb" target="tools\NInjector.pdb" />
   </files>
 </package>

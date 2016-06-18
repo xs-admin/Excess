@@ -122,6 +122,26 @@ namespace Excess.Compiler
             return result;
         }
 
+        public ICollection<string> GetKeywords()
+        {
+            return (ICollection<string>)get("keywords");
+        }
+
+        public ICollection<string> AddKeywords(params string[] values)
+        {
+            var keywords = get<ICollection<string>>("keywords");
+            if (keywords == null)
+            {
+                keywords = new List<string>();
+                set("keywords", keywords);
+            }
+
+            foreach(var value in values)
+                keywords.Add(value);
+
+            return keywords;
+        }
+
         //DynamicObject
         public dynamic context()
         {

@@ -13,19 +13,9 @@ namespace NInjector
     [Extension("ninject")]
     public class NinjectExtension
     {
-        public static IEnumerable<string> GetKeywords()
-        {
-            return new[] { "injector" };
-        }
-
         public static void Apply(ExcessCompiler compiler, Scope scope = null)
         {
-            if (scope != null)
-            {
-                var keywords = scope.get("keywords") as List<string>;
-                if (keywords != null)
-                    keywords.AddRange(GetKeywords());
-            }
+            scope?.AddKeywords("injector");
 
             var lexical = compiler.Lexical();
             var syntax = compiler.Syntax();

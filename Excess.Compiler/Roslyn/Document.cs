@@ -216,7 +216,7 @@ namespace Excess.Compiler.Roslyn
                 if (!namespaces.Any())
                 {
                     _root = (_root as CompilationUnitSyntax)
-                        .AddMembers(additionalTypes.ToArray());
+                       .AddMembers(additionalTypes.ToArray());
                 }
                 else
                 {
