@@ -7,7 +7,7 @@ namespace Tests
     public class GraphTests
     {
         [TestMethod]
-        public void GraphUsage()
+        public void Graph_Usage()
         {
 
         }
