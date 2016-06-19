@@ -1,10 +1,9 @@
 ﻿using Excess.Compiler.Roslyn;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 
-namespace LanguageExtension
+namespace Excess.Server.Compiler
 {
     using Excess.Compiler.Razor;
-    using System;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
     public static class Templates

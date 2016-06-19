@@ -1,11 +1,9 @@
-﻿using Excess.Compiler.Core;
-using Excess.Compiler.Roslyn;
-using LanguageExtension;
+﻿using System.Collections.Generic;
+using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.Collections.Generic;
-using System.Linq;
+using Excess.Server.Compiler;
 
 namespace Tests
 {

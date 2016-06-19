@@ -1,11 +1,11 @@
-﻿using System.Text;
+﻿using System;
+using System.Text;
+using System.Collections.Generic;
+using System.Linq;
 using Microsoft.CodeAnalysis;
 using Excess.Compiler;
-using System.Collections.Generic;
-using System;
-using System.Linq;
 
-namespace LanguageExtension
+namespace Excess.Server.Compiler
 {
     public interface IServerConfiguration
     {

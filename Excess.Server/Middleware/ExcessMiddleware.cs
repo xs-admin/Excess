@@ -2,8 +2,8 @@
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.Owin;
 using System.Collections.Generic;
+using Microsoft.Owin;
 
 namespace Excess.Server.Middleware
 {
@@ -54,13 +54,14 @@ namespace Excess.Server.Middleware
                                 Success = responseData => SendResponse(response, responseData, completion),
                                 Failure = ex => SendError(response, ex, completion),
                             });
+
+                        await completion.Task;
                     }
                     catch (Exception ex)
                     {
                         SendError(response, ex, null);
                     }
 
-                    await completion.Task;
                     return;
                 }
             }

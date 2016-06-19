@@ -19,8 +19,8 @@ using xslang;
 
 namespace Tests
 {
-    using ServerExtension = LanguageExtension.ServerExtension;
-    using ConcurrentExtension = Excess.Extensions.Concurrent.ConcurrentExtension;
+    using ServerExtension = Excess.Server.Compiler.ServerExtension;
+    using ConcurrentExtension = Excess.Concurrent.Compiler.ConcurrentExtension;
     using FactoryMethod = Func<IConcurrentApp, object[], IConcurrentObject>;
     using Compilation = Excess.Compiler.Roslyn.RoslynCompilation;
     using CompilationAnalysis = Excess.Compiler.ICompilationAnalysis<SyntaxToken, SyntaxNode, SemanticModel>;
@@ -219,7 +219,12 @@ namespace Tests
 
             if (attribute != null)
             {
-                id = Guid.Parse((string)attribute.ConstructorArguments[0].Value);
+                attribute = type
+                    .CustomAttributes
+                    .Where(attr => attr.AttributeType.Name == "Concurrent")
+                    .Single();
+
+                id = Guid.Parse((string)attribute.NamedArguments[0].TypedValue.Value);
                 return true;
             }
 

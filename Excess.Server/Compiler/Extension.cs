@@ -10,9 +10,9 @@ using Microsoft.CodeAnalysis;
 using Excess.Compiler;
 using Excess.Compiler.Roslyn;
 using Excess.Compiler.Attributes;
-using Excess.Extensions.Concurrent;
+using Excess.Concurrent.Compiler;
 
-namespace LanguageExtension
+namespace Excess.Server.Compiler
 {
     using ExcessCompiler = ICompiler<SyntaxToken, SyntaxNode, SemanticModel>;
     using ExcessCompilation = ICompilation<SyntaxToken, SyntaxNode, SemanticModel>;

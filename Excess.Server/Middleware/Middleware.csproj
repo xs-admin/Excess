@@ -35,6 +35,14 @@
       <HintPath>..\packages\AsyncIO.0.1.17.0\lib\net40\AsyncIO.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="Excess.Concurrent.Compiler, Version=0.46.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Excess.Concurrent.Runtime.0.46.6-alpha\lib\Net45\Excess.Concurrent.Compiler.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Excess.Concurrent.Runtime, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Excess.Concurrent.Runtime.0.46.6-alpha\lib\Net45\Excess.Concurrent.Runtime.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Excess.Runtime, Version=1.0.0.0, Culture=neutral, PublicKeyToken=270b7f55f5ad09f8, processorArchitecture=MSIL">
       <HintPath>..\packages\Excess.Runtime.0.46.8-alpha\lib\Net45\Excess.Runtime.dll</HintPath>
       <Private>True</Private>
@@ -92,12 +100,6 @@
   <ItemGroup>
     <Compile Include="ExcessMiddleware.cs" />
     <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\Excess.Concurrent\Runtime\Concurrent.Runtime.csproj">
-      <Project>{4be92f98-4415-4118-9a57-e1e2b3cbb1a5}</Project>
-      <Name>Concurrent.Runtime</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

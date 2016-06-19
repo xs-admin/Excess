@@ -7,8 +7,8 @@
     <ProjectGuid>{0B09CEFB-454E-42D0-8F2B-E7353BF52D98}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>LanguageExtension</RootNamespace>
-    <AssemblyName>Excess.Extensions.Server</AssemblyName>
+    <RootNamespace>Excess.Server.Compiler</RootNamespace>
+    <AssemblyName>Excess.Server.Compiler</AssemblyName>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
@@ -32,19 +32,31 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Excess.Compiler, Version=1.0.0.0, Culture=neutral, PublicKeyToken=b0e2cc790a4c1b9e, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Compiler.0.46.69-alpha\lib\Net45\Excess.Compiler.dll</HintPath>
+      <HintPath>..\packages\Excess.Compiler.0.46.72-alpha\lib\Net45\Excess.Compiler.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Compiler.GraphInstances, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Compiler.0.46.69-alpha\lib\Net45\Excess.Compiler.GraphInstances.dll</HintPath>
+      <HintPath>..\packages\Excess.Compiler.0.46.72-alpha\lib\Net45\Excess.Compiler.GraphInstances.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Compiler.Mock, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Compiler.0.46.69-alpha\lib\Net45\Excess.Compiler.Mock.dll</HintPath>
+      <HintPath>..\packages\Excess.Compiler.0.46.72-alpha\lib\Net45\Excess.Compiler.Mock.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Compiler.Razor, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Compiler.0.46.69-alpha\lib\Net45\Excess.Compiler.Razor.dll</HintPath>
+      <HintPath>..\packages\Excess.Compiler.0.46.72-alpha\lib\Net45\Excess.Compiler.Razor.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Excess.Concurrent.Compiler, Version=0.46.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Excess.Concurrent.Runtime.0.46.6-alpha\lib\Net45\Excess.Concurrent.Compiler.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Excess.Concurrent.Runtime, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Excess.Concurrent.Runtime.0.46.6-alpha\lib\Net45\Excess.Concurrent.Runtime.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Excess.Runtime, Version=1.0.0.0, Culture=neutral, PublicKeyToken=270b7f55f5ad09f8, processorArchitecture=MSIL">
+      <HintPath>..\packages\Excess.Runtime.0.46.8-alpha\lib\Net45\Excess.Runtime.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.CodeAnalysis, Version=1.2.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
@@ -120,7 +132,7 @@
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
     <Reference Include="xslang, Version=1.0.0.0, Culture=neutral, PublicKeyToken=a8909f1e5623e4ea, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Compiler.0.46.69-alpha\lib\Net45\xslang.dll</HintPath>
+      <HintPath>..\packages\Excess.Compiler.0.46.72-alpha\lib\Net45\xslang.dll</HintPath>
       <Private>True</Private>
     </Reference>
   </ItemGroup>
@@ -132,14 +144,7 @@
     <Compile Include="Templates.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
     <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\Excess.Extensions.Concurrent\Excess.Extensions.Concurrent.csproj">
-      <Project>{99f869f8-7bd4-476a-98ca-27c63e89da93}</Project>
-      <Name>Excess.Extensions.Concurrent</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.1.1.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.Analyzers.dll" />

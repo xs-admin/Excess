@@ -41,7 +41,7 @@ namespace Tests
                 response = server.HttpClient.GetAsync($"{uri}?what=world").Result;
                 Assert.AreEqual(response.StatusCode, HttpStatusCode.NotFound);
 
-                //the server should not respond to post where te body is not json
+                //the server should not respond to post where the body is not json
                 response = server.HttpClient.PostAsync(uri,
                     new StringContent(
                         "what=world",

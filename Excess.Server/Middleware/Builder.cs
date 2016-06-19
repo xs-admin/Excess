@@ -75,7 +75,7 @@ namespace Excess.Server.Middleware
 
         public static void UseExcess(this IAppBuilder builder, IDistributedApp server)
         {
-            builder.Use<ExcessOwinMiddleware>(server);
+            builder.Use<ExcessOwinMiddleware>(server, null);
             server.Start();
         }
 
