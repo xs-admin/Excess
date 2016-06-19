@@ -1,21 +1,18 @@
-﻿using Excess.Compiler.Roslyn;
-using Excess.Extensions.Concurrent.Model;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Excess.Compiler.Roslyn;
+using Excess.Concurrent.Compiler.Model;
+using Microsoft.CodeAnalysis.CSharp;
 
-namespace Excess.Extensions.Concurrent
+namespace Excess.Concurrent.Compiler
 {
-    using Compiler;
-    using Microsoft.CodeAnalysis.CSharp;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
     using Roslyn = RoslynCompiler;
+    using Scope = Excess.Compiler.Scope;
 
     internal class ExpressionParser : CSharpSyntaxRewriter
     {

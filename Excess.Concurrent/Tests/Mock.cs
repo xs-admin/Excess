@@ -11,9 +11,9 @@ using Excess.Concurrent.Runtime;
 using Excess.Compiler;
 using Excess.Compiler.Core;
 using Excess.Compiler.Roslyn;
-using Excess.Extensions.Concurrent;
+using Excess.Concurrent.Compiler;
 
-namespace Concurrent.Tests
+namespace Excess.Concurrent.Tests
 {
     using FactoryMap = Dictionary<string, Func<IConcurrentApp, object[], IConcurrentObject>>;
     using ConcurrentAttribute = Excess.Concurrent.Runtime.Concurrent;

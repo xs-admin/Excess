@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("Excess.Extensions.Concurrent")]
+[assembly: AssemblyTitle("Excess.Concurrent.Compiler")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("Excess.Extensions.Concurrent")]
+[assembly: AssemblyProduct("Excess.Concurrent.Compiler")]
 [assembly: AssemblyCopyright("Copyright Excess ©  2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

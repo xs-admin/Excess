@@ -7,7 +7,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Concurrent.Tests</RootNamespace>
-    <AssemblyName>Concurrent.Tests</AssemblyName>
+    <AssemblyName>Excess.Concurrent.Tests</AssemblyName>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{3AC096D0-A1C2-E12C-1390-A8335801FDAB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
@@ -145,17 +145,16 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Excess.Extensions.Concurrent\Excess.Extensions.Concurrent.csproj">
+    <ProjectReference Include="..\Compiler\Compiler.csproj">
       <Project>{99f869f8-7bd4-476a-98ca-27c63e89da93}</Project>
-      <Name>Excess.Extensions.Concurrent</Name>
+      <Name>Compiler</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Runtime\Concurrent.Runtime.csproj">
+    <ProjectReference Include="..\Runtime\Runtime.csproj">
       <Project>{4be92f98-4415-4118-9a57-e1e2b3cbb1a5}</Project>
-      <Name>Concurrent.Runtime</Name>
+      <Name>Runtime</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="app.config" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

@@ -8,7 +8,7 @@
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Excess.Concurrent.Runtime</RootNamespace>
-    <AssemblyName>Runtime</AssemblyName>
+    <AssemblyName>Excess.Concurrent.Runtime</AssemblyName>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />

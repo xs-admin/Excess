@@ -6,6 +6,6 @@ using System.Threading.Tasks;
 using System.Diagnostics;
 using Excess.Concurrent.Runtime;
 
-namespace Concurrent.Tests
+namespace Excess.Concurrent.Tests
 {
 }

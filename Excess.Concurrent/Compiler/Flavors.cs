@@ -1,10 +1,8 @@
 ﻿using Excess.Compiler;
 using Excess.Compiler.Attributes;
 using Excess.Compiler.Roslyn;
-using Excess.Concurrent.Runtime;
-using System.Collections.Generic;
 
-namespace Excess.Extensions.Concurrent
+namespace Excess.Concurrent.Compiler
 {
     [Extension("concurrent")]
     public static class Flavors

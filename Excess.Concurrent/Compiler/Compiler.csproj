@@ -7,8 +7,8 @@
     <ProjectGuid>{99F869F8-7BD4-476A-98CA-27C63E89DA93}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Excess.Extensions.Concurrent</RootNamespace>
-    <AssemblyName>Excess.Extensions.Concurrent</AssemblyName>
+    <RootNamespace>Excess.Concurrent.Compiler</RootNamespace>
+    <AssemblyName>Excess.Concurrent.Compiler</AssemblyName>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
@@ -143,14 +143,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Excess.Concurrent\Runtime\Concurrent.Runtime.csproj">
+    <ProjectReference Include="..\Runtime\Runtime.csproj">
       <Project>{4be92f98-4415-4118-9a57-e1e2b3cbb1a5}</Project>
-      <Name>Concurrent.Runtime</Name>
+      <Name>Runtime</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Analyzer Include="..\Excess.Concurrent\packages\Microsoft.CodeAnalysis.Analyzers.1.1.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.Analyzers.dll" />
-    <Analyzer Include="..\Excess.Concurrent\packages\Microsoft.CodeAnalysis.Analyzers.1.1.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.CSharp.Analyzers.dll" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

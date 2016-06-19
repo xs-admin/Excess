@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Excess.Compiler.Roslyn;
-using Excess.Extensions.Concurrent.Model;
+using Excess.Concurrent.Compiler.Model;
 
-namespace Excess.Extensions.Concurrent
+namespace Excess.Concurrent.Compiler
 {
-    using Microsoft.CodeAnalysis.CSharp;
-    using System.Diagnostics;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
     using Roslyn = RoslynCompiler;
 

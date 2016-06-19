@@ -6,11 +6,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
-namespace Excess.Extensions.Concurrent.Model
+namespace Excess.Concurrent.Compiler.Model
 {
-    using Compiler;
-    using System.Diagnostics;
+    using Scope = Excess.Compiler.Scope;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
     using Roslyn = RoslynCompiler;
 

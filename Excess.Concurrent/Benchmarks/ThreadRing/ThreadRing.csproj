@@ -53,9 +53,9 @@
     <None Include="ThreadRing.xs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\Runtime\Concurrent.Runtime.csproj">
+    <ProjectReference Include="..\..\Runtime\Runtime.csproj">
       <Project>{4be92f98-4415-4118-9a57-e1e2b3cbb1a5}</Project>
-      <Name>Concurrent.Runtime</Name>
+      <Name>Runtime</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

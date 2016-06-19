@@ -7,11 +7,11 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.CSharp;
 using Excess.Compiler;
 using Excess.Compiler.Roslyn;
-using Excess.Extensions.Concurrent.Model;
+using Excess.Concurrent.Compiler.Model;
 using Excess.Concurrent.Runtime;
 using Excess.Compiler.Attributes;
 
-namespace Excess.Extensions.Concurrent
+namespace Excess.Concurrent.Compiler
 {
     using CSharp = SyntaxFactory;
     using Roslyn = RoslynCompiler;

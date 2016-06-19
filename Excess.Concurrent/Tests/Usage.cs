@@ -1,13 +1,12 @@
-﻿using System;
+﻿using System.Linq;
+using System.Collections.Generic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Excess.Compiler.Roslyn;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using System.Linq;
-using Excess.Extensions.Concurrent;
-using System.Collections.Generic;
+using Excess.Compiler.Roslyn;
+using Excess.Concurrent.Compiler;
 
-namespace Concurrent.Tests
+namespace Excess.Concurrent.Tests
 {
     [TestClass]
     public class Usage
@@ -16,7 +15,7 @@ namespace Concurrent.Tests
         public void BasicOperators()
         {
             RoslynCompiler compiler = new RoslynCompiler();
-            Excess.Extensions.Concurrent.ConcurrentExtension.Apply(compiler);
+            ConcurrentExtension.Apply(compiler);
 
             SyntaxTree tree = null;
             string text = null;

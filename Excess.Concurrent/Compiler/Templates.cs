@@ -1,14 +1,9 @@
-﻿using Excess.Compiler.Roslyn;
+﻿using System;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Excess.Compiler.Roslyn;
 
-namespace Excess.Extensions.Concurrent
+namespace Excess.Concurrent.Compiler
 {
-    using Microsoft.CodeAnalysis;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
     internal static class Templates

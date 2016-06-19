@@ -8,7 +8,7 @@
         <description>C# extensions for concurrency</description>
     </metadata>
     <files>
-        <file src="..\..\Excess.Extensions.Concurrent\bin\Release\Excess.Extensions.Concurrent.dll" target="tools\Excess.Extensions.Concurrent.dll" />
+        <file src="..\..\Excess.Concurrent.Compiler\bin\Release\Excess.Concurrent.Compiler.dll" target="tools\Excess.Concurrent.Compiler.dll" />
         <file src="..\Runtime\bin\Release\Runtime.dll" target="tools\Runtime.dll" />
         <file src="..\Runtime\bin\Release\Runtime.dll" target="lib\Net45\Runtime.dll" />
     </files>
