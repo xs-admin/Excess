@@ -11,7 +11,7 @@ namespace Tests
     public class HttpServerTests
     {
         [TestMethod]
-        public void Usage()
+        public void HttpServer_Usage()
         {
             //setup
             const string SourceCode = @"

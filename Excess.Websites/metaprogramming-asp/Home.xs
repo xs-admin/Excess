@@ -5,7 +5,7 @@ using demo_transpiler;
 
 namespace Home
 { 
-	public function Transpile(string text)   
+	public function Transpile(string text)    
 	{
 		inject 
 		{

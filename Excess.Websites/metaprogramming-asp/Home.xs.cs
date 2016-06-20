@@ -1,4 +1,5 @@
-﻿#line 4
+﻿#line 1 "C:\dev\Excess\Excess.Websites\metaprogramming-asp\Home.xs"
+#line 4
 using demo_transpiler;
 #line hidden
 using System;

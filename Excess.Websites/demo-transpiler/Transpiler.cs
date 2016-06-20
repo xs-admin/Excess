@@ -1,5 +1,5 @@
 ﻿using Excess.Compiler.Roslyn;
-using Excess.Extensions.Concurrent;
+using Excess.Concurrent.Compiler;
 using xslang;
 
 namespace demo_transpiler

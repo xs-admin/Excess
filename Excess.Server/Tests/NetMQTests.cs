@@ -12,7 +12,7 @@ namespace Tests
     public class NetMQTests
     {
         [TestMethod, Ignore] //netmq is not yet fully functional
-        public void Usage()
+        public void NetMQ_Usage()
         {
             //setup
             const string SourceCode = @"

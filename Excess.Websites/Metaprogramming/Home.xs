@@ -20,7 +20,7 @@ namespace metaprogramming
 
 		public string TranspileGraph(string text)
 		{
-			return _graphTranspiler.Process(text);       
+			return _graphTranspiler.Process(text);         
 		} 
 	} 
 }

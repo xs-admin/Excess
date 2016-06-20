@@ -1,9 +1,11 @@
-﻿#line 4
+﻿#line 1 "C:\dev\Excess\Excess.Websites\metaprogramming\Home.xs"
+#line 4
 using demo_transpiler;
 #line hidden
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Excess.Runtime;
 using Excess.Server.Middleware;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,8 +16,8 @@ namespace metaprogramming
 #line 7
 {
 #line hidden
-    [Service(id: "027aaf98-bf95-4692-a6b7-80d71c2f091c")]
-    [Concurrent(id = "d0a7995b-f20b-477a-aaea-42d6e5626968")]
+    [Service(id: "97eb75ce-1eac-4060-bb0a-38adf2930c31")]
+    [Concurrent(id = "0833c722-d1be-4796-8f13-3330be19f849")]
 #line 8
     public class Home : ConcurrentObject
 #line 9

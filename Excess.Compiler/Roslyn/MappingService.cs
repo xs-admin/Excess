@@ -1,7 +1,5 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using System.Text;
-using System.Diagnostics;
 using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -164,6 +162,8 @@ namespace Excess.Compiler.Roslyn
             node = node.NormalizeWhitespace();
 
             var file = new StringBuilder();
+            file.AppendLine($"#line 1 \"{fileName}\"");
+
             var line = new StringBuilder();
             var lineNumber = -1;
             foreach (var token in node.DescendantTokens())
