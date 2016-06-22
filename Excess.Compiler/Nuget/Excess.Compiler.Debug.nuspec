@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
         <id>Excess.Compiler</id>
-        <version>0.47.1-alpha</version>
+        <version>0.47.2-alpha</version>
         <authors>Excess</authors>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>Metaprogramming platform for C#</description>
@@ -11,6 +11,8 @@
           <dependency id="Microsoft.CodeAnalysis" version="1.2.2"/>
           <dependency id="RazorEngine" version="3.8.2"/>
           <dependency id="Excess.Runtime" version="0.47.1-alpha"/>
+          <dependency id="Antlr4" version="4.5.3-rc1"/>
+          <dependency id="Antlr4.Runtime" version="4.5.3-rc1"/>
         </dependencies>
     </metadata>
     <files>
@@ -22,6 +24,8 @@
         <file src="..\Excess.Compiler.Mock\bin\Debug\Excess.Compiler.Mock.pdb" target="lib\Net45\Excess.Compiler.Mock.pdb" />
         <file src="..\Excess.Compiler.Razor\bin\Debug\Excess.Compiler.Razor.dll" target="lib\Net45\Excess.Compiler.Razor.dll" />
         <file src="..\Excess.Compiler.Razor\bin\Debug\Excess.Compiler.Razor.pdb" target="lib\Net45\Excess.Compiler.Razor.pdb" />
+        <file src="..\Excess.Compiler.Antlr4\bin\Debug\Excess.Compiler.Antlr4.dll" target="lib\Net45\Excess.Compiler.Antlr4.dll" />
+        <file src="..\Excess.Compiler.Antlr4\bin\Debug\Excess.Compiler.Antlr4.pdb" target="lib\Net45\Excess.Compiler.Antlr4.pdb" />
         <file src="..\Excess.Compiler.GraphInstances\bin\Debug\Excess.Compiler.GraphInstances.dll" target="lib\Net45\Excess.Compiler.GraphInstances.dll" />
         <file src="..\Excess.Compiler.GraphInstances\bin\Debug\Excess.Compiler.GraphInstances.pdb" target="lib\Net45\Excess.Compiler.GraphInstances.pdb" />
     </files>

@@ -11,7 +11,7 @@ namespace Tests
     public class NInjectorTests
     {
         [TestMethod]
-        public void NInjectorUsage()
+        public void NInjector_Usage()
         {
             var tree = ExcessMock.Compile(@"
             namespace SomeNS

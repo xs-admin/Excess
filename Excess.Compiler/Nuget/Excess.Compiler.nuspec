@@ -10,6 +10,9 @@
         <dependencies>
           <dependency id="Microsoft.CodeAnalysis" version="1.2.2"/>
           <dependency id="RazorEngine" version="3.8.2"/>
+          <dependency id="Antlr4" version="4.5.3-rc1"/>
+          <dependency id="Antlr4.Runtime" version="4.5.3-rc1"/>
+
           <dependency id="Excess.Runtime" version="0.47.0-alpha"/>
         </dependencies>
     </metadata>
@@ -18,6 +21,7 @@
         <file src="..\xslang\bin\Release\xslang.dll" target="lib\Net45\xslang.dll" />
         <file src="..\Excess.Compiler.Mock\bin\Release\Excess.Compiler.Mock.dll" target="lib\Net45\Excess.Compiler.Mock.dll" />
         <file src="..\Excess.Compiler.Razor\bin\Release\Excess.Compiler.Razor.dll" target="lib\Net45\Excess.Compiler.Razor.dll" />
-      <file src="..\Excess.Compiler.GraphInstances\bin\Release\Excess.Compiler.GraphInstances.dll" target="lib\Net45\Excess.Compiler.GraphInstances.dll" />
+        <file src="..\Excess.Compiler.GraphInstances\bin\Release\Excess.Compiler.GraphInstances.dll" target="lib\Net45\Excess.Compiler.GraphInstances.dll" />
+        <file src="..\Excess.Compiler.Antlr4\bin\Release\Excess.Compiler.Antlr4.dll" target="lib\Net45\Excess.Compiler.Antlr4.dll" />
     </files>
 </package>

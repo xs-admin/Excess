@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Antlr4.Runtime;
+using Excess.Compiler.Roslyn;
 
-using Antlr4.Runtime;
-
-namespace Excess.Compiler.Roslyn
+namespace Excess.Compiler.Antlr4
 {
     public class AntlrErrors<TToken> : IAntlrErrorListener<TToken> where TToken : IToken
     {

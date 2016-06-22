@@ -137,7 +137,6 @@
     <Compile Include="Core\InstanceScope.cs" />
     <Compile Include="InstanceAnalysis.cs" />
     <Compile Include="Reflection\Loader.cs" />
-    <Compile Include="Roslyn\AntlrErrors.cs" />
     <Compile Include="Core\CompilerBase.cs" />
     <Compile Include="Core\DocumentBase.cs" />
     <Compile Include="Core\GrammarAnalysisBase.cs" />
@@ -149,7 +148,6 @@
     <Compile Include="Grammar.cs" />
     <Compile Include="LexicalAnalysis.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Roslyn\AntlrExpression.cs" />
     <Compile Include="Roslyn\Compilation.cs" />
     <Compile Include="Roslyn\CompilationAnalysis.cs" />
     <Compile Include="Roslyn\CompilationAnalysisVisitor.cs" />

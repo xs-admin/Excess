@@ -29,7 +29,7 @@ namespace Excess.Compiler.Core
                 return node; 
 
             var compiler = scope.GetService<TToken, TNode, TModel>();
-            var g        = _grammar.parse(withoutBraces, scope, compiler.GetOffset(withoutBraces.First()));
+            var g        = _grammar.Parse(withoutBraces, scope, compiler.GetOffset(withoutBraces.First()));
 
             if (g == null || g.Equals(default(GNode)))
                 return node; //errors added to the scope already

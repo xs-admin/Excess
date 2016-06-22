@@ -1,19 +1,19 @@
-﻿using Antlr4.Runtime;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Antlr4.Runtime;
 
-namespace Excess.Compiler.Roslyn
+namespace Excess.Compiler.Antlr4
 {
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
+
     public static class AntlrExpression
     {
+        //When expressions.g4 is imported into grammars, you can invoke this function 
+        //in order to transform : antlr expression => roslyn expression
         public static SyntaxNode Parse(ParserRuleContext node, Func<ParserRuleContext, Scope, SyntaxNode> continuation, Scope scope)
         {
             return visitNode((ParserRuleContext)node); //td: scope needed?
