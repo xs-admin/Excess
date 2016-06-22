@@ -1,7 +1,7 @@
 ﻿to compile: 
 
-xsc DiningPhilosophers.xs -concurrent Console
+xsc ChameneoRedux.xs -concurrent Performance
 
 to run:
 
-DiningPhilosophers
+ChameneoRedux

@@ -364,6 +364,6 @@ namespace Excess.Concurrent.Compiler
             }");
 
         public static Template StartSingleton = Template.ParseStatement("_0.Start(app);");
-        
+        public static StatementSyntax StopApp = CSharp.ParseStatement("App.Stop();");
     }
 }

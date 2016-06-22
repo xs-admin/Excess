@@ -184,3 +184,7 @@ FakesAssemblies/
 
 # App Data Folder
 App_Data/
+
+# Visual studio folders
+.vs/
+.nuget/

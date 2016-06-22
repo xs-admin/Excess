@@ -16,6 +16,7 @@ namespace Excess.Concurrent.Compiler
     using CSharp = SyntaxFactory;
     using Roslyn = RoslynCompiler;
     using Compilation = ICompilation<SyntaxToken, SyntaxNode, SemanticModel>;
+    using CompilationAnalysis = ICompilationAnalysis<SyntaxToken, SyntaxNode, SemanticModel>;
 
     public class Options
     {
@@ -42,11 +43,6 @@ namespace Excess.Concurrent.Compiler
     [Extension("concurrent")]
     public class ConcurrentExtension
     {
-        public static IEnumerable<string> GetKeywords()
-        {
-            return new[] { "concurrent", "spawn" };
-        }
-
         public static void Apply(RoslynCompiler compiler, Scope scope)
         {
             Apply(compiler, new Options(), scope);
@@ -54,12 +50,7 @@ namespace Excess.Concurrent.Compiler
 
         public static void Apply(RoslynCompiler compiler, Options options = null, Scope scope = null)
         {
-            if (scope != null)
-            {
-                var keywords = scope.get("keywords") as List<string>;
-                if (keywords != null)
-                    keywords.AddRange(GetKeywords());
-            }
+            scope?.AddKeywords("concurrent", "spawn", "await");
 
             if (options == null)
                 options = new Options();
@@ -97,27 +88,24 @@ namespace Excess.Concurrent.Compiler
                     "System.Threading.Tasks",
                 })
                 .dependency<ConcurrentObject>("Excess.Concurrent.Runtime");
+        }
 
-            if (options.GenerateAppProgram /*&& compilation != null */)
-            {
-                throw new NotImplementedException();
-                //var compilation = compiler.Compilation();
-
-                ////app support
-                //var Programs = new List<ClassDeclarationSyntax>();
-                //var Singletons = new List<ClassDeclarationSyntax>();
-                //compilation
-                //    .match<ClassDeclarationSyntax>((@class, model, scpe) =>
-                //        @class.Identifier.ToString() == "Program"
-                //        && @class
-                //            .Members
-                //            .OfType<MethodDeclarationSyntax>()
-                //            .Any(method => method.Identifier.ToString() == "Main"))
-                //        .then((node, model, scpe) => Programs.Add((ClassDeclarationSyntax)node))
-                //    .match<ClassDeclarationSyntax>((@class, model, scpe) => isSingleton(@class))
-                //        .then((node, model, scpe) => Singletons.Add((ClassDeclarationSyntax)node))
-                //    .after(AddAppProgram(Programs, Singletons));
-            }
+        public static void AppCompilation(CompilationAnalysis compilation)
+        {
+            //app support
+            var Programs = new List<ClassDeclarationSyntax>();
+            var Singletons = new List<ClassDeclarationSyntax>();
+            compilation
+                .match<ClassDeclarationSyntax>((@class, model, scpe) =>
+                    @class.Identifier.ToString() == "Program"
+                    && @class
+                        .Members
+                        .OfType<MethodDeclarationSyntax>()
+                        .Any(method => method.Identifier.ToString() == "Main"))
+                    .then((node, model, scpe) => Programs.Add((ClassDeclarationSyntax)node))
+                .match<ClassDeclarationSyntax>((@class, model, scpe) => isSingleton(@class))
+                    .then((node, model, scpe) => Singletons.Add((ClassDeclarationSyntax)node))
+                .after(AddAppProgram(Programs, Singletons));
         }
 
         public static void Visit(ClassDeclarationSyntax @class,
@@ -895,6 +883,14 @@ namespace Excess.Concurrent.Compiler
                 }
             }
 
+            //replace returns for stops
+            main = main
+                .ReplaceNodes(main
+                    .DescendantNodes()
+                    .OfType<ReturnStatementSyntax>(),
+                (on, nn) => Templates.StopApp);
+
+            //and eliminate args
             return main.WithParameterList(CSharp.ParameterList());
         }
 

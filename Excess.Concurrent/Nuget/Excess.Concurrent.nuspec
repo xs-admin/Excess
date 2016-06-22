@@ -2,14 +2,14 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
         <id>Excess.Concurrent</id>
-        <version>0.46.7-alpha</version>
+        <version>0.47.1-alpha</version>
         <authors>Excess</authors>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>C# extensions for concurrency</description>
     </metadata>
     <files>
-        <file src="..\..\Excess.Concurrent.Compiler\bin\Release\Excess.Concurrent.Compiler.dll" target="tools\Excess.Concurrent.Compiler.dll" />
-        <file src="..\Runtime\bin\Release\Runtime.dll" target="tools\Runtime.dll" />
-        <file src="..\Runtime\bin\Release\Runtime.dll" target="lib\Net45\Runtime.dll" />
+        <file src="..\Compiler\bin\Release\Excess.Concurrent.Compiler.dll" target="tools\Excess.Concurrent.Compiler.dll" />
+        <file src="..\Runtime\bin\Release\Excess.Concurrent.Runtime.dll" target="tools\Excess.Concurrent.Runtime.dll" />
+        <file src="..\Runtime\bin\Release\Excess.Concurrent.Runtime.dll" target="lib\Net45\Excess.Concurrent.Runtime.dll" />
     </files>
 </package>

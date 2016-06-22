@@ -2,13 +2,15 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
     <id>Excess.Concurrent.Runtime</id>
-    <version>0.46.6-alpha</version>
+    <version>0.47.2-alpha</version>
     <authors>Excess</authors>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>C# extensions for concurrency</description>
   </metadata>
   <files>
     <file src="..\Compiler\bin\Debug\Excess.Concurrent.Compiler.dll" target="lib\Net45\Excess.Concurrent.Compiler.dll" />
+    <file src="..\Compiler\bin\Debug\Excess.Concurrent.Compiler.pdb" target="lib\Net45\Excess.Concurrent.Compiler.pdb" />
     <file src="..\Runtime\bin\Debug\Excess.Concurrent.Runtime.dll" target="lib\Net45\Excess.Concurrent.Runtime.dll" />
+    <file src="..\Runtime\bin\Debug\Excess.Concurrent.Runtime.pdb" target="lib\Net45\Excess.Concurrent.Runtime.pdb" />
   </files>
 </package>

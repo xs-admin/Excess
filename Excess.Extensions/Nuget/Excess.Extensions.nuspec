@@ -8,11 +8,10 @@
     <description>Official Excess Extension Package</description>
 
     <dependencies>
-      <dependency id="Excess.Extensions.NInjector" version="0.46.12-alpha"/>
+      <dependency id="Excess.Extensions.NInjector" version="0.47.0-alpha"/>
     </dependencies>
   </metadata>
   <files>
     <file src="..\Contract\bin\Release\Contract.dll" target="tools\Contract.dll" />
-    <file src="..\NInjector\bin\Release\NInjector.pdb" target="tools\NInjector.pdb" />
   </files>
 </package>

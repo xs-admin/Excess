@@ -1,9 +1,12 @@
 ﻿using Excess.Compiler;
 using Excess.Compiler.Attributes;
 using Excess.Compiler.Roslyn;
+using Microsoft.CodeAnalysis;
 
 namespace Excess.Concurrent.Compiler
 {
+    using CompilationAnalysis = ICompilationAnalysis<SyntaxToken, SyntaxNode, SemanticModel>;
+
     [Extension("concurrent")]
     public static class Flavors
     {
@@ -27,6 +30,8 @@ namespace Excess.Concurrent.Compiler
             }, props);
         }
 
+        public static void PerformanceCompilation(CompilationAnalysis compilation)  => ConcurrentExtension.AppCompilation(compilation);
+
         [Flavor]
         public static void Console(RoslynCompiler compiler, Scope props)
         {
@@ -36,6 +41,8 @@ namespace Excess.Concurrent.Compiler
                 GenerateAppConstructor = false,
             }, props);
         }
+
+        public static void ConsoleCompilation(CompilationAnalysis compilation) => ConcurrentExtension.AppCompilation(compilation);
 
         [Flavor]
         public static void Distributed(RoslynCompiler compiler, Scope props)

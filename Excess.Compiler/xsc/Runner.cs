@@ -48,8 +48,7 @@ namespace xsc
         public IDictionary<string, LoaderFunc> directoryExtensions(string directory)
         {
             var items = Directory.EnumerateFiles(directory, "*", SearchOption.AllDirectories)
-                .Where(file => Path.GetExtension(file) == ".dll"
-                            && Path.GetFileName(file).StartsWith("Excess.Extensions"))
+                .Where(file => Path.GetExtension(file) == ".dll")
                 .Select(dll => loadExtension(dll));
 
             var result = new Dictionary<string, LoaderFunc>();

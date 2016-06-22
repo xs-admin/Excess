@@ -2,14 +2,14 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
         <id>Excess.Server</id>
-        <version>0.46.58-alpha</version>
+        <version>0.47.2-alpha</version>
         <authors>Excess</authors>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>Excess Web App</description>
 
         <dependencies>
-          <dependency id="Excess.Runtime" version="0.46.5-alpha"/>
-          <dependency id="Excess.Concurrent" version="0.46.22-alpha"/>
+          <dependency id="Excess.Runtime" version="0.47.1-alpha"/>
+          <dependency id="Excess.Concurrent" version="0.47.1-alpha"/>
           <dependency id="Newtonsoft.Json" version="8.0.0"/>
           <dependency id="Owin" version="1.0.0"/>
           <dependency id="Microsoft.Owin" version="3.0.0"/>
@@ -21,8 +21,8 @@
         </dependencies>
     </metadata>
     <files>
-        <file src="..\Compiler\bin\Debug\Excess.Extensions.Server.dll" target="tools\Excess.Extensions.Server.dll" />
-        <file src="..\Compiler\bin\Debug\Excess.Extensions.Server.pdb" target="tools\Excess.Extensions.Server.pdb" />
+        <file src="..\Compiler\bin\Debug\Excess.Server.Compiler.dll" target="tools\Excess.Server.Compiler.dll" />
+        <file src="..\Compiler\bin\Debug\Excess.Server.Compiler.pdb" target="tools\Excess.Server.Compiler.pdb" />
         <file src="install.ps1" target="tools\install.ps1" />
         <file src="..\xss\bin\Debug\xss.exe" target="lib\Net45\xss.exe" />
         <file src="..\xss\bin\Debug\xss.pdb" target="lib\Net45\xss.pdb" />

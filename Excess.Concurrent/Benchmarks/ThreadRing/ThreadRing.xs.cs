@@ -8,7 +8,7 @@ using Excess.Concurrent.Runtime;
 
 namespace ThreadRing
 {
-    [Concurrent(id = "978e9e4b-dacb-4d56-8773-1a709c469e99")]
+    [Concurrent(id = "3af83722-d05c-483e-bec6-d4ba5b3bbef2")]
     class RingItem : ConcurrentObject
     {
         int _idx;
@@ -67,8 +67,8 @@ namespace ThreadRing
         public readonly Guid __ID = Guid.NewGuid();
     }
 
-    [Concurrent(id = "181ac22b-7d43-4ca7-8ccd-e8b9e92d7d0e")]
-    [ConcurrentSingleton(id: "d82e7f4c-adf6-4d1c-b2bc-dbce540fb85f")]
+    [Concurrent(id = "96a6f36b-f5b1-4b94-89b6-0224b41740b9")]
+    [ConcurrentSingleton(id: "b296fbf4-67e7-41f7-9980-b5b4ca1c3e5d")]
     public class __app : ConcurrentObject
     {
         protected override void __started()

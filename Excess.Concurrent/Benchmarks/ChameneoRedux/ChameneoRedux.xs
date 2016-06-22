@@ -105,6 +105,7 @@ namespace ChameneoRedux
             PrintRun(firstRunColors, firstRun);
             Console.WriteLine();
             PrintRun(secondRunColors, secondRun);
+			return;
 		}
 
         IEnumerable<Chameneo> Run(int meetings, Color[] colors)

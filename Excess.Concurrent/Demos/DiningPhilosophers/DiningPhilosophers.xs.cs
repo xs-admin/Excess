@@ -8,8 +8,8 @@ using Excess.Concurrent.Runtime;
 
 namespace DiningPhilosophers
 {
-    [Concurrent(id = "9a56cedc-5256-4e10-9d10-28ac292975b3")]
-    [ConcurrentSingleton(id: "95c24c07-05aa-4ca5-83b0-c01877ebd968")]
+    [Concurrent(id = "0b0cb53d-54d9-4014-b69e-c337dad28649")]
+    [ConcurrentSingleton(id: "5d1dcbd1-a861-4392-b8e4-0a5f4d300951")]
     public class __app : ConcurrentObject
     {
         protected override void __started()
@@ -80,7 +80,7 @@ namespace DiningPhilosophers
         }
     }
 
-    [Concurrent(id = "02afb1cf-c7e7-44f8-8ca1-33958cb1c821")]
+    [Concurrent(id = "8f75b5fa-639c-4862-8912-0126480630c6")]
     class philosopher : ConcurrentObject
     {
         string _name;
@@ -429,7 +429,7 @@ namespace DiningPhilosophers
         public readonly Guid __ID = Guid.NewGuid();
     }
 
-    [Concurrent(id = "9648df94-1fe7-481f-9409-6971dd516635")]
+    [Concurrent(id = "18e234d9-d4b3-49b6-80a5-19a21d9362be")]
     class chopstick : ConcurrentObject
     {
         philosopher _owner;
