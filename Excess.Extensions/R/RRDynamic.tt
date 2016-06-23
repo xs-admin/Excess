@@ -1,0 +1,175 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+
+<# Type[] numericTypes = {
+		typeof(double), typeof(float),
+		typeof(Int64), typeof(Int32)
+	};
+
+	Type[] allTypes = {
+		typeof(double), typeof(float),
+		typeof(Int64), typeof(Int32),
+		typeof(bool), typeof(string)
+	};
+	
+	string[] numericOperators = {
+		"add",
+		"sub",
+		"mul",
+		"div",
+		"gt",
+		"ge",
+		"lt",
+		"le",
+		"eq",
+		"neq",
+	};
+
+	string[] boolOperators = {
+		"and",
+		"bnd",
+		"or",
+		"bor",
+	};
+#>
+
+using System;
+using System.Collections.Generic;
+using System.Linq; 
+
+namespace Excess.Extensions.R
+{
+	public static partial class RR {
+		<# for(int nop = 0; nop < numericOperators.Length; nop++) { 
+			var opName = numericOperators[nop]; #>
+
+			public static object <#= opName #> (object val1, object val2) 
+			{
+				<# for(int i = 0; i < numericTypes.Length; i++) { 
+					var type1 = numericTypes[i];#>
+
+					if (val1 is <#= type1.Name #>)
+					{
+						<# for(int j = 0; j < numericTypes.Length; j++) { 
+							var type2 = numericTypes[j];#>
+
+							if (val2 is <#= type2.Name #>)
+								return <#= opName #>((<#= type1.Name #>)val1, (<#= type2.Name #>)val2);
+
+							if (val2 is Vector<<#= type2.Name #>>)
+								return <#= opName #>((<#= type1.Name #>)val1, (Vector<<#= type2.Name #>>)val2);
+						<# } #>
+					}
+
+					if (val1 is Vector<<#= type1.Name #>>)
+					{
+						<# for(int j = 0; j < numericTypes.Length; j++) { 
+							var type2 = numericTypes[j];#>
+
+							if (val2 is <#= type2.Name #>)
+								return <#= opName #>((Vector<<#= type1.Name #>>)val1, (<#= type2.Name #>)val2);
+
+							if (val2 is Vector<<#= type2.Name #>>)
+								return <#= opName #>((Vector<<#= type1.Name #>>)val1, (Vector<<#= type2.Name #>>)val2);
+						<# } #>
+					}
+
+				<# } #>
+				throw new InvalidOperationException("operator <#= opName #> does not support this type combination");
+			}
+		<# } #>
+
+		<# for(int bop = 0; bop < boolOperators.Length; bop++) { 
+			var opName = boolOperators[bop]; #>
+
+			public static object <#= opName #> (object val1, object val2) 
+			{
+				if (val1 is bool)
+				{
+					if (val2 is bool)
+						return <#= opName #>((bool)val1, (bool)val2);
+
+					if (val2 is Vector<bool>)
+						return <#= opName #>((bool)val1, (Vector<bool>)val2);
+				}
+
+				if (val1 is Vector<bool>)
+				{
+					if (val2 is bool)
+						return <#= opName #>((Vector<bool>)val1, (bool)val2);
+
+					if (val2 is Vector<bool>)
+						return <#= opName #>((Vector<bool>)val1, (Vector<bool>)val2);
+				}
+				throw new InvalidOperationException("operator <#= opName #> does not support this type combination");
+			}
+		<# } #>
+
+        private static bool higher(Type type1, Type type2)
+        {
+			if (type1 == type2)
+				return false;
+
+			<# for(int i = 0; i < numericTypes.Length - 1; i++) { 
+				var type1 = numericTypes[i];#>
+
+				if (type1 == typeof(<#= type1.Name #>))
+				{
+					<# for(int j = i + 1; j < numericTypes.Length; j++) { 
+						var type2 = numericTypes[j]; #>
+						
+						if (type2 == typeof(<#= type2.Name #>))
+							return true;
+					<# } #>
+				}
+			<# } #>
+
+			return false;
+        }
+
+		//dynamic operations
+		public static object sum(object val)
+		{
+			<# foreach (var type in numericTypes) { #> 
+				if (val is Vector<<#= type.Name #>>)
+					return sum(val as Vector<<#= type.Name #>>);
+			<# } #>
+
+			throw new InvalidOperationException("sum expects numeric vectors");
+		}
+
+        public static object index(object val, object vec)
+		{
+			if (vec is Vector<bool>)
+			{
+				<# foreach (var type in allTypes) { #> 
+					if (val is Vector<<#= type.Name #>>)
+						return index((Vector<<#= type.Name #>>)val, (Vector<bool>)vec);
+				<# } #>
+			}
+			else if (vec is Vector<int>)
+			{
+				<# foreach (var type in allTypes) { #> 
+					if (val is Vector<<#= type.Name #>>)
+						return index((Vector<<#= type.Name #>>)val, (Vector<int>)vec);
+				<# } #>
+			}
+
+			throw new InvalidOperationException("index vectors expects only boolean or int");
+		}
+
+        private static object concat(IEnumerable<IVector> values, int len, Type type)
+        {
+			<# foreach (var type in allTypes) { #> 
+				if (type == typeof(<#= type.Name #>) || type == typeof(Vector<<#= type.Name #>>))
+					return Vector<<#= type.Name #>>.create(len, EnumerateVectors<<#= type.Name #>>(values));
+			<# } #>
+
+			throw new InvalidOperationException("cannont concatenate type: " + type.FullName);
+        }
+	}
+}
