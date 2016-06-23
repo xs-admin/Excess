@@ -2,17 +2,22 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
     <id>Excess.Extensions</id>
-    <version>0.47.1-alpha</version>
+    <version>0.47.2-alpha</version>
     <authors>Excess</authors>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Official Excess Extension Package</description>
 
     <dependencies>
       <dependency id="Excess.Extensions.NInjector" version="0.47.1-alpha"/>
+      <dependency id="Newtonsoft.Json" version="8.0.0"/>
     </dependencies>
   </metadata>
   <files>
     <file src="..\Contract\bin\Debug\Contract.dll" target="tools\Contract.dll" />
     <file src="..\Contract\bin\Debug\Contract.pdb" target="tools\Contract.pdb" />
+    <file src="..\Json\bin\Debug\Json.dll" target="tools\Json.dll" />
+    <file src="..\Json\bin\Debug\Json.pdb" target="tools\Json.pdb" />
+    <file src="..\R\bin\Debug\R.dll" target="tools\R.dll" />
+    <file src="..\R\bin\Debug\R.pdb" target="tools\R.pdb" />
   </files>
 </package>

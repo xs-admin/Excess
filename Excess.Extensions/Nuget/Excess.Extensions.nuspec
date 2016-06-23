@@ -9,9 +9,12 @@
 
     <dependencies>
       <dependency id="Excess.Extensions.NInjector" version="0.47.0-alpha"/>
+      <dependency id="Newtonsoft.Json" version="8.0.0"/>
     </dependencies>
   </metadata>
   <files>
     <file src="..\Contract\bin\Release\Contract.dll" target="tools\Contract.dll" />
+    <file src="..\Json\bin\Release\Json.dll" target="tools\Json.dll" />
+    <file src="..\R\bin\Release\R.dll" target="tools\R.dll" />
   </files>
 </package>

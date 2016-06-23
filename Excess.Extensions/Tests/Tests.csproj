@@ -156,6 +156,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ContractTests.cs" />
     <Compile Include="JsonTests.cs" />
+    <Compile Include="RTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -172,6 +173,10 @@
     <ProjectReference Include="..\NInjector\NInjector.csproj">
       <Project>{d161f91c-5d87-4356-9dcb-8b62a754f787}</Project>
       <Name>NInjector</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\R\R.csproj">
+      <Project>{5a14c7ba-9e0b-471d-b9d4-fe08073a9f00}</Project>
+      <Name>R</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

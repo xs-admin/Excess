@@ -8,46 +8,15 @@ using Antlr4.Runtime;
 using Excess.Compiler;
 using Excess.Compiler.Roslyn;
 using Excess.Compiler.Antlr4;
+
+using R;
 using R.Grammar;
 
 namespace Excess.Extensions.R
 {
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
-    public static class RScope
-    {
-        public static void InitR(this Scope scope)
-        {
-            scope.set("rPreStatements", new List<StatementSyntax>());
-            scope.set("rVariables", new List<string>());
-        }
-
-        public static List<StatementSyntax> PreStatements(this Scope scope)
-        {
-            var result = scope.find<List<StatementSyntax>>("rPreStatements");
-            Debug.Assert(result != null);
-            return result;
-        }
-
-        public static bool hasVariable(this Scope scope, string varName)
-        {
-            var result = scope.find<List<string>>("rVariables");
-            if (result != null && result.Contains(varName)) 
-                return true;
-
-            var parent = scope.parent();
-            return parent == null ? false : parent.hasVariable(varName);
-        }
-
-        public static void addVariable(this Scope scope, string varName)
-        {
-            var result = scope.find<List<string>>("rVariables");
-            Debug.Assert(result != null && !result.Contains(varName));
-            result.Add(varName);
-        }
-    }
-
-    public class Extension
+    public class RExtension
     {
         class RGrammar : AntlrGrammar
         {
@@ -171,7 +140,7 @@ namespace Excess.Extensions.R
         static Dictionary<string, ExpressionSyntax> _binaryOperators = new Dictionary<string, ExpressionSyntax>();
         static Dictionary<string, ExpressionSyntax> _unaryOperators = new Dictionary<string, ExpressionSyntax>();
         
-        static Extension()
+        static RExtension()
         {
             _binaryOperators["+"] = CSharp.ParseExpression("RR.add");
             _binaryOperators["-"] = CSharp.ParseExpression("RR.sub");
