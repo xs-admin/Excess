@@ -16,6 +16,18 @@ namespace Excess.Compiler.Roslyn
 
     public class RoslynLexicalAnalysis : BaseLexicalAnalysis<SyntaxToken, SyntaxNode, SemanticModel>
     {
+        public override IIndentationGrammarAnalysis<SyntaxToken, SyntaxNode> indented(string keyword, ExtensionKind kind)
+        {
+            var analysis = new RoslynIndentationGrammarAnalysis();
+            extension(keyword, kind, ParseIndented(analysis));
+            return analysis;
+        }
+
+        private Func<SyntaxNode, Scope, LexicalExtension<SyntaxToken>, SyntaxNode> ParseIndented(RoslynIndentationGrammarAnalysis analysis)
+        {
+            return (node, scope, extension) => RoslynIndentationParser.Parse(node, scope, extension);
+        }
+
         protected override SyntaxNode normalize(SyntaxNode root, Scope scope)
         {
             IEnumerable<SyntaxNode> rootStatements = null;
