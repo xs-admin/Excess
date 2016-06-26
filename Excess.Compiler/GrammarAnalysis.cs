@@ -18,13 +18,18 @@ namespace Excess.Compiler
         void then(Func<TNode, TNode, Scope, LexicalExtension<TToken>, TNode> handler);
     }
 
-    public interface IIndentationGrammarMatch<TToken, TNode>
+    public interface IIndentationGrammarMatch<TToken, TNode> 
     {
         IIndentationGrammarAnalysis<TToken, TNode> children(Action<IIndentationGrammarAnalysis<TToken, TNode>> handler);
         IIndentationGrammarAnalysis<TToken, TNode> then(Func<TNode, TNode, Scope, LexicalExtension<TToken>, TNode> handler);
     }
 
-    public interface IIndentationGrammarAnalysis<TToken, TNode>
+    public interface IIndentationGrammarTransform<TNode>
+    {
+        TNode transform();
+    }
+
+    public interface IIndentationGrammarAnalysis<TToken, TNode> 
     {
         IIndentationGrammarMatch<TToken, TNode> match(Func<string, TNode> linker);
         IIndentationGrammarMatch<TToken, TNode> match<T>(Func<T, bool> matcher) where T : TNode;
@@ -33,5 +38,7 @@ namespace Excess.Compiler
 
         IIndentationGrammarAnalysis<TToken, TNode> before(Func<TNode, Scope, LexicalExtension<TToken>, TNode> handler);
         IIndentationGrammarAnalysis<TToken, TNode> after(Func<TNode, TNode, Scope, TNode> handler);
+
+        IIndentationGrammarTransform<TNode> transform(TNode node, Scope scope, LexicalExtension<TToken> data);
     }
 }

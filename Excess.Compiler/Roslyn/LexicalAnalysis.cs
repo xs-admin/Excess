@@ -25,7 +25,11 @@ namespace Excess.Compiler.Roslyn
 
         private Func<SyntaxNode, Scope, LexicalExtension<SyntaxToken>, SyntaxNode> ParseIndented(RoslynIndentationGrammarAnalysis analysis)
         {
-            return (node, scope, extension) => RoslynIndentationParser.Parse(node, scope, extension);
+            return (node, scope, extension) =>
+            {
+                var transform = analysis.transform(node, scope, extension);
+                return transform.transform();
+            };
         }
 
         protected override SyntaxNode normalize(SyntaxNode root, Scope scope)

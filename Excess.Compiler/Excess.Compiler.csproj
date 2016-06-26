@@ -156,6 +156,7 @@
     <Compile Include="Roslyn\Document.cs" />
     <Compile Include="Roslyn\Environment.cs" />
     <Compile Include="Roslyn\IndentationAnalysis.cs" />
+    <Compile Include="Roslyn\IndentationParser.cs" />
     <Compile Include="Roslyn\InstanceDocument.cs" />
     <Compile Include="Roslyn\LexicalAnalysis.cs" />
     <Compile Include="Roslyn\MappingService.cs" />
