@@ -26,7 +26,7 @@ namespace Excess.Compiler
 
     public interface IIndentationGrammarTransform<TNode>
     {
-        TNode transform();
+        TNode transform(TNode node, Scope scope);
     }
 
     public interface IIndentationGrammarAnalysis<TToken, TNode> 
@@ -39,6 +39,6 @@ namespace Excess.Compiler
         IIndentationGrammarAnalysis<TToken, TNode> before(Func<TNode, Scope, LexicalExtension<TToken>, TNode> handler);
         IIndentationGrammarAnalysis<TToken, TNode> after(Func<TNode, TNode, Scope, TNode> handler);
 
-        IIndentationGrammarTransform<TNode> transform(TNode node, Scope scope, LexicalExtension<TToken> data);
+        IIndentationGrammarTransform<TNode> transform(LexicalExtension<TToken> data, Scope scope);
     }
 }

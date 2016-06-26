@@ -10,15 +10,19 @@ namespace Excess.Compiler.Roslyn
 {
     public class RoslynIndentationGrammarAnalysis : IndentationGrammarAnalysisBase<SyntaxToken, SyntaxNode>
     {
-        public override IIndentationGrammarTransform<SyntaxNode> transform(SyntaxNode node, Scope scope, LexicalExtension<SyntaxToken> data)
-        {
-            var root = IndentationParser.Parse(data.Body);
-            return new RoslynIndentationGrammarTransform(this, root);
-        }
-
         protected override IndentationGrammarMatchBase<SyntaxToken, SyntaxNode> createMatch(Func<string, SyntaxNode> handler)
         {
             return new RoslynIndentationGrammarMatch(handler);
+        }
+
+        protected override IIndentationGrammarTransform<SyntaxNode> createTransform(IndentationNode node, Scope scope)
+        {
+            return new RoslynIndentationGrammarTransform(this, node);
+        }
+
+        protected override IndentationNode parse(LexicalExtension<SyntaxToken> data)
+        {
+            return IndentationParser.Parse(data.Body);
         }
 
         protected override T parseNode<T>(string text)
@@ -37,9 +41,20 @@ namespace Excess.Compiler.Roslyn
             _root = root;
         }
 
-        public SyntaxNode transform()
+        public SyntaxNode transform(SyntaxNode node, Scope scope)
         {
-            throw new NotImplementedException();
+            var result = null as SyntaxNode;
+            var matchers = _owner.matchers();
+            foreach (var matcher in matchers)
+            {
+                result = matcher.matches(_root, scope);
+                if (result == null)
+                    continue;
+
+
+            }
+
+            return result;
         }
     }
 
@@ -51,7 +66,7 @@ namespace Excess.Compiler.Roslyn
 
         protected override IndentationGrammarAnalysisBase<SyntaxToken, SyntaxNode> createChildren()
         {
-            throw new NotImplementedException();
+            return new RoslynIndentationGrammarAnalysis();
         }
     }
 }

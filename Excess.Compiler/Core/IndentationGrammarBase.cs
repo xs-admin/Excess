@@ -6,6 +6,13 @@ using System.Threading.Tasks;
 
 namespace Excess.Compiler.Core
 {
+    public class IndentationNode
+    {
+        public int Depth { get; private set; }
+        public string Value { get; private set; }
+        public IEnumerable<IndentationNode> Children { get; private set; }
+    }
+
     public abstract class IndentationGrammarAnalysisBase<TToken, TNode> : IIndentationGrammarAnalysis<TToken, TNode>
     {
         List<Func<TNode, TNode, Scope, TNode>> _after = new List<Func<TNode, TNode, Scope, TNode>>();
@@ -43,10 +50,28 @@ namespace Excess.Compiler.Core
                 ? transform()
                 : default(TNode));
 
-        public abstract IIndentationGrammarTransform<TNode> transform(TNode node, Scope scope, LexicalExtension<TToken> data);
+        public IIndentationGrammarTransform<TNode> transform(LexicalExtension<TToken> data, Scope scope)
+        {
+            var node = parse(data);
+            if (node == null)
+                return null;
 
+            return createTransform(node, scope);
+        }
+
+        //implementors
         protected abstract IndentationGrammarMatchBase<TToken, TNode> createMatch(Func<string, TNode> handler);
         protected abstract T parseNode<T>(string text) where T : TNode;
+        protected abstract IndentationNode parse(LexicalExtension<TToken> data);
+        protected abstract IIndentationGrammarTransform<TNode> createTransform(IndentationNode node, Scope scope);
+
+        //internals
+        public IEnumerable<IndentationGrammarMatchBase<TToken, TNode>> matchers() => _matchers;
+        public TNode transform(TNode syntaxNode, IndentationNode node, Scope scope)
+        {
+            var transformer = createTransform(node, scope);
+            return transformer.transform(syntaxNode, scope);
+        }
     }
 
     public abstract class IndentationGrammarMatchBase<TToken, TNode> : IIndentationGrammarMatch<TToken, TNode>
@@ -63,10 +88,12 @@ namespace Excess.Compiler.Core
             _owner = owner;
         }
 
+        List<IndentationGrammarAnalysisBase<TToken, TNode>> _children = new List<IndentationGrammarAnalysisBase<TToken, TNode>>();
         public IIndentationGrammarAnalysis<TToken, TNode> children(Action<IIndentationGrammarAnalysis<TToken, TNode>> handler)
         {
             var inner = createChildren();
             handler?.Invoke(inner);
+            _children.Add(inner);
             return _owner;
         }
 
@@ -80,14 +107,34 @@ namespace Excess.Compiler.Core
         protected abstract IndentationGrammarAnalysisBase<TToken, TNode> createChildren();
 
         //internals 
-        public TNode transform(string text, Scope scope, Func<IEnumerable<TNode>> children)
+        public TNode matches(IndentationNode node, Scope scope)
         {
-            var node = _matcher(text);
-            if (node == null)
-                return node;
+            var result = _matcher(node.Value);
+            if (result == null)
+                return default(TNode);
+
+            if (_children.Any())
+            {
+                var childSyntaxNodes = new List<TNode>();
+                foreach (var child in node.Children)
+                {
+                    var syntaxNode = default(TNode);
+                    foreach (var analysis in _children)
+                    {
+                        var childNode = analysis.transform(result, child, scope);
+                        if (childNode != null)
+                        {
+                            childSyntaxNodes.Add(syntaxNode);
+                            break;
+                        }
+                    }
+                }
+
+                throw new NotImplementedException(); //td: merge chidren
+            }
 
             //td: !! revise the signature
-            return _then == null ? node : _then(node, node, scope, null);
+            return _then == null ? result : _then(result, result, scope, null);
         }
     }
 

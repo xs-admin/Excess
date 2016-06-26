@@ -27,8 +27,8 @@ namespace Excess.Compiler.Roslyn
         {
             return (node, scope, extension) =>
             {
-                var transform = analysis.transform(node, scope, extension);
-                return transform.transform();
+                var transform = analysis.transform(extension, scope);
+                return transform.transform(node, scope);
             };
         }
 
