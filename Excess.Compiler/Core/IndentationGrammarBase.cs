@@ -89,9 +89,11 @@ namespace Excess.Compiler.Core
         }
 
         List<IndentationGrammarAnalysisBase<TToken, TNode>> _children = new List<IndentationGrammarAnalysisBase<TToken, TNode>>();
-        public IIndentationGrammarAnalysis<TToken, TNode> children(Action<IIndentationGrammarAnalysis<TToken, TNode>> handler)
+        public IIndentationGrammarAnalysis<TToken, TNode> children(
+            Action<IIndentationGrammarAnalysis<TToken, TNode>> handler, 
+            Func<TNode, IEnumerable<TNode>, TNode> transform)
         {
-            var inner = createChildren();
+            var inner = createChildren(transform);
             handler?.Invoke(inner);
             _children.Add(inner);
             return _owner;
@@ -104,7 +106,7 @@ namespace Excess.Compiler.Core
             return _owner;
         }
 
-        protected abstract IndentationGrammarAnalysisBase<TToken, TNode> createChildren();
+        protected abstract IndentationGrammarAnalysisBase<TToken, TNode> createChildren(Func<TNode, IEnumerable<TNode>, TNode> transform);
 
         //internals 
         public TNode matches(IndentationNode node, Scope scope)

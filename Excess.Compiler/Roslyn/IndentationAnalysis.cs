@@ -64,8 +64,9 @@ namespace Excess.Compiler.Roslyn
         {
         }
 
-        protected override IndentationGrammarAnalysisBase<SyntaxToken, SyntaxNode> createChildren()
+        protected override IndentationGrammarAnalysisBase<SyntaxToken, SyntaxNode> createChildren(Func<SyntaxNode, IEnumerable<SyntaxNode>, SyntaxNode> transform)
         {
+            //td: !!! use transform
             return new RoslynIndentationGrammarAnalysis();
         }
     }
