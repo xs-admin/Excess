@@ -13,17 +13,27 @@ namespace Tests
     using Compiler = ICompiler<SyntaxToken, SyntaxNode, SemanticModel>;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
+    class TestNode
+    {
+    };
+
+    class TestRootNode : TestNode
+    {
+    };
+
+    class SiblingNode : TestNode
+    {
+    };
+
     static class Indented_Usage_Extension
     {
         public static void Apply(Compiler compiler)
         {
             compiler.Lexical()
-                .indented("settings", ExtensionKind.Code)
-                    .match(SettingHeader)
-                        .children(
-                            child => child.match<AssignmentExpressionSyntax>(SettingValue),
-                            BuildSettings)
-                    .after(CheckEmpty);
+                .indented<TestNode>("someExtension", ExtensionKind.Code)
+                    .match<TestRootNode>(MatchHeader)
+                        .children(child => child
+                            .match<TestRootNode, SiblingNode>(MatchAssignment));
         }
 
         private static SyntaxNode CheckEmpty(SyntaxNode node, SyntaxNode useless, Scope arg3)
@@ -33,29 +43,26 @@ namespace Tests
                 : node;
         }
 
-        private static Template SettingsCall = Template.ParseStatement("SetSettings(__0, __1, __2);");
-        private static SyntaxNode BuildSettings(SyntaxNode node, IEnumerable<SyntaxNode> children)
+        private static Template SomeFunctionCall = Template.ParseStatement("SomeFunctionCall(__0, __1, __2);");
+        private static SyntaxNode BuildChildren(SyntaxNode node, IEnumerable<SyntaxNode> children)
         {
-            var settingHeader = (LiteralExpressionSyntax)node;
+            var header = (LiteralExpressionSyntax)node;
             return CSharp.Block(children
                 .Select(n => (AssignmentExpressionSyntax)n)
-                .Select(assign => SettingsCall.Get<StatementSyntax>(
-                    settingHeader,
+                .Select(assign => SomeFunctionCall.Get<StatementSyntax>(
+                    header,
                     assign.Left,
                     assign.Right))
                 .ToArray());
         }
 
-        private static bool SettingValue(AssignmentExpressionSyntax arg)
+        private static SiblingNode MatchAssignment(string text, TestRootNode parent, Scope scope)
         {
-            return true;
+            return null;
         }
 
-        private static SyntaxNode SettingHeader(string text)
+        private static TestRootNode MatchHeader(string text, Scope scope)
         {
-            if (text.StartsWith("[") && text.EndsWith("]"))
-                return RoslynCompiler.Quoted(text.Substring(1, text.Length - 2));
-
             return null; 
         }
     }
@@ -72,16 +79,18 @@ namespace Tests
                     void TestMethod()
                     {
                         var TestVar = ""World"";        
-                        settings()
+                        someExtension()
                         {
-                            [TestSetting1]
-                                TestSettingValue1 = 10
-                                TestSettingValue2 = ""SomeValue""
-                            [TestSetting2]
-                                TestSettingValue3 = ""Hello "" + TestVar
+                            [Header1]
+                                Value1 = 10
+                                Value2 = ""SomeValue""
+                            [Header1]
+                                Value3 = ""Hello "" + TestVar
                         }
                     }
                 }", (compiler) => Indented_Usage_Extension.Apply(compiler));
+
+            Assert.IsNotNull(tree);
         }
     }
 }

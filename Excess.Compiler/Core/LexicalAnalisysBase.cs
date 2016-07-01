@@ -786,11 +786,16 @@ namespace Excess.Compiler.Core
             return this;
         }
 
-        public IGrammarAnalysis<TGrammar, GNode, TToken, TNode> grammar<TGrammar, GNode>(string keyword, ExtensionKind kind) where TGrammar : IGrammar<TToken, TNode, GNode>, new()
+        public IGrammarAnalysis<GNode, TToken, TNode> grammar<TGrammar, GNode>(string keyword, ExtensionKind kind) where TGrammar : IGrammar<TToken, TNode, GNode>, new()
         {
-            return new BaseGrammarAnalysis<TToken, TNode, TModel, GNode, TGrammar>(this, keyword, kind);
+            return new BaseGrammarAnalysis<TToken, TNode, TModel, GNode, TGrammar>(this, keyword, kind, new TGrammar());
         }
 
-        public abstract IIndentationGrammarAnalysis<TToken, TNode> indented(string keyword, ExtensionKind kind);
+        public IGrammarAnalysis<GNode, TToken, TNode> grammar<TGrammar, GNode>(string keyword, ExtensionKind kind, TGrammar grammar) where TGrammar : IGrammar<TToken, TNode, GNode>
+        {
+            return new BaseGrammarAnalysis<TToken, TNode, TModel, GNode, TGrammar>(this, keyword, kind, grammar);
+        }
+
+        public abstract IIndentationGrammarAnalysis<TToken, TNode, GNode> indented<GNode>(string keyword, ExtensionKind kind);
     }
 }

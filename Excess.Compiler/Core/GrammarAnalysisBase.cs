@@ -6,13 +6,13 @@ using System.Threading.Tasks;
 
 namespace Excess.Compiler.Core
 {
-    public class BaseGrammarAnalysis<TToken, TNode, TModel, GNode, TGrammar> : IGrammarAnalysis<TGrammar, GNode, TToken, TNode> where TGrammar : IGrammar<TToken, TNode, GNode>, new()
+    public class BaseGrammarAnalysis<TToken, TNode, TModel, GNode, TGrammar> : IGrammarAnalysis<GNode, TToken, TNode> where TGrammar : IGrammar<TToken, TNode, GNode>
     {
         TGrammar _grammar;
-        public BaseGrammarAnalysis(ILexicalAnalysis<TToken, TNode, TModel> lexical, string keyword, ExtensionKind kind)
+        public BaseGrammarAnalysis(ILexicalAnalysis<TToken, TNode, TModel> lexical, string keyword, ExtensionKind kind, TGrammar grammar)
         {
             lexical.extension(keyword, kind, ParseExtension);
-            _grammar = new TGrammar();
+            _grammar = grammar;
         }
 
         Func<TNode, TNode, Scope, LexicalExtension<TToken>, TNode> _then;
@@ -48,7 +48,7 @@ namespace Excess.Compiler.Core
         }
 
         Dictionary<Type, Func<GNode, Func<GNode, Scope, TNode>, Scope, TNode>> _transformers = new Dictionary<Type, Func<GNode, Func<GNode, Scope, TNode>, Scope, TNode>>();
-        public IGrammarAnalysis<TGrammar, GNode, TToken, TNode> transform<T>(Func<T, Func<GNode, Scope, TNode>, Scope, TNode> handler) where T : GNode
+        public IGrammarAnalysis<GNode, TToken, TNode> transform<T>(Func<T, Func<GNode, Scope, TNode>, Scope, TNode> handler) where T : GNode
         {
             var type = typeof(T);
             if (_transformers.ContainsKey(type))

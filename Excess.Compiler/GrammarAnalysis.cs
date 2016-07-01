@@ -11,36 +11,23 @@ namespace Excess.Compiler
         GNode Parse(IEnumerable<TToken> tokens, Scope scope, int offset);
     }
 
-    public interface IGrammarAnalysis<TGrammar, GNode, TToken, TNode>
+    public interface IGrammarAnalysis<GNode, TToken, TNode>
     {
-        IGrammarAnalysis<TGrammar, GNode, TToken, TNode> transform<T>(Func<T, Func<GNode, Scope, TNode>, Scope, TNode> handler) where T : GNode;
+        IGrammarAnalysis<GNode, TToken, TNode> transform<T>(Func<T, Func<GNode, Scope, TNode>, Scope, TNode> handler) where T : GNode;
 
         void then(Func<TNode, TNode, Scope, LexicalExtension<TToken>, TNode> handler);
     }
 
-    public interface IIndentationGrammarMatch<TToken, TNode> 
+    public interface IIndentationGrammarMatch<TToken, TNode, GNode>
     {
-        IIndentationGrammarAnalysis<TToken, TNode> children(
-            Action<IIndentationGrammarAnalysis<TToken, TNode>> builder, 
-            Func<TNode, IEnumerable<TNode>, TNode> transform);
-        IIndentationGrammarAnalysis<TToken, TNode> then(Func<TNode, TNode, Scope, LexicalExtension<TToken>, TNode> handler);
+        IIndentationGrammarAnalysis<TToken, TNode, GNode> children(Action<IIndentationGrammarAnalysis<TToken, TNode, GNode>> builder);
     }
 
-    public interface IIndentationGrammarTransform<TNode>
+    public interface IIndentationGrammarAnalysis<TToken, TNode, GNode>
     {
-        TNode transform(TNode node, Scope scope);
-    }
+        IIndentationGrammarMatch<TToken, TNode, GNode> match<TRoot>(Func<string, Scope, TRoot> handler) where TRoot : GNode, new();
+        IIndentationGrammarMatch<TToken, TNode, GNode> match<TParent, T>(Func<string, TParent, Scope, T> handler) where T : GNode;
 
-    public interface IIndentationGrammarAnalysis<TToken, TNode> 
-    {
-        IIndentationGrammarMatch<TToken, TNode> match(Func<string, TNode> linker);
-        IIndentationGrammarMatch<TToken, TNode> match<T>(Func<T, bool> matcher) where T : TNode;
-        IIndentationGrammarMatch<TToken, TNode> match<T>(Func<string, T> parser, Func<T, TNode> transform);
-        IIndentationGrammarMatch<TToken, TNode> match(Func<string, bool> parser, Func<TNode> transform);
-
-        IIndentationGrammarAnalysis<TToken, TNode> before(Func<TNode, Scope, LexicalExtension<TToken>, TNode> handler);
-        IIndentationGrammarAnalysis<TToken, TNode> after(Func<TNode, TNode, Scope, TNode> handler);
-
-        IIndentationGrammarTransform<TNode> transform(LexicalExtension<TToken> data, Scope scope);
+        IGrammarAnalysis<GNode, TToken, TNode> then<TRoot>() where TRoot : GNode, new();
     }
 }

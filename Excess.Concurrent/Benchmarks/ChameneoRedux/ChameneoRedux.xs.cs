@@ -16,7 +16,7 @@ namespace ChameneoRedux
         yellow,
     }
 
-    [Concurrent(id = "d769a165-7067-4039-8bbb-9d353d8d1dd2")]
+    [Concurrent(id = "61c84b1d-815c-47ea-96a1-bb19d97c71f6")]
     public class Chameneo : ConcurrentObject
     {
         public Color Colour
@@ -161,7 +161,7 @@ namespace ChameneoRedux
         public readonly Guid __ID = Guid.NewGuid();
     }
 
-    [Concurrent(id = "45989cb2-7843-4bc2-b9d7-881bf2e68c52")]
+    [Concurrent(id = "e92cad6b-0728-41c7-8cca-346b7865402a")]
     public class Broker : ConcurrentObject
     {
         int _meetings = 0;
@@ -328,8 +328,8 @@ namespace ChameneoRedux
         public readonly Guid __ID = Guid.NewGuid();
     }
 
-    [Concurrent(id = "8a7cd853-a7ee-4747-b586-116dcf0bca08")]
-    [ConcurrentSingleton(id: "c2d4597c-049e-4cdb-bb31-8a6ae9775985")]
+    [Concurrent(id = "58a8977d-a90b-4482-bc18-e87337997e8d")]
+    [ConcurrentSingleton(id: "60c91518-8069-40bb-85bc-aca246538609")]
     public class __app : ConcurrentObject
     {
         protected override void __started()

@@ -1,73 +1,33 @@
-﻿using Excess.Compiler.Core;
-using Microsoft.CodeAnalysis;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Microsoft.CodeAnalysis;
+using Excess.Compiler.Core;
 
 namespace Excess.Compiler.Roslyn
 {
-    public class RoslynIndentationGrammarAnalysis : IndentationGrammarAnalysisBase<SyntaxToken, SyntaxNode>
+    using Microsoft.CodeAnalysis.CSharp.Syntax;
+    using System.Linq;
+    using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
+
+    public class RoslynIndentationGrammarAnalysis<GNode> : IndentationGrammarAnalysisBase<SyntaxToken, SyntaxNode, SemanticModel, GNode>
     {
-        protected override IndentationGrammarMatchBase<SyntaxToken, SyntaxNode> createMatch(Func<string, SyntaxNode> handler)
+        public RoslynIndentationGrammarAnalysis(ILexicalAnalysis<SyntaxToken, SyntaxNode, SemanticModel> owner, string keyword, ExtensionKind kind) : base(owner, keyword, kind)
         {
-            return new RoslynIndentationGrammarMatch(handler);
         }
 
-        protected override IIndentationGrammarTransform<SyntaxNode> createTransform(IndentationNode node, Scope scope)
+        protected override IIndentationGrammarMatch<SyntaxToken, SyntaxNode, GNode> newMatch<T>(IndentationGrammarAnalysisBase<SyntaxToken, SyntaxNode, SemanticModel, GNode> owner, Func<string, object, Scope, T> handler)
         {
-            return new RoslynIndentationGrammarTransform(this, node);
+            throw new NotImplementedException();
         }
 
-        protected override IndentationNode parse(LexicalExtension<SyntaxToken> data)
+        protected override IndentationNode parse(IEnumerable<SyntaxToken> data, Scope scope)
         {
-            return IndentationParser.Parse(data.Body);
+            return IndentationParser.Parse(data, 4); //td: !!!
         }
 
         protected override T parseNode<T>(string text)
         {
             throw new NotImplementedException();
-        }
-    }
-
-    public class RoslynIndentationGrammarTransform : IIndentationGrammarTransform<SyntaxNode>
-    {
-        RoslynIndentationGrammarAnalysis _owner;
-        IndentationNode _root;
-        public RoslynIndentationGrammarTransform(RoslynIndentationGrammarAnalysis owner, IndentationNode root)
-        {
-            _owner = owner;
-            _root = root;
-        }
-
-        public SyntaxNode transform(SyntaxNode node, Scope scope)
-        {
-            var result = null as SyntaxNode;
-            var matchers = _owner.matchers();
-            foreach (var matcher in matchers)
-            {
-                result = matcher.matches(_root, scope);
-                if (result == null)
-                    continue;
-
-
-            }
-
-            return result;
-        }
-    }
-
-    public class RoslynIndentationGrammarMatch : IndentationGrammarMatchBase<SyntaxToken, SyntaxNode>
-    {
-        public RoslynIndentationGrammarMatch(Func<string, SyntaxNode> matcher) : base(matcher)
-        {
-        }
-
-        protected override IndentationGrammarAnalysisBase<SyntaxToken, SyntaxNode> createChildren(Func<SyntaxNode, IEnumerable<SyntaxNode>, SyntaxNode> transform)
-        {
-            //td: !!! use transform
-            return new RoslynIndentationGrammarAnalysis();
         }
     }
 }

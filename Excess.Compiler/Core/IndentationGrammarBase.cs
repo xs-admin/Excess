@@ -8,135 +8,126 @@ namespace Excess.Compiler.Core
 {
     public class IndentationNode
     {
+        public IndentationNode(IndentationNode parent, int depth)
+        {
+            Parent = parent;
+            Depth = depth;
+            Children = new List<IndentationNode>();
+        }
+
         public int Depth { get; private set; }
         public string Value { get; private set; }
+        public IndentationNode Parent { get; private set; }
         public IEnumerable<IndentationNode> Children { get; private set; }
+
+        public void SetValue(string value)
+        {
+            Value = value;
+        }
+
+        public void AddChild(IndentationNode result)
+        {
+            ((List<IndentationNode>)Children).Add(result);
+        }
     }
 
-    public abstract class IndentationGrammarAnalysisBase<TToken, TNode> : IIndentationGrammarAnalysis<TToken, TNode>
+    public abstract class IndentationGrammarAnalysisBase<TToken, TNode, TModel, GNode> : IIndentationGrammarAnalysis<TToken, TNode, GNode>
     {
-        List<Func<TNode, TNode, Scope, TNode>> _after = new List<Func<TNode, TNode, Scope, TNode>>();
-        public IIndentationGrammarAnalysis<TToken, TNode> after(Func<TNode, TNode, Scope, TNode> handler)
+        ILexicalAnalysis<TToken, TNode, TModel> _owner;
+        string _keyword;
+        ExtensionKind _kind;
+        public IndentationGrammarAnalysisBase(ILexicalAnalysis<TToken, TNode, TModel> owner, string keyword, ExtensionKind kind)
         {
-            _after.Add(handler);
-            return this;
         }
 
-        List<Func<TNode, Scope, LexicalExtension<TToken>, TNode>> _before = new List<Func<TNode, Scope, LexicalExtension<TToken>, TNode>>();
-        public IIndentationGrammarAnalysis<TToken, TNode> before(Func<TNode, Scope, LexicalExtension<TToken>, TNode> handler)
+        IGrammarAnalysis<GNode, TToken, TNode> _grammar;
+        public IIndentationGrammarMatch<TToken, TNode, GNode> match<TRoot>(Func<string, Scope, TRoot> handler) where TRoot : GNode, new()
         {
-            _before.Add(handler);
-            return this;
+            if (_grammar != null)
+                throw new InvalidOperationException("already has a grammar");
+
+            _grammar = _owner.grammar<Grammar, GNode>(_keyword, _kind, new Grammar(
+                (tokens, scope) =>
+                {
+                    var indentRoot = parse(tokens, scope);
+                    var root = new TRoot();
+                    foreach (var child in indentRoot.Children)
+                    {
+
+                    }
+
+                    return root;
+                }));
+
+            return match<object, TRoot>((text, parent, scope) => handler(text, scope));
         }
 
-        List<IndentationGrammarMatchBase<TToken, TNode>> _matchers = new List<IndentationGrammarMatchBase<TToken, TNode>>();
-        public IIndentationGrammarMatch<TToken, TNode> match(Func<string, TNode> handler)
+        public IIndentationGrammarMatch<TToken, TNode, GNode> match<TParent, T>(Func<string, TParent, Scope, T> handler) where T : GNode
         {
-            var result = createMatch(handler);
-            _matchers.Add(result);
-            return result;
+            return newMatch(this, (text, parent, scope) => handler(text, (TParent)parent, scope));
         }
 
-        public IIndentationGrammarMatch<TToken, TNode> match<T>(Func<string, T> parser, Func<T, TNode> transform) =>
-            match(text => transform(parser(text)));
-
-        public IIndentationGrammarMatch<TToken, TNode> match<T>(Func<T, bool> matcher) where T : TNode =>
-            match(
-                parser: text => parseNode<T>(text),
-                transform: node => node);
-
-        public IIndentationGrammarMatch<TToken, TNode> match(Func<string, bool> parser, Func<TNode> transform) =>
-            match(text => parser(text)
-                ? transform()
-                : default(TNode));
-
-        public IIndentationGrammarTransform<TNode> transform(LexicalExtension<TToken> data, Scope scope)
+        public IGrammarAnalysis<GNode, TToken, TNode> then<TRoot>() where TRoot : GNode, new ()
         {
-            var node = parse(data);
-            if (node == null)
-                return null;
+            return _grammar;
+        }
 
-            return createTransform(node, scope);
+        class Grammar : IGrammar<TToken, TNode, GNode>
+        {
+            Func<IEnumerable<TToken>, Scope, GNode> _parse;
+            public Grammar(Func<IEnumerable<TToken>, Scope, GNode> parse)
+            {
+                _parse = parse;
+            }
+
+            public GNode Parse(IEnumerable<TToken> tokens, Scope scope, int offset) => _parse(tokens, scope);
         }
 
         //implementors
-        protected abstract IndentationGrammarMatchBase<TToken, TNode> createMatch(Func<string, TNode> handler);
         protected abstract T parseNode<T>(string text) where T : TNode;
-        protected abstract IndentationNode parse(LexicalExtension<TToken> data);
-        protected abstract IIndentationGrammarTransform<TNode> createTransform(IndentationNode node, Scope scope);
-
-        //internals
-        public IEnumerable<IndentationGrammarMatchBase<TToken, TNode>> matchers() => _matchers;
-        public TNode transform(TNode syntaxNode, IndentationNode node, Scope scope)
-        {
-            var transformer = createTransform(node, scope);
-            return transformer.transform(syntaxNode, scope);
-        }
+        protected abstract IndentationNode parse(IEnumerable<TToken> data, Scope scope);
+        protected abstract IIndentationGrammarMatch<TToken, TNode, GNode> newMatch<T>(
+            IndentationGrammarAnalysisBase<TToken, TNode, TModel, GNode> owner,
+            Func<string, object, Scope, T> handler);
     }
 
-    public abstract class IndentationGrammarMatchBase<TToken, TNode> : IIndentationGrammarMatch<TToken, TNode>
+    public abstract class IndentationGrammarMatchBase<TToken, TNode, TModel, GNode> : IIndentationGrammarMatch<TToken, TNode, GNode>
     {
-        Func<string, TNode> _matcher;
-        public IndentationGrammarMatchBase(Func<string, TNode> matcher)
+        Func<string, object, Scope, object> _matcher;
+        IndentationGrammarAnalysisBase<TToken, TNode, TModel, GNode> _owner;
+        public IndentationGrammarMatchBase(IndentationGrammarAnalysisBase<TToken, TNode, TModel, GNode> owner, Func<string, object, Scope, object> matcher)
         {
             _matcher = matcher;
+            _owner = owner;
         }
 
-        IndentationGrammarAnalysisBase<TToken, TNode> _owner;
-        public IndentationGrammarMatchBase(IndentationGrammarAnalysisBase<TToken, TNode> owner)
+        public IndentationGrammarMatchBase(IndentationGrammarAnalysisBase<TToken, TNode, TModel, GNode> owner)
         {
             _owner = owner;
         }
 
-        List<IndentationGrammarAnalysisBase<TToken, TNode>> _children = new List<IndentationGrammarAnalysisBase<TToken, TNode>>();
-        public IIndentationGrammarAnalysis<TToken, TNode> children(
-            Action<IIndentationGrammarAnalysis<TToken, TNode>> handler, 
-            Func<TNode, IEnumerable<TNode>, TNode> transform)
+        public IIndentationGrammarAnalysis<TToken, TNode, GNode> children(Action<IIndentationGrammarAnalysis<TToken, TNode, GNode>> builder)
         {
-            var inner = createChildren(transform);
-            handler?.Invoke(inner);
-            _children.Add(inner);
-            return _owner;
+            throw new NotImplementedException();
         }
-
-        Func<TNode, TNode, Scope, LexicalExtension<TToken>, TNode> _then;
-        public IIndentationGrammarAnalysis<TToken, TNode> then(Func<TNode, TNode, Scope, LexicalExtension<TToken>, TNode> handler)
-        {
-            _then = handler;
-            return _owner;
-        }
-
-        protected abstract IndentationGrammarAnalysisBase<TToken, TNode> createChildren(Func<TNode, IEnumerable<TNode>, TNode> transform);
 
         //internals 
-        public TNode matches(IndentationNode node, Scope scope)
+        List<IndentationGrammarMatchBase<TToken, TNode, TModel, GNode>> _children = new List<IndentationGrammarMatchBase<TToken, TNode, TModel, GNode>>();
+        public object transform(object parent, IndentationNode node, Scope scope)
         {
-            var result = _matcher(node.Value);
+            var result = _matcher(node.Value, parent, scope);
             if (result == null)
                 return default(TNode);
 
-            if (_children.Any())
+            foreach (var child in node.Children)
             {
-                var childSyntaxNodes = new List<TNode>();
-                foreach (var child in node.Children)
+                foreach (var analysis in _children)
                 {
-                    var syntaxNode = default(TNode);
-                    foreach (var analysis in _children)
-                    {
-                        var childNode = analysis.transform(result, child, scope);
-                        if (childNode != null)
-                        {
-                            childSyntaxNodes.Add(syntaxNode);
-                            break;
-                        }
-                    }
+                    analysis.transform(result, child, scope);
                 }
-
-                throw new NotImplementedException(); //td: merge chidren
             }
 
-            //td: !! revise the signature
-            return _then == null ? result : _then(result, result, scope, null);
+            return result;
         }
     }
 
