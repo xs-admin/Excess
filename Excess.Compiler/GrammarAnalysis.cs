@@ -20,14 +20,16 @@ namespace Excess.Compiler
 
     public interface IIndentationGrammarMatch<TToken, TNode, GNode>
     {
-        IIndentationGrammarAnalysis<TToken, TNode, GNode> children(Action<IIndentationGrammarAnalysis<TToken, TNode, GNode>> builder);
+        IIndentationGrammarAnalysis<TToken, TNode, GNode> children(Action<IIndentationGrammarMatchChildren<TToken, TNode, GNode>> builder);
     }
 
-    public interface IIndentationGrammarAnalysis<TToken, TNode, GNode>
+    public interface IIndentationGrammarMatchChildren<TToken, TNode, GNode>
     {
-        IIndentationGrammarMatch<TToken, TNode, GNode> match<TRoot>(Func<string, Scope, TRoot> handler) where TRoot : GNode, new();
         IIndentationGrammarMatch<TToken, TNode, GNode> match<TParent, T>(Func<string, TParent, Scope, T> handler) where T : GNode;
+    }
 
-        IGrammarAnalysis<GNode, TToken, TNode> then<TRoot>() where TRoot : GNode, new();
+    public interface IIndentationGrammarAnalysis<TToken, TNode, GNode> : IIndentationGrammarMatchChildren<TToken, TNode, GNode>
+    {
+        IGrammarAnalysis<GNode, TToken, TNode> then();
     }
 }

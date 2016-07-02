@@ -53,7 +53,7 @@ namespace Excess.Compiler.Core
                     var root = new TRoot();
                     foreach (var child in indentRoot.Children)
                     {
-
+                        throw new NotImplementedException();
                     }
 
                     return root;
@@ -67,7 +67,7 @@ namespace Excess.Compiler.Core
             return newMatch(this, (text, parent, scope) => handler(text, (TParent)parent, scope));
         }
 
-        public IGrammarAnalysis<GNode, TToken, TNode> then<TRoot>() where TRoot : GNode, new ()
+        public IGrammarAnalysis<GNode, TToken, TNode> then() 
         {
             return _grammar;
         }
@@ -106,9 +106,11 @@ namespace Excess.Compiler.Core
             _owner = owner;
         }
 
-        public IIndentationGrammarAnalysis<TToken, TNode, GNode> children(Action<IIndentationGrammarAnalysis<TToken, TNode, GNode>> builder)
+        public IIndentationGrammarAnalysis<TToken, TNode, GNode> children(Action<IIndentationGrammarMatchChildren<TToken, TNode, GNode>> builder)
         {
-            throw new NotImplementedException();
+            var matcher = newChildrenMatch();
+            builder(matcher);
+            return _owner;
         }
 
         //internals 
@@ -129,6 +131,9 @@ namespace Excess.Compiler.Core
 
             return result;
         }
+
+        //for implementors
+        protected abstract IIndentationGrammarMatchChildren<TToken, TNode, GNode> newChildrenMatch();
     }
 
 }

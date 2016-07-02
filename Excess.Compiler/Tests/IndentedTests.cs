@@ -1,23 +1,28 @@
-﻿using System;
-using System.Linq;
+﻿using System.Collections.Generic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Excess.Compiler;
 using Microsoft.CodeAnalysis;
+using Excess.Compiler;
+using Excess.Compiler.Mock;
 
 namespace Tests
 {
-    using System.Collections.Generic;
-    using Excess.Compiler.Mock;
-    using Excess.Compiler.Roslyn;
-    using Microsoft.CodeAnalysis.CSharp.Syntax;
     using Compiler = ICompiler<SyntaxToken, SyntaxNode, SemanticModel>;
-    using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
     class TestNode
     {
     };
 
     class TestRootNode : TestNode
+    {
+        public TestRootNode()
+        {
+            Siblings = new List<SiblingNode>();
+        }
+
+        public List<SiblingNode> Siblings { get; private set; }
+    };
+
+    class HeaderNode : TestNode
     {
     };
 
@@ -31,39 +36,19 @@ namespace Tests
         {
             compiler.Lexical()
                 .indented<TestNode>("someExtension", ExtensionKind.Code)
-                    .match<TestRootNode>(MatchHeader)
+                    .match<TestRootNode, HeaderNode>(MatchHeader)
                         .children(child => child
-                            .match<TestRootNode, SiblingNode>(MatchAssignment));
+                            .match<TestRootNode, SiblingNode>(MatchSibling));
         }
 
-        private static SyntaxNode CheckEmpty(SyntaxNode node, SyntaxNode useless, Scope arg3)
+        private static HeaderNode MatchHeader(string text, TestRootNode parent, Scope scope)
         {
-            return node is LiteralExpressionSyntax
-                ? null
-                : node;
+            return new HeaderNode();
         }
 
-        private static Template SomeFunctionCall = Template.ParseStatement("SomeFunctionCall(__0, __1, __2);");
-        private static SyntaxNode BuildChildren(SyntaxNode node, IEnumerable<SyntaxNode> children)
+        private static SiblingNode MatchSibling(string text, TestRootNode parent, Scope scope)
         {
-            var header = (LiteralExpressionSyntax)node;
-            return CSharp.Block(children
-                .Select(n => (AssignmentExpressionSyntax)n)
-                .Select(assign => SomeFunctionCall.Get<StatementSyntax>(
-                    header,
-                    assign.Left,
-                    assign.Right))
-                .ToArray());
-        }
-
-        private static SiblingNode MatchAssignment(string text, TestRootNode parent, Scope scope)
-        {
-            return null;
-        }
-
-        private static TestRootNode MatchHeader(string text, Scope scope)
-        {
-            return null; 
+            return new SiblingNode();
         }
     }
 
