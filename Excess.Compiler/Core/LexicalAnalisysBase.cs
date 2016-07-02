@@ -796,6 +796,6 @@ namespace Excess.Compiler.Core
             return new BaseGrammarAnalysis<TToken, TNode, TModel, GNode, TGrammar>(this, keyword, kind, grammar);
         }
 
-        public abstract IIndentationGrammarAnalysis<TToken, TNode, GNode> indented<GNode>(string keyword, ExtensionKind kind);
+        public abstract IIndentationGrammarAnalysis<TToken, TNode, GNode> indented<GNode, GRoot>(string keyword, ExtensionKind kind) where GRoot : GNode, new();
     }
 }

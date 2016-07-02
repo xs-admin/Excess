@@ -16,9 +16,9 @@ namespace Excess.Compiler.Roslyn
 
     public class RoslynLexicalAnalysis : BaseLexicalAnalysis<SyntaxToken, SyntaxNode, SemanticModel>
     {
-        public override IIndentationGrammarAnalysis<SyntaxToken, SyntaxNode, GNode> indented<GNode>(string keyword, ExtensionKind kind)
+        public override IIndentationGrammarAnalysis<SyntaxToken, SyntaxNode, GNode> indented<GNode, GRoot>(string keyword, ExtensionKind kind) 
         {
-            return new RoslynIndentationGrammarAnalysis<GNode>(this, keyword, kind);
+            return new RoslynIndentationGrammarAnalysis<GNode, GRoot>(this, keyword, kind);
         }
 
         protected override SyntaxNode normalize(SyntaxNode root, Scope scope)

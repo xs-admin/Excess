@@ -16,16 +16,13 @@ namespace Excess.Compiler.Roslyn
         {
             var lines = readLines(tokens);
             var rootIndent = getIndentation(lines[0], step);
-            if (getIndentation(lines[lines.Length - 1], step) != rootIndent)
-                throw new InvalidOperationException("bad root indentation"); //td: error
-
-            var root = new IndentationNode(null, rootIndent);
+            var root = new IndentationNode(null, rootIndent - 1);
             var current = root;
-            for (int i = 1; i < lines.Length - 1; i++)
+            foreach (var line in lines)
             {
-                var indent = getIndentation(lines[i], step);
+                var indent = getIndentation(line, step);
                 current = newNode(current, indent);
-                current.SetValue(lines[i].TrimStart());
+                current.SetValue(line.TrimStart());
             }
 
             return root;
