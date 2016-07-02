@@ -1,17 +1,18 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Excess.Compiler;
+using Excess.Compiler.Roslyn;
 using Excess.Compiler.Mock;
 
 namespace Tests
 {
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
     using Compiler = ICompiler<SyntaxToken, SyntaxNode, SemanticModel>;
-    using Excess.Compiler.Roslyn;
-    using System.Linq;
+
     class TestNode
     {
     };

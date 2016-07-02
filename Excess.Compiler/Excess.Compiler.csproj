@@ -136,6 +136,9 @@
     <Compile Include="Core\IndentationGrammarBase.cs" />
     <Compile Include="Core\InstanceAnalysisBase.cs" />
     <Compile Include="Core\InstanceScope.cs" />
+    <Compile Include="Extrapolators\RazorParser.cs" />
+    <Compile Include="Extrapolators\Reflection.cs" />
+    <Compile Include="Extrapolators\RegexParser.cs" />
     <Compile Include="InstanceAnalysis.cs" />
     <Compile Include="Reflection\Loader.cs" />
     <Compile Include="Core\CompilerBase.cs" />
