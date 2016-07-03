@@ -87,9 +87,13 @@ namespace Excess.Compiler.Extrapolators
 
                                     yield return new Dynamic(next, createParser<T>(buffer.ToString()));
 
+                                    //reset
+                                    startBrace = -1;
                                     buffer.Clear();
                                     add = false;
-                                    index = nextBrace;
+
+                                    if (nextBrace > 0)
+                                        index = nextBrace - 1;
                                 }
                             }
                         }
@@ -180,7 +184,7 @@ namespace Excess.Compiler.Extrapolators
                 if (!_parser(stream.Substring(position, nextIdx - position), values, scope))
                     return false;
 
-                newPosition = nextIdx + _next.Length;
+                newPosition = nextIdx + (_next != null ? _next.Length : 0);
                 return true;
             }
         }

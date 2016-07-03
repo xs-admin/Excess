@@ -8,6 +8,7 @@ using Excess.Compiler;
 using Excess.Compiler.Roslyn;
 using Excess.Compiler.Mock;
 using Tests.Mocks;
+using Microsoft.CodeAnalysis.CSharp;
 
 namespace Tests
 {
@@ -30,6 +31,10 @@ namespace Tests
                                 Value2 = ""SomeValue""
                             [Header2]
                                 Value3 = ""Hello "" + TestVar
+                            [Header3]
+                                Call Someone at 1-800-WAT-EVER
+                                    Or else at 1-800-456-7890
+                                    Less likely at (877) 789-1234
                         }
                     }
                 }", (compiler) => MockIndentGrammar.Apply(compiler));
@@ -46,35 +51,47 @@ namespace Tests
                     .ToString()
                     .StartsWith("SetHeaderValue"))
                 .Count());
-        }
 
-        [TestMethod]
-        public void Indented_Razor_Usage()
-        {
-            var tree = ExcessMock.Compile(@"
-                class TestClass
-                {
-                    void TestMethod()
-                    {
-                        someExtension()
-                        {
-                            [Header1]
-                                Call Someone at 1-800-WAT-EVER
-                        }
-                    }
-                }", (compiler) => MockIndentGrammar.Apply(compiler));
-
-            Assert.IsNotNull(tree);
-
-            //must have add 3 calls in the form SetHeaderValue("[Header]", "Value", Value);
-            Assert.AreEqual(3, tree
+            //must have added a call in the form SetContact("[Header]", "Name", "Telephone");
+            Assert.AreEqual(1, tree
                 .GetRoot()
                 .DescendantNodes()
                 .OfType<InvocationExpressionSyntax>()
                 .Where(invocation => invocation
                     .Expression
                     .ToString()
-                    .StartsWith("SetHeaderValue"))
+                    .StartsWith("SetContact"))
+                .Count());
+
+            //must refer to the supplied number
+            Assert.AreEqual(1, tree
+                .GetRoot()
+                .DescendantNodes()
+                .OfType<LiteralExpressionSyntax>()
+                .Where(literal => literal
+                    .ToString()
+                    .Equals("\"1-800-WAT-EVER\""))
+                .Count());
+
+            //must have added extra numbers in the form AddContactNumber("Header", "Name", AreaCode, First 3 numbers, Last 4 numbers)
+            Assert.AreEqual(2, tree
+                .GetRoot()
+                .DescendantNodes()
+                .OfType<InvocationExpressionSyntax>()
+                .Where(invocation => invocation
+                    .Expression
+                    .ToString()
+                    .Equals("AddContactNumber"))
+                .Count());
+
+            //must have parsed correctly and include all secondary telephones
+            var numbers = new[] { 800, 456, 7890, 877, 789, 1234 };
+            Assert.AreEqual(numbers.Length, tree
+                .GetRoot()
+                .DescendantNodes()
+                .OfType<LiteralExpressionSyntax>()
+                .Where(number => number.IsKind(SyntaxKind.NumericLiteralExpression)
+                              && numbers.Contains(int.Parse(number.ToString())))
                 .Count());
         }
     }

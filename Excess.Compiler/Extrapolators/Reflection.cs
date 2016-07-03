@@ -36,7 +36,7 @@ namespace Excess.Compiler.Extrapolators
 
         private static object parse(string value, Type type)
         {
-            throw new NotImplementedException();
+            return Convert.ChangeType(value, type);
         }
     }
 }

@@ -12,20 +12,27 @@ namespace Tests.Mocks
 {
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
     using Compiler = ICompiler<SyntaxToken, SyntaxNode, SemanticModel>;
-
+    using System.Text.RegularExpressions;
+    using Microsoft.CodeAnalysis.CSharp;
     static class MockIndentGrammar
     {
         public static void Apply(Compiler compiler)
         {
             compiler.Lexical()
                 .indented<MockIdentGrammarModel, RootModel>("someExtension", ExtensionKind.Code)
-                    .match<RootModel, HeaderModel>(MatchHeader, 
+                    .match<RootModel, HeaderModel>(MatchHeader,
                         children: child => child
                             .match<HeaderModel, HeaderValueModel>(MatchValue)
-                            .match<MockIdentGrammarModel, HeaderModel, RazorModel>("Call {Name} at {Telephone}"))
+                            .match<MockIdentGrammarModel, HeaderModel, ContactModel>("Call {Name} at {Telephone}",
+                                then: (header, razor) => header.Contacts.Add(razor),
+                                children: contactChild => contactChild
+                                    .match<MockIdentGrammarModel, ContactModel, TelephoneModel>(MatchTelephone,
+                                        then: (contact, phone) => contact.OtherNumbers.Add(phone))))
                 .then()
                     .transform<RootModel>(TransformHeaderModel);
         }
+
+        private static Regex MatchTelephone = new Regex(@"\(?(?<AreaCode>\d{3})\)?-? *(?<FirstThree>\d{3})-? *-?(?<LastFour>\d{4})");
 
         private static HeaderModel MatchHeader(string text, RootModel parent, Scope scope)
         {
@@ -44,7 +51,11 @@ namespace Tests.Mocks
             return new HeaderValueModel();
         }
 
-        private static Template HeaderValue = Template.ParseStatement("SetHeaderValue(__0, __1, )__2);");
+        //templates
+        private static Template HeaderValue = Template.ParseStatement("SetHeaderValue(__0, __1, __2);");
+        private static Template Contact = Template.ParseStatement("SetContact(__0, __1, __2);");
+        private static Template OtherNUmber = Template.ParseStatement("AddContactNumber(__0, __1, __2, __3, __4);");
+
         private static SyntaxNode TransformHeaderModel(RootModel root, Func<MockIdentGrammarModel, Scope, SyntaxNode> parse, Scope scope)
         {
             var statements = new List<StatementSyntax>();
@@ -56,6 +67,30 @@ namespace Tests.Mocks
                         RoslynCompiler.Quoted(header.Name),
                         RoslynCompiler.Quoted(value.Left.ToString()),
                         value.Right));
+                }
+
+                foreach (var contact in header.Contacts)
+                {
+                    statements.Add(Contact.Get<StatementSyntax>(
+                        RoslynCompiler.Quoted(header.Name),
+                        RoslynCompiler.Quoted(contact.Name),
+                        RoslynCompiler.Quoted(contact.Telephone)));
+
+                    foreach (var phone in contact.OtherNumbers)
+                    {
+                        statements.Add(OtherNUmber.Get<StatementSyntax>(
+                            RoslynCompiler.Quoted(header.Name),
+                            RoslynCompiler.Quoted(contact.Name),
+                            CSharp.LiteralExpression(
+                                SyntaxKind.NumericLiteralExpression,
+                                CSharp.Literal(phone.AreaCode)),
+                            CSharp.LiteralExpression(
+                                SyntaxKind.NumericLiteralExpression,
+                                CSharp.Literal(phone.FirstThree)),
+                            CSharp.LiteralExpression(
+                                SyntaxKind.NumericLiteralExpression,
+                                CSharp.Literal(phone.LastFour))));
+                    }
                 }
             }
 

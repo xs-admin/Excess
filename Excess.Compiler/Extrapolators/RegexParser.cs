@@ -21,6 +21,10 @@ namespace Excess.Compiler.Extrapolators
                 var values = new Dictionary<string, string>();
                 foreach (var group in parser.GetGroupNames())
                 {
+                    var useless = 0;
+                    if (int.TryParse(group, out useless))
+                        continue; //only named groups
+
                     values[group] = match.Groups[group].Value;
                 }
 

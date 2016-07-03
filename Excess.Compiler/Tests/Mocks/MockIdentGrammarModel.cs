@@ -26,19 +26,34 @@ namespace Tests.Mocks
         public HeaderModel()
         {
             Values = new List<AssignmentExpressionSyntax>();
+            Contacts = new List<ContactModel>();
         }
 
         public string Name { get; set; }
         public List<AssignmentExpressionSyntax> Values { get; private set; }
+        public List<ContactModel> Contacts { get; private set; }
     }
 
     public class HeaderValueModel : MockIdentGrammarModel
     {
     }
 
-    public class RazorModel : MockIdentGrammarModel
+    public class ContactModel : MockIdentGrammarModel
     {
+        public ContactModel()
+        {
+            OtherNumbers = new List<TelephoneModel>();
+        }
+
         public string Name { get; set; }
         public string Telephone { get; set; }
+        public List<TelephoneModel> OtherNumbers { get; private set; }
+    }
+
+    public class TelephoneModel : MockIdentGrammarModel
+    {
+        public int AreaCode { get; set; }
+        public int FirstThree { get; set; }
+        public int LastFour { get; set; }
     }
 }
