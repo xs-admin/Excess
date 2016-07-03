@@ -9,9 +9,8 @@ namespace Excess.Compiler.Extrapolators
 {
     class RegexParser
     {
-        public static Func<string, Scope, T> Create<T>(string pattern) where T : new()
+        public static Func<string, Scope, T> Create<T>(Regex parser) where T : new()
         {
-            Regex parser = new Regex(pattern);
             return (text, scope) =>
             {
                 var match = parser.Match(text);

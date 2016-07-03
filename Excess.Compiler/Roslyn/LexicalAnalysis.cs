@@ -18,7 +18,22 @@ namespace Excess.Compiler.Roslyn
     {
         public override IIndentationGrammarAnalysis<SyntaxToken, SyntaxNode, GNode> indented<GNode, GRoot>(string keyword, ExtensionKind kind) 
         {
-            return new RoslynIndentationGrammarAnalysis<GNode, GRoot>(this, keyword, kind);
+            var result = new RoslynIndentationGrammarAnalysis<GNode, GRoot>();
+            var grammar = new IndentedGrammar<SyntaxToken, SyntaxNode, GNode>(
+                (tokens, scope) =>
+                {
+                    var indentRoot = IndentationParser.Parse(tokens, 4); //td: !!!
+                    var root = new GRoot();
+                    foreach (var child in indentRoot.Children)
+                    {
+                        result.transform(root, child, scope);
+                    }
+
+                    return root;
+                });
+
+            result.Grammar = grammar<IndentedGrammar<SyntaxToken, SyntaxNode, GNode>, GNode>(keyword, kind, grammar);
+            return result;
         }
 
         protected override SyntaxNode normalize(SyntaxNode root, Scope scope)

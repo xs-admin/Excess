@@ -18,18 +18,12 @@ namespace Excess.Compiler
         void then(Func<TNode, TNode, Scope, LexicalExtension<TToken>, TNode> handler);
     }
 
-    public interface IIndentationGrammarMatch<TToken, TNode, GNode>
+    public interface IIndentationGrammarAnalysis<TToken, TNode, GNode>
     {
-        IIndentationGrammarAnalysis<TToken, TNode, GNode> children(Action<IIndentationGrammarMatchChildren<TToken, TNode, GNode>> builder);
-    }
+        IIndentationGrammarAnalysis<TToken, TNode, GNode> match<TParent, T>(
+            Func<string, TParent, Scope, T> handler,
+            Action<IIndentationGrammarAnalysis<TToken, TNode, GNode>> children = null) where T : GNode;
 
-    public interface IIndentationGrammarMatchChildren<TToken, TNode, GNode>
-    {
-        IIndentationGrammarMatch<TToken, TNode, GNode> match<TParent, T>(Func<string, TParent, Scope, T> handler) where T : GNode;
-    }
-
-    public interface IIndentationGrammarAnalysis<TToken, TNode, GNode> : IIndentationGrammarMatchChildren<TToken, TNode, GNode>
-    {
         IGrammarAnalysis<GNode, TToken, TNode> then();
     }
 }

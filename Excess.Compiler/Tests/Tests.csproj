@@ -115,6 +115,8 @@
     <Compile Include="InstanceTests.cs" />
     <Compile Include="MappingTests.cs" />
     <Compile Include="MatchTests.cs" />
+    <Compile Include="Mocks\MockIdentGrammarModel.cs" />
+    <Compile Include="Mocks\MockIndentGrammar.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="IndentedTests.cs" />
   </ItemGroup>
