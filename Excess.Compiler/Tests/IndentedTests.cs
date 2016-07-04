@@ -24,6 +24,7 @@ namespace Tests
                     void TestMethod()
                     {
                         var TestVar = ""World"";        
+                        var TestArray = new [] {""Hello"", ""World""};
                         someExtension()
                         {
                             [Header1]
@@ -31,10 +32,14 @@ namespace Tests
                                 Value2 = ""SomeValue""
                             [Header2]
                                 Value3 = ""Hello "" + TestVar
-                            [Header3]
+                            [ContactHeader]
                                 Call Someone at 1-800-WAT-EVER
                                     Or else at 1-800-456-7890
                                     Less likely at (877) 789-1234
+
+                            //some code
+                            for i in TestArray
+                                Console.Write(i);
                         }
                     }
                 }", (compiler) => MockIndentGrammar.Apply(compiler));
@@ -92,6 +97,13 @@ namespace Tests
                 .OfType<LiteralExpressionSyntax>()
                 .Where(number => number.IsKind(SyntaxKind.NumericLiteralExpression)
                               && numbers.Contains(int.Parse(number.ToString())))
+                .Count());
+
+            //must have added a foreach statement
+            Assert.AreEqual(1, tree
+                .GetRoot()
+                .DescendantNodes()
+                .OfType<ForEachStatementSyntax>()
                 .Count());
         }
     }

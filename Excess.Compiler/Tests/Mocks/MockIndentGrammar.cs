@@ -24,21 +24,31 @@ namespace Tests.Mocks
                         children: child => child
                             .match<HeaderModel, HeaderValueModel>(MatchValue)
                             .match<MockIdentGrammarModel, HeaderModel, ContactModel>("Call {Name} at {Telephone}",
-                                then: (header, razor) => header.Contacts.Add(razor),
+                                then: (header, contact) => header.Contacts.Add(contact),
                                 children: contactChild => contactChild
                                     .match<MockIdentGrammarModel, ContactModel, TelephoneModel>(MatchTelephone,
                                         then: (contact, phone) => contact.OtherNumbers.Add(phone))))
-                .then()
-                    .transform<RootModel>(TransformHeaderModel);
+                    .match<MockIdentGrammarModel, RootModel, ForModel>("for {Iterator} in {Iterable}",
+                        then: (root, forloop) => root.Statements.Add(forloop),
+                        children: forChild => forChild
+                            .match<MockIdentGrammarModel, ForModel, StatementSyntax>(
+                                (@for, statement) => @for.Statements.Add(statement)))
+                    .then()
+                        .transform<RootModel>(TransformHeaderModel);
         }
 
         private static Regex MatchTelephone = new Regex(@"\(?(?<AreaCode>\d{3})\)?-? *(?<FirstThree>\d{3})-? *-?(?<LastFour>\d{4})");
 
         private static HeaderModel MatchHeader(string text, RootModel parent, Scope scope)
         {
-            var header = new HeaderModel { Name = text };
-            parent.Headers.Add(header);
-            return header;
+            if (text.StartsWith("[") && text.EndsWith("]"))
+            {
+                var header = new HeaderModel { Name = text };
+                parent.Headers.Add(header);
+                return header;
+            }
+
+            return null;
         }
 
         private static HeaderValueModel MatchValue(string text, HeaderModel parent, Scope scope)
@@ -92,6 +102,18 @@ namespace Tests.Mocks
                                 CSharp.Literal(phone.LastFour))));
                     }
                 }
+            }
+
+            foreach (var forStatement in root.Statements)
+            {
+                statements.Add(CSharp
+                    .ForEachStatement(
+                        CSharp.ParseTypeName("var"),
+                        forStatement.Iterator,
+                        CSharp.ParseExpression(forStatement.Iterable),
+                        CSharp.Block(forStatement
+                            .Statements
+                            .ToArray())));
             }
 
             return CSharp.Block(statements.ToArray());

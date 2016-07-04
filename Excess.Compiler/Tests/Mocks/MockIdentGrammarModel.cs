@@ -16,9 +16,11 @@ namespace Tests.Mocks
         public RootModel()
         {
             Headers = new List<HeaderModel>();
+            Statements = new List<ForModel>();
         }
 
         public List<HeaderModel> Headers { get; private set; }
+        public List<ForModel> Statements { get; private set; }
     }
 
     public class HeaderModel : MockIdentGrammarModel
@@ -55,5 +57,17 @@ namespace Tests.Mocks
         public int AreaCode { get; set; }
         public int FirstThree { get; set; }
         public int LastFour { get; set; }
+    }
+
+    public class ForModel : MockIdentGrammarModel
+    {
+        public ForModel()
+        {
+            Statements = new List<StatementSyntax>();
+        }
+
+        public string Iterator { get; set; }
+        public string Iterable { get; set; }
+        public List<StatementSyntax> Statements { get; private set; }
     }
 }

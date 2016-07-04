@@ -9,19 +9,21 @@ using System.Threading.Tasks;
 
 namespace Excess.Compiler.Roslyn
 {
+    using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
+
     public static class IndentationExtensions
     {
         //default
         private static IIndentationGrammarAnalysis<SyntaxToken, SyntaxNode, GNode> match<GNode, TParent, T>(
             IIndentationGrammarAnalysis<SyntaxToken, SyntaxNode, GNode> self,
             Func<string, Scope, T> parser,
-            Action<IIndentationGrammarAnalysis<SyntaxToken, SyntaxNode, GNode>> children = null,
-            Action<TParent, T> then = null) where T : GNode, new()
+            Action<IIndentationGrammarAnalysis<SyntaxToken, SyntaxNode, GNode>> children,
+            Action<TParent, T> then) where T : GNode, new()
         {
             return self.match<TParent, T>((text, parent, scope) =>
             {
                 var result = parser(text, scope);
-                if (!result.Equals(default(T)) && then != null)
+                if (result != null && then != null)
                     then(parent, result);
 
                 return result;
@@ -43,5 +45,31 @@ namespace Excess.Compiler.Roslyn
             Action<IIndentationGrammarAnalysis<SyntaxToken, SyntaxNode, GNode>> children = null,
             Action<TParent, T> then = null) where T : GNode, new()
                 => match<GNode, TParent, T>(self, RegexParser.Create<T>(pattern), children, then);
+
+        //roslyn
+        public static IIndentationGrammarAnalysis<SyntaxToken, SyntaxNode, GNode> match<GNode, TParent, T>(
+            this IIndentationGrammarAnalysis<SyntaxToken, SyntaxNode, GNode> self,
+            Action<TParent, T> then,
+            Action<IIndentationGrammarAnalysis<SyntaxToken, SyntaxNode, GNode>> children = null) 
+                where T : SyntaxNode 
+                where GNode : new()
+        {
+            return self.match<TParent, GNode>((text, parent, scope) =>
+            {
+                var expr = CSharp.ParseExpression(text) as T;
+                var statement = expr == null
+                    ? CSharp.ParseStatement(text) as T
+                    : default(T);
+
+                var result = statement ?? expr;
+                if (result != null && !result.ContainsDiagnostics)
+                {
+                    then(parent, result);
+                    return new GNode();
+                }
+
+                return default(GNode);
+            }, children);
+        }
     }
 }

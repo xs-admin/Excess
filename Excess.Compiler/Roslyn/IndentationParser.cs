@@ -20,12 +20,43 @@ namespace Excess.Compiler.Roslyn
             var current = root;
             foreach (var line in lines)
             {
+                if (string.IsNullOrWhiteSpace(line) || isComment(line))
+                    continue;
+
                 var indent = getIndentation(line, step);
                 current = newNode(current, indent);
                 current.SetValue(line.TrimStart());
             }
 
             return root;
+        }
+
+        private static bool isComment(string line)
+        {
+            var count = 0;
+            foreach (var ch in line)
+            {
+                if (char.IsWhiteSpace(ch))
+                {
+                    if (count == 0)
+                        continue;
+
+                    return false;
+                }
+
+                if (ch == '/')
+                {
+                    count++;
+                    if (count == 2)
+                        return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+
+            return false;
         }
 
         private static int getIndentation(string value, int step)
