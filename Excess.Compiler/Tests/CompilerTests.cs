@@ -60,6 +60,9 @@ namespace Tests
             string lResult = compiler.ApplyLexicalPass("my_ext(int i) { code(); }");
             Assert.IsTrue(lResult == "my_ext_replaced (int i)  = { code(); }");
 
+            lResult = compiler.ApplyLexicalPass("my_ext { code(); }");
+            Assert.IsTrue(lResult == "my_ext_replaced (int i)  = { code(); }");
+
             lexical
                 .extension("my_ext_s", ExtensionKind.Member, myExtSyntactical);
 
@@ -87,9 +90,11 @@ namespace Tests
         private IEnumerable<SyntaxToken> myExtLexical(IEnumerable<SyntaxToken> tokens, Scope scope, LexicalExtension<SyntaxToken> extension)
         {
             string testResult = "my_ext_replaced "
-                              + RoslynCompiler.TokensToString(extension.Arguments)
-                              + " = "
-                              + RoslynCompiler.TokensToString(extension.Body);
+                + extension.Arguments != null
+                    ? RoslynCompiler.TokensToString(extension.Arguments)
+                    : ""
+                + " = "
+                + RoslynCompiler.TokensToString(extension.Body);
 
             return RoslynCompiler.ParseTokens(testResult);
         }
