@@ -34,17 +34,23 @@ namespace Excess.Compiler.Core
 
     class IndentedGrammar<TToken, TNode, GNode> : IGrammar<TToken, TNode, GNode>
     {
-        Func<IEnumerable<TToken>, Scope, GNode> _parse;
-        public IndentedGrammar(Func<IEnumerable<TToken>, Scope, GNode> parse)
+        Func<LexicalExtension<TToken>, Scope, GNode> _parse;
+        public IndentedGrammar(Func<LexicalExtension<TToken>, Scope, GNode> parse)
         {
             _parse = parse;
         }
 
-        public GNode Parse(IEnumerable<TToken> tokens, Scope scope, int offset) => _parse(tokens, scope);
+        public GNode Parse(LexicalExtension<TToken> extension, Scope scope) => _parse(extension, scope);
     }
 
     public abstract class IndentationGrammarAnalysisBase<TToken, TNode, TModel, GNode, TRoot> : IIndentationGrammarAnalysis<TToken, TNode, GNode> where TRoot : GNode, new ()
     {
+        IndentationGrammarAnalysisBase<TToken, TNode, TModel, GNode, TRoot> _parent;
+        public IndentationGrammarAnalysisBase(IndentationGrammarAnalysisBase<TToken, TNode, TModel, GNode, TRoot> parent)
+        {
+            _parent = parent;
+        }
+
         public IGrammarAnalysis<GNode, TToken, TNode> Grammar { get; set; }
 
         //delegated
@@ -94,6 +100,11 @@ namespace Excess.Compiler.Core
             });
 
             return this;
+        }
+
+        public void match_parent()
+        {
+            _matchers.AddRange(_parent._matchers);
         }
 
         //internals 

@@ -9,7 +9,11 @@ namespace Excess.Server.Middleware
 {
     public class Loader
     {
-        public static void FromAssemblies(IDistributedApp app, IEnumerable<Assembly> assemblies)
+        public static void FromAssemblies(
+            IDistributedApp app, 
+            IEnumerable<Assembly> assemblies, 
+            IEnumerable<string> except = null,
+            IEnumerable<string> only = null)
         {
             if (assemblies != null)
                 Application.Start(assemblies);
@@ -23,6 +27,12 @@ namespace Excess.Server.Middleware
             {
                 foreach (var type in assembly.GetTypes())
                 {
+                    if (except != null && except.Contains(type.Name))
+                        continue;
+
+                    if (only != null && !only.Contains(type.Name))
+                        continue;
+
                     var id = default(Guid);
                     if (isConcurrent(type))
                         app.RegisterClass(type);

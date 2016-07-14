@@ -8,14 +8,14 @@ namespace Excess.Compiler.Antlr4
     //interop between antlr and excess, derive
     public abstract class AntlrGrammar : IGrammar<SyntaxToken, SyntaxNode, ParserRuleContext>
     {
-        public ParserRuleContext Parse(IEnumerable<SyntaxToken> tokens, Scope scope, int offset)
+        public ParserRuleContext Parse(LexicalExtension<SyntaxToken> extension, Scope scope)
         {
-            var text = RoslynCompiler.TokensToString(tokens); //td: token matching
+            var text = RoslynCompiler.TokensToString(extension.Body); //td: token matching
             AntlrInputStream stream = new AntlrInputStream(text);
             ITokenSource lexer = GetLexer(stream);
             ITokenStream tokenStream = new CommonTokenStream(lexer);
             Parser parser = GetParser(tokenStream);
-            parser.AddErrorListener(new AntlrErrors<IToken>(scope, offset));
+            parser.AddErrorListener(new AntlrErrors<IToken>(scope, extension.BodyStart));
 
             var result = GetRoot(parser);
             if (parser.NumberOfSyntaxErrors > 0)

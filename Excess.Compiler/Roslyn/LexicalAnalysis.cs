@@ -1,29 +1,31 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Text;
 using Excess.Compiler.Core;
 
 namespace Excess.Compiler.Roslyn
 {
-    using Microsoft.CodeAnalysis.CSharp;
-    using Microsoft.CodeAnalysis.CSharp.Syntax;
-    using Microsoft.CodeAnalysis.Text;
-    using System.Diagnostics;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
     public class RoslynLexicalAnalysis : BaseLexicalAnalysis<SyntaxToken, SyntaxNode, SemanticModel>
     {
-        public override IIndentationGrammarAnalysis<SyntaxToken, SyntaxNode, GNode> indented<GNode, GRoot>(string keyword, ExtensionKind kind) 
+        public override IIndentationGrammarAnalysis<SyntaxToken, SyntaxNode, GNode> indented<GNode, GRoot>(
+            string keyword, 
+            ExtensionKind kind,
+            Action<GRoot, LexicalExtension<SyntaxToken>> init) 
         {
-            var result = new RoslynIndentationGrammarAnalysis<GNode, GRoot>();
+            var result = new RoslynIndentationGrammarAnalysis<GNode, GRoot>(null);
             var grammar = new IndentedGrammar<SyntaxToken, SyntaxNode, GNode>(
-                (tokens, scope) =>
+                (extension, scope) =>
                 {
-                    var indentRoot = IndentationParser.Parse(tokens, 4); //td: !!!
+                    var indentRoot = IndentationParser.Parse(extension.Body, 4); //td: !!!
                     var root = new GRoot();
+                    init?.Invoke(root, extension);
+
                     foreach (var child in indentRoot.Children)
                     {
                         result.transform(root, child, scope);

@@ -11,9 +11,14 @@ namespace Excess.Compiler.Roslyn
 
     public class RoslynIndentationGrammarAnalysis<GNode, GRoot> : IndentationGrammarAnalysisBase<SyntaxToken, SyntaxNode, SemanticModel, GNode, GRoot> where GRoot : GNode, new()
     {
+        public RoslynIndentationGrammarAnalysis(IndentationGrammarAnalysisBase<SyntaxToken, SyntaxNode, SemanticModel, GNode, GRoot> parent) 
+            : base(parent)
+        {
+        }
+
         protected override IndentationGrammarAnalysisBase<SyntaxToken, SyntaxNode, SemanticModel, GNode, GRoot> createChildren()
         {
-            return new RoslynIndentationGrammarAnalysis<GNode, GRoot>();
+            return new RoslynIndentationGrammarAnalysis<GNode, GRoot>(this);
         }
 
         protected override T parseNode<T>(string text)

@@ -19,7 +19,7 @@ namespace Tests.Mocks
         public static void Apply(Compiler compiler)
         {
             compiler.Lexical()
-                .indented<MockIdentGrammarModel, RootModel>("someExtension", ExtensionKind.Code)
+                .indented<MockIdentGrammarModel, RootModel>("someExtension", ExtensionKind.Code, null)
                     .match<RootModel, HeaderModel>(MatchHeader,
                         children: child => child
                             .match<HeaderModel, HeaderValueModel>(MatchValue)

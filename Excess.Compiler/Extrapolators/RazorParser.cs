@@ -42,7 +42,7 @@ namespace Excess.Compiler.Extrapolators
             for (;; index++)
             {
                 if (index == pattern.Length)
-                    yield break;
+                    break;
 
                 var ch = pattern[index];
                 var add = true;
@@ -103,6 +103,9 @@ namespace Excess.Compiler.Extrapolators
                 if (add)
                     buffer.Append(ch);
             }
+
+            if (buffer.Length > 0)
+                yield return new Literal(buffer.ToString());
         }
 
         private static Func<string, IDictionary<string, string>, Scope, bool> createParser<T>(string pattern)

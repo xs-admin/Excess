@@ -12,6 +12,8 @@ using Excess.Compiler.Roslyn;
 using Excess.Compiler.Attributes;
 using Excess.Concurrent.Compiler;
 
+using Excess.Server.Compiler.Model;
+
 namespace Excess.Server.Compiler
 {
     using ExcessCompiler = ICompiler<SyntaxToken, SyntaxNode, SemanticModel>;
@@ -51,8 +53,8 @@ namespace Excess.Server.Compiler
             var keywords = scope?.get("keywords") as List<string>;
             keywords?.Add("service");
 
-            compiler.Syntax()
-                .extension("server", ExtensionKind.Type, CompileServer);
+            //compiler.Syntax()
+            //    .extension("server", ExtensionKind.Type, CompileServer);
 
             var lexical = compiler.Lexical();
             lexical.match()
@@ -64,299 +66,138 @@ namespace Excess.Server.Compiler
 
             compiler.Environment()
                 .dependency("Excess.Server.Middleware");
+
+            compiler.Lexical()
+                .indented<ServerModel, ServerInstance>("server", ExtensionKind.Type, InitApp)
+                    .match<ServerModel, ServerInstance, ServerLocation>("@{Url}",              then: SetServerLocation)
+                    .match<ServerModel, ServerInstance, ServerLocation>("on port {Port}",      then: SetServerLocation)
+                    .match<ServerModel, ServerInstance, ServerLocation>("@{Url} port {Port}",  then: SetServerLocation)
+                    .match<ServerModel, ServerInstance, ServerLocation>("@{Url}, port {Port}", then: SetServerLocation)
+
+                    .match<ServerModel, ServerInstance, ConfigModel>("using {Threads} threads", then: SetConfiguration)
+                    .match<ServerModel, ServerInstance, ConfigModel>("identity @{Identity}",    then: SetConfiguration)
+
+                    .match<ServerModel, ServerInstance, HostingModel>("hosting {ClassName}", 
+                        then: (server, hosting) => server.HostedClasses.Add(hosting.ClassName))
+
+                    .match<ServerModel, ServerInstance, ServerInstance>("new instance",
+                        then: AddInstance,
+                        children: child => child.match_parent())
+
+                    .then()
+                        .transform<ServerInstance>(LinkServerInstance);
         }
 
-        //server information
-        class ServerModel
+        private static void InitApp(ServerInstance app, LexicalExtension<SyntaxToken> extension)
         {
-            public ServerModel(SyntaxToken serverId = default(SyntaxToken))
-            {
-                ServerId = serverId;
-                Threads = Templates.DefaultThreads;
-                Nodes = new List<ServerModel>();
-                DeployStatements = new List<StatementSyntax>();
-                StartStatements = new List<StatementSyntax>();
-                HostedClasses = new List<TypeSyntax>();
-            }
-
-            public SyntaxToken ServerId { get; private set; }
-            public ExpressionSyntax Url { get; set; }
-            public ExpressionSyntax Threads { get; set; }
-            public ExpressionSyntax Identity { get; set; }
-            public ExpressionSyntax Connection { get; set; }
-            public List<ServerModel> Nodes { get; private set; }
-            public List<StatementSyntax> DeployStatements { get; private set; }
-            public List<StatementSyntax> StartStatements { get; private set; }
-            public List<TypeSyntax> HostedClasses { get; private set; }
-        };
-
-        //server compilation
-        private static SyntaxNode CompileServer(SyntaxNode node, Scope scope, SyntacticalExtension<SyntaxNode> data)
-        {
-            Debug.Assert(node is MethodDeclarationSyntax);
-            var methodSyntax = node as MethodDeclarationSyntax;
-
-            var mainServer = new ServerModel();
-            if (!parseMainServer(methodSyntax, mainServer))
-                return node; //errors
-
-            //main server class
-            var configurationClass = Templates
-                .ConfigClass
-                .Get<ClassDeclarationSyntax>(data.Identifier);
-
-            configurationClass = configurationClass
-                .ReplaceNodes(configurationClass
-                    .DescendantNodes()
-                    .OfType<MethodDeclarationSyntax>(),
-                    (on, nn) =>
-                    {
-                        var methodName = nn.Identifier.ToString();
-                        switch (methodName)
-                        {
-                            case "Deploy":
-                                return nn.AddBodyStatements(
-                                    mainServer
-                                        .Nodes
-                                        .SelectMany(serverNode => serverNode.DeployStatements)
-                                    .Union(
-                                        mainServer.DeployStatements)
-                                    .ToArray());
-                            case "Start":
-                                return nn.AddBodyStatements(mainServer.StartStatements.ToArray());
-                            case "StartNodes":
-                                return nn.AddBodyStatements(
-                                    mainServer
-                                    .Nodes
-                                    .Select(serverNode => Templates
-                                        .NodeInvocation
-                                        .Get<StatementSyntax>(serverNode.ServerId))
-                                    .ToArray());
-                            case "RemoteTypes":
-                                var initializer = Templates
-                                    .RemoteTypes
-                                    .DescendantNodes()
-                                    .OfType<InitializerExpressionSyntax>()
-                                    .Single();
-
-                                return nn.AddBodyStatements(Templates
-                                    .RemoteTypes
-                                    .ReplaceNode(
-                                        initializer,
-                                        initializer.AddExpressions(mainServer
-                                            .Nodes
-                                            .SelectMany(serverNode => serverNode.HostedClasses)
-                                            .Select(type => CSharp.TypeOfExpression(type))
-                                            .ToArray())));
-                            case "NodeCount":
-                                return nn.AddBodyStatements(CSharp
-                                    .ReturnStatement(CSharp.ParseExpression(
-                                        mainServer.Nodes.Count.ToString())));
-                        }
-
-                        throw new NotImplementedException();
-                    });
-
-            //add a method per node which will be invoked when starting
-            configurationClass = configurationClass
-                .AddMembers(mainServer
-                    .Nodes
-                    .Select(serverNode =>
-                    {
-                        var hostedTypes = Templates
-                            .TypeArray
-                            .WithInitializer(CSharp.InitializerExpression(
-                                SyntaxKind.ArrayInitializerExpression, CSharp.SeparatedList<ExpressionSyntax>(
-                                serverNode
-                                    .HostedClasses
-                                    .Select(type => CSharp.TypeOfExpression(type)))));
-
-                        return Templates
-                            .NodeMethod
-                            .Get<MethodDeclarationSyntax>(
-                                serverNode.ServerId,
-                                hostedTypes)
-                            .AddBodyStatements(serverNode
-                                .StartStatements
-                                .ToArray());
-                    })
-                    .ToArray());
-
-
-            //apply changes
-            var document = scope.GetDocument();
-            document.change(node.Parent, RoslynCompiler.AddType(configurationClass));
-            document.change(node.Parent, RoslynCompiler.RemoveMember(node));
-            return node; //untouched, it will be removed
+            app.Id = extension.Identifier.ToString();
         }
 
-        private static bool parseMainServer(MethodDeclarationSyntax method, ServerModel result)
+        private static void AddInstance(ServerInstance app, ServerInstance node)
         {
-            var valid = true;
-            foreach (var statement in method.Body.Statements)
-            {
-                if (statement is ExpressionStatementSyntax)
-                {
-                    var expressionStatement = statement as ExpressionStatementSyntax;
-                    if (expressionStatement.Expression is AssignmentExpressionSyntax)
-                        valid = parseServerParameters(expressionStatement.Expression as AssignmentExpressionSyntax, result);
-                    else
-                        valid = false; //td: error
-                }
-                else if (statement is LocalDeclarationStatementSyntax)
-                {
-                    var localDeclaration = (statement as LocalDeclarationStatementSyntax)
-                        .Declaration;
-                    if (localDeclaration.Type.ToString() == "Node" && localDeclaration.Variables.Count == 1)
-                    {
-                        var variable = localDeclaration.Variables[0];
-                        var initializer = variable.Initializer;
-                        if (initializer != null)
-                        {
-                            var nodeName = variable.Identifier;
-                            var value = variable.Initializer.Value;
-                            if (value is ObjectCreationExpressionSyntax)
-                            {
-                                var nodeServer = new ServerModel(variable.Identifier);
-                                nodeServer.Identity = result.Identity;
+            Debug.Assert(app.Parent == null); //td: error, no nesting 
 
-                                var objectCreation = value as ObjectCreationExpressionSyntax;
-                                valid = parseNodeStatements(objectCreation, nodeServer);
-                                result.Nodes.Add(nodeServer);
-                            }
-                            else
-                                valid = false; //td: error
-                        }
-                    }
-                    else
-                        valid = false; //td: error
-                }
-                else 
-                    valid = false; //td: error
-            }
+            node.Parent = app;
+            node.Id = app.Id + "__" + app.Nodes.Count;
 
-            if (!valid)
-                return false;
-
-            //instances hosted by nodes
-            var hostedInNodes = result
-                .Nodes
-                .SelectMany(node => node
-                    .HostedClasses
-                    .Select(type => CSharp.TypeOfExpression(type)));
-
-            var hostedInstances = Templates
-                .TypeArray
-                .WithInitializer(CSharp.InitializerExpression(
-                    SyntaxKind.ArrayInitializerExpression, CSharp
-                    .SeparatedList<ExpressionSyntax>(
-                        hostedInNodes)));
-
-            //the web server
-            result
-                .StartStatements
-                .AddRange(new StatementSyntax[]
-                {
-                    Templates
-                        .HttpServer
-                        .Get<StatementSyntax>(
-                            result.Url,
-                            result.Identity,
-                            result.Threads)
-                });
-
-            return true;
+            app.Nodes.Add(node);
         }
 
-        private static bool parseNodeStatements(ObjectCreationExpressionSyntax creation, ServerModel result)
+        private static void SetConfiguration(ServerInstance instance, ConfigModel config)
         {
-            var valid = true;
-            foreach (var expression in creation.Initializer.Expressions)
-            {
-                if (expression is AssignmentExpressionSyntax)
-                    valid = parseServerParameters(expression as AssignmentExpressionSyntax, result);
-                else
-                    valid = false; //td: error
-            }
-
-            if (valid)
-            {
-                var serverType = getNodeServer(creation.Type);
-                if (serverType != null)
-                {
-                    Debug.Assert(result.Identity != null); //td: error
-
-                    result
-                        .StartStatements
-                        .AddRange(new StatementSyntax[]
-                        {
-                            Templates
-                                .NodeServer
-                                .Get<StatementSyntax>(
-                                    serverType,
-                                    result.Url,
-                                    result.Identity,
-                                    result.Threads)
-                        });
-                    return true;
-                }
-            }
-
-            return false;
+            instance.Threads = config.Threads; //td: multiples
+            instance.Identity = config.Identity;
         }
 
-        private static bool parseServerParameters(AssignmentExpressionSyntax assignment, ServerModel result)
+        private static void SetServerLocation(ServerInstance instance, ServerLocation location)
         {
-            switch (assignment.Left.ToString())
-            {
-                case "Url":
-                    result.Url = assignment.Right;
-                    break;
-                case "Threads":
-                    result.Threads = assignment.Right;
-                    break;
-                case "Identity":
-                    result.Identity = assignment.Right;
-                    break;
-                case "Services":
-                    if (assignment.Right is ImplicitArrayCreationExpressionSyntax)
-                    {
-                        var hostedClasses = (assignment.Right as ImplicitArrayCreationExpressionSyntax)
-                            .Initializer
-                            .Expressions;
-
-                        var valid = true;
-                        foreach (var @class in hostedClasses)
-                        {
-                            var type = @class as TypeSyntax;
-                            if (type == null && @class is IdentifierNameSyntax)
-                                type = CSharp.ParseTypeName(@class.ToString());
-
-                            if (type != null)
-                                result.HostedClasses.Add(type);
-                            else
-                                valid = false; //error
-                        }
-
-                        return valid;
-                    }
-                    else
-                        return false; //td: error
-                default:
-                    return false; //td: error
-            }
-
-            return true;
+            instance.Url = location.Url;
+            instance.Port = location.Port;
         }
 
-        private static string getNodeServer(TypeSyntax type)
+        public static InitializerExpressionSyntax StringArrayInitializer(IEnumerable<string> values)
         {
-            switch (type.ToString())
+            return CSharp.InitializerExpression(
+                SyntaxKind.ArrayInitializerExpression,
+                CSharp.SeparatedList(values
+                    .Select(value => Roslyn.Quoted(value))));
+        }
+
+        private static SyntaxNode LinkServerInstance(ServerInstance app, Func<ServerModel, Scope, SyntaxNode> transform, Scope scope)
+        {
+            //a list of statements and types to be added
+            var statements = new List<StatementSyntax>();
+            foreach (var node in app.Nodes)
             {
-                case "NetMQ.Node": return "NetMQNode";
+                var appStatement = default(StatementSyntax);
+                scope.AddType(LinkNode(node, out appStatement));
+
+                if (appStatement != null)
+                    statements.Add(appStatement);
             }
 
-            throw new ArgumentException("type");
+            //create the http start
+            var except = Templates
+                .StringArray
+                .Get<ArrayCreationExpressionSyntax>()
+                    .WithInitializer(StringArrayInitializer(app
+                        .Nodes
+                        .SelectMany(node => node.HostedClasses)));
+
+            statements.Add(Templates
+                .StartHttpServer
+                .Get<StatementSyntax>(
+                    Roslyn.Quoted(app.Host.Address),
+                    Roslyn.Quoted(app.Identity),
+                    Roslyn.Constant(app.Threads),
+                    except,
+                    Roslyn.Constant(app.Nodes.Count)));
+
+            //generate configuration class
+            var result = Templates
+                .ServerInstance
+                .Get<ClassDeclarationSyntax>(app.Id);
+
+            var start = result
+                .DescendantNodes()
+                .OfType<MethodDeclarationSyntax>()
+                .Single();
+
+            return result
+                .ReplaceNode(start, start
+                    .AddBodyStatements(statements.ToArray()));
+        }
+
+        private static ClassDeclarationSyntax LinkNode(ServerInstance instance, out StatementSyntax appStatement)
+        {
+            appStatement = Templates.CallStartNode.Get<StatementSyntax>(instance.Id); //td:
+            var statements = new List<StatementSyntax>();
+
+            var only = Templates
+                .StringArray
+                .Get<ArrayCreationExpressionSyntax>()
+                    .WithInitializer(StringArrayInitializer(instance.HostedClasses));
+
+            statements.Add(Templates
+                .StartNetMQServer
+                .Get<StatementSyntax>(
+                    Roslyn.Quoted(instance.Host.Address),
+                    Roslyn.Quoted(instance.Parent.Identity),
+                    Roslyn.Constant(instance.Threads),
+                    only));
+
+            var result = Templates
+                .ServerInstance
+                .Get<ClassDeclarationSyntax>(instance.Id);
+
+            var start = result
+                .DescendantNodes()
+                .OfType<MethodDeclarationSyntax>()
+                .Single();
+
+            return result
+                .ReplaceNode(start, start
+                    .AddBodyStatements(statements.ToArray()));
         }
 
         //generation
@@ -477,15 +318,15 @@ namespace Excess.Server.Compiler
                 },
                 fields: (name, type, value) =>
                 {
-                    //td: shall we transmit properties?
-                    //result.AppendLine(Templates
-                    //    .jsProperty
-                    //    .Render(new
-                    //    {
-                    //        Name = name.ToString(),
-                    //        Value = valueString(value, type, model)
-                    //    }));
-                });
+                        //td: shall we transmit properties?
+                        //result.AppendLine(Templates
+                        //    .jsProperty
+                        //    .Render(new
+                        //    {
+                        //        Name = name.ToString(),
+                        //        Value = valueString(value, type, model)
+                        //    }));
+                    });
 
             return result.ToString();
         }
@@ -533,7 +374,7 @@ namespace Excess.Server.Compiler
 
             compilation.AddContent(servicePath, Templates
                 .servicesFile
-                .Render( new
+                .Render(new
                 {
                     Members = clientCode
                 }));
@@ -580,10 +421,10 @@ namespace Excess.Server.Compiler
         {
             var @class = (node as ClassDeclarationSyntax)
                 .AddAttributeLists(CSharp.AttributeList(CSharp.SeparatedList(new[] {CSharp
-                    .Attribute(CSharp
-                        .ParseName("Service"),
-                        CSharp.ParseAttributeArgumentList(
-                            $"(id : \"{Guid.NewGuid()}\")"))})));
+                        .Attribute(CSharp
+                            .ParseName("Service"),
+                            CSharp.ParseAttributeArgumentList(
+                                $"(id : \"{Guid.NewGuid()}\")"))})));
 
             var options = new Options();
             return ConcurrentExtension.CompileClass(options)(@class, scope);

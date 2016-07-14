@@ -26,11 +26,20 @@ namespace Excess.Compiler.Core
             var allTokens = extension.Body.ToArray();
             var withoutBraces = Range(allTokens, 1, allTokens.Length - 1);
             if (!withoutBraces.Any())
-                return node; 
+                return node;
 
             var compiler = scope.GetService<TToken, TNode, TModel>();
-            var g        = _grammar.Parse(withoutBraces, scope, compiler.GetOffset(withoutBraces.First()));
+            var extCopy = new LexicalExtension<TToken>
+            {
+                Kind  = extension.Kind,
+                Keyword = extension.Keyword,
+                Identifier = extension.Identifier,
+                Arguments = extension.Arguments,
+                Body = withoutBraces,
+                BodyStart = compiler.GetOffset(withoutBraces.First()),
+            };
 
+            var g = _grammar.Parse(extCopy, scope);
             if (g == null || g.Equals(default(GNode)))
                 return node; //errors added to the scope already
 

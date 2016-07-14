@@ -9,6 +9,7 @@ using System.Diagnostics;
 using NetMQ.Sockets;
 using System.Linq;
 using Newtonsoft.Json.Linq;
+using System.Reflection;
 
 namespace Excess.Server.Middleware
 {
@@ -182,28 +183,12 @@ namespace Excess.Server.Middleware
             string localServer,
             string remoteServer,
             int threads = 2,
-            IEnumerable<Type> classes = null,
-            IDictionary<Guid, IConcurrentObject> managedInstances = null)
+            IEnumerable<Assembly> assemblies = null,
+            IEnumerable<string> classes = null)
         {
             var concurrentApp = new ThreadedConcurrentApp(new Dictionary<string, Func<IConcurrentApp, object[], IConcurrentObject>>());
             var app = new DistributedApp(concurrentApp, localServer);
-            if (classes != null)
-            {
-                foreach (var @class in classes)
-                {
-                    Guid id;
-                    IConcurrentObject @object;
-
-                    app.RegisterClass(@class);
-                    if (isConcurrentSingleton(@class, out id, out @object))
-                    {
-                        if (managedInstances != null)
-                            managedInstances[id] = @object;
-
-                        app.RegisterInstance(id, @object);
-                    }
-                }
-            }
+            Loader.FromAssemblies(app, assemblies, only: classes);
 
             app.Connect = _ =>
             {

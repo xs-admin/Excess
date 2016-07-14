@@ -1,13 +1,43 @@
-﻿using Excess.Compiler.Roslyn;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
+﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Excess.Compiler.Roslyn;
+using Excess.Compiler.Razor;
 
 namespace Excess.Server.Compiler
 {
-    using Excess.Compiler.Razor;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
     public static class Templates
     {
+        public static Template ServerInstance = Template.Parse(@"
+            [ServerConfiguration]    
+            public class _0
+            {
+                public static void Start()
+                {
+                }
+            }");
+
+        public static Template StartHttpServer = Template.ParseStatement(@"
+            HttpServer.Start(
+                assemblies: new [] {this.GetType().Assembly},
+                url: __0, 
+                identityUrl: __1,
+                threads: __2, 
+                except: __3,
+                nodes: __4);");
+
+        public static Template StartNetMQServer = Template.ParseStatement(@"
+            NetMQNode.Start(
+                __0,
+                __1,
+                assemblies: new [] {this.GetType().Assembly},
+                threads: __2, 
+                only: __3);");
+
+        public static Template StringArray = Template.ParseExpression("new string[] {}");
+        public static Template CallStartNode = Template.ParseStatement("_0.Start();");
+
+        //oldies
         public static Template ConfigClass = Template.Parse(@"
             [ServerConfiguration]    
             public class _0
@@ -38,12 +68,6 @@ namespace Excess.Server.Compiler
             {
                 var hostedTypes = commonClasses.Union(__1);
             }");
-
-        public static Template HttpServer = Template.ParseStatement(@"
-            HttpServer.Start(
-                url: __0, 
-                identityUrl: __1,
-                threads: __2);");
 
         public static Template NodeServer = Template.ParseStatement(@"
             _0.Start(

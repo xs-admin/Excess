@@ -24,12 +24,14 @@ namespace xss
                 return;
             }
 
+            throw new NotImplementedException();
+
             //start a http concurrent server
-            HttpServer.Start(url,
-                classes: concurrentClasses,
-                instances: concurrentInstances,
-                staticFiles: staticFiles,
-                assemblies: assemblies);
+            //HttpServer.Start(url,
+            //    classes: concurrentClasses,
+            //    instances: concurrentInstances,
+            //    staticFiles: staticFiles,
+            //    assemblies: assemblies);
         }
 
         private static bool parseArguments(string[] args, 

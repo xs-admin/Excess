@@ -19,26 +19,20 @@ namespace Tests
             {
                 server SomeServer()
                 {
-                    Url = ""http://*.1080"";
-                    Identity = ""tcp://*.10800""                    
+                    @http://*.1080
+                    identity @tcp://*.10800 
 
-                    Node someNode = new NetMQ.Node
-                    {
-                        Url = ""http://*.2080"",
-                        Threads = 25,
-                        Services = new []
-                        {
-                            SomeService
-                        }
-                    };
+                    new instance 
+                        on port 2080
+                        hosting SomeService
                 }
             }";
 
             string output;
             var tree = Mock.Compile(Code, out output);
 
-            //should have a class marked as [ServerConfiguration]
-            Assert.AreEqual(1, tree
+            //should have 2 classes marked as [ServerConfiguration]
+            Assert.AreEqual(2, tree
                 .GetRoot()
                 .DescendantNodes()
                 .OfType<ClassDeclarationSyntax>()
@@ -49,20 +43,12 @@ namespace Tests
                         .Any(attr => attr.Name.ToString() == "ServerConfiguration")))
                 .Count());
 
-            //should have a "start" method 
-            Assert.AreEqual(1, tree
+            //both should have a "start" method 
+            Assert.AreEqual(2, tree
                 .GetRoot()
                 .DescendantNodes()
                 .OfType<MethodDeclarationSyntax>()
                 .Where(method => method.Identifier.ToString() == "Start")
-                .Count());
-
-            //should have a "someNode" method, which starts the node 
-            Assert.AreEqual(1, tree
-                .GetRoot()
-                .DescendantNodes()
-                .OfType<MethodDeclarationSyntax>()
-                .Where(method => method.Identifier.ToString() == "someNode")
                 .Count());
         }
 

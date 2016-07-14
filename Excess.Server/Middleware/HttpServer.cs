@@ -22,8 +22,7 @@ namespace Excess.Server.Middleware
             string staticFiles = null,
             int nodes = 0,
             IEnumerable<Assembly> assemblies = null,
-            IEnumerable<Type> classes = null,
-            IEnumerable<KeyValuePair<Guid, Type>> instances = null)
+            IEnumerable<string> except = null)
         {
             if (assemblies != null)
                 Application.Start(assemblies);
@@ -53,28 +52,14 @@ namespace Excess.Server.Middleware
                     builder.UseFileServer(options);
                 }
 
-                var distributed = null as IDistributedApp;
                 builder.UseExcess(initializeApp: server =>
                 {
-                    distributed = server;
-
-                    //setup
-                    if (classes != null)
-                    {
-                        foreach (var @class in classes)
-                            server.RegisterClass(@class);
-                    }
-
-                    if (instances != null)
-                    {
-                        foreach (var instance in instances)
-                        {
-                            server.RegisterInstance(instance.Key, (IConcurrentObject)instantiator.Create(instance.Value)); 
-                        }
-                    }
+                    Loader.FromAssemblies(server, assemblies, except);
 
                     if (nodes > 0)
                     {
+                        throw new NotImplementedException();
+
                         //start the identity server if we have any nodes
                         var error = null as Exception;
                         var waiter = new ManualResetEvent(false);

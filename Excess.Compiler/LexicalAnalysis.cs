@@ -145,10 +145,17 @@ namespace Excess.Compiler
         ILexicalAnalysis<TToken, TNode, TModel> extension(string keyword, ExtensionKind kind, Func<TNode, Scope, LexicalExtension<TToken>, TNode> handler);
         IGrammarAnalysis<GNode, TToken, TNode> grammar<TGrammar, GNode>(string keyword, ExtensionKind kind) where TGrammar : IGrammar<TToken, TNode, GNode>, new();
         IGrammarAnalysis<GNode, TToken, TNode> grammar<TGrammar, GNode>(string keyword, ExtensionKind kind, TGrammar grammar) where TGrammar : IGrammar<TToken, TNode, GNode>;
-        IIndentationGrammarAnalysis<TToken, TNode, GNode> indented<GNode, GRoot>(string keyword, ExtensionKind kind) where GRoot : GNode, new();
 
+        //indented grammars
+        IIndentationGrammarAnalysis<TToken, TNode, GNode> indented<GNode, GRoot>(
+            string keyword, 
+            ExtensionKind kind,
+            Action<GRoot, LexicalExtension<TToken>> init) where GRoot : GNode, new();
+
+        //deprecated
         INormalizer<TToken, TNode, TModel> normalize();
 
+        //transforms
         ILexicalTransform<TToken, TNode, TModel> transform();
     }
 }
