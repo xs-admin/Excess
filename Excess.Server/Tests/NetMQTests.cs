@@ -11,7 +11,7 @@ namespace Tests
     [TestClass]
     public class NetMQTests
     {
-        [TestMethod, Ignore] //netmq is not yet fully functional
+        [TestMethod] 
         public void NetMQ_Usage()
         {
             //setup
@@ -62,28 +62,18 @@ namespace Tests
 
             namespace Servers
             {
-                server Default()
+                server 
                 {
-                    Url = ""http://localhost:1080"";
-                    Identity = ""tcp://localhost:5000"";
+                    on port 1080
+                    identity @tcp://localhost:5000
 
-                    Node node1 = new NetMQ.Node
-                    {
-                        Url = ""tcp://localhost:1081"",
-                        Services = new []
-                        {
-                            HelloService
-                        }
-                    };
+                    new instance
+                        @tcp://localhost:1081
+                        hosting HelloService
 
-                    Node node2 = new NetMQ.Node
-                    {
-                        Url = ""tcp://localhost:1082"",
-                        Services = new []
-                        {
-                            ProcessingService
-                        }
-                    };
+                    new instance
+                        @tcp://localhost:1082
+                        hosting ProcessingService
                 }
             }";
 

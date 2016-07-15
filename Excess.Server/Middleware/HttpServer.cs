@@ -2,14 +2,12 @@
 using System.Threading;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using Owin;
 using Microsoft.Owin.Hosting;
-using Excess.Concurrent.Runtime;
 using Microsoft.Owin.StaticFiles;
 using Microsoft.Owin.FileSystems;
-using Microsoft.Owin;
 using Excess.Runtime;
-using System.Reflection;
 
 namespace Excess.Server.Middleware
 {

@@ -19,20 +19,20 @@ namespace Excess.Server.Compiler
 
         public static Template StartHttpServer = Template.ParseStatement(@"
             HttpServer.Start(
-                assemblies: new [] {this.GetType().Assembly},
                 url: __0, 
                 identityUrl: __1,
                 threads: __2, 
                 except: __3,
-                nodes: __4);");
+                nodes: __4,
+                assemblies: new [] {typeof(_5).Assembly});");
 
         public static Template StartNetMQServer = Template.ParseStatement(@"
             NetMQNode.Start(
                 __0,
                 __1,
-                assemblies: new [] {this.GetType().Assembly},
                 threads: __2, 
-                only: __3);");
+                classes: __3,
+                assemblies: new [] {typeof(_4).Assembly});");
 
         public static Template StringArray = Template.ParseExpression("new string[] {}");
         public static Template CallStartNode = Template.ParseStatement("_0.Start();");

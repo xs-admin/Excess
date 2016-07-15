@@ -91,6 +91,8 @@ namespace Excess.Server.Compiler
         private static void InitApp(ServerInstance app, LexicalExtension<SyntaxToken> extension)
         {
             app.Id = extension.Identifier.ToString();
+            if (string.IsNullOrWhiteSpace(app.Id))
+                app.Id = "Default"; 
         }
 
         private static void AddInstance(ServerInstance app, ServerInstance node)
@@ -151,7 +153,8 @@ namespace Excess.Server.Compiler
                     Roslyn.Quoted(app.Identity),
                     Roslyn.Constant(app.Threads),
                     except,
-                    Roslyn.Constant(app.Nodes.Count)));
+                    Roslyn.Constant(app.Nodes.Count),
+                    app.Id));
 
             //generate configuration class
             var result = Templates
@@ -184,7 +187,8 @@ namespace Excess.Server.Compiler
                     Roslyn.Quoted(instance.Host.Address),
                     Roslyn.Quoted(instance.Parent.Identity),
                     Roslyn.Constant(instance.Threads),
-                    only));
+                    only,
+                    instance.Id));
 
             var result = Templates
                 .ServerInstance

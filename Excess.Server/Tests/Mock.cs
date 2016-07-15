@@ -121,6 +121,10 @@ namespace Tests
             var config = configurations
                 .Single(cfg => cfg.Name == configuration);
 
+            var nodeConfigs = configurations
+                .Where(cfg => cfg.Name.StartsWith(configuration + "__"))
+                .ToArray();
+
             var remoteTypes = null as IEnumerable<Type>;
             var clients = 0;
             var startNodes = false;
@@ -130,10 +134,7 @@ namespace Tests
                     .GetMethod("RemoteTypes")
                     .Invoke(null, new object[] { });
 
-                clients = (int)config
-                    .GetMethod("NodeCount")
-                    .Invoke(null, new object[] { });
-
+                clients = nodeConfigs.Length;
                 startNodes = clients > 0;
             }
 
