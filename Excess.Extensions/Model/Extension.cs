@@ -1,25 +1,22 @@
-﻿using Excess.Compiler;
-using Microsoft.CodeAnalysis;
-using System;
+﻿using System.Linq;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Excess.Compiler.Attributes;
+using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Excess.Compiler;
+using Excess.Compiler.Roslyn;
+using Excess.Compiler.Attributes;
 
 namespace Excess.Extensions.Model
 {
     using ExcessCompiler = ICompiler<SyntaxToken, SyntaxNode, SemanticModel>;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
-    using Microsoft.CodeAnalysis.CSharp;
-    using Compiler.Roslyn;
+
     [Extension("model")]
     public class ModelExtension
     {
         public static void Apply(ExcessCompiler compiler, Scope scope = null)
         {
-            scope?.AddKeywords("injector");
+            scope?.AddKeywords("model");
 
             var lexical = compiler.Lexical();
             lexical
