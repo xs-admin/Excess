@@ -108,6 +108,7 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="CompilerExtensionsTest.cs" />
     <Compile Include="CompilerTests.cs" />
     <Compile Include="FunctionTests.cs" />
     <Compile Include="GraphTests.cs" />

@@ -108,11 +108,13 @@ namespace Excess.Compiler
 
     public enum ExtensionKind
     {
+        None,
         Expression,
         Code,
         Member,
         Type,
-        Modifier
+        TypeCode,
+        Modifier //td: !!
     }
 
     public class LexicalExtension<TToken>
@@ -140,9 +142,9 @@ namespace Excess.Compiler
 
     public interface ILexicalAnalysis<TToken, TNode, TModel>
     {
-        ILexicalMatch<TToken, TNode, TModel> match(); 
-        ILexicalAnalysis<TToken, TNode, TModel> extension(string keyword, ExtensionKind kind, Func<IEnumerable<TToken>, Scope, LexicalExtension<TToken>, IEnumerable<TToken>> handler);
+        ILexicalMatch<TToken, TNode, TModel> match();
         ILexicalAnalysis<TToken, TNode, TModel> extension(string keyword, ExtensionKind kind, Func<TNode, Scope, LexicalExtension<TToken>, TNode> handler);
+        ILexicalAnalysis<TToken, TNode, TModel> extension(string keyword, ExtensionKind kind, Func<IEnumerable<TToken>, Scope, LexicalExtension<TToken>, IEnumerable<TToken>> handler);
         IGrammarAnalysis<GNode, TToken, TNode> grammar<TGrammar, GNode>(string keyword, ExtensionKind kind) where TGrammar : IGrammar<TToken, TNode, GNode>, new();
         IGrammarAnalysis<GNode, TToken, TNode> grammar<TGrammar, GNode>(string keyword, ExtensionKind kind, TGrammar grammar) where TGrammar : IGrammar<TToken, TNode, GNode>;
 

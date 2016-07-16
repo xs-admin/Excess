@@ -85,5 +85,8 @@ namespace Excess.Compiler
         TNode Find(TNode node, SourceSpan value);
         IEnumerable<TToken> NodeTokens(TNode node);
         int TokenOffset(TToken token);
+
+        TNode ParseCodeFromTokens(IEnumerable<TToken> tokens);
+        TNode ParseParamListFromTokens(IEnumerable<TToken> tokens);
     }
 }

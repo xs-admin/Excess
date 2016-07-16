@@ -773,7 +773,7 @@ namespace Excess.Compiler.Core
 
         public ILexicalAnalysis<TToken, TNode, TModel> extension(string keyword, ExtensionKind kind, Func<IEnumerable<TToken>, Scope, LexicalExtension<TToken>, IEnumerable<TToken>> handler)
         {
-            //extension(args) {content}
+            //extension [identifier](args) {content}
             var result = createMatch();
             result
                 .token(keyword, named: "keyword")
@@ -784,7 +784,7 @@ namespace Excess.Compiler.Core
 
             _matchers.Add(result);
 
-            //extension {content}
+            //extension [identifier] {content}
             result = createMatch();
             result
                 .token(keyword, named: "keyword")

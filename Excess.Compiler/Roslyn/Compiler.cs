@@ -164,6 +164,57 @@ namespace Excess.Compiler.Roslyn
         {
             return token.SpanStart;
         }
+
+        public SyntaxNode ParseCodeFromTokens(IEnumerable<SyntaxToken> tokens)
+        {
+            var text = new StringBuilder();
+            text.Append("{");
+            foreach (var token in tokens)
+                text.Append(token.ToFullString());
+            text.Append("}");
+
+            var result = (BlockSyntax)CSharp.ParseStatement(text.ToString());
+            var original = tokens.GetEnumerator();
+
+
+            result = result
+                .ReplaceTokens(result.DescendantTokens(),
+                    (ot, nt) =>
+                    {
+                        original.MoveNext();
+                        var originalToken = original.Current;
+
+                        if (originalToken.ContainsAnnotations) 
+                            return nt.WithAdditionalAnnotations(originalToken.GetAnnotations());
+                        return nt;
+                    });
+
+            return result.Statements.Count == 1
+                ? result.Statements.First()
+                : result;
+        }
+
+        public SyntaxNode ParseParamListFromTokens(IEnumerable<SyntaxToken> tokens)
+        {
+            var text = new StringBuilder();
+            foreach (var token in tokens)
+                text.Append(token.ToFullString());
+
+            var result = CSharp.ParseParameterList(text.ToString());
+            var original = tokens.GetEnumerator();
+
+            return result
+                .ReplaceTokens(result.DescendantTokens(),
+                    (ot, nt) =>
+                    {
+                        original.MoveNext();
+                        var originalToken = original.Current;
+
+                        if (originalToken.ContainsAnnotations)
+                            return nt.WithAdditionalAnnotations(originalToken.GetAnnotations());
+                        return nt;
+                    });
+        }
     }
 
     public class RoslynCompiler : CompilerBase<SyntaxToken, SyntaxNode, SemanticModel>

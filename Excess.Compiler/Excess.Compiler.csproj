@@ -132,6 +132,7 @@
     <Compile Include="Attributes\Flavor.cs" />
     <Compile Include="CompilationAnalysis.cs" />
     <Compile Include="Compiler.cs" />
+    <Compile Include="Roslyn\CompilerExtensions.cs" />
     <Compile Include="Core\CompilationAnalysisBase.cs" />
     <Compile Include="Core\IndentationGrammarBase.cs" />
     <Compile Include="Core\InstanceAnalysisBase.cs" />
