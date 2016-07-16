@@ -23,6 +23,13 @@ namespace Tests.Mocks
                     .match<RootModel, HeaderModel>(MatchHeader,
                         children: child => child
                             .match<HeaderModel, HeaderValueModel>(MatchValue)
+                            .match<MockIdentGrammarModel, HeaderModel, LocationModel>(new[] {
+                                "Last seen in {City}",
+                                "Feeling blessed at {Place}, {City}",
+                                "Now at {Place}, {City}",
+                                "Now at {Place}",
+                                "Now at {City}",},
+                                then: (header, location) => header.AddLocation(location))
                             .match<MockIdentGrammarModel, HeaderModel, ContactModel>("Call {Name} at {Telephone}",
                                 then: (header, contact) => header.Contacts.Add(contact),
                                 children: contactChild => contactChild
@@ -64,7 +71,8 @@ namespace Tests.Mocks
         //templates
         private static Template HeaderValue = Template.ParseStatement("SetHeaderValue(__0, __1, __2);");
         private static Template Contact = Template.ParseStatement("SetContact(__0, __1, __2);");
-        private static Template OtherNUmber = Template.ParseStatement("AddContactNumber(__0, __1, __2, __3, __4);");
+        private static Template OtherNumber = Template.ParseStatement("AddContactNumber(__0, __1, __2, __3, __4);");
+        private static Template Location = Template.ParseStatement("SetLocation(__0, __1, __2);");
 
         private static SyntaxNode TransformHeaderModel(RootModel root, Func<MockIdentGrammarModel, Scope, SyntaxNode> parse, Scope scope)
         {
@@ -88,7 +96,7 @@ namespace Tests.Mocks
 
                     foreach (var phone in contact.OtherNumbers)
                     {
-                        statements.Add(OtherNUmber.Get<StatementSyntax>(
+                        statements.Add(OtherNumber.Get<StatementSyntax>(
                             RoslynCompiler.Quoted(header.Name),
                             RoslynCompiler.Quoted(contact.Name),
                             CSharp.LiteralExpression(
@@ -102,6 +110,12 @@ namespace Tests.Mocks
                                 CSharp.Literal(phone.LastFour))));
                     }
                 }
+
+                if (header.Location != null)
+                    statements.Add(Location.Get<StatementSyntax>(
+                        RoslynCompiler.Quoted(header.Name),
+                        RoslynCompiler.Quoted(header.Location.Place ?? ""),
+                        RoslynCompiler.Quoted(header.Location.City ?? "")));
             }
 
             foreach (var forStatement in root.Statements)

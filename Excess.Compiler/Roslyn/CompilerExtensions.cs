@@ -242,5 +242,64 @@ namespace Excess.Compiler.Roslyn
             return @this;
         }
 
+        public static ICompiler<SyntaxToken, SyntaxNode, SemanticModel> extension(this ICompiler<SyntaxToken, SyntaxNode, SemanticModel> @this,
+            string keyword,
+            Func<ClassDeclarationSyntax, Scope, TypeDeclarationSyntax> transform) => extension(@this, keyword,
+                (Func<ClassDeclarationSyntax, ParameterListSyntax, Scope, TypeDeclarationSyntax>)
+                ((@class, parameters, scope) => transform(@class, scope)));
+
+        //type code extensions
+        private static Func<SyntaxNode, Scope, LexicalExtension<SyntaxToken>, SyntaxNode> TransformTypeCode(
+            Func<ClassDeclarationSyntax, ParameterListSyntax, BlockSyntax, Scope, TypeDeclarationSyntax> transform)
+        {
+            return (node, scope, extension) =>
+            {
+                var @class = node as ClassDeclarationSyntax;
+                if (@class == null)
+                {
+                    Debug.Assert(false); //td: error
+                    return node;
+                }
+
+                if (node.Parent is NamespaceDeclarationSyntax || node.Parent is CompilationUnitSyntax)
+                {
+                    var service = scope.GetService<SyntaxToken, SyntaxNode, SemanticModel>();
+                    var body = (BlockSyntax)service
+                        .ParseCodeFromTokens(extension.Body);
+
+                    var identifier = extension.Identifier.IsKind(SyntaxKind.None)
+                        ? CSharp.Identifier("__")
+                        : extension.Identifier;
+
+                    var parameters = default(ParameterListSyntax);
+                    if (extension.Arguments != null && extension.Arguments.Any())
+                        parameters = (ParameterListSyntax)service.ParseParamListFromTokens(extension.Arguments);
+
+                    return transform(@class
+                        .WithIdentifier(identifier), parameters, body, scope);
+                }
+
+                Debug.Assert(false); //td: error
+                return node;
+            };
+        }
+
+        public static ICompiler<SyntaxToken, SyntaxNode, SemanticModel> extension(this ICompiler<SyntaxToken, SyntaxNode, SemanticModel> @this,
+            string keyword,
+            Func<ClassDeclarationSyntax, ParameterListSyntax, BlockSyntax, Scope, TypeDeclarationSyntax> transform)
+        {
+            if (string.IsNullOrWhiteSpace(keyword))
+                throw new ArgumentException(nameof(keyword));
+
+            @this.Lexical()
+                .extension(keyword, ExtensionKind.TypeCode, TransformTypeCode(transform));
+
+            return @this;
+        }
+
+        public static ICompiler<SyntaxToken, SyntaxNode, SemanticModel> extension(this ICompiler<SyntaxToken, SyntaxNode, SemanticModel> @this,
+            string keyword,
+            Func<ClassDeclarationSyntax, BlockSyntax, Scope, TypeDeclarationSyntax> transform) => extension(@this, keyword,
+                (@class, parameters, code, scope) => transform(@class, code, scope));
     }
 }

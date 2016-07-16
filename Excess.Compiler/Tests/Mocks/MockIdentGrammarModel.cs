@@ -34,10 +34,25 @@ namespace Tests.Mocks
         public string Name { get; set; }
         public List<AssignmentExpressionSyntax> Values { get; private set; }
         public List<ContactModel> Contacts { get; private set; }
+        public LocationModel Location { get; private set; }
+
+        public void AddLocation(LocationModel location)
+        {
+            if (Location != null)
+                throw new InvalidOperationException("already has a location");
+
+            Location = location;
+        }
     }
 
     public class HeaderValueModel : MockIdentGrammarModel
     {
+    }
+
+    public class LocationModel : MockIdentGrammarModel
+    {
+        public string Place { get; set; }
+        public string City { get; set; }
     }
 
     public class ContactModel : MockIdentGrammarModel

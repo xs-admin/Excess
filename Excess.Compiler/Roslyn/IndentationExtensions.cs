@@ -38,6 +38,20 @@ namespace Excess.Compiler.Roslyn
             Action<TParent, T> then = null) where T : GNode, new() 
                 => match<GNode, TParent, T>(self, RazorParser.Create<T>(pattern), children, then);
 
+        public static IIndentationGrammarAnalysis<SyntaxToken, SyntaxNode, GNode> match<GNode, TParent, T>(
+            this IIndentationGrammarAnalysis<SyntaxToken, SyntaxNode, GNode> self,
+            IEnumerable<string> patterns,
+            Action<IIndentationGrammarAnalysis<SyntaxToken, SyntaxNode, GNode>> children = null,
+            Action<TParent, T> then = null) where T : GNode, new()
+        {
+            foreach (var pattern in patterns)
+            {
+                match<GNode, TParent, T>(self, RazorParser.Create<T>(pattern), children, then);
+            }
+
+            return self;
+        }
+
         //regex
         public static IIndentationGrammarAnalysis<SyntaxToken, SyntaxNode, GNode> match<GNode, TParent, T>(
             this IIndentationGrammarAnalysis<SyntaxToken, SyntaxNode, GNode> self,
@@ -45,6 +59,20 @@ namespace Excess.Compiler.Roslyn
             Action<IIndentationGrammarAnalysis<SyntaxToken, SyntaxNode, GNode>> children = null,
             Action<TParent, T> then = null) where T : GNode, new()
                 => match<GNode, TParent, T>(self, RegexParser.Create<T>(pattern), children, then);
+
+        public static IIndentationGrammarAnalysis<SyntaxToken, SyntaxNode, GNode> match<GNode, TParent, T>(
+            this IIndentationGrammarAnalysis<SyntaxToken, SyntaxNode, GNode> self,
+            IEnumerable<Regex> patterns,
+            Action<IIndentationGrammarAnalysis<SyntaxToken, SyntaxNode, GNode>> children = null,
+            Action<TParent, T> then = null) where T : GNode, new()
+        {
+            foreach (var pattern in patterns)
+            {
+                match<GNode, TParent, T>(self, RegexParser.Create<T>(pattern), children, then);
+            }
+
+            return self;
+        }
 
         //roslyn
         public static IIndentationGrammarAnalysis<SyntaxToken, SyntaxNode, GNode> match<GNode, TParent, T>(

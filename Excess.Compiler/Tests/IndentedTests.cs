@@ -16,7 +16,7 @@ namespace Tests
     public class IndentedTests
     {
         [TestMethod]
-        public void Indented_Usage()
+        public void IndentedGrammar_Usage()
         {
             var tree = ExcessMock.Compile(@"
                 class TestClass
@@ -36,7 +36,8 @@ namespace Tests
                                 Call Someone at 1-800-WAT-EVER
                                     Or else at 1-800-456-7890
                                     Less likely at (877) 789-1234
-
+                            [Location]
+                                Now at 9th and Hennepin, Minneapolis
                             //some code
                             for i in TestArray
                                 Console.Write(i);
@@ -97,6 +98,14 @@ namespace Tests
                 .OfType<LiteralExpressionSyntax>()
                 .Where(number => number.IsKind(SyntaxKind.NumericLiteralExpression)
                               && numbers.Contains(int.Parse(number.ToString())))
+                .Count());
+
+            //must have added a location call
+            Assert.AreEqual(1, tree
+                .GetRoot()
+                .DescendantNodes()
+                .OfType<InvocationExpressionSyntax>()
+                .Where(invocation => invocation.Expression.ToString() == "SetLocation")
                 .Count());
 
             //must have added a foreach statement
