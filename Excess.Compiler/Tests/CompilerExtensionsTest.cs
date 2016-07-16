@@ -402,5 +402,427 @@ namespace Tests
             CodeExtensions_Assertions(tree,
                 expectedArguments: 4);
         }
+
+        //member extensions
+        private Func<MethodDeclarationSyntax, Scope, MemberDeclarationSyntax> MemberExtensions_Transform(
+            bool expectsIdentifier,
+            bool expectsParameters)
+        {
+            return (method, scope) =>
+            {
+                var hasIdentifier = method.Identifier.ToString().Equals("SomeIdentifier");
+                if (expectsIdentifier)
+                    Assert.IsTrue(hasIdentifier);
+
+                if (expectsParameters)
+                    Assert.AreNotEqual(0, method.ParameterList.Parameters.Count);
+
+                if (!hasIdentifier)
+                    method = method.WithIdentifier(CSharp
+                        .ParseToken("SomeIdentifier"));
+
+                return method
+                    .WithReturnType(RoslynCompiler.@void);
+            };
+        }
+
+        private void MemberExtensions_Assertions(SyntaxTree tree, int expectedArguments = 0)
+        {
+            //must have replaced the extension a method called SomeIdentifier
+            var method = tree
+                .GetRoot()
+                .DescendantNodes()
+                .OfType<MethodDeclarationSyntax>()
+                .Single();
+
+            Assert.IsNotNull(method);
+            Assert.AreEqual("SomeIdentifier", method.Identifier.ToString());
+            Assert.AreEqual("void", method.ReturnType.ToString());
+            Assert.AreEqual(expectedArguments, method
+                .ParameterList
+                .Parameters
+                .Count);
+
+            //must have the SomeCall(); statement
+            Assert.AreEqual("SomeCall();", method
+                .DescendantNodes()
+                .OfType<ExpressionStatementSyntax>()
+                .Single()
+                .ToString());
+        }
+
+        [TestMethod]
+        public void MemberExtensions_Keyword()
+        {
+            var tree = ExcessMock.Compile(@"
+                class SomeClass
+                {
+                    SomeExtension
+                    {
+                        SomeCall();                
+                    }    
+                }",
+                (compiler) => compiler.extension(
+                    "SomeExtension",
+                    MemberExtensions_Transform(
+                        expectsIdentifier: false,
+                        expectsParameters: false)));
+
+            Assert.IsNotNull(tree);
+            MemberExtensions_Assertions(tree);
+        }
+
+        [TestMethod]
+        public void MemberExtensions_KeywordIdentifiers()
+        {
+            var tree = ExcessMock.Compile(@"
+                class SomeClass
+                {
+                    SomeExtension SomeIdentifier
+                    {
+                        SomeCall();                
+                    }    
+                }",
+                (compiler) => compiler.extension(
+                    "SomeExtension",
+                    MemberExtensions_Transform(
+                        expectsIdentifier: true,
+                        expectsParameters: false)));
+
+            Assert.IsNotNull(tree);
+            MemberExtensions_Assertions(tree);
+        }
+
+        [TestMethod]
+        public void MemberExtensions_KeywordParameters()
+        {
+            var tree = ExcessMock.Compile(@"
+                class SomeClass
+                {
+                    SomeExtension(int SomeParam)
+                    {
+                        SomeCall();                
+                    }    
+                }",
+                (compiler) => compiler.extension(
+                    "SomeExtension",
+                    MemberExtensions_Transform(
+                        expectsIdentifier: false,
+                        expectsParameters: true)));
+
+            Assert.IsNotNull(tree);
+            MemberExtensions_Assertions(tree, expectedArguments: 1);
+        }
+
+        [TestMethod]
+        public void MemberExtensions_KeywordIdentifierParameters()
+        {
+            var tree = ExcessMock.Compile(@"
+                class SomeClass
+                {
+                    SomeExtension SomeIdentifier(int SomeParam)
+                    {
+                        SomeCall();                
+                    }    
+                }",
+                (compiler) => compiler.extension(
+                    "SomeExtension",
+                    MemberExtensions_Transform(
+                        expectsIdentifier: true,
+                        expectsParameters: true)));
+
+            Assert.IsNotNull(tree);
+            MemberExtensions_Assertions(tree, expectedArguments: 1);
+        }
+
+        //member type extensions
+        private Func<ClassDeclarationSyntax, ParameterListSyntax, Scope, MemberDeclarationSyntax> MemberTypeExtensions_Transform(
+            bool expectsIdentifier,
+            bool expectsParameters)
+        {
+            return (@class, parameters, scope) =>
+            {
+                var hasIdentifier = @class.Identifier.ToString().Equals("SomeIdentifier");
+                if (expectsIdentifier)
+                    Assert.IsTrue(hasIdentifier);
+
+                if (expectsParameters)
+                    Assert.IsNotNull(parameters);
+
+                if (!hasIdentifier)
+                    @class = @class.WithIdentifier(CSharp
+                        .ParseToken("SomeIdentifier"));
+
+                if (parameters != null)
+                    @class = @class.AddMembers(CSharp
+                        .MethodDeclaration(RoslynCompiler.@void, "SomeParameters")
+                            .AddParameterListParameters(parameters
+                                .Parameters
+                                .ToArray()));
+
+                return @class;
+            };
+        }
+
+        private void MemberTypeExtensions_Assertions(SyntaxTree tree, int expectedArguments = 0)
+        {
+            //must have replaced the extension a method called SomeIdentifier
+            var @class = tree
+                .GetRoot()
+                .DescendantNodes()
+                .OfType<ClassDeclarationSyntax>()
+                .Where(c => c.Identifier.ToString() == "SomeIdentifier")
+                .Single();
+
+            if (expectedArguments > 0)
+            {
+                Assert.AreEqual(expectedArguments, @class
+                    .DescendantNodes()
+                    .OfType<MethodDeclarationSyntax>()
+                    .Where(method => method.Identifier.ToString() == "SomeParameters")
+                    .Single()
+                        .ParameterList
+                        .Parameters
+                        .Count);
+            }
+
+            //must have the SomeMethod method
+            Assert.AreEqual(1, @class
+                .DescendantNodes()
+                .OfType<MethodDeclarationSyntax>()
+                .Where(method => method.Identifier.ToString() == "SomeMethod")
+                .Count());
+        }
+
+        [TestMethod]
+        public void MemberTypeExtensions_Keyword()
+        {
+            var tree = ExcessMock.Compile(@"
+                class SomeClass
+                {
+                    SomeExtension
+                    {
+                        void SomeMethod()
+                        {
+                        }
+                    }    
+                }",
+                (compiler) => compiler.extension(
+                    "SomeExtension",
+                    MemberTypeExtensions_Transform(
+                        expectsIdentifier: false,
+                        expectsParameters: false)));
+
+            Assert.IsNotNull(tree);
+            MemberTypeExtensions_Assertions(tree);
+        }
+
+        [TestMethod]
+        public void MemberTypeExtensions_KeywordIdentifier()
+        {
+            var tree = ExcessMock.Compile(@"
+                class SomeClass
+                {
+                    SomeExtension SomeIdentifier
+                    {
+                        void SomeMethod()
+                        {
+                        }
+                    }    
+                }",
+                (compiler) => compiler.extension(
+                    "SomeExtension",
+                    MemberTypeExtensions_Transform(
+                        expectsIdentifier: true,
+                        expectsParameters: false)));
+
+            Assert.IsNotNull(tree);
+            MemberTypeExtensions_Assertions(tree);
+        }
+
+        [TestMethod]
+        public void MemberTypeExtensions_KeywordParameters()
+        {
+            var tree = ExcessMock.Compile(@"
+                class SomeClass
+                {
+                    SomeExtension(int SomeParameter)
+                    {
+                        void SomeMethod()
+                        {
+                        }
+                    }    
+                }",
+                (compiler) => compiler.extension(
+                    "SomeExtension",
+                    MemberTypeExtensions_Transform(
+                        expectsIdentifier: false,
+                        expectsParameters: true)));
+
+            Assert.IsNotNull(tree);
+            MemberTypeExtensions_Assertions(tree, expectedArguments: 1);
+        }
+
+        [TestMethod]
+        public void MemberTypeExtensions_KeywordIdentifierParameters()
+        {
+            var tree = ExcessMock.Compile(@"
+                class SomeClass
+                {
+                    SomeExtension SomeIdentifier(int SomeParameter)
+                    {
+                        void SomeMethod()
+                        {
+                        }
+                    }    
+                }",
+                (compiler) => compiler.extension(
+                    "SomeExtension",
+                    MemberTypeExtensions_Transform(
+                        expectsIdentifier: false,
+                        expectsParameters: true)));
+
+            Assert.IsNotNull(tree);
+            MemberTypeExtensions_Assertions(tree, expectedArguments: 1);
+        }
+
+        //type extensions
+        private Func<ClassDeclarationSyntax, ParameterListSyntax, Scope, TypeDeclarationSyntax> TypeExtensions_Transform(
+            bool expectsIdentifier,
+            bool expectsParameters)
+        {
+            return (@class, parameters, scope) =>
+            {
+                var hasIdentifier = @class.Identifier.ToString().Equals("SomeIdentifier");
+                if (expectsIdentifier)
+                    Assert.IsTrue(hasIdentifier);
+
+                if (expectsParameters)
+                    Assert.IsNotNull(parameters);
+
+                if (!hasIdentifier)
+                    @class = @class.WithIdentifier(CSharp
+                        .ParseToken("SomeIdentifier"));
+
+                if (parameters != null)
+                    @class = @class.AddMembers(CSharp
+                        .MethodDeclaration(RoslynCompiler.@void, "SomeParameters")
+                            .AddParameterListParameters(parameters
+                                .Parameters
+                                .ToArray()));
+
+                return @class;
+            };
+        }
+
+        private void TypeExtensions_Assertions(SyntaxTree tree, int expectedArguments = 0)
+        {
+            //must have replaced the extension a method called SomeIdentifier
+            var @class = tree
+                .GetRoot()
+                .DescendantNodes()
+                .OfType<ClassDeclarationSyntax>()
+                .Where(c => c.Identifier.ToString() == "SomeIdentifier")
+                .Single();
+
+            if (expectedArguments > 0)
+            {
+                Assert.AreEqual(expectedArguments, @class
+                    .DescendantNodes()
+                    .OfType<MethodDeclarationSyntax>()
+                    .Where(method => method.Identifier.ToString() == "SomeParameters")
+                    .Single()
+                        .ParameterList
+                        .Parameters
+                        .Count);
+            }
+
+            //must have the SomeMethod method
+            Assert.AreEqual(1, @class
+                .DescendantNodes()
+                .OfType<MethodDeclarationSyntax>()
+                .Where(method => method.Identifier.ToString() == "SomeMethod")
+                .Count());
+        }
+
+        [TestMethod]
+        public void TypeExtensions_Keyword()
+        {
+            var tree = ExcessMock.Compile(@"
+                SomeExtension
+                {
+                    void SomeMethod()
+                    {
+                    }
+                }",
+                (compiler) => compiler.extension(
+                    "SomeExtension",
+                    TypeExtensions_Transform(
+                        expectsIdentifier: false,
+                        expectsParameters: false)));
+
+            Assert.IsNotNull(tree);
+            TypeExtensions_Assertions(tree);
+        }
+
+        [TestMethod]
+        public void TypeExtensions_KeywordIdentifier()
+        {
+            var tree = ExcessMock.Compile(@"
+                SomeExtension SomeIdentifier
+                {
+                    void SomeMethod()
+                    {
+                    }
+                }",
+                (compiler) => compiler.extension(
+                    "SomeExtension",
+                    TypeExtensions_Transform(
+                        expectsIdentifier: true,
+                        expectsParameters: false)));
+
+            Assert.IsNotNull(tree);
+            TypeExtensions_Assertions(tree);
+        }
+
+        [TestMethod]
+        public void TypeExtensions_KeywordParameters()
+        {
+            var tree = ExcessMock.Compile(@"
+                SomeExtension(int SomeParameter)
+                {
+                    void SomeMethod()
+                    {
+                    }
+                }",
+                (compiler) => compiler.extension(
+                    "SomeExtension",
+                    TypeExtensions_Transform(
+                        expectsIdentifier: false,
+                        expectsParameters: true)));
+
+            Assert.IsNotNull(tree);
+            TypeExtensions_Assertions(tree, expectedArguments: 1);
+        }
+
+        [TestMethod]
+        public void TypeExtensions_KeywordIdentifierParameters()
+        {
+            var tree = ExcessMock.Compile(@"
+                SomeExtension SomeIdentifier(int SomeParameter)
+                {
+                    void SomeMethod()
+                    {
+                    }
+                }",
+                (compiler) => compiler.extension(
+                    "SomeExtension",
+                    TypeExtensions_Transform(
+                        expectsIdentifier: true,
+                        expectsParameters: true)));
+
+            Assert.IsNotNull(tree);
+            TypeExtensions_Assertions(tree, expectedArguments: 1);
+        }
     }
 }

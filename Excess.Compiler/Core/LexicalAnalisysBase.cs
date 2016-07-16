@@ -737,21 +737,16 @@ namespace Excess.Compiler.Core
                 switch (extension.Kind)
                 {
                     case ExtensionKind.Code:
-                    {
                         tokens = compiler.ParseTokens("__extension();");
                         break;
-                    }
                     case ExtensionKind.Member:
-                    {
                         tokens = compiler.ParseTokens("void __extension() {}");
                         break;
-                    }
+                    case ExtensionKind.MemberType:
                     case ExtensionKind.Type:
-                    {
+                    case ExtensionKind.TypeCode:
                         tokens = compiler.ParseTokens("class __extension() {}");
                         break;
-                    }
-
                     default: throw new InvalidOperationException();
                 }
 

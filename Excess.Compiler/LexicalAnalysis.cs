@@ -112,6 +112,7 @@ namespace Excess.Compiler
         Expression,
         Code,
         Member,
+        MemberType,
         Type,
         TypeCode,
         Modifier //td: !!

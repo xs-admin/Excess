@@ -215,6 +215,36 @@ namespace Excess.Compiler.Roslyn
                         return nt;
                     });
         }
+
+        public SyntaxNode ParseMembersFromTokens(IEnumerable<SyntaxToken> tokens)
+        {
+            var text = new StringBuilder();
+            text.Append("class __");
+            foreach (var token in tokens)
+                text.Append(token.ToFullString());
+
+            var result = CSharp
+                .ParseSyntaxTree(text.ToString())
+                .GetRoot()
+                .DescendantNodes()
+                .First(node => node is ClassDeclarationSyntax);
+
+            Debug.Assert(result != null);
+
+            var original = tokens.GetEnumerator();
+            return result
+                .ReplaceTokens(result.DescendantTokens(),
+                    (ot, nt) =>
+                    {
+                        original.MoveNext();
+                        var originalToken = original.Current;
+
+                        if (originalToken.ContainsAnnotations)
+                            return nt.WithAdditionalAnnotations(originalToken.GetAnnotations());
+                        return nt;
+                    });
+        }
+
     }
 
     public class RoslynCompiler : CompilerBase<SyntaxToken, SyntaxNode, SemanticModel>
