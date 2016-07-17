@@ -18,7 +18,7 @@ namespace Tests
                 {
                     void SomeMethod()
                     {
-                        contract()
+                        contract
                         {
                             x > 3;
                             y != null;

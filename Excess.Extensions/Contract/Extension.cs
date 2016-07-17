@@ -3,6 +3,7 @@ using System.Diagnostics;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Excess.Compiler;
+using Excess.Compiler.Core;
 using Excess.Compiler.Attributes;
 using Excess.Compiler.Roslyn;
 
@@ -18,40 +19,30 @@ namespace Contract
         {
             scope?.AddKeywords("contract");
 
-            compiler.Syntax()
-                .extension("contract", ExtensionKind.Code, ProcessContract);
+            compiler.extension("contract", ParseContract);
         }
 
         static private Template ContractCheck = Template.ParseStatement(@"
             if (!(__0)) 
                 throw new InvalidOperationException(""Breach of contract!!"");");
 
-        private static SyntaxNode ProcessContract(SyntaxNode node, Scope scope, SyntacticalExtension<SyntaxNode> extension)
+        private static SyntaxNode ParseContract(BlockSyntax block, Scope scope)
         {
-            if (extension.Kind == ExtensionKind.Code)
+            List<StatementSyntax> checks = new List<StatementSyntax>();
+            foreach (var st in block.Statements)
             {
-                var block = extension.Body as BlockSyntax;
-                Debug.Assert(block != null);
-
-                List<StatementSyntax> checks = new List<StatementSyntax>();
-                foreach (var st in block.Statements)
+                var stExpression = st as ExpressionStatementSyntax;
+                if (stExpression == null)
                 {
-                    var stExpression = st as ExpressionStatementSyntax;
-                    if (stExpression == null)
-                    {
-                        scope.AddError("contract01", "contracts only support boolean expressions", st);
-                        continue;
-                    }
-
-                    checks.Add(ContractCheck
-                        .Get<StatementSyntax>(stExpression.Expression));
+                    scope.AddError("contract01", "contracts only support boolean expressions", st);
+                    continue;
                 }
 
-                return CSharp.Block(checks);
+                checks.Add(ContractCheck
+                    .Get<StatementSyntax>(stExpression.Expression));
             }
 
-            scope.AddError("contract02", "contract cannot return a value", node);
-            return node;
+            return CSharp.Block(checks);
         }
     }
 }

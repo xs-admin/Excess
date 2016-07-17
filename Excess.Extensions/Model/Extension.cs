@@ -17,25 +17,13 @@ namespace Excess.Extensions.Model
         public static void Apply(ExcessCompiler compiler, Scope scope = null)
         {
             scope?.AddKeywords("model");
-
-            var lexical = compiler.Lexical();
-            lexical
-                .match()
-                    .token("model", named: "keyword")
-                    .identifier()
-                    .enclosed('{', '}', end: "lastBrace")
-                    .then(lexical.transform()
-                        .replace("keyword", "class ")
-                        .then(ParseModel));
-
-            //td: !!! .extension("model", ExtensionKind.Type, ParseModel);
+            compiler.extension("model", ParseModel);
         }
 
         private static Template ModelProperty = Template.Parse("public __0 _1 { get; private set; }");
 
-        private static SyntaxNode ParseModel(SyntaxNode node, Scope scope)
+        private static TypeDeclarationSyntax ParseModel(ClassDeclarationSyntax @class, ParameterListSyntax parameters, Scope scope)
         {
-            var @class = (ClassDeclarationSyntax)node;
             var init = new List<ParameterSyntax>();
             var props = new List<PropertyDeclarationSyntax>();
             foreach (var member in @class.Members)
