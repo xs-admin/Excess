@@ -18,14 +18,13 @@ namespace xslang
         {
             var lexical = compiler.Lexical();
 
-            lexical
-                .match()
-                    .token("match", named: "keyword")
-                    .enclosed('(', ')')
-                    .token('{')
-                    .then(lexical.transform()
-                        .replace("keyword", "switch")
-                        .then(ProcessMatch, referenceToken: "keyword"));
+            lexical.match()
+                .token("match", named: "keyword")
+                .enclosed('(', ')')
+                .token('{')
+                .then(lexical.transform()
+                    .replace("keyword", "switch")
+                    .then(ProcessMatch, referenceToken: "keyword"));
         }
 
         private static SyntaxNode ProcessMatch(SyntaxNode node, Scope scope)

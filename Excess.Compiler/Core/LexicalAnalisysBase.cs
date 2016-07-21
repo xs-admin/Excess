@@ -745,7 +745,7 @@ namespace Excess.Compiler.Core
                     case ExtensionKind.MemberType:
                     case ExtensionKind.Type:
                     case ExtensionKind.TypeCode:
-                        tokens = compiler.ParseTokens("class __extension() {}");
+                        tokens = compiler.ParseTokens("class __extension {}");
                         break;
                     default: throw new InvalidOperationException();
                 }

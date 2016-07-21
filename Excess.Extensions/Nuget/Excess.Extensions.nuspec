@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
     <id>Excess.Extensions</id>
-    <version>0.47.0-alpha</version>
+    <version>0.47.5-alpha</version>
     <authors>Excess</authors>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Official Excess Extension Package</description>
@@ -16,5 +16,7 @@
     <file src="..\Contract\bin\Release\Contract.dll" target="tools\Contract.dll" />
     <file src="..\Json\bin\Release\Json.dll" target="tools\Json.dll" />
     <file src="..\R\bin\Release\R.dll" target="tools\R.dll" />
+    <file src="..\Model\bin\Release\Excess.Extensions.Model.dll" target="tools\Excess.Extensions.Model.dll" />
+    <file src="..\Settings\bin\Release\Settings.dll" target="tools\Settings.dll" />
   </files>
 </package>

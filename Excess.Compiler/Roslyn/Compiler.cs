@@ -141,7 +141,7 @@ namespace Excess.Compiler.Roslyn
 
         public SyntaxNode Find(SyntaxNode node, SourceSpan span)
         {
-            return node.FindNode(new TextSpan(span.Start, span.Length - 1));
+            return node.FindNode(new TextSpan(span.Start, span.Length));
         }
 
         public SyntaxNode FindNode(SyntaxNode node, string xsId)

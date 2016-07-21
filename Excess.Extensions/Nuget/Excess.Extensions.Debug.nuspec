@@ -19,5 +19,9 @@
     <file src="..\Json\bin\Debug\Json.pdb" target="tools\Json.pdb" />
     <file src="..\R\bin\Debug\R.dll" target="tools\R.dll" />
     <file src="..\R\bin\Debug\R.pdb" target="tools\R.pdb" />
+    <file src="..\Model\bin\Debug\Excess.Extensions.Model.dll" target="tools\Excess.Extensions.Model.dll" />
+    <file src="..\Model\bin\Debug\Excess.Extensions.Model.pdb" target="tools\Excess.Extensions.Model.pdb" />
+    <file src="..\Settings\bin\Debug\Settings.dll" target="tools\Settings.dll" />
+    <file src="..\Settings\bin\Debug\Settings.pdb" target="tools\Settings.pdb" />
   </files>
 </package>

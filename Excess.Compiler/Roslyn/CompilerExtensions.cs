@@ -28,8 +28,11 @@ namespace Excess.Compiler.Roslyn
                 var statement = node as ExpressionStatementSyntax;
                 if (statement == null)
                 {
-                    Debug.Assert(false); //td: error
-                    return node;
+                    var expr = node as ExpressionSyntax;
+                    if (expr != null)
+                        statement = (ExpressionStatementSyntax)(expr.Parent);
+                    else
+                        return node;
                 }
 
                 if (node.Parent is StatementSyntax)

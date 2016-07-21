@@ -749,10 +749,13 @@ namespace Tests
         public void TypeExtensions_Keyword()
         {
             var tree = ExcessMock.Compile(@"
-                SomeExtension
+                namespace SomeNamespace
                 {
-                    void SomeMethod()
+                    SomeExtension
                     {
+                        void SomeMethod()
+                        {
+                        }
                     }
                 }",
                 (compiler) => compiler.extension(

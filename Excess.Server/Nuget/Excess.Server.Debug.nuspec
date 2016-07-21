@@ -9,7 +9,7 @@
 
         <dependencies>
           <dependency id="Excess.Runtime" version="0.47.1-alpha"/>
-          <dependency id="Excess.Concurrent" version="0.47.1-alpha"/>
+          <dependency id="Excess.Concurrent" version="0.47.5-alpha"/>
           <dependency id="Newtonsoft.Json" version="8.0.0"/>
           <dependency id="Owin" version="1.0.0"/>
           <dependency id="Microsoft.Owin" version="3.0.0"/>

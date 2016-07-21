@@ -30,6 +30,7 @@ namespace NInjector
             BlockSyntax code,
             Scope scope)
         {
+            //td: we're getting a modified class (no parent)
             //var parentNS = @class.Parent as NamespaceDeclarationSyntax;
             //if (parentNS == null)
             //{
