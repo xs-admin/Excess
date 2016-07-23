@@ -82,7 +82,7 @@ namespace Tests
                 {
                     void SomeMethod(int SomeInt)
                     {
-                        result = sql
+                        sql
                         {
                             insert into SomeTable
                             values(@SomeInt)
