@@ -5,11 +5,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{DF3B867B-A862-4D03-AF7E-418E459DA110}</ProjectGuid>
+    <ProjectGuid>{271C866F-DE7D-457C-91C5-F7CD878DAB27}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Excess.Extensions.Model</RootNamespace>
-    <AssemblyName>Excess.Extensions.Model</AssemblyName>
+    <RootNamespace>SQL.Dapper</RootNamespace>
+    <AssemblyName>SQL.Dapper</AssemblyName>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <NuGetPackageImportStamp>
