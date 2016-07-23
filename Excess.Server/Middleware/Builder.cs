@@ -1,12 +1,16 @@
 ﻿using System;
-using Owin;
-using Excess.Concurrent.Runtime;
 using System.Reflection;
 using System.Collections.Generic;
 using System.Linq;
+using Owin;
+using Microsoft.Owin;
+using Excess.Concurrent.Runtime;
+using Excess.Runtime;
 
 namespace Excess.Server.Middleware
 {
+    using ContextAction = Action<IOwinRequest, __Scope>;
+
     public class ConcurrentAppSettings
     {
         public ConcurrentAppSettings()
@@ -30,7 +34,8 @@ namespace Excess.Server.Middleware
         public static void UseExcess(this IAppBuilder app, 
             Action<ConcurrentAppSettings> initializeSettings = null,
             Action<IDistributedApp> initializeApp = null,
-            IEnumerable<Type> functional = null)
+            IEnumerable<Type> functional = null,
+            IEnumerable<ContextAction> context = null)
         {
             var settings = new ConcurrentAppSettings();
             initializeSettings?.Invoke(settings);
@@ -42,7 +47,7 @@ namespace Excess.Server.Middleware
 
             initializeApp?.Invoke(server);
 
-            app.Use<ExcessOwinMiddleware>(server, functional);
+            app.Use<ExcessOwinMiddleware>(server, functional, context);
             server.Start();
         }
 
@@ -75,7 +80,7 @@ namespace Excess.Server.Middleware
 
         public static void UseExcess(this IAppBuilder builder, IDistributedApp server)
         {
-            builder.Use<ExcessOwinMiddleware>(server, null);
+            builder.Use<ExcessOwinMiddleware>(server, null, null);
             server.Start();
         }
 

@@ -1,28 +1,37 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Linq;
+using System.Reflection;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Microsoft.Owin;
+
+using Excess.Runtime;
 
 namespace Excess.Server.Middleware
 {
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Linq;
-    using Runtime;
-    using System.Diagnostics;
-    using System.Linq;
-    using System.Reflection;
-    using FunctionAction = Action<string, IOwinResponse, TaskCompletionSource<bool>>;
+    using FunctionAction = Action<string, IOwinRequest, IOwinResponse, TaskCompletionSource<bool>>;
+    using ExecutorFunction = Func<string, IOwinRequest, IOwinResponse, TaskCompletionSource<bool>, __Scope, object>;
+    using FilterFunction = Func<
+        Func<string, IOwinRequest, IOwinResponse, TaskCompletionSource<bool>, __Scope, object>,  //prev
+        Func<string, IOwinRequest, IOwinResponse, TaskCompletionSource<bool>, __Scope, object>>; //next
 
     public class ExcessOwinMiddleware : OwinMiddleware
     {
         IDistributedApp _server;
         IDictionary<string, FunctionAction> _functions;
-        public ExcessOwinMiddleware(OwinMiddleware next, IDistributedApp server, IEnumerable<Type> functions) : base(next)
+        public ExcessOwinMiddleware(
+            OwinMiddleware next, 
+            IDistributedApp server, 
+            IEnumerable<Type> functions,
+            IEnumerable<FilterFunction> filters) : base(next)
         {
             _server = server;
-            _functions = BuildFunctions(functions);
+            _functions = BuildFunctions(functions, filters);
         }
 
         public async override Task Invoke(IOwinContext context)
@@ -44,7 +53,7 @@ namespace Excess.Server.Middleware
                     try
                     {
                         if (function != null)
-                            function(data, context.Response, completion);
+                            function(data, context.Request, context.Response, completion);
                         else //a distributed app message
                             _server.Receive(new DistributedAppMessage
                             {
@@ -69,7 +78,9 @@ namespace Excess.Server.Middleware
             await Next.Invoke(context);
         }
 
-        private IDictionary<string, FunctionAction> BuildFunctions(IEnumerable<Type> functions)
+        private IDictionary<string, FunctionAction> BuildFunctions(
+            IEnumerable<Type> functions, 
+            IEnumerable<FilterFunction> filters)
         {
             if (functions == null)
                 return null;
@@ -107,12 +118,14 @@ namespace Excess.Server.Middleware
                             .ToArray();
 
                         var instantiator = Application.GetService<IInstantiator>();
-                        result[methodPath] = (data, response, continuation) =>
+
+                        //build the running function
+                        ExecutorFunction eval = (data, request, response, continuation, scope) =>
                         {
                             var args = JObject
                                 .Parse(data);
 
-                            var arguments = new object[paramCount]; 
+                            var arguments = new object[paramCount];
                             for (int i = 0; i < paramCount - 1; i++)
                             {
                                 arguments[i] = args
@@ -121,12 +134,28 @@ namespace Excess.Server.Middleware
                                     .ToObject(paramTypes[i]);
                             }
 
-                            //add the scope
-                            arguments[paramCount - 1] = new __Scope(instantiator);
+
+                            return method.Invoke(null, arguments);
+                        };
+
+                        //apply any wrappers
+                        if (filters != null)
+                        {
+                            foreach (var filter in filters)
+                            {
+                                eval = filter.Invoke(eval);
+                            }
+                        }
+
+                        result[methodPath] = (data, request, response, continuation) =>
+                        {
+                            //set up the scope
+                            var scope = new __Scope(instantiator);
 
                             try
                             {
-                                var responseValue = method.Invoke(null, arguments);
+                                var responseValue = eval(data, request, response, continuation, scope);
+
                                 SendResponse(response, 
                                     $"{{\"__res\": {JsonConvert.SerializeObject(responseValue)}}}",
                                     continuation);
@@ -144,7 +173,7 @@ namespace Excess.Server.Middleware
             return result;
         }
 
-        private bool TryParseFunctional(string path, out Action<string, IOwinResponse, TaskCompletionSource<bool>> function)
+        private bool TryParseFunctional(string path, out FunctionAction function)
         {
             function = null;
             return _functions != null

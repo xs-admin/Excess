@@ -708,6 +708,13 @@ namespace Excess.Concurrent.Compiler
                 ? method.ReturnType
                 : Roslyn.@object;
 
+            var realType = default(TypeSyntax);
+            if ((returnType is GenericNameSyntax) || (returnType is ArrayTypeSyntax))
+            {
+                realType = returnType;
+                returnType = CSharp.ParseTypeName("__temp__"); //hack
+            }
+
             var internalMethod = method.Identifier.ToString();
             if (!internalMethod.StartsWith("__concurrent"))
                 internalMethod = "__concurrent" + internalMethod;
@@ -734,6 +741,13 @@ namespace Excess.Concurrent.Compiler
                         method.Identifier.ToString(),
                         returnType,
                         internalCall));
+
+            if (realType != null)
+                ps1 = ps1.ReplaceNodes(ps1
+                    .DescendantNodes()
+                    .OfType<TypeSyntax>()
+                    .Where(type => type.ToString() == "__temp__"),
+                    (on, nn) => realType);
 
             var ps2 = publicSignal(
                 method.ParameterList,

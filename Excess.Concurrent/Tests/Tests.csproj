@@ -150,6 +150,7 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="CompilerTests.cs" />
     <Compile Include="Debug.cs" />
     <Compile Include="Mock.cs" />
     <Compile Include="Usage.cs" />

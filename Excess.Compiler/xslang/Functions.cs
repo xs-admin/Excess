@@ -130,6 +130,9 @@ namespace xslang
             if (!modifiers.Any(m => m.IsKind(SyntaxKind.StaticKeyword)))
                 method = method.AddModifiers(CSharp.Token(SyntaxKind.StaticKeyword));
 
+            if (!Roslyn.HasVisibilityModifier(method.Modifiers))
+                method = method.AddModifiers(CSharp.Token(SyntaxKind.PublicKeyword));
+
             return method;
         }
 

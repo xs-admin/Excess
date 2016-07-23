@@ -20,7 +20,7 @@ namespace Tests
             const string SourceCode = @"
             namespace Some.Namespace
             {
-                public function SomeFunction(string what)
+                function SomeFunction(string what)
                 {
                     return ""Hello "" + what;
                 }

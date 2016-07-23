@@ -11,19 +11,19 @@ namespace Tests
     public class MappingTests
     {
         [TestMethod]
-        public void MappingComments()
+        public void Mapping_Usage()
         {
-            var tree = ExcessMock.CompileWithMapping(
-                @"  class SomeClass
+            var tree = ExcessMock.CompileWithMapping(@"  
+                class SomeClass
+                {
+                    //one line comment                        
+                    public void SomeMehod()
                     {
-                        //one line comment                        
-                        public void SomeMehod()
-                        {
-                            //two line comment                        
-                            //two line comment
-                            someCall();    
-                        }    
-                    }");
+                        //two line comment                        
+                        //two line comment
+                        someCall();    
+                    }    
+                }");
 
             Assert.IsNotNull(tree);
 

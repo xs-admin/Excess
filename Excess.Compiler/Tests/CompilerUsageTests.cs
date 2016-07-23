@@ -11,10 +11,10 @@ namespace Tests
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
     [TestClass]
-    public class CompilerTests
+    public class CompilerUsageTests
     {
         [TestMethod]
-        public void LexicalTokenMatching()
+        public void LexicalTokenMatching_Usage()
         {
             var compiler = new RoslynCompiler();
             var lexical = compiler.Lexical();
@@ -47,7 +47,7 @@ namespace Tests
         }
 
         [TestMethod, Ignore] //reconcile with the extension refactoring
-        public void LexicalExtension()
+        public void LexicalExtension_Usage()
         {
             RoslynCompiler compiler = new RoslynCompiler();
             var lexical = compiler.Lexical();
@@ -121,7 +121,7 @@ namespace Tests
         }
 
         [TestMethod]
-        public void SyntacticalMatching()
+        public void SyntacticalMatching_Usage()
         {
             RoslynCompiler compiler = new RoslynCompiler();
             var syntax = compiler.Syntax();
@@ -171,7 +171,7 @@ namespace Tests
         }
 
         [TestMethod]
-        public void SyntacticalExtensions()
+        public void SyntacticalExtensions_Usage()
         {
             RoslynCompiler compiler = new RoslynCompiler();
             var syntax = compiler.Syntax();

@@ -3,7 +3,9 @@ using System.Threading;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Threading.Tasks;
 using Owin;
+using Microsoft.Owin;
 using Microsoft.Owin.Hosting;
 using Microsoft.Owin.StaticFiles;
 using Microsoft.Owin.FileSystems;
@@ -11,6 +13,10 @@ using Excess.Runtime;
 
 namespace Excess.Server.Middleware
 {
+    using FilterFunction = Func<
+        Func<string, IOwinRequest, IOwinResponse, TaskCompletionSource<bool>, __Scope, object>,  //prev
+        Func<string, IOwinRequest, IOwinResponse, TaskCompletionSource<bool>, __Scope, object>>; //next
+
     public class HttpServer
     {
         public static void Start(
@@ -52,7 +58,8 @@ namespace Excess.Server.Middleware
 
                 builder.UseExcess(initializeApp: server =>
                 {
-                    Loader.FromAssemblies(server, assemblies, except);
+                    var filters = new List<FilterFunction>();
+                    Loader.FromAssemblies(server, assemblies, filters, except);
 
                     if (nodes > 0)
                     {

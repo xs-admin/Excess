@@ -1,5 +1,6 @@
 ﻿using Excess.Compiler.Mock;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
@@ -181,6 +182,34 @@ namespace Tests
                 .DescendantNodes()
                 .OfType<StatementSyntax>()
                 .Where(statement => statement.ToString() == "__newScope.set(\"InjectedValue\", InjectedValue);")
+                .Any());
+        }
+
+        [TestMethod]
+        public void NamespaceFunction_WithoutModifiers_ShouldBePublic()
+        {
+            var tree = ExcessMock.Link(@"
+                namespace SomeNamespace
+                {
+                    function Function1()
+                    {
+                    }
+                }",
+                (compiler) => Functions.Apply(compiler));
+
+            var root = tree
+                ?.GetRoot()
+                ?.NormalizeWhitespace();
+
+            //should have created a public method
+            var method = root
+                .DescendantNodes()
+                .OfType<MethodDeclarationSyntax>()
+                .Single();
+
+            Assert.IsTrue(method
+                .Modifiers
+                .Where(modifier => modifier.IsKind(SyntaxKind.PublicKeyword))
                 .Any());
         }
 
