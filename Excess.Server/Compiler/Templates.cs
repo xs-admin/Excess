@@ -24,7 +24,8 @@ namespace Excess.Server.Compiler
                 threads: __2, 
                 except: __3,
                 nodes: __4,
-                assemblies: new [] {typeof(_5).Assembly});");
+                assemblies: new [] {typeof(_5).Assembly},
+                filters: __6);");
 
         public static Template StartNetMQServer = Template.ParseStatement(@"
             NetMQNode.Start(
@@ -125,5 +126,33 @@ namespace Excess.Server.Compiler
         public static RazorTemplate servicesFile = RazorTemplate.Parse(@"
             var xsServices = angular.module('xs.Services', []);
             @Model.Members");
+
+        public static Template SqlFilter = Template.ParseExpression(@"
+                prev =>
+                {
+                    var connectionString = __0;
+                    return (data, request, scope) => 
+                    {
+                        using (var connection = new SqlConnection(connectionString))
+                        {
+                            scope.set<SqlConnection>(connection);
+                            return prev(data, request, scope);
+                        }
+                    };
+                }
+            }");
+
+        public static ExpressionSyntax UserFilter = CSharp.ParseExpression(@"
+            prev => (data, request, scope) => 
+            {
+                scope.set<IPrincipal>(request.User);
+                return prev(data, request, scope);
+            }");
+
+        public static Template SqlConnectionStringFromConfig = Template.ParseExpression(
+            "ConfigurationManager.ConnectionStrings[__0].ConnectionString");
+
+        public static ImplicitArrayCreationExpressionSyntax EmptyArray = Template.ParseExpression("new [] {}")
+            .Get<ImplicitArrayCreationExpressionSyntax>();
     }
 }

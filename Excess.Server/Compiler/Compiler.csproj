@@ -155,6 +155,7 @@
     <Compile Include="Model\ServerInstance.cs" />
     <Compile Include="Model\ServerLocation.cs" />
     <Compile Include="Model\ServerModel.cs" />
+    <Compile Include="Model\SQLLocation.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ResponseVisitor.cs" />
     <Compile Include="Templates.cs" />

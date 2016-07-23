@@ -65,14 +65,17 @@ namespace Excess.Server.Compiler
                     .then(CompileService));
 
             compiler.Environment()
+                .dependency("System.Configuration")
                 .dependency("Excess.Server.Middleware");
 
             compiler.Lexical()
                 .indented<ServerModel, ServerInstance>("server", ExtensionKind.Type, InitApp)
-                    .match<ServerModel, ServerInstance, ServerLocation>("@{Url}",              then: SetServerLocation)
-                    .match<ServerModel, ServerInstance, ServerLocation>("on port {Port}",      then: SetServerLocation)
-                    .match<ServerModel, ServerInstance, ServerLocation>("@{Url} port {Port}",  then: SetServerLocation)
-                    .match<ServerModel, ServerInstance, ServerLocation>("@{Url}, port {Port}", then: SetServerLocation)
+                    .match<ServerModel, ServerInstance, ServerLocation>(new[] {
+                        "@{Url}",
+                        "on port {Port}",
+                        "@{Url} port {Port}",
+                        "@{Url}, port {Port}" }, 
+                        then: SetServerLocation)
 
                     .match<ServerModel, ServerInstance, ConfigModel>("using {Threads} threads", then: SetConfiguration)
                     .match<ServerModel, ServerInstance, ConfigModel>("identity @{Identity}",    then: SetConfiguration)
@@ -83,6 +86,11 @@ namespace Excess.Server.Compiler
                     .match<ServerModel, ServerInstance, ServerInstance>("new instance",
                         then: AddInstance,
                         children: child => child.match_parent())
+
+                    .match<ServerModel, ServerInstance, SQLLocation>(new[] {
+                        "Sql @{ConnectionString}",
+                        "Sql on connection {ConnectionId}", },
+                        then: (server, sql) => server.SetSqlLocation(sql))
 
                     .then()
                         .transform<ServerInstance>(LinkServerInstance);
@@ -146,6 +154,33 @@ namespace Excess.Server.Compiler
                         .Nodes
                         .SelectMany(node => node.HostedClasses)));
 
+            //find functional filters
+            var filters = new List<ExpressionSyntax>();
+            if (app.SQL != null)
+            {
+                var connectionString = default(ExpressionSyntax);
+                if (app.SQL.ConnectionString != null)
+                {
+                    Debug.Assert(app.SQL.ConnectionId == null);
+                    connectionString = Roslyn.Quoted(app.SQL.ConnectionString);
+                }
+                else
+                {
+                    Debug.Assert(app.SQL.ConnectionId != null);
+                    connectionString = Templates
+                        .SqlConnectionStringFromConfig
+                        .Get<ExpressionSyntax>(
+                            Roslyn.Quoted(app.SQL.ConnectionId));
+                }
+
+                filters.Add(Templates
+                    .SqlFilter
+                    .Get<ExpressionSyntax>(
+                        connectionString));
+            }
+
+            filters.Add(Templates.UserFilter);
+
             statements.Add(Templates
                 .StartHttpServer
                 .Get<StatementSyntax>(
@@ -154,7 +189,12 @@ namespace Excess.Server.Compiler
                     Roslyn.Constant(app.Threads),
                     except,
                     Roslyn.Constant(app.Nodes.Count),
-                    app.Id));
+                    app.Id,
+                    Templates
+                        .EmptyArray
+                        .WithInitializer(CSharp.InitializerExpression(
+                            SyntaxKind.ArrayInitializerExpression, CSharp.SeparatedList(
+                            filters)))));
 
             //generate configuration class
             var result = Templates

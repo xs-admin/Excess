@@ -15,10 +15,10 @@ using Excess.Runtime;
 namespace Excess.Server.Middleware
 {
     using FunctionAction = Action<string, IOwinRequest, IOwinResponse, TaskCompletionSource<bool>>;
-    using ExecutorFunction = Func<string, IOwinRequest, IOwinResponse, TaskCompletionSource<bool>, __Scope, object>;
+    using ExecutorFunction = Func<string, IOwinRequest, __Scope, object>;
     using FilterFunction = Func<
-        Func<string, IOwinRequest, IOwinResponse, TaskCompletionSource<bool>, __Scope, object>,  //prev
-        Func<string, IOwinRequest, IOwinResponse, TaskCompletionSource<bool>, __Scope, object>>; //next
+        Func<string, IOwinRequest, __Scope, object>,  //prev
+        Func<string, IOwinRequest, __Scope, object>>; //next
 
     public class ExcessOwinMiddleware : OwinMiddleware
     {
@@ -120,7 +120,7 @@ namespace Excess.Server.Middleware
                         var instantiator = Application.GetService<IInstantiator>();
 
                         //build the running function
-                        ExecutorFunction eval = (data, request, response, continuation, scope) =>
+                        ExecutorFunction eval = (data, request, scope) =>
                         {
                             var args = JObject
                                 .Parse(data);
@@ -151,10 +151,9 @@ namespace Excess.Server.Middleware
                         {
                             //set up the scope
                             var scope = new __Scope(instantiator);
-
                             try
                             {
-                                var responseValue = eval(data, request, response, continuation, scope);
+                                var responseValue = eval(data, request, scope);
 
                                 SendResponse(response, 
                                     $"{{\"__res\": {JsonConvert.SerializeObject(responseValue)}}}",

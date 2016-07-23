@@ -37,7 +37,7 @@ namespace Excess.Compiler.Mock
 
             //do the compilation
             compiler.apply(document);
-            document.applyChanges();
+            document.applyChanges(CompilerStage.Syntactical);
 
             if (mapper != null)
             {

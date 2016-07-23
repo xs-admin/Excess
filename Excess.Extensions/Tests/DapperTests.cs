@@ -14,34 +14,38 @@ namespace Tests
     public class DapperTests
     {
         [TestMethod]
-        public void Query_Usage()
+        public void DapperQuery_Usage()
         {
             var tree = ExcessMock.Compile(@"
-                class SomeClass
+                function SomeFunction(int SomeInt)
                 {
-                    void SomeMethod(int SomeInt)
+                    IEnumerable<SomeModel> result = sql
                     {
-                        IEnumerable<SomeModel> result = sql
-                        {
-                            select * from SomeTable
-                            where SomeColumn > @SomeInt
-                        }
+                        select * from SomeTable
+                        where SomeColumn > @SomeInt
                     }
-                }", builder: (compiler) => DapperExtension.Apply(compiler));
+                }", 
+                builder: compiler =>
+                {
+                    xslang.Functions.Apply(compiler);
+                    DapperExtension.Apply(compiler);
+                });
 
             //must have a call to __connection.Query
-            var invocation = (tree.GetRoot()
+            var invocation = ((tree.GetRoot()
                 .DescendantNodes()
                 .OfType<MethodDeclarationSyntax>()
                 .Single()
                 .Body
                     .Statements
-                    .Single() as LocalDeclarationStatementSyntax)
-                        .Declaration
-                        .Variables
-                        .Single()
-                        .Initializer
-                            .Value as InvocationExpressionSyntax;
+                    .Single() as BlockSyntax)
+                        .Statements
+                        .Last() as LocalDeclarationStatementSyntax)
+                            .Declaration
+                            .Variables
+                            .Single()
+                            .Initializer
+                                .Value as InvocationExpressionSyntax;
 
             Assert.IsNotNull(invocation);
             Assert.IsTrue(invocation is InvocationExpressionSyntax);
@@ -75,7 +79,7 @@ namespace Tests
         }
 
         [TestMethod]
-        public void Command_Usage()
+        public void DapperCommand_Usage()
         {
             var tree = ExcessMock.Compile(@"
                 class SomeClass

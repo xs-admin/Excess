@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
 using System.Text;
-using System.Threading.Tasks;
+using System.Data.SqlClient;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -22,7 +22,12 @@ namespace SQL.Dapper
         public static void Apply(ExcessCompiler compiler, Scope scope = null)
         {
             scope?.AddKeywords("sql");
-            compiler.Lexical().extension("sql", ExtensionKind.Code, ParseDapper);
+            compiler.Lexical()
+                .extension("sql", ExtensionKind.Code, ParseDapper);
+
+            compiler.Environment()
+                .dependency("Dapper")
+                .dependency<SqlConnection>("System.Data.SqlClient");
         }
 
         private static SyntaxNode ParseDapper(SyntaxNode node, Scope scope, LexicalExtension<SyntaxToken> extension)
@@ -33,12 +38,52 @@ namespace SQL.Dapper
                 .Skip(1)
                 .Take(tokenCount - 2);
 
+            var result = default(SyntaxNode);
             if (node is LocalDeclarationStatementSyntax)
-                return ParseQuery(node as LocalDeclarationStatementSyntax, scope, withoutBraces);
+                result = ParseQuery(node as LocalDeclarationStatementSyntax, scope, withoutBraces);
             else if (node is ExpressionStatementSyntax)
-                return ParseCommand(node as ExpressionStatementSyntax, scope, withoutBraces);
+                result = ParseCommand(node as ExpressionStatementSyntax, scope, withoutBraces);
 
-            Debug.Assert(false); //td: error
+            Debug.Assert(result != null); //td: error
+
+            //schedule a search for __connection, after the first pass
+            var document = scope.GetDocument<SyntaxToken, SyntaxNode, SemanticModel>();
+            return document.change(result, SkipPass); 
+        }
+
+        private static SyntaxNode SkipPass(SyntaxNode node, Scope scope)
+        {
+            var document = scope.GetDocument<SyntaxToken, SyntaxNode, SemanticModel>();
+            return document.change(node, LinkDapper);
+        }
+
+        private static StatementSyntax ConnectionFromContext = CSharp.ParseStatement("var __connection = __scope.get<SqlConnection>();");
+        private static SyntaxNode LinkDapper(SyntaxNode node, Scope scope)
+        {
+            var method = node
+                .Ancestors()
+                .OfType<MethodDeclarationSyntax>()
+                .FirstOrDefault();
+
+            if (method == null)
+            {
+                Debug.Assert(false); //td: error
+                return node;
+            }
+
+            if (method
+                .ParameterList
+                .Parameters
+                .Any(parameter => parameter
+                    .Identifier
+                    .ToString() == "__scope"))
+            {
+                return CSharp.Block(
+                    ConnectionFromContext,
+                    (StatementSyntax)node);
+            }
+
+            //assume __connection is available
             return node;
         }
 

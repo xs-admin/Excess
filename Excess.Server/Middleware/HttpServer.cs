@@ -14,8 +14,8 @@ using Excess.Runtime;
 namespace Excess.Server.Middleware
 {
     using FilterFunction = Func<
-        Func<string, IOwinRequest, IOwinResponse, TaskCompletionSource<bool>, __Scope, object>,  //prev
-        Func<string, IOwinRequest, IOwinResponse, TaskCompletionSource<bool>, __Scope, object>>; //next
+        Func<string, IOwinRequest, __Scope, object>,  //prev
+        Func<string, IOwinRequest, __Scope, object>>; //next
 
     public class HttpServer
     {
@@ -26,7 +26,8 @@ namespace Excess.Server.Middleware
             string staticFiles = null,
             int nodes = 0,
             IEnumerable<Assembly> assemblies = null,
-            IEnumerable<string> except = null)
+            IEnumerable<string> except = null,
+            IEnumerable<FilterFunction> filters = null)
         {
             if (assemblies != null)
                 Application.Start(assemblies);
@@ -56,32 +57,33 @@ namespace Excess.Server.Middleware
                     builder.UseFileServer(options);
                 }
 
-                builder.UseExcess(initializeApp: server =>
-                {
-                    var filters = new List<FilterFunction>();
-                    Loader.FromAssemblies(server, assemblies, filters, except);
-
-                    if (nodes > 0)
+                builder.UseExcess(
+                    initializeApp: server =>
                     {
-                        throw new NotImplementedException();
+                        Loader.FromAssemblies(server, assemblies, except);
 
-                        //start the identity server if we have any nodes
-                        var error = null as Exception;
-                        var waiter = new ManualResetEvent(false);
+                        if (nodes > 0)
+                        {
+                            throw new NotImplementedException();
 
-                        NetMQFunctions.StartServer(server, identityUrl, 
-                            expectedClients: nodes,
-                            connected: ex => 
-                            {
-                                error = ex;
-                                waiter.Set();
-                            });
+                            //start the identity server if we have any nodes
+                            var error = null as Exception;
+                            var waiter = new ManualResetEvent(false);
 
-                        waiter.WaitOne(); //td: timeout
-                        if (error != null)
-                            throw error;
-                    }
-                });
+                            NetMQFunctions.StartServer(server, identityUrl, 
+                                expectedClients: nodes,
+                                connected: ex => 
+                                {
+                                    error = ex;
+                                    waiter.Set();
+                                });
+
+                            waiter.WaitOne(); //td: timeout
+                            if (error != null)
+                                throw error;
+                        }
+                    }, 
+                    filters: filters);
             }))
             {
                 Console.ReadKey();

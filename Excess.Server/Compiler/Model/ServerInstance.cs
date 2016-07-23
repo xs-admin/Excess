@@ -21,6 +21,7 @@ namespace Excess.Server.Compiler.Model
         public string Id { get; set; }
         public ServerInstance Parent { get; set; }
         public ServerLocation Host { get; private set; }
+        public SQLLocation  SQL { get; private set; }
 
         public string Identity { get; set; }
         public int Threads { get; set; }
@@ -38,6 +39,14 @@ namespace Excess.Server.Compiler.Model
         {
             get { return Host.Port; }
             set { Host.Port = value; }
+        }
+
+        public void SetSqlLocation(SQLLocation sql)
+        {
+            if (SQL != null)
+                throw new InvalidOperationException("already has sql");
+
+            SQL = sql;
         }
     }
 }

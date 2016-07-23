@@ -11,15 +11,14 @@ using Excess.Runtime;
 namespace Excess.Server.Middleware
 {
     using FilterFunction = Func<
-        Func<string, IOwinRequest, IOwinResponse, TaskCompletionSource<bool>, __Scope, object>,  //prev
-        Func<string, IOwinRequest, IOwinResponse, TaskCompletionSource<bool>, __Scope, object>>; //next
+        Func<string, IOwinRequest, __Scope, object>,  //prev
+        Func<string, IOwinRequest, __Scope, object>>; //next
 
     public class Loader
     {
         public static void FromAssemblies(
             IDistributedApp       app, 
             IEnumerable<Assembly> assemblies, 
-            IList<FilterFunction> filters = null,
             IEnumerable<string>   except = null,
             IEnumerable<string>   only = null)
         {
@@ -53,20 +52,15 @@ namespace Excess.Server.Middleware
 
                     if (isServiceType || isConcurrentType)
                         continue;
-
-                    //check functionals
-                    var wrapperFunc = default(FilterFunction);
-                    if (filters != null && isWrapperFunction(type, out wrapperFunc))
-                        filters.Add(wrapperFunc);
                 }
             }
         }
 
-        private static bool isWrapperFunction(Type type, out FilterFunction wrapperFunc)
+        private static bool isFilterFunction(Type type, out FilterFunction filterFunc)
         {
             var attribute = type
                 .CustomAttributes
-                .Where(attr => attr.AttributeType.Name == "WrapperFunction")
+                .Where(attr => attr.AttributeType.Name == "ServerFilter")
                 .SingleOrDefault();
 
             if (attribute != null)
@@ -74,15 +68,15 @@ namespace Excess.Server.Middleware
                 var method = type.GetMethod("Apply");
                 Debug.Assert(method != null);
 
-                wrapperFunc = wrapped =>
-                    (data, request, response, completion, scope) => method.Invoke(null, new object[] {
-                            data, request, response, completion, wrapped
-                        });
+                filterFunc = wrapped =>
+                    (data, request, scope) => method
+                        .Invoke(null, new object[] {
+                            request, wrapped });
 
                 return true;
             }
 
-            wrapperFunc = null;
+            filterFunc = null;
             return false;
         }
 

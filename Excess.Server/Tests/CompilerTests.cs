@@ -8,7 +8,7 @@ using Excess.Server.Compiler;
 namespace Tests
 {
     [TestClass]
-    public class LanguageExtensionTests
+    public class CompilerTests
     {
         [TestMethod]
         public void Server_Usage()
@@ -50,6 +50,37 @@ namespace Tests
                 .OfType<MethodDeclarationSyntax>()
                 .Where(method => method.Identifier.ToString() == "Start")
                 .Count());
+        }
+
+        [TestMethod]
+        public void Server_SQL_Usage()
+        {
+            //setup
+            const string Code = @"
+            namespace SomeNS            
+            {
+                server SomeServer
+                {
+                    Sql on connection SomeConnectionId
+                }
+            }";
+
+            string output;
+            var tree = Mock.Compile(Code, out output);
+
+            //should have a filters parameter with an array as value and 2 items
+            var filters = tree
+                .GetRoot()
+                .DescendantNodes()
+                .OfType<ArgumentSyntax>()
+                .Where(arg => arg.NameColon?.Name.ToString() == "filters")
+                .Single();
+
+            Assert.IsTrue(filters.Expression is ImplicitArrayCreationExpressionSyntax);
+            Assert.AreEqual(2, (filters.Expression as ImplicitArrayCreationExpressionSyntax)
+                .Initializer
+                .Expressions
+                .Count);
         }
 
         [TestMethod]

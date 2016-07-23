@@ -9,7 +9,10 @@ using Excess.Runtime;
 
 namespace Excess.Server.Middleware
 {
-    using ContextAction = Action<IOwinRequest, __Scope>;
+    using ExecutorFunction = Func<string, IOwinRequest, __Scope, object>;
+    using FilterFunction = Func<
+        Func<string, IOwinRequest, __Scope, object>,  //prev
+        Func<string, IOwinRequest, __Scope, object>>; //next
 
     public class ConcurrentAppSettings
     {
@@ -35,7 +38,7 @@ namespace Excess.Server.Middleware
             Action<ConcurrentAppSettings> initializeSettings = null,
             Action<IDistributedApp> initializeApp = null,
             IEnumerable<Type> functional = null,
-            IEnumerable<ContextAction> context = null)
+            IEnumerable<FilterFunction> filters = null)
         {
             var settings = new ConcurrentAppSettings();
             initializeSettings?.Invoke(settings);
@@ -47,7 +50,7 @@ namespace Excess.Server.Middleware
 
             initializeApp?.Invoke(server);
 
-            app.Use<ExcessOwinMiddleware>(server, functional, context);
+            app.Use<ExcessOwinMiddleware>(server, functional, filters);
             server.Start();
         }
 

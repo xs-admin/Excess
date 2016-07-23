@@ -190,7 +190,7 @@
   <ItemGroup>
     <Compile Include="Debug.cs" />
     <Compile Include="FunctionalTests.cs" />
-    <Compile Include="LanguageExtensionTests.cs" />
+    <Compile Include="CompilerTests.cs" />
     <Compile Include="HttpServerTests.cs" />
     <Compile Include="MockStorage.cs" />
     <Compile Include="NetMQTests.cs" />

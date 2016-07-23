@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+        <id>Excess.Extensions.Dapper</id>
+        <version>0.48.0-alpha</version>
+        <authors>Excess</authors>
+        <requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <description>C# sql extensions with Dapper</description>
+
+        <dependencies>
+          <dependency id="Dapper" version="1.50.2"/>
+        </dependencies>
+    </metadata>
+    <files>
+        <file src="..\SQL.Dapper\bin\Debug\SQL.Dapper.dll" target="tools\SQL.Dapper.dll" />
+        <file src="..\SQL.Dapper\bin\Debug\SQL.Dapper.pdb" target="tools\SQL.Dapper.pdb" />
+    </files>
+</package>
