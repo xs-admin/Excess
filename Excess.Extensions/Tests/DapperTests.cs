@@ -17,12 +17,18 @@ namespace Tests
         public void DapperQuery_Usage()
         {
             var tree = ExcessMock.Compile(@"
-                function SomeFunction(int SomeInt)
+                function SomeFunction(int SomeInt, int SomeId)
                 {
                     IEnumerable<SomeModel> result = sql
                     {
                         select * from SomeTable
                         where SomeColumn > @SomeInt
+                    }
+
+                    SomeModel anotherResult = sql
+                    {
+                        select * from SomeTable
+                        where IdColumn > @SomeId
                     }
                 }", 
                 builder: compiler =>
@@ -38,7 +44,7 @@ namespace Tests
                 .Single()
                 .Body
                     .Statements
-                    .Single() as BlockSyntax)
+                    .First() as BlockSyntax)
                         .Statements
                         .Last() as LocalDeclarationStatementSyntax)
                             .Declaration
@@ -58,7 +64,7 @@ namespace Tests
             var literal = tree.GetRoot()
                 .DescendantNodes()
                 .OfType<LiteralExpressionSyntax>()
-                .Single()
+                .First()
                 .ToString();
 
             Assert.IsTrue(literal.Contains("@\""));
@@ -68,7 +74,7 @@ namespace Tests
             var parameters = tree.GetRoot()
                 .DescendantNodes()
                 .OfType<AnonymousObjectCreationExpressionSyntax>()
-                .Single();
+                .First();
 
             Assert.IsTrue(parameters
                 .Initializers
@@ -76,6 +82,27 @@ namespace Tests
                     .NameEquals
                     .Name
                     .ToString() == "SomeInt"));
+
+            //must have added a second call
+            invocation = ((tree.GetRoot()
+                .DescendantNodes()
+                .OfType<MethodDeclarationSyntax>()
+                .Single()
+                .Body
+                    .Statements
+                    .Last() as BlockSyntax)
+                        .Statements
+                        .Last() as LocalDeclarationStatementSyntax)
+                            .Declaration
+                            .Variables
+                            .Single()
+                            .Initializer
+                                .Value as InvocationExpressionSyntax;
+
+            //containing a Single() call
+            Assert.AreEqual(1, invocation
+                    .DescendantTokens()
+                    .Count(token => token.ToString() == "Single"));
         }
 
         [TestMethod]

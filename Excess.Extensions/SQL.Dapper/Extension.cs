@@ -16,7 +16,7 @@ namespace SQL.Dapper
     using ExcessCompiler = Excess.Compiler.ICompiler<SyntaxToken, SyntaxNode, SemanticModel>;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
-    [Extension("sql")]
+    [Extension("dapper")]
     public class DapperExtension
     {
         public static void Apply(ExcessCompiler compiler, Scope scope = null)
@@ -88,17 +88,26 @@ namespace SQL.Dapper
             return node;
         }
 
+        class QueryTypeInfo
+        {
+            public bool isEnumerable { get; set; }
+            public TypeSyntax DapperType { get; set; }
+        }
+
         private static Template DapperQuery = Template.ParseExpression("__connection.Query<__0>(__1, __2)");
         private static SyntaxNode ParseQuery(LocalDeclarationStatementSyntax node, Scope scope, IEnumerable<SyntaxToken> body)
         {
             var declaration = node.Declaration;
             var variable = declaration.Variables.Single(); //td: error
-            var type = declaration.Type;
-            if (!ValidateQueryType(type, out type))
+
+            var typeInfo = ParseQueryType(declaration.Type);
+            if (typeInfo == null)
             {
                 Debug.Assert(false); //td: error
                 return node;
             }
+
+            var type = typeInfo.DapperType;
 
             var parameters = default(AnonymousObjectCreationExpressionSyntax);
             var sqlQueryString = ParseBody(body, scope, out parameters);
@@ -108,14 +117,27 @@ namespace SQL.Dapper
                 return node;
             }
 
+            var sqlExpression = DapperQuery.Get<ExpressionSyntax>(
+                type,
+                sqlQueryString,
+                parameters);
+
+            if (!typeInfo.isEnumerable)
+            {
+                //we expect one result
+                var expr = CSharp.MemberAccessExpression(
+                    kind: SyntaxKind.SimpleMemberAccessExpression,
+                    expression: sqlExpression,
+                    name: (SimpleNameSyntax)CSharp.ParseName("Single"));
+
+                sqlExpression = CSharp.InvocationExpression(expr);
+            }
+
             return node
                 .WithDeclaration(node.Declaration
                     .WithVariables(CSharp.SeparatedList(new[] {
                         variable.WithInitializer(variable.Initializer
-                            .WithValue(DapperQuery.Get<ExpressionSyntax>(
-                                type,
-                                sqlQueryString,
-                                parameters)))})));
+                            .WithValue(sqlExpression))})));
         }
 
         private static Template DapperCommand = Template.ParseExpression("__connection.Execute(__0, __1)");
@@ -134,28 +156,37 @@ namespace SQL.Dapper
                     sqlQueryString, parameters));
         }
 
-        private static bool ValidateQueryType(TypeSyntax type, out TypeSyntax innerType)
+        private static QueryTypeInfo ParseQueryType(TypeSyntax type)
         {
-            innerType = null;
+            var result = new QueryTypeInfo();
             if (type is GenericNameSyntax)
             {
                 var generic = type as GenericNameSyntax;
+                if (generic.Identifier.ToString() != "IEnumerable")
+                {
+                    Debug.Assert(false); //td: error
+                    return null;
+                }
+
                 if (generic.Arity != 1)
                 {
                     Debug.Assert(false); //td: error
-                    return false;
+                    return null;
                 }
 
-                innerType = generic
+                result.isEnumerable = true;
+                result.DapperType = generic
                     .TypeArgumentList
                     .Arguments
                     .Single();
-
-                return true;
+            }
+            else
+            {
+                Debug.Assert(result.isEnumerable == false);
+                result.DapperType = type;
             }
 
-            Debug.Assert(false); //td: error
-            return false;
+            return result;
         }
 
         private static ExpressionSyntax ParseBody(IEnumerable<SyntaxToken> body, Scope scope, out AnonymousObjectCreationExpressionSyntax parameters)

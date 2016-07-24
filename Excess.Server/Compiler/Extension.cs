@@ -427,8 +427,10 @@ namespace Excess.Server.Compiler
         private static string calculateResponse(TypeSyntax type, SemanticModel model)
         {
             var typeSymbol = model.GetSymbolInfo(type).Symbol as ITypeSymbol;
-            Debug.Assert(typeSymbol != null);
-            return ResponseVisitor.Get(typeSymbol, "response");
+            if (typeSymbol != null)
+                return ResponseVisitor.Get(typeSymbol, "response");
+
+            return string.Empty;
         }
 
         private static string valueString(ExpressionSyntax value, TypeSyntax type, SemanticModel model)
