@@ -10,5 +10,6 @@ namespace Excess.Server.Compiler.Model
     {
         public string ConnectionId { get; set; }
         public string ConnectionString { get; set; }
+        public string ConnectionInstantiator { get; set; }
     }
 }

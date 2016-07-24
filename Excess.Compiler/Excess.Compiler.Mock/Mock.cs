@@ -14,6 +14,8 @@ namespace Excess.Compiler.Mock
     using Compiler = ICompiler<SyntaxToken, SyntaxNode, SemanticModel>;
     using Mapper = IMappingService<SyntaxToken, SyntaxNode>;
     using Microsoft.CodeAnalysis.CSharp;
+    using System.Reflection;
+    using System.IO;
     public static class ExcessMock
     {
         public static SyntaxTree CompileWithMapping(string code, Action<Compiler> builder = null)
@@ -86,6 +88,43 @@ namespace Excess.Compiler.Mock
             document.Model = compilation.GetSemanticModel(node.SyntaxTree);
             document.applyChanges(CompilerStage.Finished);
             return document.SyntaxRoot.SyntaxTree;
+        }
+
+        public static Assembly Build(string code, Action<Compiler> builder)
+        {
+            //build a compiler
+            var compiler = new RoslynCompiler();
+            if (builder == null)
+                builder = (c) => XSLanguage.Apply(c);
+            builder(compiler);
+
+            //then a document
+            var document = new RoslynDocument(compiler.Scope, code);
+
+            //do the compilation
+            compiler.apply(document);
+            document.applyChanges(CompilerStage.Syntactical);
+
+            var node = document.SyntaxRoot;
+            var compilation = CSharpCompilation.Create("mock-assembly",
+                syntaxTrees: new[] { node.SyntaxTree },
+                references: new[]
+                {
+                    MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
+                    MetadataReference.CreateFromFile(typeof(Enumerable).Assembly.Location),
+                    MetadataReference.CreateFromFile(typeof(Dictionary<int, int>).Assembly.Location),
+                });
+
+            document.SyntaxRoot = node;
+            document.Model = compilation.GetSemanticModel(node.SyntaxTree);
+            document.applyChanges(CompilerStage.Finished);
+
+            var stream = new MemoryStream();
+            var result = compilation.Emit(stream);
+            if (!result.Success)
+                return null;
+
+            return Assembly.Load(stream.GetBuffer()); 
         }
     }
 }

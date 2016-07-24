@@ -88,8 +88,10 @@ namespace Excess.Server.Compiler
                         children: child => child.match_parent())
 
                     .match<ServerModel, ServerInstance, SQLLocation>(new[] {
-                        "Sql @{ConnectionString}",
-                        "Sql on connection {ConnectionId}", },
+                        "sql @{ConnectionString}",
+                        "sql with {ConnectionInstantiator} @{ConnectionString}",
+                        "sql on connection {ConnectionId}",
+                        "sql with {ConnectionInstantiator} on connection {ConnectionId}",},
                         then: (server, sql) => server.SetSqlLocation(sql))
 
                     .then()
@@ -158,6 +160,7 @@ namespace Excess.Server.Compiler
             var filters = new List<ExpressionSyntax>();
             if (app.SQL != null)
             {
+                aaa
                 var connectionString = default(ExpressionSyntax);
                 if (app.SQL.ConnectionString != null)
                 {
@@ -181,6 +184,7 @@ namespace Excess.Server.Compiler
 
             filters.Add(Templates.UserFilter);
 
+            //start the server
             statements.Add(Templates
                 .StartHttpServer
                 .Get<StatementSyntax>(

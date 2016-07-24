@@ -53,6 +53,14 @@ namespace Excess.Runtime
             return value;
         }
 
+        public void set<T>(T value)
+        {
+            if (value == null)
+                throw new InvalidOperationException($"type not instantiable: {typeof(T)}");
+
+            set(key<T>(), value);
+        }
+
         void set(string key, object value)
         {
             if (_bindings.ContainsKey(key))

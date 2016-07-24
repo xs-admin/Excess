@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Tests.Mock;
+using xslang;
 
 namespace Tests
 {
@@ -30,10 +32,10 @@ namespace Tests
                         select * from SomeTable
                         where IdColumn > @SomeId
                     }
-                }", 
+                }",
                 builder: compiler =>
                 {
-                    xslang.Functions.Apply(compiler);
+                    Functions.Apply(compiler);
                     DapperExtension.Apply(compiler);
                 });
 
@@ -160,6 +162,33 @@ namespace Tests
                     .NameEquals
                     .Name
                     .ToString() == "SomeInt"));
+        }
+
+        [TestMethod]
+        public void DapperRuntime_Usage()
+        {
+            var dapper = DapperMock.Compile(@"
+                function Values(int SomeInt)
+                {
+                    IEnumerable<int> result = sql()
+                    {
+                        select * from SomeTable
+                    }
+
+                    return result;
+                }", 
+                database: @"
+                    CREATE TABLE SomeTable
+                    (
+                        SomeValue int
+                    );
+
+                    INSERT INTO SomeTable (SomeValue)
+                    VALUES (1), (2), (3), (4), (5), (6)");
+
+            var allValues = dapper.GetMany<int>("Values");
+            Assert.AreEqual(6, allValues.Count());
+
         }
     }
 }
