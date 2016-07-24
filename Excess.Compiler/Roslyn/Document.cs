@@ -112,9 +112,11 @@ namespace Excess.Compiler.Roslyn
             {
                 SyntaxNode tNode = node
                     .GetAnnotatedNodes(RoslynCompiler.NodeIdAnnotation + transformer.Key.ToString())
-                    .First();
+                    .FirstOrDefault();
 
-                Debug.Assert(tNode != null); //td: cases
+                if (tNode == null)
+                    continue; 
+
                 nodes[tNode] = transformer.Value;
             }
 

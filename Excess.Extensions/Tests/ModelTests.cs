@@ -64,5 +64,28 @@ namespace Tests
                             .Any(modifier => modifier.IsKind(SyntaxKind.PrivateKeyword))))
                 .Count());
         }
+
+        [TestMethod]
+        public void Model_WithMultiTokenType_ShouldSucceed()
+        {
+            var tree = ExcessMock.Compile(@"
+                namespace SomeNamespace
+                {
+	                public model SomeModel 
+	                {
+                        IEnumerable<int> SomeGeneric;
+		                Guid[] SomeArray;
+	                }
+                }", builder: (compiler) => ModelExtension.Apply(compiler));
+
+            Assert.IsNotNull(tree);
+
+            //must have transform both fields into properties
+            Assert.AreEqual(2, tree
+                .GetRoot()
+                .DescendantNodes()
+                .OfType<PropertyDeclarationSyntax>()
+                .Count());
+        }
     }
 }

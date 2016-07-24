@@ -26,6 +26,7 @@ namespace SQL.Dapper
                 .extension("sql", ExtensionKind.Code, ParseDapper);
 
             compiler.Environment()
+                .dependency("Excess.Runtime")
                 .dependency("Dapper")
                 .dependency<SqlConnection>("System.Data.SqlClient");
         }

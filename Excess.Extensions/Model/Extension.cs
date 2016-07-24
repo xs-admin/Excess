@@ -20,7 +20,7 @@ namespace Excess.Extensions.Model
             compiler.extension("model", ParseModel);
         }
 
-        private static Template ModelProperty = Template.Parse("public __0 _1 { get; private set; }");
+        private static Template ModelProperty = Template.Parse("public __0 T { get; private set; }");
 
         private static TypeDeclarationSyntax ParseModel(ClassDeclarationSyntax @class, ParameterListSyntax parameters, Scope scope)
         {
@@ -45,7 +45,8 @@ namespace Excess.Extensions.Model
                             ? variable.Initializer.Value
                             : CSharp.DefaultExpression(type))));
 
-                props.Add(ModelProperty.Get<PropertyDeclarationSyntax>(type, variable.Identifier));
+                props.Add(ModelProperty.Get<PropertyDeclarationSyntax>(type)
+                    .WithIdentifier(variable.Identifier));
             }
 
             return CSharp.StructDeclaration(@class.Identifier)
