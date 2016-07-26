@@ -66,6 +66,7 @@ namespace Excess.Server.Compiler
 
             compiler.Environment()
                 .dependency("System.Configuration")
+                .dependency("System.Security.Principal")
                 .dependency("Excess.Server.Middleware");
 
             compiler.Lexical()

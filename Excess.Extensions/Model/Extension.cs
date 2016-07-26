@@ -10,7 +10,7 @@ namespace Excess.Extensions.Model
 {
     using ExcessCompiler = ICompiler<SyntaxToken, SyntaxNode, SemanticModel>;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
-
+    using Microsoft.CodeAnalysis.CSharp;
     [Extension("model")]
     public class ModelExtension
     {
@@ -49,9 +49,13 @@ namespace Excess.Extensions.Model
                     .WithIdentifier(variable.Identifier));
             }
 
-            return CSharp.StructDeclaration(@class.Identifier)
-                .AddMembers(GenerateConstructor(@class, init))
-                .AddMembers(props.ToArray());
+            if (!RoslynCompiler.HasVisibilityModifier(@class.Modifiers))
+                @class = @class.AddModifiers(CSharp.Token(SyntaxKind.PublicKeyword));
+
+            return @class
+                .WithMembers(CSharp.List<MemberDeclarationSyntax>(
+                    props.Union(new[] {
+                    GenerateConstructor(@class, init)})));
         }
 
         private static Template ModelAssign = Template.ParseStatement(

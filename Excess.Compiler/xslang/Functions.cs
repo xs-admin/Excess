@@ -55,6 +55,7 @@ namespace xslang
 
         private static SyntaxNode ProcessMemberFunction(SyntaxNode node, Scope scope)
         {
+
             var document = scope.GetDocument<SyntaxToken, SyntaxNode, SemanticModel>();
 
             if (node is MethodDeclarationSyntax)
