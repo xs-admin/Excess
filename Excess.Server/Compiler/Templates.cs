@@ -133,9 +133,9 @@ namespace Excess.Server.Compiler
                     var connectionString = __0;
                     return (data, request, scope) => 
                     {
-                        using (var connection = new SqlConnection(connectionString))
+                        using (var connection = new __1(connectionString))
                         {
-                            scope.set<SqlConnection>(connection);
+                            scope.set<IDbConnection>(connection);
                             return prev(data, request, scope);
                         }
                     };

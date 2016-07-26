@@ -160,7 +160,6 @@ namespace Excess.Server.Compiler
             var filters = new List<ExpressionSyntax>();
             if (app.SQL != null)
             {
-                aaa
                 var connectionString = default(ExpressionSyntax);
                 if (app.SQL.ConnectionString != null)
                 {
@@ -176,10 +175,12 @@ namespace Excess.Server.Compiler
                             Roslyn.Quoted(app.SQL.ConnectionId));
                 }
 
+                var connectionClass = app.SQL.ConnectionInstantiator ?? "SqlConnection";
                 filters.Add(Templates
                     .SqlFilter
                     .Get<ExpressionSyntax>(
-                        connectionString));
+                        connectionString,
+                        CSharp.IdentifierName(connectionClass)));
             }
 
             filters.Add(Templates.UserFilter);
@@ -366,15 +367,15 @@ namespace Excess.Server.Compiler
                 },
                 fields: (name, type, value) =>
                 {
-                        //td: shall we transmit properties?
-                        //result.AppendLine(Templates
-                        //    .jsProperty
-                        //    .Render(new
-                        //    {
-                        //        Name = name.ToString(),
-                        //        Value = valueString(value, type, model)
-                        //    }));
-                    });
+                    //td: shall we transmit properties?
+                    //result.AppendLine(Templates
+                    //    .jsProperty
+                    //    .Render(new
+                    //    {
+                    //        Name = name.ToString(),
+                    //        Value = valueString(value, type, model)
+                    //    }));
+                });
 
             return result.ToString();
         }

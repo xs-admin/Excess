@@ -925,9 +925,10 @@ namespace Excess.Compiler.Roslyn
             }
 
             if (rt == null)
-                return @dynamic;
+                return @object;
 
-            return CSharp.ParseTypeName(rt.Name);
+            var syntaxReference = rt.DeclaringSyntaxReferences.SingleOrDefault();
+            return CSharp.ParseTypeName(rt.ToString());
         }
 
         //td: !!! refactor the marking

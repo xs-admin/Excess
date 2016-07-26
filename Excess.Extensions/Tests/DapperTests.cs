@@ -168,7 +168,7 @@ namespace Tests
         public void DapperRuntime_Usage()
         {
             var dapper = DapperMock.Compile(@"
-                function Values(int SomeInt)
+                function Values()
                 {
                     IEnumerable<int> result = sql()
                     {

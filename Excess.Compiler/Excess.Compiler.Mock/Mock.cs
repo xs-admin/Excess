@@ -16,6 +16,7 @@ namespace Excess.Compiler.Mock
     using Microsoft.CodeAnalysis.CSharp;
     using System.Reflection;
     using System.IO;
+    using System.Collections;
     public static class ExcessMock
     {
         public static SyntaxTree CompileWithMapping(string code, Action<Compiler> builder = null)
@@ -90,7 +91,7 @@ namespace Excess.Compiler.Mock
             return document.SyntaxRoot.SyntaxTree;
         }
 
-        public static Assembly Build(string code, Action<Compiler> builder)
+        public static Assembly Build(string code, Action<Compiler> builder, IEnumerable<Type> referenceTypes)
         {
             //build a compiler
             var compiler = new RoslynCompiler();
@@ -106,18 +107,29 @@ namespace Excess.Compiler.Mock
             document.applyChanges(CompilerStage.Syntactical);
 
             var node = document.SyntaxRoot;
-            var compilation = CSharpCompilation.Create("mock-assembly",
-                syntaxTrees: new[] { node.SyntaxTree },
-                references: new[]
+            var references = referenceTypes
+                .Select(refType => MetadataReference.CreateFromFile(refType.Assembly.Location))
+                .Union(new[]
                 {
                     MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
+                    MetadataReference.CreateFromFile(typeof(IEnumerable).Assembly.Location),
                     MetadataReference.CreateFromFile(typeof(Enumerable).Assembly.Location),
                     MetadataReference.CreateFromFile(typeof(Dictionary<int, int>).Assembly.Location),
                 });
 
+            var compilation = CSharpCompilation.Create("mock-assembly",
+                syntaxTrees: new[] { node.SyntaxTree },
+                references: references,
+                options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+
             document.SyntaxRoot = node;
             document.Model = compilation.GetSemanticModel(node.SyntaxTree);
             document.applyChanges(CompilerStage.Finished);
+
+            //build
+            compilation = compilation.ReplaceSyntaxTree(
+                compilation.SyntaxTrees.Single(),
+                document.SyntaxRoot.SyntaxTree);
 
             var stream = new MemoryStream();
             var result = compilation.Emit(stream);

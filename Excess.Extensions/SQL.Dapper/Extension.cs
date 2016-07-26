@@ -1,9 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
 using System.Text;
-using System.Data.SqlClient;
+using System.Data;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -28,7 +27,9 @@ namespace SQL.Dapper
             compiler.Environment()
                 .dependency("Excess.Runtime")
                 .dependency("Dapper")
-                .dependency<SqlConnection>("System.Data.SqlClient");
+                .dependency<IDbConnection>("System.Data")
+                .dependency("System.Collections.Generic")
+                .dependency("System.Linq");
         }
 
         private static SyntaxNode ParseDapper(SyntaxNode node, Scope scope, LexicalExtension<SyntaxToken> extension)
@@ -58,7 +59,7 @@ namespace SQL.Dapper
             return document.change(node, LinkDapper);
         }
 
-        private static StatementSyntax ConnectionFromContext = CSharp.ParseStatement("var __connection = __scope.get<SqlConnection>();");
+        private static StatementSyntax ConnectionFromContext = CSharp.ParseStatement("var __connection = __scope.get<IDbConnection>();");
         private static SyntaxNode LinkDapper(SyntaxNode node, Scope scope)
         {
             var method = node
@@ -79,12 +80,32 @@ namespace SQL.Dapper
                     .Identifier
                     .ToString() == "__scope"))
             {
-                return CSharp.Block(
-                    ConnectionFromContext,
-                    (StatementSyntax)node);
+                var document = scope.GetDocument<SyntaxToken, SyntaxNode, SemanticModel>();
+                document.change(method.Body, AddConnectionVariable);
             }
 
             //assume __connection is available
+            return node;
+        }
+
+        private static SyntaxNode AddConnectionVariable(SyntaxNode node, Scope scope)
+        {
+            var block = (BlockSyntax)node;
+            if (!block
+                .Statements
+                .OfType<LocalDeclarationStatementSyntax>()
+                .Any(local => local
+                    .Declaration
+                    .Variables
+                    .First()
+                    .Identifier.ToString() == "__connection"))
+            {
+                return block
+                    .WithStatements(CSharp.List(
+                        new StatementSyntax[] { ConnectionFromContext }
+                        .Union(block.Statements)));
+            }
+
             return node;
         }
 

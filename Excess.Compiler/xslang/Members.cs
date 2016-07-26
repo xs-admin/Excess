@@ -85,7 +85,7 @@ namespace xslang
             }
 
             if (type == null)
-                type = RoslynCompiler.@dynamic;
+                type = RoslynCompiler.@object;
 
             var property = _property
                 .WithIdentifier(variable.Identifier)

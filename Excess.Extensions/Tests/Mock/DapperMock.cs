@@ -12,6 +12,9 @@ using System.Threading.Tasks;
 using Dapper;
 using System.Data.SQLite;
 using xslang;
+using System.Data.SqlClient;
+using System.ComponentModel;
+using System.Data;
 
 namespace Tests.Mock
 {
@@ -26,26 +29,34 @@ namespace Tests.Mock
                 {
                     Functions.Apply(compiler);
                     DapperExtension.Apply(compiler);
+                },
+                referenceTypes: new[] {
+                    typeof(Dapper.SqlMapper),
+                    typeof(__Scope),
+                    typeof(IDbConnection),
+                    typeof(IEnumerable<>),
+                    typeof(SqlConnection),
+                    typeof(SQLiteConnection),
+                    typeof(Component),
                 });
 
 
-            if (assembly != null)
+            if (assembly == null)
                 throw new InvalidOperationException();
+
+            var connection = new SQLiteConnection(ConnectionString);
+            connection.Open();
 
             if (database != null)
             {
-                using (var connection = new SQLiteConnection(ConnectionString))
-                {
-                    connection.Open();
-                    connection.Execute(database);
-                }
+                connection.Execute(database);
             }
 
-            return new DapperMock(assembly);
+            return new DapperMock(assembly, connection);
         }
 
         Dictionary<string, Func<object>> _functions = new Dictionary<string, Func<object>>();
-        private DapperMock(Assembly assembly)
+        private DapperMock(Assembly assembly, SQLiteConnection connection)
         {
             var container = assembly
                 .GetTypes()
@@ -55,20 +66,15 @@ namespace Tests.Mock
                 .GetMethods()
                 .Where(method => method.IsStatic 
                               && method.IsPublic
-                              && method.GetParameters().Length == 0);
+                              && method.GetParameters().Length == 1);
 
             foreach (var method in methods)
             {
                 _functions[method.Name] = () =>
                 {
-                    using (var connection = new SQLiteConnection(ConnectionString))
-                    {
-                        connection.Open();
-
-                        var scope = new __Scope(null as IInstantiator);
-                        scope.set<SQLiteConnection>(connection);
-                        return method.Invoke(null, new object[] { });
-                    }
+                    var scope = new __Scope(null as IInstantiator);
+                    scope.set<IDbConnection>(connection);
+                    return method.Invoke(null, new object[] { scope });
                 };
             }
         }
