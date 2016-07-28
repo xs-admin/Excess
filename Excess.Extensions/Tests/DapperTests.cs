@@ -188,7 +188,35 @@ namespace Tests
 
             var allValues = dapper.GetMany<int>("Values");
             Assert.AreEqual(6, allValues.Count());
+        }
 
+        [TestMethod]
+        public void DapperParameters_Usage()
+        {
+            var tree = ExcessMock.Compile(@"
+                class SomeClass
+                {
+                    public void SomeMethod(IDBConnection connection)
+                    {
+                        sql(connection)
+                        {
+			                CREATE TABLE SomeTable
+			                (
+				                Id varchar(36) not null
+                            );
+                        }
+                    }
+                }", builder: (compiler) => DapperExtension.Apply(compiler));
+
+            Assert.IsNotNull(tree);
+            Assert.IsFalse(tree.GetDiagnostics().Any());
+
+            //must have added a typecast for parameter connection
+            Assert.AreEqual(1, tree
+                .GetRoot()
+                .DescendantNodes()
+                .OfType<CastExpressionSyntax>()
+                .Count());
         }
     }
 }

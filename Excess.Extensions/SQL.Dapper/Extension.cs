@@ -14,7 +14,7 @@ namespace SQL.Dapper
 {
     using ExcessCompiler = Excess.Compiler.ICompiler<SyntaxToken, SyntaxNode, SemanticModel>;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
-
+    using System;
     [Extension("dapper")]
     public class DapperExtension
     {
@@ -40,17 +40,77 @@ namespace SQL.Dapper
                 .Skip(1)
                 .Take(tokenCount - 2);
 
+            //generate a variable per sql statament
+            var connectionResolved = false;
+            var connectionId = default(IdentifierNameSyntax);
+            var connectionVariable = ParseConnection(extension.Arguments, scope, out connectionId, out connectionResolved);
+
             var result = default(SyntaxNode);
             if (node is LocalDeclarationStatementSyntax)
-                result = ParseQuery(node as LocalDeclarationStatementSyntax, scope, withoutBraces);
+                result = ParseQuery(node as LocalDeclarationStatementSyntax, scope, withoutBraces, connectionId);
             else if (node is ExpressionStatementSyntax)
-                result = ParseCommand(node as ExpressionStatementSyntax, scope, withoutBraces);
+                result = ParseCommand(node as ExpressionStatementSyntax, scope, withoutBraces, connectionId);
 
             Debug.Assert(result != null); //td: error
 
-            //schedule a search for __connection, after the first pass
+            //use the document to schedule changes in later passes
             var document = scope.GetDocument<SyntaxToken, SyntaxNode, SemanticModel>();
-            return document.change(result, SkipPass); 
+            if (connectionResolved)
+            {
+                var method = node
+                    .Ancestors()
+                    .FirstOrDefault(n => n is MethodDeclarationSyntax)
+                        as MethodDeclarationSyntax;
+
+                if (method != null)
+                    document.change(method.Body, AddConnectionVariable(connectionVariable));
+
+                return result;
+            }
+            else
+                //We will try to run a few known scenarios, such as the functional context
+                //but this must be scheduled a pass after next (when functional is ready)
+                return document.change(result, SkipPass);
+        }
+
+        private static Template AssignConnectionVariable = Template.ParseStatement("var _0 = (IDbConnection)(__1);");
+        private static StatementSyntax ParseConnection(
+            IEnumerable<SyntaxToken> arguments,
+            Scope scope,
+            out IdentifierNameSyntax identifier, 
+            out bool resolved)
+        {
+            var id = scope.GetUniqueId("__connection");
+            identifier = CSharp.IdentifierName(id);
+            resolved = false;
+            if (arguments != null)
+            {
+                var service = scope.GetService<SyntaxToken, SyntaxNode, SemanticModel>();
+                var argumentList = (ArgumentListSyntax)service.ParseArgumentListFromTokens(arguments);
+                var expr = default(ExpressionSyntax);
+                foreach (var argument in argumentList.Arguments)
+                {
+                    if (argument.NameColon != null && !argument.NameColon.IsMissing)
+                    {
+                        throw new NotImplementedException(); //td: connection related parameters
+                    }
+                    else if (expr == null)
+                        expr = argument.Expression;
+                    else
+                    {
+                        Debug.Assert(false); //td: error, too many parameters
+                    } 
+                }
+
+                if (expr != null)
+                {
+                    //assume the single parameter to be a already-constructed connection
+                    resolved = true;
+                    return AssignConnectionVariable.Get<StatementSyntax>(id, expr);
+                }
+            }
+
+            return null;
         }
 
         private static SyntaxNode SkipPass(SyntaxNode node, Scope scope)
@@ -81,32 +141,23 @@ namespace SQL.Dapper
                     .ToString() == "__scope"))
             {
                 var document = scope.GetDocument<SyntaxToken, SyntaxNode, SemanticModel>();
-                document.change(method.Body, AddConnectionVariable);
+                document.change(method.Body, AddConnectionVariable(ConnectionFromContext));
             }
 
             //assume __connection is available
             return node;
         }
 
-        private static SyntaxNode AddConnectionVariable(SyntaxNode node, Scope scope)
+        private static Func<SyntaxNode, Scope, SyntaxNode> AddConnectionVariable(StatementSyntax statement)
         {
-            var block = (BlockSyntax)node;
-            if (!block
-                .Statements
-                .OfType<LocalDeclarationStatementSyntax>()
-                .Any(local => local
-                    .Declaration
-                    .Variables
-                    .First()
-                    .Identifier.ToString() == "__connection"))
+            return (node, scope) =>
             {
+                var block = (BlockSyntax)node;
                 return block
                     .WithStatements(CSharp.List(
-                        new StatementSyntax[] { ConnectionFromContext }
+                        new StatementSyntax[] { statement }
                         .Union(block.Statements)));
-            }
-
-            return node;
+            };
         }
 
         class QueryTypeInfo
@@ -115,8 +166,8 @@ namespace SQL.Dapper
             public TypeSyntax DapperType { get; set; }
         }
 
-        private static Template DapperQuery = Template.ParseExpression("__connection.Query<__0>(__1, __2)");
-        private static SyntaxNode ParseQuery(LocalDeclarationStatementSyntax node, Scope scope, IEnumerable<SyntaxToken> body)
+        private static Template DapperQuery = Template.ParseExpression("__0.Query<__1>(__2, __3)");
+        private static SyntaxNode ParseQuery(LocalDeclarationStatementSyntax node, Scope scope, IEnumerable<SyntaxToken> body, IdentifierNameSyntax connectionId)
         {
             var declaration = node.Declaration;
             var variable = declaration.Variables.Single(); //td: error
@@ -139,6 +190,7 @@ namespace SQL.Dapper
             }
 
             var sqlExpression = DapperQuery.Get<ExpressionSyntax>(
+                connectionId,
                 type,
                 sqlQueryString,
                 parameters);
@@ -161,8 +213,8 @@ namespace SQL.Dapper
                             .WithValue(sqlExpression))})));
         }
 
-        private static Template DapperCommand = Template.ParseExpression("__connection.Execute(__0, __1)");
-        private static SyntaxNode ParseCommand(ExpressionStatementSyntax node, Scope scope, IEnumerable<SyntaxToken> body)
+        private static Template DapperCommand = Template.ParseExpression("__0.Execute(__1, __2)");
+        private static SyntaxNode ParseCommand(ExpressionStatementSyntax node, Scope scope, IEnumerable<SyntaxToken> body, IdentifierNameSyntax connectionId)
         {
             var parameters = default(AnonymousObjectCreationExpressionSyntax);
             var sqlQueryString = ParseBody(body, scope, out parameters);
@@ -174,7 +226,9 @@ namespace SQL.Dapper
 
             return node.WithExpression( 
                 DapperCommand.Get<ExpressionSyntax>(
-                    sqlQueryString, parameters));
+                    connectionId,
+                    sqlQueryString, 
+                    parameters));
         }
 
         private static QueryTypeInfo ParseQueryType(TypeSyntax type)

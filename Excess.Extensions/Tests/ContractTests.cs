@@ -44,5 +44,25 @@ namespace Tests
             Assert.AreEqual(1, newExpr.ArgumentList.Arguments.Count);
             Assert.AreEqual("\"z\"", newExpr.ArgumentList.Arguments.Single().ToString());
         }
+
+        [TestMethod]
+        public void Contract_WhenUsingInvocationThenException_ShouldSucceed()
+        {
+            var tree = ExcessMock.Compile(@"
+                class SomeClass
+                {
+                    void SomeMethod()
+                    {
+                        contract
+                        {
+                            SomeObject.SomeOtherMethod()
+                                >> SomeException();
+                        }
+                    }
+                }", builder: (compiler) => ContractExtension.Apply(compiler));
+
+            Assert.IsNotNull(tree);
+            Assert.IsFalse(tree.GetDiagnostics().Any());
+        }
     }
 }

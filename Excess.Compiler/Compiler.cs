@@ -85,5 +85,6 @@ namespace Excess.Compiler
         TNode ParseCodeFromTokens(IEnumerable<TToken> tokens);
         TNode ParseParamListFromTokens(IEnumerable<TToken> tokens);
         TNode ParseMembersFromTokens(IEnumerable<TToken> tokens);
+        TNode ParseArgumentListFromTokens(IEnumerable<TToken> tokens); 
     }
 }
