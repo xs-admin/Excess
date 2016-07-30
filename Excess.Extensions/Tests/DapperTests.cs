@@ -39,28 +39,27 @@ namespace Tests
                     DapperExtension.Apply(compiler);
                 });
 
-            //must have a call to __connection.Query
-            var invocation = ((tree.GetRoot()
+            //must have a call to __connection1.Query
+            var invocation = (tree.GetRoot()
                 .DescendantNodes()
                 .OfType<MethodDeclarationSyntax>()
                 .Single()
                 .Body
                     .Statements
-                    .First() as BlockSyntax)
-                        .Statements
-                        .Last() as LocalDeclarationStatementSyntax)
-                            .Declaration
-                            .Variables
-                            .Single()
-                            .Initializer
-                                .Value as InvocationExpressionSyntax;
+                    .Skip(2) //connection declarations
+                    .First() as LocalDeclarationStatementSyntax)
+                        .Declaration
+                        .Variables
+                        .Single()
+                        .Initializer
+                            .Value as InvocationExpressionSyntax;
 
             Assert.IsNotNull(invocation);
             Assert.IsTrue(invocation is InvocationExpressionSyntax);
             Assert.IsTrue((invocation as InvocationExpressionSyntax)
                 .Expression
                 .ToString()
-                .StartsWith("__connection.Query"));
+                .StartsWith("__connection1.Query"));
 
             //must have added a literal string @"...query..."
             var literal = tree.GetRoot()
@@ -86,20 +85,18 @@ namespace Tests
                     .ToString() == "SomeInt"));
 
             //must have added a second call
-            invocation = ((tree.GetRoot()
+            invocation = (tree.GetRoot()
                 .DescendantNodes()
                 .OfType<MethodDeclarationSyntax>()
                 .Single()
                 .Body
                     .Statements
-                    .Last() as BlockSyntax)
-                        .Statements
-                        .Last() as LocalDeclarationStatementSyntax)
-                            .Declaration
-                            .Variables
-                            .Single()
-                            .Initializer
-                                .Value as InvocationExpressionSyntax;
+                    .Last() as LocalDeclarationStatementSyntax)
+                        .Declaration
+                        .Variables
+                        .Single()
+                        .Initializer
+                            .Value as InvocationExpressionSyntax;
 
             //containing a Single() call
             Assert.AreEqual(1, invocation
@@ -138,7 +135,7 @@ namespace Tests
             Assert.IsTrue((invocation as InvocationExpressionSyntax)
                 .Expression
                 .ToString()
-                .StartsWith("__connection.Execute"));
+                .StartsWith("__connection1.Execute"));
 
             //must have added a literal string @"...query..."
             var literal = tree.GetRoot()

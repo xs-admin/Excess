@@ -9,42 +9,24 @@ namespace Excess.Runtime
 {
     public static class Application
     {
-        static Dictionary<Type, object> _services = new Dictionary<Type, object>();
-
-        public static void RegisterService<T>(T service)
+        public static __Scope Load(IEnumerable<Assembly> assemblies)
         {
-            lock (_services)
+            var result = new __Scope(default(__Scope));
+            foreach (var assembly in assemblies)
             {
-                _services[typeof(T)] = service;
-            }
-        }
-
-        public static T GetService<T>()
-        {
-            object result = null;
-            lock (_services)
-            {
-                _services.TryGetValue(typeof(T), out result);
-            }
-
-            return (T)result;
-        }
-
-        public static void Start(IEnumerable<Assembly> clients)
-        {
-            foreach (var client in clients)
-            {
-                foreach (var type in client.GetTypes())
+                foreach (var type in assembly.GetTypes())
                 {
                     if (type
                         .CustomAttributes
                         .Any(attr => attr.AttributeType == typeof(AutoInit)))
                     {
-                            type.GetMethod("__init")
-                                ?.Invoke(null, new object[] { });
+                        type.GetMethod("__init")
+                            ?.Invoke(null, new object[] { result });
                     }
                 }
             }
+
+            return result;
         }
     }
 }

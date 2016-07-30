@@ -20,9 +20,9 @@ namespace NInjector
                     }
                 }
 
-                public static void __init()
+                public static void __init(__Scope scope)
                 {
-                    Application.RegisterService<IInstantiator>(new NinjectInstantiator());
+                    scope.set<IInstantiator>(new NinjectInstantiator());
                 }   
 
                 public override void Load() 

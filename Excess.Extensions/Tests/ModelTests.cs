@@ -31,14 +31,14 @@ namespace Tests
             Assert.IsNotNull(tree);
 
             //an struct should have been added
-            var @struct = tree
+            var @class = tree
                 .GetRoot()
                 .DescendantNodes()
-                .OfType<StructDeclarationSyntax>()
+                .OfType<ClassDeclarationSyntax>()
                 .Single();
 
             //with one constructor
-            var constructor = @struct
+            var constructor = @class
                 .DescendantNodes()
                 .OfType<ConstructorDeclarationSyntax>()
                 .Single();
@@ -51,7 +51,7 @@ namespace Tests
                 .Count());
 
             //must have 2 properties with private sets
-            Assert.AreEqual(2, @struct
+            Assert.AreEqual(2, @class
                 .DescendantNodes()
                 .OfType<PropertyDeclarationSyntax>()
                 .Where(property => property

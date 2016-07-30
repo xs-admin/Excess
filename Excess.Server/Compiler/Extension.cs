@@ -205,11 +205,13 @@ namespace Excess.Server.Compiler
             //generate configuration class
             var result = Templates
                 .ServerInstance
-                .Get<ClassDeclarationSyntax>(app.Id);
+                .Get<ClassDeclarationSyntax>(app.Id, Roslyn.Quoted(app.Id));
 
             var start = result
                 .DescendantNodes()
                 .OfType<MethodDeclarationSyntax>()
+                .Where(method => method.Identifier.ToString() == "Run"
+                              && method.ParameterList.Parameters.Count == 2)
                 .Single();
 
             return result
@@ -238,11 +240,13 @@ namespace Excess.Server.Compiler
 
             var result = Templates
                 .ServerInstance
-                .Get<ClassDeclarationSyntax>(instance.Id);
+                .Get<ClassDeclarationSyntax>(instance.Id, Roslyn.Quoted(instance.Id));
 
             var start = result
                 .DescendantNodes()
                 .OfType<MethodDeclarationSyntax>()
+                .Where(method => method.Identifier.ToString() == "Run"
+                              && method.ParameterList.Parameters.Count == 2)
                 .Single();
 
             return result

@@ -9,11 +9,21 @@ namespace Excess.Server.Compiler
     public static class Templates
     {
         public static Template ServerInstance = Template.Parse(@"
-            [ServerConfiguration]    
-            public class _0
+            public class _0 : IServer
             {
-                public static void Start()
+                string Name => __1;
+
+                public void Run()
                 {
+                }
+
+                public void Run(Action<object> success, Action<Exception> failure)
+                {
+                }
+
+                public void Deploy()
+                {
+                    throw new NotImplemented();
                 }
             }");
 

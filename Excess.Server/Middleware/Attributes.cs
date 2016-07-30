@@ -3,11 +3,6 @@
 namespace Excess.Server.Middleware
 {
     [AttributeUsage(AttributeTargets.Class)]
-    public class ServerConfiguration : Attribute
-    {
-    }
-
-    [AttributeUsage(AttributeTargets.Class)]
     public class Service : Attribute
     {
         public string id;

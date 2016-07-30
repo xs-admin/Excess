@@ -70,7 +70,7 @@ namespace SQL.Dapper
             else
                 //We will try to run a few known scenarios, such as the functional context
                 //but this must be scheduled a pass after next (when functional is ready)
-                return document.change(result, SkipPass);
+                return document.change(result, SkipPass(connectionId));
         }
 
         private static Template AssignConnectionVariable = Template.ParseStatement("var _0 = (IDbConnection)(__1);");
@@ -104,48 +104,56 @@ namespace SQL.Dapper
 
                 if (expr != null)
                 {
-                    //assume the single parameter to be a already-constructed connection
+                    //assume the single parameter to be an already-constructed connection
                     resolved = true;
                     return AssignConnectionVariable.Get<StatementSyntax>(id, expr);
                 }
             }
 
+
             return null;
         }
 
-        private static SyntaxNode SkipPass(SyntaxNode node, Scope scope)
+        private static Func<SyntaxNode, Scope, SyntaxNode> SkipPass(IdentifierNameSyntax identifier)
         {
-            var document = scope.GetDocument<SyntaxToken, SyntaxNode, SemanticModel>();
-            return document.change(node, LinkDapper);
+            return (node, scope) =>
+            {
+                var document = scope.GetDocument<SyntaxToken, SyntaxNode, SemanticModel>();
+                return document.change(node, LinkDapper(identifier));
+            };
         }
 
-        private static StatementSyntax ConnectionFromContext = CSharp.ParseStatement("var __connection = __scope.get<IDbConnection>();");
-        private static SyntaxNode LinkDapper(SyntaxNode node, Scope scope)
+        private static Template ConnectionFromContext = Template.ParseStatement("var _0 = __scope.get<IDbConnection>();");
+        private static Func<SyntaxNode, Scope, SyntaxNode> LinkDapper(IdentifierNameSyntax identifier)
         {
-            var method = node
+            return (node, scope) =>
+            {
+                var method = node
                 .Ancestors()
                 .OfType<MethodDeclarationSyntax>()
                 .FirstOrDefault();
 
-            if (method == null)
-            {
-                Debug.Assert(false); //td: error
+                if (method == null)
+                {
+                    Debug.Assert(false); //td: error
+                    return node;
+                }
+
+                if (method
+                    .ParameterList
+                    .Parameters
+                    .Any(parameter => parameter
+                        .Identifier
+                        .ToString() == "__scope"))
+                {
+                    var document = scope.GetDocument<SyntaxToken, SyntaxNode, SemanticModel>();
+                    document.change(method.Body, AddConnectionVariable(ConnectionFromContext
+                        .Get<StatementSyntax>(identifier.ToString())));
+                }
+
+                //assume __connection is available
                 return node;
-            }
-
-            if (method
-                .ParameterList
-                .Parameters
-                .Any(parameter => parameter
-                    .Identifier
-                    .ToString() == "__scope"))
-            {
-                var document = scope.GetDocument<SyntaxToken, SyntaxNode, SemanticModel>();
-                document.change(method.Body, AddConnectionVariable(ConnectionFromContext));
-            }
-
-            //assume __connection is available
-            return node;
+            };
         }
 
         private static Func<SyntaxNode, Scope, SyntaxNode> AddConnectionVariable(StatementSyntax statement)
@@ -153,6 +161,11 @@ namespace SQL.Dapper
             return (node, scope) =>
             {
                 var block = (BlockSyntax)node;
+
+                var firstStatement = block.Statements.FirstOrDefault();
+                if (firstStatement != null && firstStatement.IsEquivalentTo(statement))
+                    return block; //already there
+
                 return block
                     .WithStatements(CSharp.List(
                         new StatementSyntax[] { statement }

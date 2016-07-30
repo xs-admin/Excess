@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
         <id>Excess.Extensions.Dapper</id>
-        <version>0.47.13-debug</version>
+        <version>0.47.15-debug</version>
         <authors>Excess</authors>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>C# sql extensions with Dapper</description>
