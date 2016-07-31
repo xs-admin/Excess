@@ -16,6 +16,61 @@ namespace Excess.Server.Middleware
 
     public class Loader
     {
+        public static void Run(IEnumerable<Assembly> assemblies, string[] args)
+        {
+            var serverName = default(string);
+            switch (args.Length)
+            {
+                case 0: break;
+                case 1:
+                    serverName = args[0];
+                    break;
+                default:
+                    Console.WriteLine("please provide one and only one server");
+                    return;
+            }
+
+            //init the app
+            var appScope = Application.Load(assemblies);
+
+            //find the server
+            var servers = assemblies
+                .SelectMany(assembly => assembly.GetTypes()
+                    .Where(type => isServer(type))
+                    .Select(type => (IServer)Activator.CreateInstance(type)))
+                .ToList();
+
+            if (servers == null || !servers.Any())
+            {
+                Console.WriteLine("no servers are registered");
+                return;
+            }
+
+            if (serverName == null)
+            {
+                if (servers.Count == 1)
+                    serverName = servers.Single().Name;
+                else
+                    serverName = "Default";
+            }
+
+            var serverInstance = servers
+                .SingleOrDefault(server => server.Name == serverName);
+
+            if (serverInstance == null)
+            {
+                Console.WriteLine($"no server is registered under the name {serverName}");
+                return;
+            }
+
+            //run
+            serverInstance.Run(appScope);
+        }
+
+        private static bool isServer(Type serverType) => serverType.FindInterfaces(
+            (type, data) => type == typeof(IServer), null)
+            .Any();
+
         public static void FromAssemblies(
             IDistributedApp       app, 
             IEnumerable<Assembly> assemblies,

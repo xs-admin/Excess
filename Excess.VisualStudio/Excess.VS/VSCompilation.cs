@@ -115,14 +115,13 @@ namespace Excess.VS
             {
                 var appConfig = Path.Combine(
                     Path.GetDirectoryName(_project.FilePath),
-                    "app.config");
+                    "xs.config");
 
                 if (File.Exists(appConfig))
                 {
                     var xmlDocument = XDocument.Load(appConfig);
                     var xsSettings = xmlDocument
                         .Element("configuration")
-                        .Element("xs")
                         .Elements("setting");
 
                     foreach (var xsSetting in xsSettings)

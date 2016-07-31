@@ -1,6 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <!--<Import Project="..\packages\Microsoft.Net.Compilers.1.0.0\build\Microsoft.Net.Compilers.props" Condition="Exists('..\packages\Microsoft.Net.Compilers.1.0.0\build\Microsoft.Net.Compilers.props')" />-->
+  <Import Project="..\packages\Antlr4.4.5.3-rc1\build\Antlr4.props" Condition="Exists('..\packages\Antlr4.4.5.3-rc1\build\Antlr4.props')" />
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.Default.props" Condition="Exists('$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\TypeScript\Microsoft.TypeScript.Default.props')" />
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -45,36 +46,44 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Antlr4.Runtime, Version=4.5.0.0, Culture=neutral, PublicKeyToken=e9931a4108ef2354, processorArchitecture=MSIL">
+      <HintPath>..\packages\Antlr4.Runtime.4.5.3-rc1\lib\net45\Antlr4.Runtime.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Excess.Compiler, Version=1.0.0.0, Culture=neutral, PublicKeyToken=b0e2cc790a4c1b9e, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Compiler.0.47.0-alpha\lib\Net45\Excess.Compiler.dll</HintPath>
+      <HintPath>..\packages\Excess.Compiler.0.47.19-debug\lib\Net45\Excess.Compiler.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Excess.Compiler.Antlr4, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Excess.Compiler.0.47.19-debug\lib\Net45\Excess.Compiler.Antlr4.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Compiler.GraphInstances, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Compiler.0.47.0-alpha\lib\Net45\Excess.Compiler.GraphInstances.dll</HintPath>
+      <HintPath>..\packages\Excess.Compiler.0.47.19-debug\lib\Net45\Excess.Compiler.GraphInstances.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Compiler.Mock, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Compiler.0.47.0-alpha\lib\Net45\Excess.Compiler.Mock.dll</HintPath>
+      <HintPath>..\packages\Excess.Compiler.0.47.19-debug\lib\Net45\Excess.Compiler.Mock.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Compiler.Razor, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Compiler.0.47.0-alpha\lib\Net45\Excess.Compiler.Razor.dll</HintPath>
+      <HintPath>..\packages\Excess.Compiler.0.47.19-debug\lib\Net45\Excess.Compiler.Razor.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Concurrent.Compiler, Version=0.46.2.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Concurrent.Runtime.0.47.1-alpha\lib\Net45\Excess.Concurrent.Compiler.dll</HintPath>
+      <HintPath>..\packages\Excess.Concurrent.Runtime.0.47.6-debug\lib\Net45\Excess.Concurrent.Compiler.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Concurrent.Runtime, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Concurrent.Runtime.0.47.1-alpha\lib\Net45\Excess.Concurrent.Runtime.dll</HintPath>
+      <HintPath>..\packages\Excess.Concurrent.Runtime.0.47.6-debug\lib\Net45\Excess.Concurrent.Runtime.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Runtime, Version=1.0.0.0, Culture=neutral, PublicKeyToken=270b7f55f5ad09f8, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Runtime.0.47.0-alpha\lib\Net45\Excess.Runtime.dll</HintPath>
+      <HintPath>..\packages\Excess.Runtime.0.47.11-debug\lib\Net45\Excess.Runtime.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Server.Middleware, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Server.0.47.1-alpha\lib\Net45\Excess.Server.Middleware.dll</HintPath>
+      <HintPath>..\packages\Excess.Server.0.47.28-debug\lib\Net45\Excess.Server.Middleware.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.CodeAnalysis, Version=1.2.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
@@ -240,11 +249,11 @@
       <HintPath>..\packages\Antlr.3.4.1.9004\lib\Antlr3.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="xslang, Version=1.0.0.0, Culture=neutral, PublicKeyToken=a8909f1e5623e4ea, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Compiler.0.47.0-alpha\lib\Net45\xslang.dll</HintPath>
+      <HintPath>..\packages\Excess.Compiler.0.47.19-debug\lib\Net45\xslang.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="xss, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Server.0.47.1-alpha\lib\Net45\xss.exe</HintPath>
+      <HintPath>..\packages\Excess.Server.0.47.28-debug\lib\Net45\xss.exe</HintPath>
       <Private>True</Private>
     </Reference>
   </ItemGroup>
@@ -2456,9 +2465,6 @@
     <Content Include="client\package.json" />
     <Content Include="client\README.md" />
     <Content Include="Home.xs" />
-    <Content Include="app.config">
-      <SubType>Designer</SubType>
-    </Content>
     <None Include="Properties\PublishProfiles\xswebappdemo.pubxml" />
     <None Include="Scripts\jquery-1.10.2-vsdoc.js" />
     <Content Include="Scripts\jquery-1.10.2.js" />
@@ -2487,6 +2493,9 @@
     <Content Include="Views\Home\Contact.cshtml" />
     <Content Include="Views\Home\Index.cshtml" />
     <Content Include="server\Dependencies.xs" />
+    <Content Include="xs.config">
+      <SubType>Designer</SubType>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />
@@ -2542,6 +2551,14 @@
       </FlavorProperties>
     </VisualStudio>
   </ProjectExtensions>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\Antlr4.4.5.3-rc1\build\Antlr4.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Antlr4.4.5.3-rc1\build\Antlr4.props'))" />
+    <Error Condition="!Exists('..\packages\Antlr4.4.5.3-rc1\build\Antlr4.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Antlr4.4.5.3-rc1\build\Antlr4.targets'))" />
+  </Target>
+  <Import Project="..\packages\Antlr4.4.5.3-rc1\build\Antlr4.targets" Condition="Exists('..\packages\Antlr4.4.5.3-rc1\build\Antlr4.targets')" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

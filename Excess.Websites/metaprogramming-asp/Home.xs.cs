@@ -6,6 +6,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Excess.Runtime;
+using System.Configuration;
+using System.Security.Principal;
+using Microsoft.Owin;
 using Excess.Server.Middleware;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,7 +22,7 @@ namespace Home
     public static partial class Functions
     {
 #line 8
-        public static String Transpile(string text, __Scope __scope)
+        static public string Transpile(string text, __Scope __scope)
 #line 9
         {
 #line 12
@@ -34,7 +37,7 @@ namespace Home
     public static partial class Functions
     {
 #line 18
-        public static String TranspileGraph(string text, __Scope __scope)
+        static public string TranspileGraph(string text, __Scope __scope)
 #line 19
         {
 #line 22

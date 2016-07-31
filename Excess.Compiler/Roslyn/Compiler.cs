@@ -1010,9 +1010,9 @@ namespace Excess.Compiler.Roslyn
                 .Any();
         }
 
-        public static ExpressionSyntax Quoted(string value)
+        public static ExpressionSyntax Quoted(string value, bool escaped = false)
         {
-            return CSharp.ParseExpression('"' + value + '"');
+            return CSharp.ParseExpression((escaped? "@\"" : "\"") + value + '"');
         }
 
         public static SyntaxNode ReplaceAssignment(SyntaxNode node, SyntaxNode newNode, out bool isAssignment)

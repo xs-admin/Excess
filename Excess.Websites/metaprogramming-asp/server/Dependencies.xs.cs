@@ -1,4 +1,5 @@
-﻿#line 2
+﻿#line 1 "C:\dev\Excess\Excess.Websites\metaprogramming-asp\server\Dependencies.xs"
+#line 2
 using demo_transpiler;
 #line hidden
 using System;
@@ -24,18 +25,15 @@ namespace metaprogramming_asp.server
             }
         }
 
-        public static void __init()
+        public static void __init(__Scope scope)
         {
-            Application.RegisterService<IInstantiator>(new NinjectInstantiator());
+            scope.set<IInstantiator>(new NinjectInstantiator());
         }
 
         public override void Load()
         {
-#line 8
             Bind<ITranspiler>().To<Transpiler>();
-#line 9
             Bind<IGraphTranspiler>().To<GraphTranspiler>();
-#line hidden
         }
     }
 }

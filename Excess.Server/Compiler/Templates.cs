@@ -13,7 +13,7 @@ namespace Excess.Server.Compiler
             {
                 public string Name => __1;
 
-                public void Run(__Scope scope)
+                public void Run(__Scope __scope)
                 {
                 }
 
@@ -32,11 +32,12 @@ namespace Excess.Server.Compiler
                 url: __0, 
                 scope: __scope,
                 identityUrl: __1,
-                threads: __2, 
-                except: __3,
-                nodes: __4,
-                assemblies: new [] {typeof(_5).Assembly},
-                filters: __6);");
+                staticFiles: __2,
+                threads: __3, 
+                except: __4,
+                nodes: __5,
+                assemblies: new [] {typeof(_6).Assembly},
+                filters: __7);");
 
         public static Template StartNetMQServer = Template.ParseStatement(@"
             NetMQNode.Start(
@@ -48,50 +49,6 @@ namespace Excess.Server.Compiler
 
         public static Template StringArray = Template.ParseExpression("new string[] {}");
         public static Template CallStartNode = Template.ParseStatement("_0.Start();");
-
-        //oldies
-        public static Template ConfigClass = Template.Parse(@"
-            [ServerConfiguration]    
-            public class _0
-            {
-                public static void Deploy()
-                {
-                }
-
-                public static void Start()
-                {
-                }
-
-                public static void StartNodes(IEnumerable<Type> commonClasses)
-                {
-                }
-
-                public static int NodeCount()
-                {
-                }
-
-                public static IEnumerable<Type> RemoteTypes()
-                {
-                }
-            }");
-
-        public static Template NodeMethod = Template.Parse(@"
-            public static void _0(IEnumerable<Type> commonClasses)
-            {
-                var hostedTypes = commonClasses.Union(__1);
-            }");
-
-        public static Template NodeServer = Template.ParseStatement(@"
-            _0.Start(
-                localServer: __1, 
-                remoteServer: __2,
-                threads: __3,
-                classes: hostedTypes);");
-
-        public static ExpressionSyntax DefaultThreads = CSharp.ParseExpression("8");
-        public static ArrayCreationExpressionSyntax TypeArray = Template
-            .ParseExpression("new Type[] {}")
-            .Get<ArrayCreationExpressionSyntax>();
 
         public static RazorTemplate jsConcurrentClass = RazorTemplate.Parse(@"
             @Model.Name = function (__ID)

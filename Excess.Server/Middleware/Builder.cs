@@ -59,7 +59,7 @@ namespace Excess.Server.Middleware
             IEnumerable<Assembly> assemblies,
             ConcurrentAppSettings settings = null)
         {
-            var scope = Application.Load(new[] { typeof(BuilderExtensions).Assembly });
+            var scope = Application.Load(assemblies);
             UseExcess(builder,
                 scope,
                 initializeSettings: _settings =>

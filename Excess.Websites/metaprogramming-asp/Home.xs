@@ -5,7 +5,7 @@ using demo_transpiler;
 
 namespace Home
 { 
-	public function Transpile(string text)    
+	function Transpile(string text)    
 	{
 		inject 
 		{
@@ -15,7 +15,7 @@ namespace Home
 		return _transpiler.Process(text);         
 	}
 
-	public function TranspileGraph(string text)
+	function TranspileGraph(string text)
 	{
 		inject 
 		{

@@ -137,6 +137,7 @@ namespace Excess.Server.Middleware
                             }
 
 
+                            arguments[paramCount - 1] = scope;
                             return method.Invoke(null, arguments);
                         };
 

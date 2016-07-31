@@ -79,7 +79,9 @@
   <ItemGroup>
     <None Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <None Include="app.template.config" />
+    <None Include="xs.template.config">
+      <SubType>Designer</SubType>
+    </None>
     <None Include="server\Dependencies.xs.cs">
       <DependentUpon>Dependencies.xs</DependentUpon>
     </None>

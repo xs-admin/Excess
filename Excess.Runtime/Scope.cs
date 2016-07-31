@@ -21,12 +21,22 @@ namespace Excess.Runtime
 
         public T get<T>() where T : class
         {
-            return (T)get(key<T>()) ?? set<T>();
+            return (T)get(key<T>());
         }
 
         public T get<T>(string id) where T : class
         {
-            return (T)get(id) ?? get<T>();
+            var result = (T)get(id);
+            if (result == default(T))
+                result = (T)get(key<T>());
+
+            if (result == default(T))
+            {
+                var instantiator = getInstantiator();
+                if (instantiator != null)
+                    return (T)instantiator.Create(typeof(T));
+            }
+            return result;
         }
 
         public object get(string key)
@@ -37,6 +47,7 @@ namespace Excess.Runtime
 
             return _parent?.get(key);
         }
+
 
         public T set<T>()
         {
@@ -69,6 +80,14 @@ namespace Excess.Runtime
                 throw new InvalidOperationException($"duplicate binding: {value?.GetType().Name}");
 
             _bindings[key] = value;
+        }
+
+        private IInstantiator getInstantiator()
+        {
+            if (_instantiator == null)
+                _instantiator = get<IInstantiator>();
+
+            return _instantiator;
         }
     }
 }

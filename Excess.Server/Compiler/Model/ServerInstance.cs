@@ -25,6 +25,7 @@ namespace Excess.Server.Compiler.Model
 
         public string Identity { get; set; }
         public int Threads { get; set; }
+        public string StaticFiles { get; set; }
         public List<ServerInstance> Nodes { get; private set; }
         public List<StatementSyntax> DeployStatements { get; private set; }
         public List<string> HostedClasses { get; private set; }

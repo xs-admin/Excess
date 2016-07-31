@@ -18,7 +18,7 @@ namespace metaprogramming
 			return _transpiler.Process(text);    
 		}
 
-		public string TranspileGraph(string text)
+		public string TranspileGraph(string text) 
 		{
 			return _graphTranspiler.Process(text);         
 		} 

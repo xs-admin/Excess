@@ -6,6 +6,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Excess.Runtime;
+using System.Configuration;
+using System.Security.Principal;
+using Microsoft.Owin;
 using Excess.Server.Middleware;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,8 +19,8 @@ namespace metaprogramming
 #line 7
 {
 #line hidden
-    [Service(id: "97eb75ce-1eac-4060-bb0a-38adf2930c31")]
-    [Concurrent(id = "0833c722-d1be-4796-8f13-3330be19f849")]
+    [Service(id: "db14c410-87d0-47a8-b3b3-736614f7a9d9")]
+    [Concurrent(id = "101273ab-44ee-40d4-9a15-b2198f888fbe")]
 #line 8
     public class Home : ConcurrentObject
 #line 9

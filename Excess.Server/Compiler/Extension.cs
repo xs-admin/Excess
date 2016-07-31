@@ -86,6 +86,12 @@ namespace Excess.Server.Compiler
                     .match<ServerModel, ServerInstance, HostingModel>("hosting {ClassName}", 
                         then: (server, hosting) => server.HostedClasses.Add(hosting.ClassName))
 
+                    .match<ServerModel, ServerInstance, StaticFilesModel>(new[] {
+                            "static files @{Directory}",
+                            "static files {Directory}",
+                        },
+                        then: (server, staticFiles) => server.StaticFiles = staticFiles.Directory)
+
                     .match<ServerModel, ServerInstance, ServerInstance>("new instance",
                         then: AddInstance,
                         children: child => child.match_parent())
@@ -194,6 +200,7 @@ namespace Excess.Server.Compiler
                 .Get<StatementSyntax>(
                     Roslyn.Quoted(app.Host.Address),
                     Roslyn.Quoted(app.Identity),
+                    Roslyn.Quoted(app.StaticFiles, escaped: true),
                     Roslyn.Constant(app.Threads),
                     except,
                     Roslyn.Constant(app.Nodes.Count),
@@ -209,16 +216,13 @@ namespace Excess.Server.Compiler
                 .ServerInstance
                 .Get<ClassDeclarationSyntax>(app.Id, Roslyn.Quoted(app.Id));
 
-            var start = result
+            var runMethods = result
                 .DescendantNodes()
                 .OfType<MethodDeclarationSyntax>()
-                .Where(method => method.Identifier.ToString() == "Run"
-                    && method.ParameterList.Parameters.Count == 3)
-                .Single(); 
+                .Where(method => method.Identifier.ToString() == "Run"); 
 
-            return result
-                .ReplaceNode(start, start
-                    .AddBodyStatements(statements.ToArray()));
+            return result.ReplaceNodes(runMethods, 
+                (on, nn) => nn.AddBodyStatements(statements.ToArray()));
         }
 
         private static ClassDeclarationSyntax LinkNode(ServerInstance instance, out StatementSyntax appStatement)

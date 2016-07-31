@@ -6,6 +6,6 @@ namespace metaprogramming_asp.server
 	injector     
 	{
 		ITranspiler = Transpiler;   
-		IGraphTranspiler = GraphTranspiler;
+		IGraphTranspiler = GraphTranspiler;      
 	}
 }
