@@ -12,11 +12,6 @@ namespace Excess.Runtime
         IInstantiator _instantiator;
         __Scope _parent;
         Dictionary<string, object> _bindings = new Dictionary<string, object>();
-        public __Scope(IInstantiator instantiator)
-        {
-            _instantiator = instantiator;
-        }
-
         public __Scope(__Scope parent)
         {
             _parent = parent;
@@ -45,6 +40,13 @@ namespace Excess.Runtime
 
         public T set<T>()
         {
+            if (_instantiator == null)
+            {
+                _instantiator = get<IInstantiator>();
+                if (_instantiator == null)
+                    throw new InvalidOperationException("no instantiator registered");
+            }
+
             var value = (T)_instantiator?.Create(typeof(T));
             if (value == null)
                 throw new InvalidOperationException($"type not instantiable: {typeof(T)}");

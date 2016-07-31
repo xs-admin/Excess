@@ -67,7 +67,9 @@ namespace Excess.Server.Compiler
             compiler.Environment()
                 .dependency("System.Configuration")
                 .dependency("System.Security.Principal")
-                .dependency("Excess.Server.Middleware");
+                .dependency("Microsoft.Owin")
+                .dependency("Excess.Server.Middleware")
+                ;
 
             compiler.Lexical()
                 .indented<ServerModel, ServerInstance>("server", ExtensionKind.Type, InitApp)
@@ -211,8 +213,8 @@ namespace Excess.Server.Compiler
                 .DescendantNodes()
                 .OfType<MethodDeclarationSyntax>()
                 .Where(method => method.Identifier.ToString() == "Run"
-                              && method.ParameterList.Parameters.Count == 2)
-                .Single();
+                    && method.ParameterList.Parameters.Count == 3)
+                .Single(); 
 
             return result
                 .ReplaceNode(start, start

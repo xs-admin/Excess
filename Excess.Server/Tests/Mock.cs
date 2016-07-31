@@ -101,9 +101,10 @@ namespace Tests
                 .ExportedTypes
                 .Where(type => type.Name == "Functions");
 
+            var scope = new __Scope(null);
             return TestServer.Create(appBuilder =>
             {
-                appBuilder.UseExcess(functional: functionTypes);
+                appBuilder.UseExcess(scope, functional: functionTypes);
             });
         }
 
@@ -174,7 +175,7 @@ namespace Tests
             IList<Type> commonClasses = null)
         {
             var types = new Dictionary<string, FactoryMethod>();
-            var concurrentApp = new TestConcurrentApp(types);
+            var concurrentApp = new TestConcurrentApp(types, new DefaultInstantiator());
             var app = new DistributedApp(concurrentApp);
 
             foreach (var type in assembly.GetTypes())

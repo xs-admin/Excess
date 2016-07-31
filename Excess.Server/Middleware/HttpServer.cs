@@ -21,6 +21,7 @@ namespace Excess.Server.Middleware
     {
         public static void Start(
             string url,
+            __Scope scope,
             string identityUrl = null,
             int threads = 4,
             string staticFiles = null,
@@ -29,10 +30,7 @@ namespace Excess.Server.Middleware
             IEnumerable<string> except = null,
             IEnumerable<FilterFunction> filters = null)
         {
-            if (assemblies != null)
-                Application.Start(assemblies);
-
-            var instantiator = Application.GetService<IInstantiator>()
+            var instantiator = scope.get<IInstantiator>()
                 ?? new DefaultInstantiator();
 
             using (WebApp.Start(url, (builder) =>
@@ -58,9 +56,10 @@ namespace Excess.Server.Middleware
                 }
 
                 builder.UseExcess(
+                    scope,
                     initializeApp: server =>
                     {
-                        Loader.FromAssemblies(server, assemblies, except);
+                        Loader.FromAssemblies(server, assemblies, instantiator, except);
 
                         if (nodes > 0)
                         {

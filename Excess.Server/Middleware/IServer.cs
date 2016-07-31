@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Excess.Runtime;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,8 +11,8 @@ namespace Excess.Server.Middleware
     {
         string Name { get; }
 
-        void Run();
-        void Run(Action<object> success, Action<Exception> failure);
+        void Run(__Scope scope);
+        void Run(__Scope scope, Action<object> success, Action<Exception> failure);
         void Deploy();
     }
 }

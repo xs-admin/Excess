@@ -18,16 +18,11 @@ namespace Excess.Server.Middleware
     {
         public static void FromAssemblies(
             IDistributedApp       app, 
-            IEnumerable<Assembly> assemblies, 
+            IEnumerable<Assembly> assemblies,
+            IInstantiator         instantiator,
             IEnumerable<string>   except = null,
             IEnumerable<string>   only = null)
         {
-            if (assemblies != null)
-                Application.Start(assemblies);
-
-            var instantiator = Application.GetService<IInstantiator>()
-                ?? new DefaultInstantiator();
-
             var classes = new List<Type>();
             var instances = new Dictionary<Guid, Type>();
             foreach (var assembly in assemblies)

@@ -339,7 +339,10 @@ namespace Excess.VS
                 .CurrentSolution
                 .GetDocumentIdsWithFilePath(filePath);
 
-            return documents.Single();
+            var result = documents.SingleOrDefault();
+
+
+            return result;
         }
     }
 }

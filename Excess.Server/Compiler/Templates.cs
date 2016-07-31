@@ -11,25 +11,26 @@ namespace Excess.Server.Compiler
         public static Template ServerInstance = Template.Parse(@"
             public class _0 : IServer
             {
-                string Name => __1;
+                public string Name => __1;
 
-                public void Run()
+                public void Run(__Scope scope)
                 {
                 }
 
-                public void Run(Action<object> success, Action<Exception> failure)
+                public void Run(__Scope __scope, Action<object> success, Action<Exception> failure)
                 {
                 }
 
                 public void Deploy()
                 {
-                    throw new NotImplemented();
+                    throw new NotImplementedException();
                 }
             }");
 
         public static Template StartHttpServer = Template.ParseStatement(@"
             HttpServer.Start(
                 url: __0, 
+                scope: __scope,
                 identityUrl: __1,
                 threads: __2, 
                 except: __3,
@@ -162,7 +163,8 @@ namespace Excess.Server.Compiler
         public static Template SqlConnectionStringFromConfig = Template.ParseExpression(
             "ConfigurationManager.ConnectionStrings[__0].ConnectionString");
 
-        public static ImplicitArrayCreationExpressionSyntax EmptyArray = Template.ParseExpression("new [] {}")
-            .Get<ImplicitArrayCreationExpressionSyntax>();
+        public static ArrayCreationExpressionSyntax EmptyArray = Template.ParseExpression(
+            "new Func<Func<string, IOwinRequest, __Scope, object>,  Func<string, IOwinRequest, __Scope, object >>[] {}")
+            .Get<ArrayCreationExpressionSyntax>();
     }
 }

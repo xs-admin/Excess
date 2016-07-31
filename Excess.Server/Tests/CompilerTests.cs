@@ -31,24 +31,23 @@ namespace Tests
             string output;
             var tree = Mock.Compile(Code, out output);
 
-            //should have 2 classes marked as [ServerConfiguration]
+            //should have 2 classes marked implementing IServer
             Assert.AreEqual(2, tree
                 .GetRoot()
                 .DescendantNodes()
                 .OfType<ClassDeclarationSyntax>()
                 .Where(@class => @class
-                    .AttributeLists
-                    .Any(attrList => attrList
-                        .Attributes
-                        .Any(attr => attr.Name.ToString() == "ServerConfiguration")))
+                    .BaseList
+                    .Types
+                    .Any(type => type.ToString() == "IServer"))
                 .Count());
 
-            //both should have a "start" method 
-            Assert.AreEqual(2, tree
+            //both should have 2 "Run" methods per class 
+            Assert.AreEqual(4, tree
                 .GetRoot()
                 .DescendantNodes()
                 .OfType<MethodDeclarationSyntax>()
-                .Where(method => method.Identifier.ToString() == "Start")
+                .Where(method => method.Identifier.ToString() == "Run")
                 .Count());
         }
 
@@ -61,7 +60,7 @@ namespace Tests
             {
                 server SomeServer
                 {
-                    Sql on connection SomeConnectionId
+                    sql on connection SomeConnectionId
                 }
             }";
 
@@ -76,8 +75,8 @@ namespace Tests
                 .Where(arg => arg.NameColon?.Name.ToString() == "filters")
                 .Single();
 
-            Assert.IsTrue(filters.Expression is ImplicitArrayCreationExpressionSyntax);
-            Assert.AreEqual(2, (filters.Expression as ImplicitArrayCreationExpressionSyntax)
+            Assert.IsTrue(filters.Expression is ArrayCreationExpressionSyntax);
+            Assert.AreEqual(2, (filters.Expression as ArrayCreationExpressionSyntax)
                 .Initializer
                 .Expressions
                 .Count);
@@ -240,13 +239,13 @@ namespace Tests
         {
             string text;
             Mock.Compile(@"
-            public service TestService
-            {
-                public string Hello(string what)
+                namespace threedee.io
                 {
-                    return ""Hello "" + what;
-                }
-            }", out text);
+	                server Development 
+	                {
+		                sql using SQLiteConnection @dev.db
+	                }
+                }", out text);
 
             Assert.IsNotNull(text);
         }

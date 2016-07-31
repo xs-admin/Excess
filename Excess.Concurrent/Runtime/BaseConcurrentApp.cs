@@ -15,10 +15,10 @@ namespace Excess.Concurrent.Runtime
     {
         protected FactoryMap _types;
         protected IInstantiator _instantiator;
-        public BaseConcurrentApp(FactoryMap types)
+        public BaseConcurrentApp(FactoryMap types, IInstantiator instantiator)
         {
             _types = types;
-            _instantiator = Application.GetService<IInstantiator>();
+            _instantiator = instantiator;
         }
 
         //type management

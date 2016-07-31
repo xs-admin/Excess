@@ -35,6 +35,7 @@ namespace Excess.Server.Middleware
     public static class BuilderExtensions
     {
         public static void UseExcess(this IAppBuilder app, 
+            __Scope scope,
             Action<ConcurrentAppSettings> initializeSettings = null,
             Action<IDistributedApp> initializeApp = null,
             IEnumerable<Type> functional = null,
@@ -50,7 +51,7 @@ namespace Excess.Server.Middleware
 
             initializeApp?.Invoke(server);
 
-            app.Use<ExcessOwinMiddleware>(server, functional, filters);
+            app.Use<ExcessOwinMiddleware>(server, scope, functional, filters);
             server.Start();
         }
 
@@ -58,13 +59,15 @@ namespace Excess.Server.Middleware
             IEnumerable<Assembly> assemblies,
             ConcurrentAppSettings settings = null)
         {
+            var scope = Application.Load(new[] { typeof(BuilderExtensions).Assembly });
             UseExcess(builder,
+                scope,
                 initializeSettings: _settings =>
                 {
                     if (settings != null)
                         _settings.From(settings);
                 },
-                initializeApp: app => Loader.FromAssemblies(app, assemblies),
+                initializeApp: app => Loader.FromAssemblies(app, assemblies, null),
                 functional: assemblies
                     .SelectMany(assembly => assembly
                         .GetTypes()
@@ -83,7 +86,7 @@ namespace Excess.Server.Middleware
 
         public static void UseExcess(this IAppBuilder builder, IDistributedApp server)
         {
-            builder.Use<ExcessOwinMiddleware>(server, null, null);
+            builder.Use<ExcessOwinMiddleware>(server, new __Scope(null), null, null);
             server.Start();
         }
 

@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 
 namespace Excess.Concurrent.Runtime
 {
+    using Excess.Runtime;
     using FactoryFunction = Func<IConcurrentApp, object[], IConcurrentObject>;
     using FactoryMap = Dictionary<string, Func<IConcurrentApp, object[], IConcurrentObject>>;
 
@@ -17,10 +18,11 @@ namespace Excess.Concurrent.Runtime
         int _stopCount;
         ManualResetEvent _blockUntilNextEvent;
         public ThreadedConcurrentApp(FactoryMap types = null, 
+            IInstantiator instantiator = null,
             int threadCount = 1, 
             bool blockUntilNextEvent = true,
             ThreadPriority priority = ThreadPriority.Normal,
-            int stopCount = 1) : base(types)
+            int stopCount = 1) : base(types, instantiator)
         {
             _threadCount = threadCount;
             _priority = priority;

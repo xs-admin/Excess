@@ -5,11 +5,12 @@ using System.Collections.Generic;
 
 namespace Excess.Concurrent.Runtime
 {
+    using Excess.Runtime;
     using FactoryMap = Dictionary<string, Func<IConcurrentApp, object[], IConcurrentObject>>;
 
     public class TestConcurrentApp : BaseConcurrentApp
     {
-        public TestConcurrentApp(FactoryMap types) : base(types)
+        public TestConcurrentApp(FactoryMap types, IInstantiator instantiator) : base(types, instantiator)
         {
         }
 

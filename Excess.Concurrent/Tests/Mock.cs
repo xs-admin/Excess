@@ -17,7 +17,7 @@ namespace Excess.Concurrent.Tests
 {
     using FactoryMap = Dictionary<string, Func<IConcurrentApp, object[], IConcurrentObject>>;
     using ConcurrentAttribute = Excess.Concurrent.Runtime.Concurrent;
-
+    using Excess.Runtime;
     public static class Mock
     {
         public static SyntaxTree Compile(string code,
@@ -72,7 +72,7 @@ namespace Excess.Concurrent.Tests
             }
 
             var types = new FactoryMap();
-            var result = new TestConcurrentApp(types);
+            var result = new TestConcurrentApp(types, new DefaultInstantiator());
 
             foreach (var type in assembly.GetTypes())
             {

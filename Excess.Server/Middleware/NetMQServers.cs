@@ -188,7 +188,7 @@ namespace Excess.Server.Middleware
         {
             var concurrentApp = new ThreadedConcurrentApp(new Dictionary<string, Func<IConcurrentApp, object[], IConcurrentObject>>());
             var app = new DistributedApp(concurrentApp, localServer);
-            Loader.FromAssemblies(app, assemblies, only: classes);
+            Loader.FromAssemblies(app, assemblies, null, only: classes);
 
             app.Connect = _ =>
             {

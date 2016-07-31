@@ -22,16 +22,19 @@ namespace Excess.Server.Middleware
 
     public class ExcessOwinMiddleware : OwinMiddleware
     {
+        __Scope _scope;
         IDistributedApp _server;
         IDictionary<string, FunctionAction> _functions;
         public ExcessOwinMiddleware(
             OwinMiddleware next, 
             IDistributedApp server, 
+            __Scope scope,
             IEnumerable<Type> functions,
             IEnumerable<FilterFunction> filters) : base(next)
         {
             _server = server;
-            _functions = BuildFunctions(functions, filters);
+            _scope = scope;
+            _functions = BuildFunctions(_scope, functions, filters); 
         }
 
         public async override Task Invoke(IOwinContext context)
@@ -79,7 +82,8 @@ namespace Excess.Server.Middleware
         }
 
         private IDictionary<string, FunctionAction> BuildFunctions(
-            IEnumerable<Type> functions, 
+            __Scope appScope,
+            IEnumerable<Type> functions,
             IEnumerable<FilterFunction> filters)
         {
             if (functions == null)
@@ -117,8 +121,6 @@ namespace Excess.Server.Middleware
                             .Select(param => param.ParameterType)
                             .ToArray();
 
-                        var instantiator = Application.GetService<IInstantiator>();
-
                         //build the running function
                         ExecutorFunction eval = (data, request, scope) =>
                         {
@@ -150,7 +152,7 @@ namespace Excess.Server.Middleware
                         result[methodPath] = (data, request, response, continuation) =>
                         {
                             //set up the scope
-                            var scope = new __Scope(instantiator);
+                            var scope = new __Scope(appScope);
                             try
                             {
                                 var responseValue = eval(data, request, scope);
