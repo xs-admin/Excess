@@ -62,6 +62,32 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "runtime", "runtime", "{5352
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Excess.Runtime", "Excess.Runtime\Excess.Runtime.csproj", "{62F3B315-2B69-4A4B-A40D-93190F6773D7}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "nuget", "nuget", "{66C03F7A-9C22-4E68-A447-6F932592B3A7}"
+	ProjectSection(SolutionItems) = preProject
+		Excess.Compiler\Nuget\Excess.Compiler.nuspec = Excess.Compiler\Nuget\Excess.Compiler.nuspec
+		Excess.Concurrent\Nuget\Excess.Concurrent.nuspec = Excess.Concurrent\Nuget\Excess.Concurrent.nuspec
+		Excess.Concurrent\Nuget\Excess.Concurrent.Runtime.nuspec = Excess.Concurrent\Nuget\Excess.Concurrent.Runtime.nuspec
+		Excess.Extensions\Nuget\Excess.Dapper.nuspec = Excess.Extensions\Nuget\Excess.Dapper.nuspec
+		Excess.Extensions\Nuget\Excess.Extensions.nuspec = Excess.Extensions\Nuget\Excess.Extensions.nuspec
+		Excess.Extensions\Nuget\Excess.NInjector.nuspec = Excess.Extensions\Nuget\Excess.NInjector.nuspec
+		Excess.Compiler\Nuget\Excess.Runtime.nuspec = Excess.Compiler\Nuget\Excess.Runtime.nuspec
+		Excess.Server\Nuget\Excess.Server.nuspec = Excess.Server\Nuget\Excess.Server.nuspec
+		Excess.Server\Nuget\Excess.Server.Runtime.nuspec = Excess.Server\Nuget\Excess.Server.Runtime.nuspec
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "debug", "debug", "{4EA53E3C-67DD-4084-B8F5-49A5926D7798}"
+	ProjectSection(SolutionItems) = preProject
+		Excess.Compiler\Nuget\Excess.Compiler.Debug.nuspec = Excess.Compiler\Nuget\Excess.Compiler.Debug.nuspec
+		Excess.Concurrent\Nuget\Excess.Concurrent.Debug.nuspec = Excess.Concurrent\Nuget\Excess.Concurrent.Debug.nuspec
+		Excess.Concurrent\Nuget\Excess.Concurrent.Runtime.Debug.nuspec = Excess.Concurrent\Nuget\Excess.Concurrent.Runtime.Debug.nuspec
+		Excess.Extensions\Nuget\Excess.Dapper.Debug.nuspec = Excess.Extensions\Nuget\Excess.Dapper.Debug.nuspec
+		Excess.Extensions\Nuget\Excess.Extensions.Debug.nuspec = Excess.Extensions\Nuget\Excess.Extensions.Debug.nuspec
+		Excess.Extensions\Nuget\Excess.NInjector.Debug.nuspec = Excess.Extensions\Nuget\Excess.NInjector.Debug.nuspec
+		Excess.Compiler\Nuget\Excess.Runtime.Debug.nuspec = Excess.Compiler\Nuget\Excess.Runtime.Debug.nuspec
+		Excess.Server\Nuget\Excess.Server.Debug.nuspec = Excess.Server\Nuget\Excess.Server.Debug.nuspec
+		Excess.Server\Nuget\Excess.Server.Runtime.Debug.nuspec = Excess.Server\Nuget\Excess.Server.Runtime.Debug.nuspec
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -173,5 +199,6 @@ Global
 		{271C866F-DE7D-457C-91C5-F7CD878DAB27} = {C3978199-1535-4333-B2F3-232E811E0ABB}
 		{F30A7D8C-4B51-4967-99E8-2092E5AD3618} = {DAAFF147-84D5-4A81-916C-23934D2FF9B7}
 		{62F3B315-2B69-4A4B-A40D-93190F6773D7} = {5352926D-CD3F-4F3F-A195-6A9A8EDA2603}
+		{4EA53E3C-67DD-4084-B8F5-49A5926D7798} = {66C03F7A-9C22-4E68-A447-6F932592B3A7}
 	EndGlobalSection
 EndGlobal
