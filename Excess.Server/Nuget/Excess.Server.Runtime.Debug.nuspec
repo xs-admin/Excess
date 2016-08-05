@@ -1,8 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
-        <id>Excess.Server.Runtime</id>
-        <version>0.47.6-debug</version>
+        <id>Excess.Server</id>
+        <version>0.46.3-alpha</version>
         <authors>Excess</authors>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>Excess Web Application Runtime</description>
