@@ -5,12 +5,12 @@ using demo_transpiler;
 
 namespace metaprogramming
 {
-	public service Home  
+	public service Home   
 	{
 		inject 
 		{
 			ITranspiler		 _transpiler;
-			IGraphTranspiler _graphTranspiler; 
+			IGraphTranspiler _graphTranspiler;  
 		}   
 
 		public string Transpile(string text)

@@ -4,7 +4,7 @@ using demo_transpiler;
 
 namespace metaprogramming.server
 {
-	injector     
+	injector   
 	{
 		ITranspiler = Transpiler;   
 		IGraphTranspiler = GraphTranspiler; 

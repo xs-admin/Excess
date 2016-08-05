@@ -2,9 +2,9 @@
 
 namespace metaprogramming
 {
-	server Development
+	server Development 
 	{
 		on port 1080
-		static files @..\..\client\app
+		static files @../../client/app
 	}
 }
