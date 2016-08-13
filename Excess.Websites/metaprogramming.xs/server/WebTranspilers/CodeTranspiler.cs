@@ -12,9 +12,14 @@ namespace metaprogramming.server.WebTranspilers
     {
         public string Transpile(string code)
         {
+            var configKey = "WebTranspiler";
+#if DEBUG
+            configKey += "-debug";
+#endif
+
             using (var client = new HttpClient())
             {
-                client.BaseAddress = new Uri(ConfigurationManager.AppSettings["WebTranspiler"]);
+                client.BaseAddress = new Uri(ConfigurationManager.AppSettings[configKey]);
                 client.DefaultRequestHeaders.Accept.Clear();
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
