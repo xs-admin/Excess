@@ -49,8 +49,10 @@ namespace Tests
             //inside the class
             Assert.AreEqual(method.Parent, @class);
 
-            //with its type calculated to int (22 or 64)
-            Assert.IsTrue(method.ReturnType.ToString().StartsWith("Int"));
+            //with its type calculated to int
+            Assert.IsTrue(method
+                .ReturnType.ToString().ToLower()
+                .StartsWith("int"));
         }
 
         [TestMethod]
