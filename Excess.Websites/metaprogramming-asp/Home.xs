@@ -1,27 +1,29 @@
 ﻿using xs.server;
 using xs.concurrent;
 
-using demo_transpiler;
+using metaprogramming.interfaces;
 
-namespace Home
+namespace metaprogramming.Home
 { 
+	[route("/transpile/code")]
 	function Transpile(string text)    
 	{
 		inject 
 		{
-			ITranspiler	_transpiler;
+			ICodeTranspiler	_transpiler;
 		}      
 
-		return _transpiler.Process(text);         
+		return _transpiler.Transpile(text);         
 	}
 
-	function TranspileGraph(string text)
+	[route("/transpile/graph")] 
+	function TranspileGraph(string text) 
 	{
 		inject 
 		{
 			IGraphTranspiler _graphTranspiler;
 		}      
 
-		return _graphTranspiler.Process(text);      
-	} 
+		return _graphTranspiler.Transpile(text);      
+	}  
 }

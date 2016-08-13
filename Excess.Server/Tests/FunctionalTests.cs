@@ -20,6 +20,7 @@ namespace Tests
             const string SourceCode = @"
             namespace Some.Namespace
             {
+                [route(""/Some/Namespace/SomeFunction"")]
                 function SomeFunction(string what)
                 {
                     return ""Hello "" + what;

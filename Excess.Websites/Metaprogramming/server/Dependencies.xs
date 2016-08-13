@@ -1,12 +1,12 @@
 ﻿using xs.ninject;
-
-using demo_transpiler;
+using metaprogramming.interfaces;
+using metaprogramming.server.WebTranspilers;
 
 namespace metaprogramming.server
 {
 	injector   
 	{
-		ITranspiler = Transpiler;   
+		ICodeTranspiler = CodeTranspiler;
 		IGraphTranspiler = GraphTranspiler; 
 	}
 }

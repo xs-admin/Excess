@@ -30,14 +30,6 @@ namespace NInjector
             BlockSyntax code,
             Scope scope)
         {
-            //td: we're getting a modified class (no parent)
-            //var parentNS = @class.Parent as NamespaceDeclarationSyntax;
-            //if (parentNS == null)
-            //{
-            //    //td: error
-            //    return @class;
-            //}
-
             var statements = new List<StatementSyntax>();
             if (!ParseInjector(code, scope, statements))
                 return @class;
@@ -72,15 +64,30 @@ namespace NInjector
                     return false;
                 }
 
-                statements.Add(Templates
-                    .Bind
-                    .Get<StatementSyntax>(
-                        assignment.Left
-                            .WithLeadingTrivia()
-                            .WithTrailingTrivia(), 
-                        assignment.Right
-                            .WithLeadingTrivia()
-                            .WithTrailingTrivia()));
+                if (assignment.Right is IdentifierNameSyntax)
+                {
+                    statements.Add(Templates
+                        .BindType
+                        .Get<StatementSyntax>(
+                            assignment.Left
+                                .WithLeadingTrivia()
+                                .WithTrailingTrivia(),
+                            assignment.Right
+                                .WithLeadingTrivia()
+                                .WithTrailingTrivia()));
+                }
+                else if (assignment.Right is ParenthesizedLambdaExpressionSyntax)
+                {
+                    statements.Add(Templates
+                        .BindMethod
+                        .Get<StatementSyntax>(
+                            assignment.Left
+                                .WithLeadingTrivia()
+                                .WithTrailingTrivia(),
+                            assignment.Right
+                                .WithLeadingTrivia()
+                                .WithTrailingTrivia()));
+                }
             }
 
             return true;

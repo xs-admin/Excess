@@ -1,11 +1,12 @@
 ﻿using xs.ninject;
-using demo_transpiler;
+using metaprogramming.interfaces;
+using metaprogramming.server.Roslyn;
 
-namespace metaprogramming_asp.server  
+namespace metaprogramming.server  
 {
 	injector     
 	{
-		ITranspiler = Transpiler;   
+		ICodeTranspiler = Transpiler;   
 		IGraphTranspiler = GraphTranspiler;      
 	}
 }

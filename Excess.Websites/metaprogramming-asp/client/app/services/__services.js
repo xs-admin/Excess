@@ -8,7 +8,7 @@
             {
                 var deferred = $q.defer();
 
-                $http.post('/Home' + '/Transpile', {
+                $http.post("/transpile/code", {
                     text : text,
 
                 }).then(function(response) {
@@ -25,7 +25,7 @@
             {
                 var deferred = $q.defer();
 
-                $http.post('/Home' + '/TranspileGraph', {
+                $http.post("/transpile/graph", {
                     text : text,
 
                 }).then(function(response) {
@@ -39,5 +39,5 @@
 
 
 
-                this.__ID = 'f416bdcb-0089-494e-92b7-40981e5f0e85';
+                this.__ID = '3bfe85f0-0deb-48f5-87a5-97afbe07be3b';
             }])

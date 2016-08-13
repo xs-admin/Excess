@@ -1,6 +1,8 @@
 ﻿#line 1 "C:\dev\Excess\Excess.Websites\metaprogramming\server\Dependencies.xs"
+#line 2
+using metaprogramming.interfaces;
 #line 3
-using demo_transpiler;
+using metaprogramming.server.WebTranspilers;
 #line hidden
 using System;
 using System.Collections.Generic;
@@ -32,7 +34,7 @@ namespace metaprogramming.server
 
         public override void Load()
         {
-            Bind<ITranspiler>().To<Transpiler>();
+            Bind<ICodeTranspiler>().To<CodeTranspiler>();
             Bind<IGraphTranspiler>().To<GraphTranspiler>();
         }
     }

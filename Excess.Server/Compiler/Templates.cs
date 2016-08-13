@@ -63,7 +63,7 @@ namespace Excess.Server.Compiler
             {
                 var deferred = $q.defer();
 
-                $http.post(@Model.Path + '/@Model.Name', {
+                $http.post(@Model.Path, {
                     @Model.Data
                 }).then(function(response) {
                     deferred.resolve(response);

@@ -25,6 +25,8 @@ namespace Tests
     using Compilation = Excess.Compiler.Roslyn.RoslynCompilation;
     using CompilationAnalysis = Excess.Compiler.ICompilationAnalysis<SyntaxToken, SyntaxNode, SemanticModel>;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
+    using Microsoft.Owin;
+
     public static class Mock
     {
         public static SyntaxTree Compile(string code, out string output)
@@ -260,6 +262,7 @@ namespace Tests
                     .Environment()
                         .dependency<ExcessOwinMiddleware>("Excess.Server.Middleware")
                         .dependency<IAppBuilder>("Owin")
+                        .dependency<IOwinRequest>("Microsoft.Owin")
                         .dependency<__Scope>("Excess.Runtime")),
 
                 new DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel>(

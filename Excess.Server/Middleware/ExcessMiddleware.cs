@@ -92,21 +92,14 @@ namespace Excess.Server.Middleware
             var result = new Dictionary<string, FunctionAction>();
             foreach (var functionObject in functions)
             {
-                var @namespace = functionObject.Namespace.Split('.');
-                var path = new StringBuilder();
-                foreach (var ns in @namespace)
-                {
-                    path.Append("/");
-                    path.Append(ns);
-                }
-
-                Debug.Assert(path.Length > 0);
                 foreach (var method in functionObject.GetTypeInfo().DeclaredMethods)
                 {
+                    var route = default(string);
+                    if (!hasRoute(method, out route))
+                        continue;
+
                     if (method.IsPublic)
                     {
-                        var methodPath = $"{path}/{method.Name}";
-
                         var parameters = method
                             .GetParameters();
 
@@ -150,7 +143,7 @@ namespace Excess.Server.Middleware
                             }
                         }
 
-                        result[methodPath] = (data, request, response, continuation) =>
+                        result[route] = (data, request, response, continuation) =>
                         {
                             //set up the scope
                             var scope = new __Scope(appScope);
@@ -173,6 +166,19 @@ namespace Excess.Server.Middleware
             }
 
             return result;
+        }
+
+        private bool hasRoute(MethodInfo method, out string route)
+        {
+            route = null;
+            var attribute = method.CustomAttributes
+                .SingleOrDefault(attr => attr.AttributeType == typeof(route));
+
+            if (attribute == null)
+                return false;
+
+            route = (string)attribute.ConstructorArguments[0].Value;
+            return true;
         }
 
         private bool TryParseFunctional(string path, out FunctionAction function)

@@ -72,7 +72,7 @@ namespace Tests.Mock
             {
                 _functions[method.Name] = () =>
                 {
-                    var scope = new __Scope(null as IInstantiator);
+                    var scope = new __Scope(null);
                     scope.set<IDbConnection>(connection);
                     return method.Invoke(null, new object[] { scope });
                 };

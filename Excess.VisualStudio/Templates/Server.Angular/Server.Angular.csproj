@@ -77,8 +77,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Servers.xs.cs">
+      <DependentUpon>Servers.xs</DependentUpon>
+    </None>
     <None Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <None Include="Servers.xs" />
     <None Include="xs.template.config">
       <SubType>Designer</SubType>
     </None>

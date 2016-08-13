@@ -12,4 +12,16 @@ namespace Excess.Server.Middleware
             this.id = id;
         }
     }
+
+    [AttributeUsage(AttributeTargets.Method)]
+    public class route : Attribute
+    {
+        public string id;
+
+        public route(string id)
+        {
+            this.id = id;
+        }
+    }
+
 }

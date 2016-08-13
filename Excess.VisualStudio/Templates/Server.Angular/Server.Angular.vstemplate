@@ -61,6 +61,8 @@
       </Folder>
       <ProjectItem ReplaceParameters="true" TargetFileName="Program.cs">Program.cs</ProjectItem>
       <ProjectItem ReplaceParameters="true" TargetFileName="xs.config">xs.template.config</ProjectItem>
+      <ProjectItem ReplaceParameters="true" TargetFileName="Servers.xs">Servers.xs</ProjectItem>
+      <ProjectItem ReplaceParameters="true" TargetFileName="Servers.xs.cs">Servers.xs.cs</ProjectItem>
       <ProjectItem ReplaceParameters="true" TargetFileName="Service1.xs">Service1.xs</ProjectItem>
       <ProjectItem ReplaceParameters="true" TargetFileName="Service1.xs.cs">Service1.xs.cs</ProjectItem>
       <ProjectItem ReplaceParameters="false" TargetFileName="xs.packages">xs.packages</ProjectItem>

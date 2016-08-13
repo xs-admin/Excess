@@ -252,7 +252,7 @@ namespace Excess.Server.Compiler
                 .DescendantNodes()
                 .OfType<MethodDeclarationSyntax>()
                 .Where(method => method.Identifier.ToString() == "Run"
-                              && method.ParameterList.Parameters.Count == 2)
+                              && method.ParameterList.Parameters.Count == 3)
                 .Single();
 
             return result
@@ -264,7 +264,19 @@ namespace Excess.Server.Compiler
         private static bool isService(ClassDeclarationSyntax @class, ExcessCompilation compilation, Scope scope)
         {
             if (!isConcurrentClass(@class, compilation, scope))
-                return @class.Identifier.ToString() == "Functions" && Roslyn.IsStatic(@class);
+            {
+                var isFunctionClass = @class.Identifier.ToString() == "Functions" && Roslyn.IsStatic(@class);
+                if (isFunctionClass)
+                    return @class.ChildNodes()
+                        .OfType<MethodDeclarationSyntax>()
+                        .Any(method => method
+                            .AttributeLists
+                            .Any(attrList => attrList
+                                .Attributes
+                                .Any(attr => attr.Name.ToString() == "route")));
+
+                return false;
+            }
 
             return @class
                 .AttributeLists
@@ -300,13 +312,15 @@ namespace Excess.Server.Compiler
                 var @namespace = @class.FirstAncestorOrSelf<NamespaceDeclarationSyntax>(
                     ancestor => ancestor is NamespaceDeclarationSyntax);
 
-                Debug.Assert(@namespace != null); //td: error
-                name = @namespace.Name.ToString();
+                if (@namespace != null)
+                {
+                    var components = @namespace.Name.ToString().Split('.');
+                    name = components.Last();
+                }
 
-                var path = $@"'/{string.Join("/", @namespace.Name.ToString().Split('.'))}'";
-                body = functionalBody(@class, path, model);
-
-                config.AddFunctionalContainer(name, body);
+                body = functionalBody(@class, model);
+                if (body.Any())
+                    config.AddFunctionalContainer(name, body);
                 return; //td: separate
             }
             else
@@ -372,7 +386,7 @@ namespace Excess.Server.Compiler
                             Name = name.ToString(),
                             Arguments = argumentsFromParameters(parameters),
                             Data = objectFromParameters(parameters),
-                            Path = "'/' + this.__ID",
+                            Path = "'/' + this.__ID + '/" + name.ToString() + "'",
                             Response = calculateResponse(type, model),
                         }));
                 },
@@ -391,13 +405,18 @@ namespace Excess.Server.Compiler
             return result.ToString();
         }
 
-        private static string functionalBody(ClassDeclarationSyntax @class, string path, SemanticModel model)
+        private static string functionalBody(ClassDeclarationSyntax @class, SemanticModel model)
         {
             var result = new StringBuilder();
             var methods = @class
                 .Members
                 .Select(member => (MethodDeclarationSyntax)member) //functional is only to have members
-                .Where(method => Roslyn.IsVisible(method)); //only publics
+                .Where(method => method
+                    .AttributeLists
+                    .Any(attrList => attrList
+                        .Attributes
+                        .Any(attr => attr.Name.ToString() == "route"))); //only functions marked as public
+
 
             foreach (var method in methods)
             {
@@ -405,6 +424,26 @@ namespace Excess.Server.Compiler
                     .ParameterList
                     .Parameters
                     .Where(param => param.Identifier.ToString() != "__scope"); //account for 
+
+                var path = string.Empty;
+                foreach (var attrList in method.AttributeLists)
+                {
+                    var attr = attrList
+                        .Attributes
+                        .FirstOrDefault(a => a.Name.ToString() == "route");
+
+                    if (attr != null)
+                    {
+                        path = attr.ArgumentList
+                            .Arguments
+                            .Single()
+                            .Expression
+                            .ToString();
+                        break;
+                    }
+                }
+
+                Debug.Assert(!string.IsNullOrWhiteSpace(path));
 
                 result.AppendLine(Templates
                     .jsMethod

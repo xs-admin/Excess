@@ -1,6 +1,8 @@
 ﻿#line 1 "C:\dev\Excess\Excess.Websites\metaprogramming-asp\server\Dependencies.xs"
 #line 2
-using demo_transpiler;
+using metaprogramming.interfaces;
+#line 3
+using metaprogramming.server.Roslyn;
 #line hidden
 using System;
 using System.Collections.Generic;
@@ -8,9 +10,9 @@ using System.Linq;
 using Excess.Runtime;
 using Ninject;
 
-#line 4
-namespace metaprogramming_asp.server
 #line 5
+namespace metaprogramming.server
+#line 6
 {
 #line hidden
     [AutoInit]
@@ -32,7 +34,7 @@ namespace metaprogramming_asp.server
 
         public override void Load()
         {
-            Bind<ITranspiler>().To<Transpiler>();
+            Bind<ICodeTranspiler>().To<Transpiler>();
             Bind<IGraphTranspiler>().To<GraphTranspiler>();
         }
     }

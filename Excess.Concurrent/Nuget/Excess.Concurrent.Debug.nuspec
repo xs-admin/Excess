@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
         <id>Excess.Concurrent</id>
-        <version>0.47.8-debug</version>
+        <version>0.47.13-debug</version>
         <authors>Excess</authors>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>C# extensions for concurrency</description>

@@ -67,16 +67,18 @@ namespace Tests
             string output;
             var tree = Mock.Compile(Code, out output);
 
-            //should have a filters parameter with an array as value and 2 items
+            //should have two filters parameter with an array as value and 2 items
             var filters = tree
                 .GetRoot()
                 .DescendantNodes()
                 .OfType<ArgumentSyntax>()
-                .Where(arg => arg.NameColon?.Name.ToString() == "filters")
-                .Single();
+                .Where(arg => arg.NameColon?.Name.ToString() == "filters");
 
-            Assert.IsTrue(filters.Expression is ArrayCreationExpressionSyntax);
-            Assert.AreEqual(2, (filters.Expression as ArrayCreationExpressionSyntax)
+            Assert.AreEqual(2, filters.Count());
+
+            var filter = filters.First();
+            Assert.IsTrue(filter.Expression is ArrayCreationExpressionSyntax);
+            Assert.AreEqual(2, (filter.Expression as ArrayCreationExpressionSyntax)
                 .Initializer
                 .Expressions
                 .Count);
@@ -160,6 +162,39 @@ namespace Tests
         }
 
         [TestMethod]
+        public void Functions_ShouldGenerateAngularServices()
+        {
+            //setup
+            const string Code = @"
+            namespace ServiceName            
+            {
+                [route(""/some/route"")]
+                function someFunction()
+                {
+                }
+            }";
+
+            var errorList = new List<string>();
+            var compilation = Mock.Build(Code, errors: errorList, generateJSFiles: true);
+
+            Assert.IsFalse(errorList.Any());
+
+            var serverConfig = compilation.Scope.get<IServerConfiguration>();
+            Assert.IsNotNull(serverConfig);
+
+            var clientCode = serverConfig.GetClientInterface();
+
+            //should generate an angular service
+            Assert.IsTrue(clientCode.Contains("xsServices.service('ServiceName', ['$http', '$q', function($http, $q)"));
+
+            //should generate internal methods
+            Assert.IsTrue(clientCode.Contains("this.someFunction = function ()"));
+
+            //should generate the post method
+            Assert.IsTrue(clientCode.Contains("$http.post(\"/some/route\""));
+        }
+
+        [TestMethod]
         public void ConcurrentClasses_ShouldGenerateJavaScriptClasses()
         {
             //setup
@@ -204,13 +239,15 @@ namespace Tests
         {
             //setup
             const string Code = @"
-            namespace Some.Namespace
+            namespace Some.Service
             {
+                [route(""/Some/Namespace/SomeFunction"")]
                 public function SomeFunction(string what)
                 {
                     return ""Hello "" + what;
                 }
 
+                [route(""/Some/Namespace/SomeOtherFunction"")]
                 public function SomeOtherFunction(string what)
                 {
                     return ""Other "" + what;
@@ -228,10 +265,10 @@ namespace Tests
             var clientCode = serverConfig.GetClientInterface();
 
             //should generate an angular service naed as the namespace
-            Assert.IsTrue(clientCode.Contains("xsServices.service('Some.Namespace', ['$http', '$q', function($http, $q)"));
+            Assert.IsTrue(clientCode.Contains("xsServices.service('Service', ['$http', '$q', function($http, $q)"));
 
             //should generate a post to /Some/Namespace/SomeFunction
-            Assert.IsTrue(clientCode.Contains("$http.post('/Some/Namespace' + '/SomeFunction'"));
+            Assert.IsTrue(clientCode.Contains("$http.post(\"/Some/Namespace/SomeFunction\""));
         }
 
         [TestMethod]

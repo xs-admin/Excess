@@ -35,7 +35,7 @@ namespace Excess.Server.Middleware
 
             using (WebApp.Start(url, (builder) =>
             {
-                if (staticFiles != null)
+                if (!string.IsNullOrWhiteSpace(staticFiles))
                 {
                     if (!Directory.Exists(staticFiles))
                         throw new ArgumentException(staticFiles);
@@ -85,7 +85,8 @@ namespace Excess.Server.Middleware
                     filters: filters);
             }))
             {
-                Console.ReadKey();
+                Console.WriteLine($"Excess server running @{url}...");
+                Console.ReadLine();
             }
         }
     }

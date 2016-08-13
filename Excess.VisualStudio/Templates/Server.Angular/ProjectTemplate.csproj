@@ -50,6 +50,9 @@
     <Compile Include="server\Dependencies.xs.cs">
       <DependentUpon>Dependencies.xs</DependentUpon>
     </Compile>
+    <Compile Include="Servers.xs.cs">
+      <DependentUpon>Servers.xs</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Content Include="client\app\app.css" />
@@ -72,9 +75,10 @@
     <None Include="client\LICENSE" />
     <None Include="client\README.md" />
     <None Include="server\Dependencies.xs" />
+    <None Include="Servers.xs" />
     <None Include="Service1.xs" />
     <None Include="xs.packages" />
-    <None Include="app.config" />
+    <None Include="xs.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

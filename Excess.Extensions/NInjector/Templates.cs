@@ -5,7 +5,8 @@ namespace NInjector
 {
     public static class Templates
     {
-        public static Template Bind = Template.ParseStatement("Bind<__0>().To<__1>();");
+        public static Template BindType = Template.ParseStatement("Bind<__0>().To<__1>();");
+        public static Template BindMethod = Template.ParseStatement("Bind<__0>().ToMethod<__1>();");
         public static ClassDeclarationSyntax Module = Template.Parse(@"
             [AutoInit]
             public class NinjectExcessModule : Ninject.Modules.NinjectModule
