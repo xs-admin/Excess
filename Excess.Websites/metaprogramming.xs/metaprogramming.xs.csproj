@@ -42,19 +42,19 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Concurrent.Compiler, Version=0.46.2.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Concurrent.Runtime.0.47.7-debug\lib\Net45\Excess.Concurrent.Compiler.dll</HintPath>
+      <HintPath>..\packages\Excess.Concurrent.Runtime.0.48.0-alpha\lib\Net45\Excess.Concurrent.Compiler.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Concurrent.Runtime, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Concurrent.Runtime.0.47.7-debug\lib\Net45\Excess.Concurrent.Runtime.dll</HintPath>
+      <HintPath>..\packages\Excess.Concurrent.Runtime.0.48.0-alpha\lib\Net45\Excess.Concurrent.Runtime.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Runtime, Version=1.0.0.0, Culture=neutral, PublicKeyToken=270b7f55f5ad09f8, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Runtime.0.47.13-debug\lib\Net45\Excess.Runtime.dll</HintPath>
+      <HintPath>..\packages\Excess.Runtime.0.48.0-alpha\lib\Net45\Excess.Runtime.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Server.Middleware, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Server.0.47.37-debug\lib\Net45\Excess.Server.Middleware.dll</HintPath>
+      <HintPath>..\packages\Excess.Server.0.48.0-alpha\lib\Net45\Excess.Server.Middleware.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.CodeAnalysis, Version=1.2.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
@@ -165,10 +165,6 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="System.Xml" />
-    <Reference Include="xss, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Server.0.47.37-debug\lib\Net45\xss.exe</HintPath>
-      <Private>True</Private>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Home.xs.cs">

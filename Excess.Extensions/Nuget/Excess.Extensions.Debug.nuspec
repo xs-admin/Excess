@@ -8,7 +8,6 @@
     <description>Official Excess Extension Package</description>
 
     <dependencies>
-      <dependency id="Excess.Extensions.NInjector" version="0.47.1-alpha"/>
       <dependency id="Newtonsoft.Json" version="8.0.0"/>
     </dependencies>
   </metadata>
