@@ -6,7 +6,7 @@ using System.Web.Mvc;
 using System.Web.Optimization;
 using System.Web.Routing;
 
-namespace metaprogramming_asp
+namespace metaprogramming.asp
 {
     public class MvcApplication : System.Web.HttpApplication
     {

@@ -23,8 +23,6 @@
     <files>
         <file src="..\Compiler\bin\Debug\Excess.Server.Compiler.dll" target="tools\Excess.Server.Compiler.dll" />
         <file src="..\Compiler\bin\Debug\Excess.Server.Compiler.pdb" target="tools\Excess.Server.Compiler.pdb" />
-        <file src="..\xss\bin\Debug\xss.exe" target="lib\Net45\xss.exe" />
-        <file src="..\xss\bin\Debug\xss.pdb" target="lib\Net45\xss.pdb" />
         <file src="..\Middleware\bin\Debug\Excess.Server.Middleware.dll" target="lib\Net45\Excess.Server.Middleware.dll" />
         <file src="..\Middleware\bin\Debug\Excess.Server.Middleware.pdb" target="lib\Net45\Excess.Server.Middleware.pdb" />
     </files>

@@ -4,6 +4,7 @@ using System.Net.Http.Headers;
 using System.Configuration;
 using Newtonsoft.Json.Linq;
 using metaprogramming.interfaces;
+using System.Web;
 
 namespace metaprogramming.server.WebTranspilers
 {
@@ -17,12 +18,12 @@ namespace metaprogramming.server.WebTranspilers
                 client.DefaultRequestHeaders.Accept.Clear();
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-                var contents = $"{{\"text\" : \"{code}\"}}";
+                var contents = $"{{\"text\" : \"{HttpUtility.JavaScriptStringEncode(code)}\"}}";
                 HttpResponseMessage response = client
                     .PostAsync("/transpile/code", new StringContent(contents))
                     .Result;
 
-                var result = string.Empty;
+                var result = "An error occured";
                 if (response.IsSuccessStatusCode)
                 {
                     var responseContents = response.Content.ReadAsStringAsync().Result;
@@ -32,7 +33,7 @@ namespace metaprogramming.server.WebTranspilers
                         .ToString();
                 }
 
-                return "An error occured";
+                return result;
             }
         }
     }

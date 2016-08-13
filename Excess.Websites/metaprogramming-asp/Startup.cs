@@ -1,12 +1,10 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using Owin;
 using Microsoft.Owin;
-using Owin;
 using Excess.Server.Middleware;
 
-[assembly: OwinStartup(typeof(metaprogramming_asp.Startup))]
+[assembly: OwinStartup(typeof(metaprogramming.asp.Startup))]
 
-namespace metaprogramming_asp
+namespace metaprogramming.asp
 {
     public class Startup
     {

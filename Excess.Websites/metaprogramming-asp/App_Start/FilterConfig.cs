@@ -1,7 +1,7 @@
 ﻿using System.Web;
 using System.Web.Mvc;
 
-namespace metaprogramming_asp
+namespace metaprogramming.asp
 {
     public class FilterConfig
     {

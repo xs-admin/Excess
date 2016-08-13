@@ -1,7 +1,7 @@
 ﻿using System.Web;
 using System.Web.Optimization;
 
-namespace metaprogramming_asp
+namespace metaprogramming.asp
 {
     public class BundleConfig
     {
