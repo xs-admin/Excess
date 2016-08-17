@@ -51,6 +51,7 @@ namespace Excess.Concurrent.Compiler
         public static void Apply(RoslynCompiler compiler, Options options = null, Scope scope = null)
         {
             scope?.AddKeywords("concurrent", "spawn", "await");
+            scope?.set<Options>(options);
 
             if (options == null)
                 options = new Options();
@@ -81,6 +82,10 @@ namespace Excess.Concurrent.Compiler
                         .replace("ref", "__app")
                         .then(CompileApp(options)));
 
+            compiler.Syntax()
+                .match<MethodDeclarationSyntax>(IsConcurrentFunction, "after-syntax")
+                    .then(CompileFunction);
+
             compiler.Environment()
                 .dependency(new[]
                 {
@@ -88,6 +93,81 @@ namespace Excess.Concurrent.Compiler
                     "System.Threading.Tasks",
                 })
                 .dependency<ConcurrentObject>("Excess.Concurrent.Runtime");
+        }
+
+        private static bool IsConcurrentFunction(MethodDeclarationSyntax function)
+        {
+            if (!function.Modifiers.Any(SyntaxKind.StaticKeyword))
+                return false; //ought to be static
+
+            var parent = function.Parent as ClassDeclarationSyntax;
+            if (parent == null || parent.Identifier.ToString() != "Functions")
+                return false; //ought to be a user function, //td: attributes
+
+            if (function
+                .DescendantNodes()
+                .OfType<ExpressionStatementSyntax>()
+                .Any(statement => IsConcurrentExpression(statement)))
+                return true; //contains concurrent expressions
+
+            if (function
+                .DescendantNodes()
+                .OfType<AwaitExpressionSyntax>()
+                .Any())
+                return true; //contains await expressions
+
+            return false; 
+        }
+
+        private static bool IsConcurrentExpression(ExpressionStatementSyntax statement)
+        {
+            return statement.Expression is BinaryExpressionSyntax;
+        }
+
+        private static SyntaxNode CompileFunction(SyntaxNode node, Scope scope)
+        {
+            var method = (MethodDeclarationSyntax)node;
+            var concurrentClass = method.Identifier.ToString() + "__concurrent";
+
+            //create a concurrent class with the method
+            var @class = CSharp.ClassDeclaration(concurrentClass)
+                .AddMembers(method);
+
+            //add it to the parent
+            var document = scope.GetDocument();
+            document.change(node.Parent, AddFunctionClass(@class));
+
+            //create a substitute call
+            var invocation = Templates.FunctionInvocation
+                .Get<StatementSyntax>(
+                    (method.Parent as ClassDeclarationSyntax).Identifier,
+                    method.Identifier);
+
+            return method
+                .AddParameterListParameters(Templates
+                    .FunctionParameters
+                    .Parameters
+                    .ToArray())
+                .WithBody(CSharp.Block(invocation));
+        }
+
+        private static Func<SyntaxNode, Scope, SyntaxNode> AddFunctionClass(ClassDeclarationSyntax @class)
+        {
+            return (node, scope) =>
+            {
+                var document = scope.GetDocument();
+                @class = (ClassDeclarationSyntax)document.change(@class, CompileFunctionClass);
+                return Roslyn.AddMember(@class)(node, scope);
+            };
+        }
+
+        private static SyntaxNode CompileFunctionClass(SyntaxNode node, Scope scope)
+        {
+            var @class = (ClassDeclarationSyntax)node;
+
+            //compile it as concurrent
+            var options = scope?.get<Options>() ?? new Options(); //td: there should be options in the scope 
+            return ConcurrentExtension.CompileClass(options)(@class, scope);
         }
 
         public static void AppCompilation(CompilationAnalysis compilation)
@@ -507,6 +587,7 @@ namespace Excess.Concurrent.Compiler
                 .Any();
 
             var isVisible = isProtected || Roslyn.IsVisible(method);
+            var isStatic = Roslyn.IsStatic(method);
 
             var hasReturnType = method.ReturnType.ToString() != "void";
             var returnType = hasReturnType 
@@ -528,7 +609,7 @@ namespace Excess.Concurrent.Compiler
                     .WithBody(CSharp.Block());
             }
 
-            var cc = parseConcurrentBlock(ctx, method.Body, scope);
+            var cc = parseConcurrentBlock(ctx, method.Body, scope, isStatic);
             if (cc != null)
                 method = method.WithBody(cc);
 
@@ -587,12 +668,15 @@ namespace Excess.Concurrent.Compiler
             if (isVisible)
             {
                 if (isEmptySignal)
+                {
+                    Debug.Assert(!isStatic); //td: error
                     ctx.AddMember(Templates
                         .EmptySignalMethod
                         .Get<MethodDeclarationSyntax>(
-                            "__concurrent" + name, 
+                            "__concurrent" + name,
                             Roslyn.Quoted(name),
                             isProtected ? Roslyn.@true : Roslyn.@false));
+                }
                 else
                     concurrentMethod(ctx, method, asVirtual: options.GenerateRemote);
             }
@@ -608,7 +692,7 @@ namespace Excess.Concurrent.Compiler
             else
                 return false;
 
-            var signal = ctx.AddSignal(name, returnType, isVisible);
+            var signal = ctx.AddSignal(name, returnType, isVisible, isStatic);
             if (isVisible)
             {
                 method = createPublicSignals(ctx, method, signal, isSingleton);
@@ -630,9 +714,9 @@ namespace Excess.Concurrent.Compiler
             return true;
         }
 
-        private static BlockSyntax parseConcurrentBlock(Class ctx, BlockSyntax body, Scope scope)
+        private static BlockSyntax parseConcurrentBlock(Class ctx, BlockSyntax body, Scope scope, bool isStatic)
         {
-            var rewriter = new ExpressionParser(ctx, scope);
+            var rewriter = new ExpressionParser(ctx, scope, isStatic);
             var result = (BlockSyntax)rewriter.Visit(body);
 
             if (rewriter.HasConcurrent)
@@ -692,6 +776,9 @@ namespace Excess.Concurrent.Compiler
                         CSharp.Token(SyntaxKind.ProtectedKeyword),
                         CSharp.Token(SyntaxKind.VirtualKeyword)));
 
+            if (Roslyn.IsStatic(method))
+                result = result.AddModifiers(CSharp.Token(SyntaxKind.StaticKeyword));
+
             ctx.AddMember(result);
             return result;
         }
@@ -740,7 +827,8 @@ namespace Excess.Concurrent.Compiler
                     .Get<MethodDeclarationSyntax>(
                         method.Identifier.ToString(),
                         returnType,
-                        internalCall));
+                        internalCall,
+                        Templates.Cheese(signal.Static)));
 
             if (realType != null)
                 ps1 = ps1.ReplaceNodes(ps1
@@ -754,7 +842,8 @@ namespace Excess.Concurrent.Compiler
                 Templates.TaskCallbackMethod
                     .Get<MethodDeclarationSyntax>(
                         method.Identifier.ToString(),
-                        internalCall));
+                        internalCall,
+                        Templates.Cheese(signal.Static)));
 
             if (isSingleton)
             {

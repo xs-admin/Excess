@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
         <id>Excess.Compiler</id>
-        <version>0.47.23-debug</version>
+        <version>0.48.5-debug</version>
         <authors>Excess</authors>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>Metaprogramming platform for C#</description>
@@ -10,7 +10,7 @@
         <dependencies>
           <dependency id="Microsoft.CodeAnalysis" version="1.2.2"/>
           <dependency id="RazorEngine" version="3.8.2"/>
-          <dependency id="Excess.Runtime" version="0.47.1-alpha"/>
+          <dependency id="Excess.Runtime" version="0.48.0-alpha"/>
           <dependency id="Antlr4" version="4.5.3-rc1"/>
           <dependency id="Antlr4.Runtime" version="4.5.3-rc1"/>
         </dependencies>

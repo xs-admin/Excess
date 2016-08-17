@@ -117,7 +117,7 @@ namespace Excess.Compiler.Core
         }
 
         List<Func<TNode, Scope, TNode>> _syntactical = new List<Func<TNode, Scope, TNode>>();
-        Dictionary<string, Func<TNode, Scope, TNode>> _syntacticalPass = new Dictionary<string, Func<TNode, Scope, TNode>>();
+        Dictionary<string, List<Func<TNode, Scope, TNode>>> _syntacticalPass = new Dictionary<string, List<Func<TNode, Scope, TNode>>>();
 
         public void change(Func<TNode, Scope, TNode> transform, string kind)
         {
@@ -127,19 +127,22 @@ namespace Excess.Compiler.Core
                 switch (kind)
                 {
                     case "normalize":
-                    {
                         _lexicalChanges.Add(new Change
                         {
                             Kind = kind,
                             Transform = transform
                         });
                         break;
-                    }
                     default:
-                    {
-                        _syntacticalPass[kind] = transform;
+                        var existing = default(List<Func<TNode, Scope, TNode>>);
+                        if (!_syntacticalPass.TryGetValue(kind, out existing))
+                        {
+                            existing = new List<Func<TNode, Scope, TNode>>();
+                            _syntacticalPass[kind] = existing;
+                        }
+
+                        existing.Add(transform);
                         break;
-                    }
                 }
             }
             else
@@ -525,6 +528,13 @@ namespace Excess.Compiler.Core
             ICompilerEnvironment environment = _scope.find<ICompilerEnvironment>();
             if (environment != null)
                 _root = addModules(_root, environment.modules());
+
+            //see if there is more syntax work to do
+            _root = pass("after-syntax", _root, _scope);
+            while (_syntacticalChanges.Any())
+            {
+                _root = applyNodeChanges(_root, CompilerStage.Syntactical);
+            }
         }
 
         protected abstract TNode addModules(TNode root, IEnumerable<string> modules);
@@ -532,9 +542,9 @@ namespace Excess.Compiler.Core
 
         protected TNode pass(string kind, TNode node, Scope scope)
         {
-            Func<TNode, Scope, TNode> transform;
-            if (_syntacticalPass.TryGetValue(kind, out transform))
-                return transform(node, scope);
+            List<Func<TNode, Scope, TNode>> transformers;
+            if (_syntacticalPass.TryGetValue(kind, out transformers))
+                return syntacticalTransform(node, scope, transformers);
 
             return node;
         }

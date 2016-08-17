@@ -59,15 +59,29 @@ namespace Excess.Concurrent.Runtime
             }
         }
 
-        public void __advance(IEnumerator<Expression> signal)
+        public static void __run(Action what, Action<Exception> failure)
+        {
+            try
+            {
+                what();
+            }
+            catch (Exception ex)
+            {
+                if (failure != null)
+                    failure(ex);
+                else
+                    throw;
+            }
+        }
+
+        public static void __advance(IEnumerator<Expression> signal)
         {
             if (!signal.MoveNext())
                 return;
 
             var expr = signal.Current;
             expr.Continuator = signal;
-            if (expr.Start != null)
-                expr.Start(expr);
+            expr?.Start(expr);
         }
 
         Dictionary<string, List<Action>> _listeners = new Dictionary<string, List<Action>>();

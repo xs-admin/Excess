@@ -61,7 +61,7 @@ namespace Excess.Concurrent.Compiler.Model
         }
 
         Dictionary<string, int> _signals = new Dictionary<string, int>();
-        public Signal AddSignal(string name, bool isPublic)
+        public Signal AddSignal(string name, bool isPublic, bool isStatic)
         {
             if (_signals.ContainsKey(name))
                 throw new InvalidOperationException("duplicate concurrent signal");
@@ -69,21 +69,21 @@ namespace Excess.Concurrent.Compiler.Model
             var id = _signals.Count;
             _signals[name] = id;
 
-            var signal = new Signal(id, name, isPublic);
+            var signal = new Signal(id, name, isPublic, isStatic);
             Signals[id] = signal;
             return signal;
         }
 
-        public Signal AddSignal(string name, TypeSyntax returnType, bool isPublic)
+        public Signal AddSignal(string name, TypeSyntax returnType, bool isPublic, bool isStatic)
         {
-            var signal = AddSignal(name, isPublic);
+            var signal = AddSignal(name, isPublic, isStatic);
             signal.ReturnType = returnType;
             return signal;
         }
 
         public Signal AddSignal()
         {
-            var signal = AddSignal(Roslyn.uniqueId(), false);
+            var signal = AddSignal(Roslyn.uniqueId(), false, false);
             signal.Internal = true;
             return signal;
         }

@@ -18,10 +18,12 @@ namespace Excess.Concurrent.Compiler
     {
         Class _class;
         Scope _scope;
-        public ExpressionParser(Class @class, Scope scope)
+        bool _static;
+        public ExpressionParser(Class @class, Scope scope, bool @static)
         {
             _class = @class;
             _scope = scope;
+            _static = @static;
         }
 
         public bool HasConcurrent { get; internal set; }
@@ -31,8 +33,7 @@ namespace Excess.Concurrent.Compiler
             var result = null as SyntaxNode;
             if (statement.Expression is BinaryExpressionSyntax)
             {
-                result = Parse(statement.Expression as BinaryExpressionSyntax);
-
+                result = Parse(statement.Expression as BinaryExpressionSyntax, Templates.Cheese(_static));
                 HasConcurrent = HasConcurrent || result != statement.Expression;
             }
             else if (statement.Expression is AwaitExpressionSyntax)
@@ -135,7 +136,7 @@ namespace Excess.Concurrent.Compiler
             return node;
         }
 
-        private SyntaxNode Parse(BinaryExpressionSyntax expression)
+        private SyntaxNode Parse(BinaryExpressionSyntax expression, SyntaxToken actor)
         {
             var exprClassName = uniqueId("__expr");
 
@@ -179,7 +180,7 @@ namespace Excess.Concurrent.Compiler
 
             var result = Templates
                 .ExpressionInstantiation
-                .Get<StatementSyntax>(exprClassName, startFunc);
+                .Get<StatementSyntax>(exprClassName, startFunc, actor);
 
             return result.ReplaceNodes(result.DescendantNodes()
                 .OfType<InitializerExpressionSyntax>(),
@@ -203,7 +204,7 @@ namespace Excess.Concurrent.Compiler
             {
                 var enterStatement = Templates
                     .StartCallbackEnter
-                        .Get<StatementSyntax>();
+                        .Get<StatementSyntax>(Templates.Cheese(_static));
 
                 statements = new[]
                 {

@@ -14,13 +14,14 @@ namespace Excess.Concurrent.Compiler.Model
 
     internal class Signal
     {
-        public Signal(int id, string name, bool @public)
+        public Signal(int id, string name, bool @public, bool @static)
         {
             Id = id;
             Name = name;
             Internal = false;
             ReturnType = RoslynCompiler.boolean;
             Public = @public;
+            Static = @static;
         }
 
         public int Id { get; internal set; }
@@ -28,5 +29,6 @@ namespace Excess.Concurrent.Compiler.Model
         public bool Internal { get; internal set; }
         public bool Public { get; internal set; }
         public TypeSyntax ReturnType { get; internal set; }
+        public bool Static { get; internal set; }
     }
 }

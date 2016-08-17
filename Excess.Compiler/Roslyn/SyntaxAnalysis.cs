@@ -54,8 +54,8 @@ namespace Excess.Compiler.Roslyn
 
     public class RoslynSyntacticalMatch : BaseSyntacticalMatch<SyntaxToken, SyntaxNode, SemanticModel>
     {
-        public RoslynSyntacticalMatch(ISyntaxAnalysis<SyntaxToken, SyntaxNode, SemanticModel> syntax) :
-            base(syntax)
+        public RoslynSyntacticalMatch(ISyntaxAnalysis<SyntaxToken, SyntaxNode, SemanticModel> syntax, string when) :
+            base(syntax, when)
         {
         }
 
@@ -77,9 +77,9 @@ namespace Excess.Compiler.Roslyn
             return new RoslynSyntaxTransform();
         }
 
-        protected override ISyntacticalMatch<SyntaxToken, SyntaxNode, SemanticModel> createMatch(Func<SyntaxNode, bool> selector)
+        protected override ISyntacticalMatch<SyntaxToken, SyntaxNode, SemanticModel> createMatch(Func<SyntaxNode, bool> selector, string when)
         {
-            RoslynSyntacticalMatch result = new RoslynSyntacticalMatch(this);
+            RoslynSyntacticalMatch result = new RoslynSyntacticalMatch(this, when);
             result.addMatcher(selector);
             return result;
         }

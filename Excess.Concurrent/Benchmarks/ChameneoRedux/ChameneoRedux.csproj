@@ -35,7 +35,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Excess.Runtime, Version=1.0.0.0, Culture=neutral, PublicKeyToken=270b7f55f5ad09f8, processorArchitecture=MSIL">
-      <HintPath>..\..\packages\Excess.Runtime.0.47.13-debug\lib\Net45\Excess.Runtime.dll</HintPath>
+      <HintPath>..\..\packages\Excess.Runtime.0.48.0-alpha\lib\Net45\Excess.Runtime.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="System" />

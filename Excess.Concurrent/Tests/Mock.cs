@@ -18,6 +18,8 @@ namespace Excess.Concurrent.Tests
     using FactoryMap = Dictionary<string, Func<IConcurrentApp, object[], IConcurrentObject>>;
     using ConcurrentAttribute = Excess.Concurrent.Runtime.Concurrent;
     using Excess.Runtime;
+    using xslang;
+
     public static class Mock
     {
         public static SyntaxTree Compile(string code,
@@ -126,6 +128,9 @@ namespace Excess.Concurrent.Tests
                         {
                             "Excess.Concurrent.Runtime"
                         })),
+
+                new DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel>(compiler =>
+                    Functions.Apply(compiler)),
 
                 new DelegateInjector<SyntaxToken, SyntaxNode, SemanticModel>(compiler =>
                     ConcurrentExtension.Apply((RoslynCompiler)compiler, options))

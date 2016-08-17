@@ -45,10 +45,14 @@ namespace Excess.Concurrent.Compiler
             return node; //let it go unmodified
         }
 
+        bool _isStatic;
         public override SyntaxNode VisitMethodDeclaration(MethodDeclarationSyntax node)
         {
             if (_class.IsSignal(node))
+            {
+                _isStatic = Roslyn.IsStatic(node);
                 return base.VisitMethodDeclaration(node);
+            }
 
             return node;
         }
@@ -547,11 +551,13 @@ namespace Excess.Concurrent.Compiler
                 case "seconds":
                     result = Templates
                         .Seconds
-                        .Get<StatementSyntax>(invocation.ArgumentList
-                            .Arguments[0] //td: validate
-                            .Expression,
+                        .Get<StatementSyntax>(
+                            invocation.ArgumentList
+                                .Arguments[0] //td: validate
+                                .Expression,
                             success,
-                            failure);
+                            failure,
+                            Templates.Cheese(_isStatic));
                     break;
                 case "timeout":
                     throw new NotImplementedException();

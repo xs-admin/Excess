@@ -78,11 +78,14 @@ namespace xslang
 
                     var isMember = method.Parent is TypeDeclarationSyntax;
                     if (!isMember)
-                        return Templates
+                    {
+                        var service = scope.GetService<SyntaxToken, SyntaxNode, SemanticModel>();
+                        return service.MarkNode(Templates
                             .NamespaceFunction
                             .AddMembers((MemberDeclarationSyntax)document.change(
-                                method, 
-                                LinkNamespaceFunction(calculateType)));
+                                method,
+                                LinkNamespaceFunction(calculateType))));
+                    }
 
                     return calculateType
                         ? document.change(method, CalculateReturnType)

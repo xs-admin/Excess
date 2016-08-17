@@ -12,10 +12,11 @@ namespace Excess.Compiler.Core
                                                                         IDocumentInjector<TToken, TNode, TModel>
     {
         ISyntaxAnalysis<TToken, TNode, TModel> _syntax;
-
-        public BaseSyntacticalMatch(ISyntaxAnalysis<TToken, TNode, TModel> syntax)
+        string _when;
+        public BaseSyntacticalMatch(ISyntaxAnalysis<TToken, TNode, TModel> syntax, string when)
         {
             _syntax = syntax;
+            _when = when;
         }
 
         private List<Func<TNode, Scope, bool>> _matchers = new List<Func<TNode, Scope, bool>>();
@@ -121,7 +122,7 @@ namespace Excess.Compiler.Core
 
         public void apply(IDocument<TToken, TNode, TModel> document)
         {
-            document.change(transform);
+            document.change(transform, _when);
         }
 
         private TNode transform(TNode node, Scope scope)
@@ -161,29 +162,29 @@ namespace Excess.Compiler.Core
             return this;
         }
 
-        protected abstract ISyntacticalMatch<TToken, TNode, TModel> createMatch(Func<TNode, bool> selector);
+        protected abstract ISyntacticalMatch<TToken, TNode, TModel> createMatch(Func<TNode, bool> selector, string when);
 
         protected List<ISyntacticalMatch<TToken, TNode, TModel>> _matchers = new List<ISyntacticalMatch<TToken, TNode, TModel>>();
 
-        public ISyntacticalMatch<TToken, TNode, TModel> match(Func<TNode, bool> selector)
+        public ISyntacticalMatch<TToken, TNode, TModel> match(Func<TNode, bool> selector, string when)
         {
-            var matcher = createMatch(selector);
+            var matcher = createMatch(selector, when);
             _matchers.Add(matcher);
 
             return matcher;
         }
 
-        public ISyntacticalMatch<TToken, TNode, TModel> match<T>(Func<T, bool> selector) where T : TNode
+        public ISyntacticalMatch<TToken, TNode, TModel> match<T>(Func<T, bool> selector, string when) where T : TNode
         {
-            var matcher = createMatch(node => node is T && selector((T)node));
+            var matcher = createMatch(node => node is T && selector((T)node), when);
             _matchers.Add(matcher);
 
             return matcher;
         }
 
-        public ISyntacticalMatch<TToken, TNode, TModel> match<T>() where T : TNode
+        public ISyntacticalMatch<TToken, TNode, TModel> match<T>(string when) where T : TNode
         {
-            var matcher = createMatch(node => node is T);
+            var matcher = createMatch(node => node is T, when);
             _matchers.Add(matcher);
 
             return matcher;

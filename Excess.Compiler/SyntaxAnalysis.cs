@@ -60,9 +60,9 @@ namespace Excess.Compiler
         ISyntaxAnalysis<TToken, TNode, TModel> extension(string keyword, ExtensionKind kind, Func<TNode, Scope, SyntacticalExtension<TNode>, TNode> handler);
         ISyntaxAnalysis<TToken, TNode, TModel> extension(string keyword, ExtensionKind kind, Func<TNode, SyntacticalExtension<TNode>, TNode> handler);
 
-        ISyntacticalMatch<TToken, TNode, TModel> match(Func<TNode, bool> selector);
-        ISyntacticalMatch<TToken, TNode, TModel> match<T>(Func<T, bool> selector) where T : TNode;
-        ISyntacticalMatch<TToken, TNode, TModel> match<T>() where T : TNode;
+        ISyntacticalMatch<TToken, TNode, TModel> match(Func<TNode, bool> selector, string when = null);
+        ISyntacticalMatch<TToken, TNode, TModel> match<T>(Func<T, bool> selector, string when = null) where T : TNode;
+        ISyntacticalMatch<TToken, TNode, TModel> match<T>(string when = null) where T : TNode;
 
         ISyntaxTransform<TNode> transform();
         ISyntaxTransform<TNode> transform(Func<TNode, Scope, TNode> handler);

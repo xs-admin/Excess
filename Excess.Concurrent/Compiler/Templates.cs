@@ -4,6 +4,7 @@ using Excess.Compiler.Roslyn;
 
 namespace Excess.Concurrent.Compiler
 {
+    using Microsoft.CodeAnalysis;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
     internal static class Templates
@@ -77,7 +78,7 @@ namespace Excess.Concurrent.Compiler
                 Start = __1,
                 End = (__expr) => 
                 {
-                    __enter(() => __advance(__expr.Continuator), __failure);
+                    _2(() => __advance(__expr.Continuator), __failure);
                 }
             };");
 
@@ -90,7 +91,7 @@ namespace Excess.Concurrent.Compiler
             }");
 
         public static Template StartCallbackEnter = Template.ParseStatement(@"
-            __enter(() =>
+            _0(() =>
             {
             }, __failure);");
 
@@ -137,7 +138,7 @@ namespace Excess.Concurrent.Compiler
                 Action<object> __success = (__res) => completion.SetResult((__1)__res);
                 Action<Exception> __failure = (__ex) => completion.SetException(__ex);
                 var __cancellation = cancellation;
-                __enter(() => __advance(__2), __failure);
+                _3(() => __advance(__2), __failure);
                 return completion.Task;
             }");
 
@@ -147,7 +148,7 @@ namespace Excess.Concurrent.Compiler
                 var __success = success;
                 var __failure = failure;
                 var __cancellation = cancellation;
-                __enter(() => __advance(__1), failure);
+                _2(() => __advance(__1), failure);
             }");
 
         public static Template InternalCall = Template.ParseExpression("_0(__cancellation, __success, __failure).GetEnumerator()");
@@ -194,7 +195,7 @@ namespace Excess.Concurrent.Compiler
             Task.Delay((int)((__0)*1000))
                 .ContinueWith(__task =>
                 {
-                    __enter(() => __1, (__ex) => __2);
+                    _3(() => __1, (__ex) => __2);
                 });");
 
         public static Template SuccessFunction = Template.ParseExpression("(__res) => __0");
@@ -365,5 +366,17 @@ namespace Excess.Concurrent.Compiler
 
         public static Template StartSingleton = Template.ParseStatement("_0.Start(app);");
         public static StatementSyntax StopApp = CSharp.ParseStatement("App.Stop();");
+
+        public static ParameterListSyntax FunctionParameters = CSharp
+            .ParseParameterList("(Action<object> __success, Action<Exception> __failure");
+
+        public static Template FunctionInvocation = Template.ParseStatement(@"_0._1(__success, __failure);");
+
+        private static SyntaxToken __enter = CSharp.ParseToken("__enter");
+        private static SyntaxToken __run = CSharp.ParseToken("__run");
+        public static SyntaxToken Cheese(bool isStatic) => isStatic
+            ? __run
+            : __enter;
+
     }
 }
