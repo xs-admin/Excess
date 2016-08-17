@@ -139,11 +139,28 @@ namespace Excess.Concurrent.Compiler
 
             //create a substitute call
             var invocation = Templates.FunctionInvocation
-                .Get<StatementSyntax>(
-                    (method.Parent as ClassDeclarationSyntax).Identifier,
+                .Get<ExpressionStatementSyntax>(
+                    concurrentClass,
                     method.Identifier);
 
+            if (method.ParameterList.Parameters.Count > 0)
+            {
+                var invoke = (InvocationExpressionSyntax)invocation.Expression;
+                var arguments = method.ParameterList
+                    .Parameters
+                    .Select(parameter => CSharp.Argument(CSharp.IdentifierName(
+                        parameter.Identifier)))
+                    .Union(invoke.ArgumentList.Arguments);
+
+                invocation = invocation
+                    .WithExpression(invoke
+                        .WithArgumentList(CSharp.ArgumentList(CSharp.SeparatedList(
+                            arguments))));
+            }
+
             return method
+                .AddAttributeLists(CSharp.AttributeList(CSharp.SeparatedList<AttributeSyntax>(new[] { 
+                    CSharp.Attribute(CSharp.ParseName("Concurrent"))})))
                 .AddParameterListParameters(Templates
                     .FunctionParameters
                     .Parameters

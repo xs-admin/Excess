@@ -478,7 +478,8 @@ namespace Excess.Concurrent.Compiler
             {
                 var identifier = (invocation.Expression as IdentifierNameSyntax)
                     .ToString();
-                Signal signal = _class.GetSignal(identifier);
+                var signal = _class.GetSignal(identifier);
+                var functional = default(StatementSyntax);
                 if (signal != null)
                 {
                     var expr = invocation
@@ -499,9 +500,47 @@ namespace Excess.Concurrent.Compiler
                         .Advance
                         .Get<ExpressionSyntax>(expr));
                 }
+                else if (isFunctionalCall(invocation, out functional))
+                    return functional;
 
                 return CSharp.ExpressionStatement(invocation);
             }
+        }
+
+        private bool isFunctionalCall(InvocationExpressionSyntax invocation, out StatementSyntax functional)
+        {
+            functional = null;
+            var containingClass = invocation
+                .Ancestors()
+                .OfType<ClassDeclarationSyntax>()
+                .FirstOrDefault();
+
+            if (containingClass == null)
+                return false;
+
+            var parentContainer = containingClass.Parent as ClassDeclarationSyntax;
+            if (parentContainer == null || parentContainer.Identifier.ToString() != "Functions" )
+                return false;
+
+            var concurrentClassName = invocation.Expression.ToString() + "__concurrent";
+            var concurrentClass = parentContainer
+                .Members
+                .OfType<ClassDeclarationSyntax>()
+                .SingleOrDefault(@class => @class.Identifier.ToString() == concurrentClassName);
+
+            var newInvocation = default(InvocationExpressionSyntax);
+            if (concurrentClass != null)
+                newInvocation = Templates.ConcurrentFunctionStatement
+                    .Get<InvocationExpressionSyntax>(
+                        concurrentClass.Identifier,
+                        (invocation.Expression as IdentifierNameSyntax)
+                            .Identifier);
+            else
+                newInvocation = Templates.FunctionStatement
+                    .Get<InvocationExpressionSyntax>(invocation.Expression);
+
+            functional = CSharp.ExpressionStatement(newInvocation);
+            return true;
         }
 
         private StatementSyntax LinkExternalInvocation(InvocationExpressionSyntax invocation, InvocationExpressionSyntax success, InvocationExpressionSyntax failure)

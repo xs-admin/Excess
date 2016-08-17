@@ -378,5 +378,8 @@ namespace Excess.Concurrent.Compiler
             ? __run
             : __enter;
 
+        public static Template ConcurrentFunctionStatement = Template.ParseStatement("Functions._0._1();");
+        public static Template FunctionStatement = Template.ParseStatement("Functions.__0();");
+        
     }
 }
