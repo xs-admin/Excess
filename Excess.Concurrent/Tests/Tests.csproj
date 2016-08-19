@@ -154,6 +154,7 @@
     <Compile Include="Debug.cs" />
     <Compile Include="Functions.cs" />
     <Compile Include="Mock.cs" />
+    <Compile Include="Tasks.cs" />
     <Compile Include="Usage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

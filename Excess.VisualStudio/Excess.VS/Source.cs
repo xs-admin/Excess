@@ -48,7 +48,12 @@ namespace Excess.VS
 
                     var model = doc.GetSemanticModelAsync().Result;
                     _document.Model = model;
-                    _document.applyChanges(CompilerStage.Semantical);
+
+                    for (int i = 0; i < 5; i++)
+                    {
+                        if (_document.applyChanges(CompilerStage.Semantical))
+                            break;
+                    }
                 }
 
                 saveCodeBehind(_document, true);

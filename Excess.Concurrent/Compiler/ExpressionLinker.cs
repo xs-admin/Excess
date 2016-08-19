@@ -556,23 +556,46 @@ namespace Excess.Concurrent.Compiler
                 .Any()); //td: errors
 
             var symbol = _model.GetSymbolInfo(invocation.Expression).Symbol;
-            if (symbol != null && isConcurrent(symbol))
-                return CSharp.ExpressionStatement(
-                    invocation
-                    .WithArgumentList(invocation
-                        .ArgumentList
-                        .AddArguments(
-                            CSharp.Argument(Templates.CancelationArgument),
-                            CSharp.Argument(Templates
-                                .SuccessFunction
-                                .Get<ExpressionSyntax>(success)),
-                            CSharp.Argument(Templates
-                                .FailureFunction
-                                .Get<ExpressionSyntax>(failure)))));
+            if (symbol != null)
+            {
+                if (isConcurrent(symbol))
+                    return CSharp.ExpressionStatement(
+                        invocation
+                        .WithArgumentList(invocation
+                            .ArgumentList
+                            .AddArguments(
+                                CSharp.Argument(Templates.CancelationArgument),
+                                CSharp.Argument(Templates
+                                    .SuccessFunction
+                                    .Get<ExpressionSyntax>(success)),
+                                CSharp.Argument(Templates
+                                    .FailureFunction
+                                    .Get<ExpressionSyntax>(failure)))));
+
+                if (isTask(symbol))
+                    return Templates.TaskInvocation
+                        .Get<StatementSyntax>(invocation, success, failure);
+            }
+
 
             return Templates
                 .NonConcurrentInvocation
                 .Get<StatementSyntax>(invocation, success, failure);
+        }
+
+        private bool isTask(ISymbol symbol)
+        {
+            var method = symbol as IMethodSymbol;
+            if (method == null)
+                return false;
+
+            if (method.ReturnType == null || method.ReturnType.Name != "Task")
+                return false;
+
+            return method
+                .ReturnType
+                .AllInterfaces
+                .Any(i => i.Name == "IAsyncResult"); //td: needs to be safer
         }
 
         private bool isConcurrent(ISymbol symbol)

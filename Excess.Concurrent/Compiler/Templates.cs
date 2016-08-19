@@ -380,6 +380,18 @@ namespace Excess.Concurrent.Compiler
 
         public static Template ConcurrentFunctionStatement = Template.ParseStatement("Functions._0._1();");
         public static Template FunctionStatement = Template.ParseStatement("Functions.__0();");
-        
+
+
+        public static Template TaskInvocation = Template.ParseStatement(@"
+            (__0).ContinueWith(__t => {
+               if (__t.IsFaulted)
+                {
+                    __2;
+                } 
+                else
+                {
+                    __1;
+                }
+            });");
     }
 }

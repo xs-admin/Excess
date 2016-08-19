@@ -245,6 +245,8 @@ namespace Excess.Compiler.Core
                     if (stage == CompilerStage.Finished)
                         return applyChanges(stage);
                 }
+
+                return result;
             }
 
             _stage = stage;

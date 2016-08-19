@@ -313,10 +313,7 @@ namespace Excess.Server.Compiler
                     ancestor => ancestor is NamespaceDeclarationSyntax);
 
                 if (@namespace != null)
-                {
-                    var components = @namespace.Name.ToString().Split('.');
-                    name = components.Last();
-                }
+                    name = @namespace.Name.ToString();
 
                 body = functionalBody(@class, model);
                 if (body.Any())
