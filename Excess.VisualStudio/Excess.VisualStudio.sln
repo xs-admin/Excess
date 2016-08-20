@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.25123.0
+VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Excess.VS", "Excess.VS\Excess.VS.csproj", "{F30A7D8C-4B51-4967-99E8-2092E5AD3618}"
 EndProject
@@ -12,6 +12,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Concurrent.Console", "Templates\Concurrent.Console\Concurrent.Console.csproj", "{3501F82B-CB37-4AE6-9F36-F855644F752B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Server.Angular", "Templates\Server.Angular\Server.Angular.csproj", "{B4B1F731-D10F-4EB1-A15F-F9F1D0E1A858}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Excess.VisualStudio.Package", "Excess.VisualStudio.Package\Excess.VisualStudio.Package.csproj", "{3DD226D6-EC0B-418A-A3DF-FDCC308308B1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,6 +37,10 @@ Global
 		{B4B1F731-D10F-4EB1-A15F-F9F1D0E1A858}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B4B1F731-D10F-4EB1-A15F-F9F1D0E1A858}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B4B1F731-D10F-4EB1-A15F-F9F1D0E1A858}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3DD226D6-EC0B-418A-A3DF-FDCC308308B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3DD226D6-EC0B-418A-A3DF-FDCC308308B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3DD226D6-EC0B-418A-A3DF-FDCC308308B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3DD226D6-EC0B-418A-A3DF-FDCC308308B1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

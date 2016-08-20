@@ -44,13 +44,13 @@ namespace Excess.VS
     [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "pkgdef, VS and vsixmanifest are valid VS terms")]
     [ProvideServiceAttribute(typeof(ExcessLanguageService))]
     [ProvideLanguageServiceAttribute(typeof(ExcessLanguageService),
-                             "xs",
-                             106,                          // resource ID of localized language name
-                             CodeSense = true,             // Supports IntelliSense
-                             RequestStockColors = false,   // Supplies custom colors
-                             EnableCommenting = true,      // Supports commenting out code
-                             EnableAsyncCompletion = true  // Supports background parsing
-                             )]
+        "xs",
+        106,                          // resource ID of localized language name
+        CodeSense = true,             // Supports IntelliSense
+        RequestStockColors = false,   // Supplies custom colors
+        EnableCommenting = true,      // Supports commenting out code
+        EnableAsyncCompletion = true  // Supports background parsing
+    )]
 
     [ProvideLanguageExtensionAttribute(typeof(ExcessLanguageService), ".xs")]
 
