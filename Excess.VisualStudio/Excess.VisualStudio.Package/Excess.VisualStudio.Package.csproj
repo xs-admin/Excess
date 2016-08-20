@@ -24,7 +24,7 @@
     <ProjectGuid>{3DD226D6-EC0B-418A-A3DF-FDCC308308B1}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Excess.VisualStudio.VSPackagePackage</RootNamespace>
+    <RootNamespace>Excess.VisualStudio.VSPackage</RootNamespace>
     <AssemblyName>Excess.VisualStudio.Package</AssemblyName>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <GeneratePkgDefFile>true</GeneratePkgDefFile>
@@ -55,6 +55,7 @@
     <Compile Include="LanguageService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Scanner.cs" />
+    <Compile Include="VSCompiler.cs" />
     <Compile Include="VSPackage.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -161,8 +162,8 @@
       <HintPath>..\packages\Microsoft.VisualStudio.Package.LanguageService.14.0.14.2.25123\lib\Microsoft.VisualStudio.Package.LanguageService.14.0.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Microsoft.VisualStudio.Shell.15.0, Version=15.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.VisualStudio.Shell.15.0.15.0.25123-Dev15Preview\lib\Microsoft.VisualStudio.Shell.15.0.dll</HintPath>
+    <Reference Include="Microsoft.VisualStudio.Shell.14.0, Version=14.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.VisualStudio.Shell.14.0.14.2.25320-beta1\lib\Microsoft.VisualStudio.Shell.14.0.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.VisualStudio.Shell.Immutable.10.0, Version=10.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">

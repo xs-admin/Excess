@@ -15,6 +15,9 @@ using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.Win32;
+using Microsoft.VisualStudio.ComponentModelHost;
+using Microsoft.VisualStudio.LanguageServices;
+using Microsoft.VisualStudio.Package;
 
 namespace Excess.VisualStudio.VSPackage
 {
@@ -52,7 +55,7 @@ namespace Excess.VisualStudio.VSPackage
 
     [ProvideLanguageExtensionAttribute(typeof(ExcessLanguageService), ".xs")]
 
-    public sealed class VSPackage : Package
+    public sealed class VSPackage : Package, IOleComponent
     {
         /// <summary>
         /// VSPackage GUID string.
@@ -72,6 +75,8 @@ namespace Excess.VisualStudio.VSPackage
 
         #region Package Members
 
+        private uint _componentID;
+
         /// <summary>
         /// Initialization of the package; this method is called right after the package is sited, so this is the place
         /// where you can put all the initialization code that rely on services provided by VisualStudio.
@@ -79,6 +84,121 @@ namespace Excess.VisualStudio.VSPackage
         protected override void Initialize()
         {
             base.Initialize();
+
+            var componentModel = (IComponentModel)this.GetService(typeof(SComponentModel));
+            var workspace = componentModel.GetService<VisualStudioWorkspace>();
+
+            ExcessLanguageService langService = new ExcessLanguageService(workspace);
+            langService.SetSite(this);
+
+            IServiceContainer serviceContainer = this as IServiceContainer;
+            serviceContainer.AddService(typeof(ExcessLanguageService), langService, true);
+
+            // Register a timer to call our language service during
+            // idle periods.
+            IOleComponentManager mgr = GetService(typeof(SOleComponentManager))
+                                       as IOleComponentManager;
+
+            if (_componentID == 0 && mgr != null)
+            {
+                OLECRINFO[] crinfo = new OLECRINFO[1];
+                crinfo[0].cbSize = (uint)Marshal.SizeOf(typeof(OLECRINFO));
+                crinfo[0].grfcrf = (uint)_OLECRF.olecrfNeedIdleTime |
+                                              (uint)_OLECRF.olecrfNeedPeriodicIdleTime;
+                crinfo[0].grfcadvf = (uint)_OLECADVF.olecadvfModal |
+                                              (uint)_OLECADVF.olecadvfRedrawOff |
+                                              (uint)_OLECADVF.olecadvfWarningsOff;
+                crinfo[0].uIdleTimeInterval = 1000;
+                int hr = mgr.FRegisterComponent(this, crinfo, out _componentID);
+            }
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (_componentID != 0)
+            {
+                IOleComponentManager mgr = GetService(typeof(SOleComponentManager))
+                                           as IOleComponentManager;
+                if (mgr != null)
+                {
+                    int hr = mgr.FRevokeComponent(_componentID);
+                }
+                _componentID = 0;
+            }
+
+            base.Dispose(disposing);
+        }
+
+        #endregion
+
+        #region IOleComponent Members
+
+        public int FDoIdle(uint grfidlef)
+        {
+            bool bPeriodic = (grfidlef & (uint)_OLEIDLEF.oleidlefPeriodic) != 0;
+            // Use typeof(TestLanguageService) because we need to
+            // reference the GUID for our language service.
+            LanguageService service = GetService(typeof(ExcessLanguageService)) as LanguageService;
+            if (service != null)
+            {
+                service.OnIdle(bPeriodic);
+            }
+            return 0;
+        }
+
+        public int FContinueMessageLoop(uint uReason,
+                                        IntPtr pvLoopData,
+                                        MSG[] pMsgPeeked)
+        {
+            return 1;
+        }
+
+        public int FPreTranslateMessage(MSG[] pMsg)
+        {
+            return 0;
+        }
+
+        public int FQueryTerminate(int fPromptUser)
+        {
+            return 1;
+        }
+
+        public int FReserved1(uint dwReserved,
+                              uint message,
+                              IntPtr wParam,
+                              IntPtr lParam)
+        {
+            return 1;
+        }
+
+        public IntPtr HwndGetWindow(uint dwWhich, uint dwReserved)
+        {
+            return IntPtr.Zero;
+        }
+
+        public void OnActivationChange(IOleComponent pic,
+                                       int fSameComponent,
+                                       OLECRINFO[] pcrinfo,
+                                       int fHostIsActivating,
+                                       OLECHOSTINFO[] pchostinfo,
+                                       uint dwReserved)
+        {
+        }
+
+        public void OnAppActivate(int fActive, uint dwOtherThreadID)
+        {
+        }
+
+        public void OnEnterState(uint uStateID, int fEnter)
+        {
+        }
+
+        public void OnLoseActivation()
+        {
+        }
+
+        public void Terminate()
+        {
         }
 
         #endregion

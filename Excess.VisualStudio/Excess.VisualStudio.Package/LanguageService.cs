@@ -75,103 +75,116 @@ namespace Excess.VisualStudio.VSPackage
             }
         }
 
-        Dictionary<string, CompilerFunc> _extensions;
-        private void BeforeBuild(vsBuildScope Scope, vsBuildAction Action)
+        private void BeforeBuild(vsBuildScope buildScope, vsBuildAction buildAction)
         {
-            _extensions = LoadExtensions();
-
-            var xsFiles = _workspace
-                .CurrentSolution
-                .Projects
-                .SelectMany(project => project
-                    .Documents
-                    .Where(document => Path.GetExtension(document.FilePath).ToLower() == ".xs"));
-
-            switch (Scope)
-            {
-                case vsBuildScope.vsBuildScopeSolution:
-                case vsBuildScope.vsBuildScopeProject:
-                    break;
-                default:
-                    throw new NotImplementedException(); //td: 
-            }
-
-            if (Action == vsBuildAction.vsBuildActionClean)
-            {
+            if (buildAction == vsBuildAction.vsBuildActionClean)
                 throw new NotImplementedException(); //td:
-            }
 
-            var requests = new Dictionary<DocumentId, RoslynDocument>();
-            var requestCount = 0;
-            var wait = new ManualResetEvent(false);
-            foreach (var file in xsFiles)
-            {
-                if (Action != vsBuildAction.vsBuildActionRebuildAll && isUptoDate(file))
-                    continue;
+            var scope = new Scope(null);
+            scope.set(loadExtensions());
 
-                var id = file.Id;
-                requests[id] = null;
-
-                Task.Run(() =>
-                {
-                    try
-                    {
-                        var xsDoc = parseFile(id, file);
-                        lock (requests)
-                        {
-                            requests[id] = xsDoc;
-                        }
-                    }
-                    catch
-                    {
-                    }
-                    finally
-                    {
-                        requestCount--;
-                        if (requestCount == 0)
-                            wait.Set();
-                    }
-                });
-            }
-
-            wait.WaitOne();
-
-            //update the .cs files
-            foreach (var request in requests)
-            {
-                if (request.Value == null)
-                    continue; //td: what to do with the cs file?
-
-                saveCodeBehind(request.Value, request.Key, false);
-            }
+            //get all the documents needing compiling
+            Dictionary<DocumentId, RoslynDocument> documents = compile(
+                filter: doc => buildAction == vsBuildAction.vsBuildActionRebuildAll
+                    ? false
+                    : isUptoDate(doc), 
+                scope : scope);
 
             //now we must join all files for semantic stuff
-            while (requests.Any())
+            while (documents.Any())
             {
-                var temp = new Dictionary<DocumentId, RoslynDocument>(requests);
-                requests.Clear();
+                var temp = new Dictionary<DocumentId, RoslynDocument>(documents);
+                documents.Clear();
 
                 foreach (var request in temp)
                 {
-                    var xs = request.Value;
-                    if (!xs.HasSemanticalChanges())
+                    saveCodeBehind(request.Value, request.Key, false);
+
+                    if (!request.Value.HasSemanticalChanges())
                         continue;
 
-                    var doc = _workspace.CurrentSolution.GetDocument(request.Key);
-                    var semanticRoot = doc.GetSyntaxRootAsync().Result;
-                    var model = doc.GetSemanticModelAsync().Result;
-                    xs.SyntaxRoot = semanticRoot;
-                    xs.Model = model;
-
-                    if (!xs.applyChanges(CompilerStage.Semantical))
-                        requests[request.Key] = request.Value;
-
-                    saveCodeBehind(request.Value, request.Key, false);
+                    documents[request.Key] = request.Value;
                 }
+
+                if (documents.Any())
+                    link(documents, scope);
             }
         }
 
-        private Dictionary<string, CompilerFunc> LoadExtensions()
+        private void link(Dictionary<DocumentId, RoslynDocument> documents, Scope scope)
+        {
+            var requestCount = documents.Count;
+            var wait = new ManualResetEvent(false);
+            foreach (var request in documents)
+            {
+                var doc = _workspace.CurrentSolution.GetDocument(request.Key);
+                var xs = request.Value;
+                doc.GetSyntaxRootAsync()
+                    .ContinueWith(t => 
+                    {
+                        var semanticRoot = t.Result;
+                        doc.GetSemanticModelAsync()
+                            .ContinueWith((tt) => 
+                            {
+                                var model = tt.Result;
+                                xs.SyntaxRoot = semanticRoot;
+                                xs.Model = model;
+                                xs.applyChanges(CompilerStage.Semantical);
+
+                                requestCount--;
+                                if (requestCount <= 0)
+                                    wait.Set();
+                            });
+                    });
+            }
+
+            wait.WaitOne();
+        }
+
+        private Dictionary<DocumentId, RoslynDocument> compile(Func<Microsoft.CodeAnalysis.Document, bool> filter, Scope scope)
+        {
+            var documents = new Dictionary<DocumentId, RoslynDocument>();
+            var requestCount = 0;
+            var wait = new ManualResetEvent(false);
+            foreach (var project in _workspace.CurrentSolution.Projects)
+            {
+                var xsFiles = project
+                    .Documents
+                    .Where(document => Path.GetExtension(document.FilePath).ToLower() == ".xs");
+
+                foreach (var file in xsFiles)
+                {
+                    if (!filter(file))
+                        continue;
+
+                    var id = file.Id;
+                    documents[id] = null;
+
+                    var source = file.GetTextAsync().Result;
+                    VSCompiler.Parse(source.ToString(), scope)
+                        .ContinueWith(t =>
+                        {
+                            if (!t.IsFaulted)
+                                documents[id] = t.Result;
+
+                            requestCount--;
+                            if (requestCount == 0)
+                                wait.Set();
+                        });
+                }
+            }
+
+            //wait for syntax changes on all documents
+            wait.WaitOne();
+            return documents;
+        }
+
+        private bool isUptoDate(Microsoft.CodeAnalysis.Document file)
+        {
+            return false; //td:
+        }
+
+        private Dictionary<string, CompilerFunc> loadExtensions()
         {
             var result = new Dictionary<string, CompilerFunc>();
 
@@ -216,76 +229,6 @@ namespace Excess.VisualStudio.VSPackage
             }
 
             return result;
-        }
-
-        private RoslynDocument parseFile(DocumentId id, Microsoft.CodeAnalysis.Document file)
-        {
-            var text = file.GetTextAsync().Result;
-            return CreateExcessDocument(text.ToString(), id);
-        }
-
-        public RoslynDocument CreateExcessDocument(string text, DocumentId document)
-        {
-            //td: we need the using list in order to deduct the extensions
-            //however, we don't need to parse the whole document.
-            //We must optimize this (maybe a custom using parser?)
-            var compilationUnit = CSharp.ParseCompilationUnit(text);
-            var extensions = new List<UsingDirectiveSyntax>(compilationUnit.Usings);
-            var keywords = null as IEnumerable<string>;
-            var compiler = GetCompiler(document, extensions, out keywords);
-
-            //build a new document
-            var result = new RoslynDocument(compiler.Scope, text);
-            result.Mapper = new MappingService();
-            compiler.apply(result);
-            return result;
-        }
-
-        private bool isExtension(UsingDirectiveSyntax @using) => @using.Name.ToString().StartsWith("xs.");
-
-        public RoslynCompiler GetCompiler(DocumentId documentId, ICollection<UsingDirectiveSyntax> extensions, out IEnumerable<string> keywords)
-        {
-            keywords = null;
-            var result = (RoslynCompiler)XSLanguage.CreateCompiler();
-
-            var keywordList = new List<string>();
-            var props = new Scope(null);
-            props.set("keywords", keywordList);
-
-            foreach (var extension in extensions.ToArray())
-            {
-                if (isExtension(extension))
-                {
-                    var extensionName = extension
-                        .Name
-                        .ToString()
-                        .Substring("xs.".Length);
-
-                    var compilerFunc = null as CompilerFunc;
-                    if (_extensions.TryGetValue(extensionName, out compilerFunc))
-                    {
-                        try
-                        {
-                            compilerFunc(result, props);
-                        }
-                        catch (Exception ex)
-                        {
-                            Debug.WriteLine(ex.Message);
-                        }
-                        continue;
-                    }
-                }
-
-                extensions.Remove(extension);
-            }
-
-            keywords = keywordList;
-            return result;
-        }
-
-        private bool isUptoDate(Microsoft.CodeAnalysis.Document file)
-        {
-            return false; //td:
         }
 
         private bool saveCodeBehind(RoslynDocument doc, DocumentId id, bool mapLines)
