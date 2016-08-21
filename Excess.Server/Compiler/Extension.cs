@@ -464,6 +464,9 @@ namespace Excess.Server.Compiler
                 throw new ArgumentException("IServerConfiguration");
 
             var clientCode = serverConfig.GetClientInterface();
+            if (string.IsNullOrWhiteSpace(clientCode))
+                return;
+
             var servicePath = serverConfig.GetServicePath();
             if (servicePath == null)
                 throw new InvalidOperationException("cannot find the path");

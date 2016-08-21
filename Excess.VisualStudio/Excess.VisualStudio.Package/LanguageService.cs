@@ -71,7 +71,6 @@ namespace Excess.VisualStudio.VSPackage
                 _buildEvents = _dteEvents.BuildEvents;
 
                 _buildEvents.OnBuildBegin += BeforeBuild;
-                _buildEvents.OnBuildDone += AfterBuild;
             }
         }
 
@@ -93,12 +92,12 @@ namespace Excess.VisualStudio.VSPackage
 
             //find the cs code behind files
             var documentIds = new Dictionary<string, DocumentId>();
-            foreach (var path in documentIds.Keys)
+            foreach (var path in documents.Keys)
             {
                 var csFile = path + ".cs";
                 var docId = _workspace
                     .CurrentSolution
-                    .GetDocumentIdsWithFilePath(path)
+                    .GetDocumentIdsWithFilePath(csFile)
                     .FirstOrDefault();
 
                 if (docId != null)
@@ -131,37 +130,38 @@ namespace Excess.VisualStudio.VSPackage
                 if (documents.Any())
                     link(documents, documentIds, scope);
             }
+
+            //post compilation
+            applyCompilation(compilation);
+        }
+
+        private void applyCompilation(RoslynCompilationAnalysis compilationAnalysis)
+        {
+            foreach (var project in _workspace.CurrentSolution.Projects)
+            {
+                var scope = new Scope(null); 
+                var compilation = new VSCompilation(project, scope);
+                compilation.PerformAnalysis(compilationAnalysis);
+                _workspace.TryApplyChanges(compilation.Project.Solution);
+            }
         }
 
         private void link(Dictionary<string, RoslynDocument> documents, Dictionary<string, DocumentId> ids, Scope scope)
         {
-            var requestCount = documents.Count;
-            var wait = new ManualResetEvent(false);
             foreach (var request in documents)
             {
                 var docId = ids[request.Key];
                 var doc = _workspace.CurrentSolution.GetDocument(docId);
                 var xs = request.Value;
-                doc.GetSyntaxRootAsync()
-                    .ContinueWith(t => 
-                    {
-                        var semanticRoot = t.Result;
-                        doc.GetSemanticModelAsync()
-                            .ContinueWith((tt) => 
-                            {
-                                var model = tt.Result;
-                                xs.SyntaxRoot = semanticRoot;
-                                xs.Model = model;
-                                xs.applyChanges(CompilerStage.Semantical);
 
-                                requestCount--;
-                                if (requestCount <= 0)
-                                    wait.Set();
-                            });
-                    });
+                var semanticRoot = doc.GetSyntaxRootAsync().Result;
+                xs.Mapper.Map(xs.SyntaxRoot, semanticRoot);
+
+                var model = doc.GetSemanticModelAsync().Result;
+                xs.Model = model;
+
+                xs.applyChanges(CompilerStage.Semantical);
             }
-
-            wait.WaitOne();
         }
 
         private Dictionary<string, RoslynDocument> compile(Func<ProjectItem, bool> filter, Scope scope)
@@ -248,7 +248,7 @@ namespace Excess.VisualStudio.VSPackage
                     {
                         if (compilationFunc != null)
                         {
-                            if (compilation == null)
+                            if (compilation != null)
                                 compilationFunc(compilation);
                         }
 
@@ -281,18 +281,6 @@ namespace Excess.VisualStudio.VSPackage
                 solution = solution.WithDocumentSyntaxRoot(id, doc.SyntaxRoot);
 
             return _workspace.TryApplyChanges(solution);
-        }
-
-        private void AfterBuild(vsBuildScope Scope, vsBuildAction Action)
-        {
-            throw new NotImplementedException(); //td: generate js files, for instance
-            //if (Scope == vsBuildScope.vsBuildScopeSolution)
-            //{
-            //    foreach (var cache in _projects)
-            //    {
-            //        cache.Value.ApplyCompilation();
-            //    }
-            //}
         }
 
         public override string GetFormatFilterList()

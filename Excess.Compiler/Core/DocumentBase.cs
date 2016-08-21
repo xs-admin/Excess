@@ -232,13 +232,8 @@ namespace Excess.Compiler.Core
             {
                 _stage = CompilerStage.Semantical;
                 bool result = applySemantical();
-                if (result)
+                if (!result)
                 {
-                    _semanticalTries = 0;
-                }
-                else
-                {
-                    _semanticalTries++;
                     if (_semanticalTries > 5)
                         return false;
 
@@ -246,6 +241,7 @@ namespace Excess.Compiler.Core
                         return applyChanges(stage);
                 }
 
+                _semanticalTries++;
                 return result;
             }
 
