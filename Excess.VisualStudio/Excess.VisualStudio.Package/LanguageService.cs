@@ -18,15 +18,15 @@ using Excess.Compiler.Reflection;
 using Excess.Compiler;
 using Excess.Compiler.Core;
 using xslang;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.CodeAnalysis.Text;
 
 namespace Excess.VisualStudio.VSPackage
 {
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
     using RoslynCompilationAnalysis = CompilationAnalysisBase<SyntaxToken, SyntaxNode, SemanticModel>;
     using CompilerFunc = Action<RoslynCompiler, Scope>;
-    using System.Threading;
-    using System.Threading.Tasks;
-    using Microsoft.CodeAnalysis.Text;
 
     class ExcessLanguageService : LanguageService
     {
@@ -62,7 +62,7 @@ namespace Excess.VisualStudio.VSPackage
         DTE2 _dte;
         private EnvDTE.Events _dteEvents;
         private BuildEvents _buildEvents;
-        private void ensureDTE()
+        public void ensureDTE()
         {
             if (_dte == null)
             {
@@ -80,25 +80,47 @@ namespace Excess.VisualStudio.VSPackage
             if (buildAction == vsBuildAction.vsBuildActionClean)
                 throw new NotImplementedException(); //td:
 
+            var compilation = new RoslynCompilationAnalysis();
             var scope = new Scope(null);
-            scope.set(loadExtensions());
+            scope.set(loadExtensions(compilation));
 
             //get all the documents needing compiling
-            Dictionary<DocumentId, RoslynDocument> documents = compile(
+            var documents = compile(
                 filter: doc => buildAction == vsBuildAction.vsBuildActionRebuildAll
-                    ? false
-                    : isUptoDate(doc), 
+                    ? true
+                    : isDirty(doc), 
                 scope : scope);
+
+            //find the cs code behind files
+            var documentIds = new Dictionary<string, DocumentId>();
+            foreach (var path in documentIds.Keys)
+            {
+                var csFile = path + ".cs";
+                var docId = _workspace
+                    .CurrentSolution
+                    .GetDocumentIdsWithFilePath(path)
+                    .FirstOrDefault();
+
+                if (docId != null)
+                {
+                    documentIds[path] = docId;
+                }
+                else
+                {
+                    //td: add to project
+                }
+            }
 
             //now we must join all files for semantic stuff
             while (documents.Any())
             {
-                var temp = new Dictionary<DocumentId, RoslynDocument>(documents);
+                var temp = new Dictionary<string, RoslynDocument>(documents);
                 documents.Clear();
 
                 foreach (var request in temp)
                 {
-                    saveCodeBehind(request.Value, request.Key, false);
+                    var docId = documentIds[request.Key];
+                    saveCodeBehind(request.Value, docId, false);
 
                     if (!request.Value.HasSemanticalChanges())
                         continue;
@@ -107,17 +129,18 @@ namespace Excess.VisualStudio.VSPackage
                 }
 
                 if (documents.Any())
-                    link(documents, scope);
+                    link(documents, documentIds, scope);
             }
         }
 
-        private void link(Dictionary<DocumentId, RoslynDocument> documents, Scope scope)
+        private void link(Dictionary<string, RoslynDocument> documents, Dictionary<string, DocumentId> ids, Scope scope)
         {
             var requestCount = documents.Count;
             var wait = new ManualResetEvent(false);
             foreach (var request in documents)
             {
-                var doc = _workspace.CurrentSolution.GetDocument(request.Key);
+                var docId = ids[request.Key];
+                var doc = _workspace.CurrentSolution.GetDocument(docId);
                 var xs = request.Value;
                 doc.GetSyntaxRootAsync()
                     .ContinueWith(t => 
@@ -141,50 +164,59 @@ namespace Excess.VisualStudio.VSPackage
             wait.WaitOne();
         }
 
-        private Dictionary<DocumentId, RoslynDocument> compile(Func<Microsoft.CodeAnalysis.Document, bool> filter, Scope scope)
+        private Dictionary<string, RoslynDocument> compile(Func<ProjectItem, bool> filter, Scope scope)
         {
-            var documents = new Dictionary<DocumentId, RoslynDocument>();
+            var documents = new Dictionary<string, RoslynDocument>();
             var requestCount = 0;
             var wait = new ManualResetEvent(false);
-            foreach (var project in _workspace.CurrentSolution.Projects)
+            var projects = _dte.Solution.Projects.Cast<EnvDTE.Project>();
+            var xsFiles = new List<ProjectItem>();
+
+            foreach (var project in projects)
             {
-                var xsFiles = project
-                    .Documents
-                    .Where(document => Path.GetExtension(document.FilePath).ToLower() == ".xs");
-
-                foreach (var file in xsFiles)
+                foreach (var item in project.ProjectItems.Cast<ProjectItem>())
                 {
-                    if (!filter(file))
-                        continue;
-
-                    var id = file.Id;
-                    documents[id] = null;
-
-                    var source = file.GetTextAsync().Result;
-                    VSCompiler.Parse(source.ToString(), scope)
-                        .ContinueWith(t =>
-                        {
-                            if (!t.IsFaulted)
-                                documents[id] = t.Result;
-
-                            requestCount--;
-                            if (requestCount == 0)
-                                wait.Set();
-                        });
+                    collectXsFiles(item, xsFiles);
                 }
             }
 
-            //wait for syntax changes on all documents
-            wait.WaitOne();
+            foreach (var file in xsFiles)
+            {
+                if (!filter(file))
+                    continue;
+
+                var fileName = file.FileNames[0];
+                requestCount++;
+                var text = File.ReadAllText(fileName);
+                var doc = VSCompiler.Parse(text, scope);
+                documents[fileName] = doc;
+            }
+
             return documents;
         }
 
-        private bool isUptoDate(Microsoft.CodeAnalysis.Document file)
+        private void collectXsFiles(ProjectItem item, List<ProjectItem> result)
         {
-            return false; //td:
+            if (isXsFile(item))
+                result.Add(item);
+            else if (item.ProjectItems != null)
+            {
+                foreach (var nested in item.ProjectItems.Cast<ProjectItem>())
+                    collectXsFiles(nested, result);
+            }
         }
 
-        private Dictionary<string, CompilerFunc> loadExtensions()
+        private bool isXsFile(ProjectItem item)
+        {
+            return item.Name.EndsWith(".xs");
+        }
+
+        private bool isDirty(ProjectItem file)
+        {
+            return true; //td:
+        }
+
+        private Dictionary<string, CompilerFunc> loadExtensions(RoslynCompilationAnalysis compilation)
         {
             var result = new Dictionary<string, CompilerFunc>();
 
@@ -214,14 +246,11 @@ namespace Excess.VisualStudio.VSPackage
                     var extension = Loader<RoslynCompiler, RoslynCompilationAnalysis>.CreateFrom(assembly, out name, out compilationFunc);
                     if (extension != null)
                     {
-                        throw new NotImplementedException();
-                        //if (compilationFunc != null)
-                        //{
-                        //    if (_compilation == null)
-                        //        _compilation = new CompilationAnalysisBase<SyntaxToken, SyntaxNode, SemanticModel>();
-
-                        //    compilationFunc(_compilation);
-                        //}
+                        if (compilationFunc != null)
+                        {
+                            if (compilation == null)
+                                compilationFunc(compilation);
+                        }
 
                         result[name] = extension;
                     }
@@ -292,12 +321,12 @@ namespace Excess.VisualStudio.VSPackage
 
         public override IScanner GetScanner(IVsTextLines buffer)
         {
-            throw new NotImplementedException();
+            return new Scanner(XSLanguage.Keywords); //td:
         }
 
         public override AuthoringScope ParseSource(ParseRequest req)
         {
-            throw new NotImplementedException();
+            return new ExcessAuthoringScope();
         }
     }
 }

@@ -90,6 +90,7 @@ namespace Excess.VisualStudio.VSPackage
 
             ExcessLanguageService langService = new ExcessLanguageService(workspace);
             langService.SetSite(this);
+            langService.ensureDTE();
 
             IServiceContainer serviceContainer = this as IServiceContainer;
             serviceContainer.AddService(typeof(ExcessLanguageService), langService, true);

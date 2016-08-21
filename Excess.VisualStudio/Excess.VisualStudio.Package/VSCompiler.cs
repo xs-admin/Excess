@@ -18,14 +18,11 @@ namespace Excess.VisualStudio.VSPackage
 
     public class VSCompiler
     {
-        public static Task<RoslynDocument> Parse(string text, Scope scope)
+        public static RoslynDocument Parse(string text, Scope scope)
         {
-            return Task.Run(() => 
-            {
-                var result = CreateExcessDocument(text, scope);
-                result.applyChanges(CompilerStage.Syntactical);
-                return result;
-            });
+            var result = CreateExcessDocument(text, scope);
+            result.applyChanges(CompilerStage.Syntactical);
+            return result;
         }
 
         private static RoslynDocument CreateExcessDocument(string text, Scope scope)
@@ -39,8 +36,7 @@ namespace Excess.VisualStudio.VSPackage
             var compiler = CreateCompiler(extensions, out keywords, scope);
 
             //build a new document
-            var docScope = new Scope(scope);
-            var result = new RoslynDocument(docScope, text);
+            var result = new RoslynDocument(compiler.Scope, text);
             result.Mapper = new MappingService();
             compiler.apply(result);
             return result;

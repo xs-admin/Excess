@@ -1,10 +1,10 @@
 ﻿using xs.server;					
 
-namespace metaprogramming
+namespace metaprogramming 
 {
 	server Development 
 	{
-		on port 1080
+		on port 80 
 		static files @../../client/app
 	}
 }
