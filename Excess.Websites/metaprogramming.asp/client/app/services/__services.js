@@ -1,7 +1,7 @@
 
             var xsServices = angular.module('xs.Services', []);
             
-            xsServices.service('Home', ['$http', '$q', function($http, $q)
+            xsServices.service('metaprogramming.Home', ['$http', '$q', function($http, $q)
             {
                 
             this.Transpile = function (text)
@@ -39,5 +39,5 @@
 
 
 
-                this.__ID = 'f89165cb-a22d-40a3-9b19-9b29816bcb88';
+                this.__ID = 'a38b84c9-958a-41b5-a746-9716a12b3eb5';
             }])

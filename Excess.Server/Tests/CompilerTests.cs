@@ -265,7 +265,7 @@ namespace Tests
             var clientCode = serverConfig.GetClientInterface();
 
             //should generate an angular service naed as the namespace
-            Assert.IsTrue(clientCode.Contains("xsServices.service('Service', ['$http', '$q', function($http, $q)"));
+            Assert.IsTrue(clientCode.Contains("xsServices.service('Some.Service', ['$http', '$q', function($http, $q)"));
 
             //should generate a post to /Some/Namespace/SomeFunction
             Assert.IsTrue(clientCode.Contains("$http.post(\"/Some/Namespace/SomeFunction\""));

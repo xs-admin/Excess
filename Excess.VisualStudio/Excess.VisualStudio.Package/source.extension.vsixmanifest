@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
-    <Identity Id="Excess.VisualStudio.Package.Emilio Santos.947b0385-58b7-4f7f-8fa7-6926656bcc9b" Version="0.1" Language="en-US" Publisher="Emilio Santos" />
+    <Identity Id="Excess.VisualStudio.Package.Emilio Santos.947b0385-58b7-4f7f-8fa7-6926656bcc9b" Version="0.48.15" Language="en-US" Publisher="Emilio Santos" />
     <DisplayName>Excess.VisualStudio.Package</DisplayName>
     <Description xml:space="preserve">Excess Metaprogramming Platform</Description>
   </Metadata>
@@ -9,7 +9,7 @@
     <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[14.0]" />
   </Installation>
   <Dependencies>
-    <Dependency Id="Microsoft.Framework.NDP" DisplayName="Microsoft .NET Framework" d:Source="Manual" Version="[4.5,)" />
+    <Dependency Id="Microsoft.Framework.NDP" DisplayName="Microsoft .NET Framework" d:Source="Manual" Version="[4.6,)" />
     <Dependency Id="Microsoft.VisualStudio.MPF.14.0" DisplayName="Visual Studio MPF 14.0" d:Source="Installed" Version="[14.0]" />
   </Dependencies>
   <Assets>

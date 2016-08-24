@@ -51,31 +51,31 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Compiler, Version=1.0.0.0, Culture=neutral, PublicKeyToken=b0e2cc790a4c1b9e, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Compiler.0.48.0-alpha\lib\Net45\Excess.Compiler.dll</HintPath>
+      <HintPath>..\packages\Excess.Compiler.0.48.7-debug\lib\Net45\Excess.Compiler.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Compiler.Antlr4, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Compiler.0.48.0-alpha\lib\Net45\Excess.Compiler.Antlr4.dll</HintPath>
+      <HintPath>..\packages\Excess.Compiler.0.48.7-debug\lib\Net45\Excess.Compiler.Antlr4.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Compiler.GraphInstances, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Compiler.0.48.0-alpha\lib\Net45\Excess.Compiler.GraphInstances.dll</HintPath>
+      <HintPath>..\packages\Excess.Compiler.0.48.7-debug\lib\Net45\Excess.Compiler.GraphInstances.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Compiler.Mock, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Compiler.0.48.0-alpha\lib\Net45\Excess.Compiler.Mock.dll</HintPath>
+      <HintPath>..\packages\Excess.Compiler.0.48.7-debug\lib\Net45\Excess.Compiler.Mock.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Compiler.Razor, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Compiler.0.48.0-alpha\lib\Net45\Excess.Compiler.Razor.dll</HintPath>
+      <HintPath>..\packages\Excess.Compiler.0.48.7-debug\lib\Net45\Excess.Compiler.Razor.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Concurrent.Compiler, Version=0.46.2.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Concurrent.Runtime.0.48.0-alpha\lib\Net45\Excess.Concurrent.Compiler.dll</HintPath>
+      <HintPath>..\packages\Excess.Concurrent.Runtime.0.48.1-debug\lib\Net45\Excess.Concurrent.Compiler.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Concurrent.Runtime, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Concurrent.Runtime.0.48.0-alpha\lib\Net45\Excess.Concurrent.Runtime.dll</HintPath>
+      <HintPath>..\packages\Excess.Concurrent.Runtime.0.48.1-debug\lib\Net45\Excess.Concurrent.Runtime.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Runtime, Version=1.0.0.0, Culture=neutral, PublicKeyToken=270b7f55f5ad09f8, processorArchitecture=MSIL">
@@ -83,7 +83,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Server.Middleware, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Server.0.48.0-alpha\lib\Net45\Excess.Server.Middleware.dll</HintPath>
+      <HintPath>..\packages\Excess.Server.0.48.3-debug\lib\Net45\Excess.Server.Middleware.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.CodeAnalysis, Version=1.2.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
@@ -249,7 +249,7 @@
       <HintPath>..\packages\Antlr.3.4.1.9004\lib\Antlr3.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="xslang, Version=1.0.0.0, Culture=neutral, PublicKeyToken=a8909f1e5623e4ea, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Compiler.0.48.0-alpha\lib\Net45\xslang.dll</HintPath>
+      <HintPath>..\packages\Excess.Compiler.0.48.7-debug\lib\Net45\xslang.dll</HintPath>
       <Private>True</Private>
     </Reference>
   </ItemGroup>

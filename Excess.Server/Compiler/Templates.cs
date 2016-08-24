@@ -59,7 +59,7 @@ namespace Excess.Server.Compiler
             }");
 
         public static RazorTemplate jsMethod = RazorTemplate.Parse(@"
-            this.@Model.Name = function @Model.Arguments
+            this.@Model.MethodName = function @Model.Arguments
             {
                 var deferred = $q.defer();
 

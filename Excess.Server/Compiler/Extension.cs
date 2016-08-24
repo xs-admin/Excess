@@ -158,6 +158,7 @@ namespace Excess.Server.Compiler
             }
 
             //create the http start
+            //
             var except = Templates
                 .StringArray
                 .Get<ArrayCreationExpressionSyntax>()
@@ -446,7 +447,7 @@ namespace Excess.Server.Compiler
                     .jsMethod
                     .Render(new
                     {
-                        Name = method.Identifier.ToString(),
+                        MethodName = method.Identifier.ToString(),
                         Arguments = argumentsFromParameters(parameters),
                         Data = objectFromParameters(parameters),
                         Path = path,

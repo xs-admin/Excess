@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Excess.VS", "Excess.VS\Excess.VS.csproj", "{F30A7D8C-4B51-4967-99E8-2092E5AD3618}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Templates", "Templates", "{D1BA226C-74BB-401B-9763-0AD8EDAC36CF}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XS.File", "Templates\XS.File\XS.File.csproj", "{F5797A65-27DD-4B9A-B1E7-05BE2F9526FA}"
@@ -21,10 +19,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{F30A7D8C-4B51-4967-99E8-2092E5AD3618}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F30A7D8C-4B51-4967-99E8-2092E5AD3618}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F30A7D8C-4B51-4967-99E8-2092E5AD3618}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F30A7D8C-4B51-4967-99E8-2092E5AD3618}.Release|Any CPU.Build.0 = Release|Any CPU
 		{F5797A65-27DD-4B9A-B1E7-05BE2F9526FA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{F5797A65-27DD-4B9A-B1E7-05BE2F9526FA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F5797A65-27DD-4B9A-B1E7-05BE2F9526FA}.Release|Any CPU.ActiveCfg = Release|Any CPU

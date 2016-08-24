@@ -41,6 +41,8 @@ angular.module('metaprogramming', [
             }
         }
 
+        transpileEditor.setValue("contacting compilation server...");
+        transpileEditor.clearSelection();
         Home.Transpile(text)
             .then(function (value){
                 transpileEditor.setValue(value.data.__res);

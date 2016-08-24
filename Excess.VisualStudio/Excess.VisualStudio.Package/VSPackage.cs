@@ -54,7 +54,7 @@ namespace Excess.VisualStudio.VSPackage
     )]
 
     [ProvideLanguageExtensionAttribute(typeof(ExcessLanguageService), ".xs")]
-
+    [ProvideBindingPath]
     public sealed class VSPackage : Package, IOleComponent
     {
         /// <summary>
@@ -87,6 +87,7 @@ namespace Excess.VisualStudio.VSPackage
 
             var componentModel = (IComponentModel)this.GetService(typeof(SComponentModel));
             var workspace = componentModel.GetService<VisualStudioWorkspace>();
+            var log = GetService(typeof(SVsActivityLog)) as IVsActivityLog;
 
             ExcessLanguageService langService = new ExcessLanguageService(workspace);
             langService.SetSite(this);

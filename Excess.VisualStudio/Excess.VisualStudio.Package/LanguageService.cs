@@ -21,12 +21,14 @@ using xslang;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.Text;
+using Excess.Compiler.Razor;
 
 namespace Excess.VisualStudio.VSPackage
 {
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
     using RoslynCompilationAnalysis = CompilationAnalysisBase<SyntaxToken, SyntaxNode, SemanticModel>;
     using CompilerFunc = Action<RoslynCompiler, Scope>;
+    using Microsoft.VisualStudio.Shell.Interop;
 
     class ExcessLanguageService : LanguageService
     {
@@ -76,6 +78,9 @@ namespace Excess.VisualStudio.VSPackage
 
         private void BeforeBuild(vsBuildScope buildScope, vsBuildAction buildAction)
         {
+            log($"Start building xs...");
+            log($"Found {_workspace.CurrentSolution.ProjectIds.Count} projects");
+
             if (buildAction == vsBuildAction.vsBuildActionClean)
                 throw new NotImplementedException(); //td:
 
@@ -89,6 +94,8 @@ namespace Excess.VisualStudio.VSPackage
                     ? true
                     : isDirty(doc), 
                 scope : scope);
+
+            log($"Found {documents.Count} files to compile");
 
             //find the cs code behind files
             var documentIds = new Dictionary<string, DocumentId>();
@@ -106,6 +113,7 @@ namespace Excess.VisualStudio.VSPackage
                 }
                 else
                 {
+                    log($"Cannot find document: {path}");
                     //td: add to project
                 }
             }
@@ -118,7 +126,10 @@ namespace Excess.VisualStudio.VSPackage
 
                 foreach (var request in temp)
                 {
-                    var docId = documentIds[request.Key];
+                    var docId = default(DocumentId);
+                    if (!documentIds.TryGetValue(request.Key, out docId))
+                        continue;
+                        
                     saveCodeBehind(request.Value, docId, false);
 
                     if (!request.Value.HasSemanticalChanges())
@@ -167,7 +178,6 @@ namespace Excess.VisualStudio.VSPackage
         private Dictionary<string, RoslynDocument> compile(Func<ProjectItem, bool> filter, Scope scope)
         {
             var documents = new Dictionary<string, RoslynDocument>();
-            var requestCount = 0;
             var wait = new ManualResetEvent(false);
             var projects = _dte.Solution.Projects.Cast<EnvDTE.Project>();
             var xsFiles = new List<ProjectItem>();
@@ -186,10 +196,23 @@ namespace Excess.VisualStudio.VSPackage
                     continue;
 
                 var fileName = file.FileNames[0];
-                requestCount++;
-                var text = File.ReadAllText(fileName);
-                var doc = VSCompiler.Parse(text, scope);
-                documents[fileName] = doc;
+
+                log($"Compiling {fileName}");
+
+                try
+                {
+                    var text = File.ReadAllText(fileName);
+                    var doc = VSCompiler.Parse(text, scope);
+                    documents[fileName] = doc;
+                }
+                catch (Exception ex)
+                {
+                    var inner = ex
+                        ?.InnerException
+                        .Message ?? "no inner exception";
+
+                    log($"Failed compiling {fileName} with {ex.Message} \n {inner} \n {ex.StackTrace}");
+                }
             }
 
             return documents;
@@ -252,6 +275,7 @@ namespace Excess.VisualStudio.VSPackage
                                 compilationFunc(compilation);
                         }
 
+                        log($"Found extension {name}");
                         result[name] = extension;
                     }
                 }
@@ -280,6 +304,7 @@ namespace Excess.VisualStudio.VSPackage
             else
                 solution = solution.WithDocumentSyntaxRoot(id, doc.SyntaxRoot);
 
+            log($"Saved {id}");
             return _workspace.TryApplyChanges(solution);
         }
 
@@ -315,6 +340,18 @@ namespace Excess.VisualStudio.VSPackage
         public override AuthoringScope ParseSource(ParseRequest req)
         {
             return new ExcessAuthoringScope();
+        }
+
+        private OutputWindowPane _logPane;
+        private void log(string what)
+        {
+            if (_logPane == null)
+            {
+                ensureDTE();
+                _logPane = _dte.ToolWindows.OutputWindow.OutputWindowPanes.Add("Excess");
+            }
+
+            _logPane.OutputString(what + Environment.NewLine);
         }
     }
 }
