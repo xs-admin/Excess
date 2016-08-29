@@ -1,7 +1,7 @@
 
             var xsServices = angular.module('xs.Services', []);
             
-            xsServices.service('Home', ['$http', '$q', function($http, $q)
+            xsServices.service('Home', ['$http', '$q',  function($http, $q)
             {
                 
             this.Transpile = function (text)

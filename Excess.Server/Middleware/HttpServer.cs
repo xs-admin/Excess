@@ -13,9 +13,10 @@ using Excess.Runtime;
 
 namespace Excess.Server.Middleware
 {
+    using System.Linq;
     using FilterFunction = Func<
-        Func<string, IOwinRequest, __Scope, object>,  //prev
-        Func<string, IOwinRequest, __Scope, object>>; //next
+Func<string, IOwinRequest, __Scope, object>,  //prev
+Func<string, IOwinRequest, __Scope, object>>; //next
 
     public class HttpServer
     {
@@ -55,6 +56,12 @@ namespace Excess.Server.Middleware
                     builder.UseFileServer(options);
                 }
 
+                var functionTypes = assemblies
+                    .SelectMany(assembly => assembly
+                        .ExportedTypes
+                        .Where(type => type.Name == "Functions"));
+
+
                 builder.UseExcess(
                     scope,
                     initializeApp: server =>
@@ -82,6 +89,7 @@ namespace Excess.Server.Middleware
                                 throw error;
                         }
                     }, 
+                    functional: functionTypes,
                     filters: filters);
             }))
             {

@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
     <id>Excess.Extensions.NInjector</id>
-    <version>0.48.0-alpha</version>
+    <version>0.48.10-alpha</version>
     <authors>Excess</authors>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>C# extensions for dependency injection using NInject</description>

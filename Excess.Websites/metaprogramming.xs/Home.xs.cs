@@ -13,8 +13,8 @@ using Excess.Concurrent.Runtime;
 
 namespace metaprogramming
 {
-    [Service(id: "684c8d52-17df-47dd-a82e-dfc1751fa1b1")]
-    [Concurrent(id = "f363c166-7827-4dd4-b2df-b3318bc90f49")]
+    [Service(id: "4f2f5b4c-ae3d-4904-84e2-495859ded449")]
+    [Concurrent(id = "ccec9308-7878-4c19-9b08-45d5f82c5911")]
     public class Home : ConcurrentObject
     {
         public Home(ICodeTranspiler ___transpiler, IGraphTranspiler ___graphTranspiler)

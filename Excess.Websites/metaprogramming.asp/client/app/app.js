@@ -43,7 +43,7 @@ angular.module('metaprogramming', [
 
         Home.Transpile(text)
             .then(function (value){
-                transpileEditor.setValue(value.data.__res);
+                transpileEditor.setValue(value);
                 transpileEditor.clearSelection();
             });
     }
@@ -85,7 +85,7 @@ angular.module('metaprogramming', [
     $scope.transpileGraph = function () {
         Home.TranspileGraph(JSON.stringify(graphEditor.toJSON()))
             .then(function (value) {
-                sourceEditor.setValue(value.data.__res);
+                sourceEditor.setValue(value);
                 sourceEditor.clearSelection();
             });
     }

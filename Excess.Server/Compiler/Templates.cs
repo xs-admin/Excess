@@ -65,8 +65,8 @@ namespace Excess.Server.Compiler
 
                 $http.post(@Model.Path, {
                     @Model.Data
-                }).then(function(response) {
-                    deferred.resolve(response);
+                }).then(function(__response) {
+                    deferred.resolve(__response.data.__res);
                 }, function(ex){
                     deferred.reject(ex);
                 });
@@ -113,7 +113,8 @@ namespace Excess.Server.Compiler
         public static ExpressionSyntax UserFilter = CSharp.ParseExpression(@"
             prev => (data, request, scope) => 
             {
-                scope.set<IPrincipal>(request.User);
+                if (request.User != null)
+                    scope.set<IPrincipal>(request.User);
                 return prev(data, request, scope);
             }");
 

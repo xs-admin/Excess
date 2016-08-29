@@ -19,13 +19,13 @@ namespace metaprogramming.server.WebTranspilers
 
             using (var client = new HttpClient())
             {
-                client.BaseAddress = new Uri(ConfigurationManager.AppSettings[configKey]);
                 client.DefaultRequestHeaders.Accept.Clear();
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
+                var uri = $"{ConfigurationManager.AppSettings[configKey]}/transpile/code";
                 var contents = $"{{\"text\" : \"{HttpUtility.JavaScriptStringEncode(code)}\"}}";
                 HttpResponseMessage response = client
-                    .PostAsync("/transpile/code", new StringContent(contents))
+                    .PostAsync(uri, new StringContent(contents))
                     .Result;
 
                 var result = "An error occured";

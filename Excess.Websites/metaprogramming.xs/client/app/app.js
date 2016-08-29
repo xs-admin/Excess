@@ -45,7 +45,7 @@ angular.module('metaprogramming', [
         transpileEditor.clearSelection();
         Home.Transpile(text)
             .then(function (value){
-                transpileEditor.setValue(value.data.__res);
+                transpileEditor.setValue(value);
                 transpileEditor.clearSelection();
             });
     }
@@ -85,9 +85,10 @@ angular.module('metaprogramming', [
 	}
 
     $scope.transpileGraph = function () {
+        sourceEditor.setValue("contacting compilation server...");
         Home.TranspileGraph(JSON.stringify(graphEditor.toJSON()))
             .then(function (value) {
-                sourceEditor.setValue(value.data.__res);
+                sourceEditor.setValue(value);
                 sourceEditor.clearSelection();
             });
     }

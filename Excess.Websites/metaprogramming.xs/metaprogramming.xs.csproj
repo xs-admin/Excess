@@ -46,7 +46,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Concurrent.Runtime, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Concurrent.Runtime.0.48.1-debug\lib\Net45\Excess.Concurrent.Runtime.dll</HintPath>
+      <HintPath>..\packages\Excess.Concurrent.0.48.2-debug\lib\Net45\Excess.Concurrent.Runtime.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Runtime, Version=1.0.0.0, Culture=neutral, PublicKeyToken=270b7f55f5ad09f8, processorArchitecture=MSIL">
@@ -54,7 +54,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Server.Middleware, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Server.0.48.3-debug\lib\Net45\Excess.Server.Middleware.dll</HintPath>
+      <HintPath>..\packages\Excess.Server.0.48.9-debug\lib\Net45\Excess.Server.Middleware.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.CodeAnalysis, Version=1.2.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">

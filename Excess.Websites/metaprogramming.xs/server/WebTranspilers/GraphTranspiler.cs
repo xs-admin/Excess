@@ -12,15 +12,20 @@ namespace metaprogramming.server.WebTranspilers
     {
         public string Transpile(string code)
         {
+            var configKey = "WebTranspiler";
+#if DEBUG
+            configKey += "-debug";
+#endif
+
             using (var client = new HttpClient())
             {
-                client.BaseAddress = new Uri(ConfigurationManager.AppSettings["WebTranspiler"]);
                 client.DefaultRequestHeaders.Accept.Clear();
                 client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
+                var uri = $"{ConfigurationManager.AppSettings[configKey]}/transpile/graph";
                 var contents = $"{{\"text\" : \"{HttpUtility.JavaScriptStringEncode(code)}\"}}";
                 HttpResponseMessage response = client
-                    .PostAsync("/transpile/graph", new StringContent(contents))
+                    .PostAsync(uri, new StringContent(contents))
                     .Result;
 
                 var result = "An error occured";
