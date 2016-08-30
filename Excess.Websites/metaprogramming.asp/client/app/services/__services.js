@@ -11,8 +11,8 @@
                 $http.post("/transpile/code", {
                     text : text,
 
-                }).then(function(response) {
-                    deferred.resolve(response);
+                }).then(function(__response) {
+                    deferred.resolve(__response.data.__res);
                 }, function(ex){
                     deferred.reject(ex);
                 });
@@ -28,8 +28,8 @@
                 $http.post("/transpile/graph", {
                     text : text,
 
-                }).then(function(response) {
-                    deferred.resolve(response);
+                }).then(function(__response) {
+                    deferred.resolve(__response.data.__res);
                 }, function(ex){
                     deferred.reject(ex);
                 });
@@ -39,5 +39,5 @@
 
 
 
-                this.__ID = 'a38b84c9-958a-41b5-a746-9716a12b3eb5';
+                this.__ID = '5cb6feb9-10c4-4be0-a87d-b1e3e3ba0761';
             }])

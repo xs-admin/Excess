@@ -195,7 +195,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ExcessMiddleware.cs" />
-    <None Include="app.config" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

@@ -10,7 +10,7 @@ angular.module('metaprogramming', [
     'ui.graphpanel'])
 
 //examples
-.controller("ctrlExamples", ['$scope', 'Home', function ($scope, Home) {
+.controller("ctrlExamples", ['$scope', 'metaprogramming.Home', function ($scope, Home) {
     var sourceEditor, transpileEditor;
 
     $scope.sourceLoaded = function (editor) {
@@ -51,7 +51,7 @@ angular.module('metaprogramming', [
 }])
 
 //graph
-.controller("ctrlGraphModel", ['$scope', '$timeout', 'Home', function ($scope, $timeout, Home) {
+.controller("ctrlGraphModel", ['$scope', '$timeout', 'metaprogramming.Home', function ($scope, $timeout, Home) {
     $scope.Model = Samples.DataProgrammingModel;
 
     var graphEditor;

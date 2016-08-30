@@ -119,31 +119,45 @@ namespace Excess.VisualStudio.VSPackage
             }
 
             //now we must join all files for semantic stuff
-            while (documents.Any())
+            try
             {
-                var temp = new Dictionary<string, RoslynDocument>(documents);
-                documents.Clear();
-
-                foreach (var request in temp)
+                while (documents.Any())
                 {
-                    var docId = default(DocumentId);
-                    if (!documentIds.TryGetValue(request.Key, out docId))
-                        continue;
-                        
-                    saveCodeBehind(request.Value, docId, false);
+                    var temp = new Dictionary<string, RoslynDocument>(documents);
+                    documents.Clear();
 
-                    if (!request.Value.HasSemanticalChanges())
-                        continue;
+                    foreach (var request in temp)
+                    {
+                        var docId = default(DocumentId);
+                        if (!documentIds.TryGetValue(request.Key, out docId))
+                            continue;
 
-                    documents[request.Key] = request.Value;
+                        saveCodeBehind(request.Value, docId, false);
+
+                        if (!request.Value.HasSemanticalChanges())
+                            continue;
+
+                        documents[request.Key] = request.Value;
+                    }
+
+                    if (documents.Any())
+                        link(documents, documentIds, scope);
                 }
-
-                if (documents.Any())
-                    link(documents, documentIds, scope);
+            }
+            catch (Exception ex)
+            {
+                log($"Failed linking with: {ex.ToString()}");
             }
 
             //post compilation
-            applyCompilation(compilation);
+            try
+            { 
+                    applyCompilation(compilation);
+            }
+            catch (Exception ex)
+            {
+                log($"Failed post-compile with: {ex.ToString()}");
+            }
         }
 
         private void applyCompilation(RoslynCompilationAnalysis compilationAnalysis)

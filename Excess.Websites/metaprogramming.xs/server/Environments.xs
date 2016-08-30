@@ -4,7 +4,7 @@ namespace metaprogramming
 {
 	server Development 
 	{
-		@http://metaprogramming.ninja 
+		on port 1080
 		static files @../../client/app  
 	}
 }

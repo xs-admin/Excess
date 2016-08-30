@@ -14,7 +14,7 @@ namespace metaprogramming
         public string Name => "Development";
         public void Run(__Scope __scope)
         {
-            HttpServer.Start(url: "http://metaprogramming.ninja ", scope: __scope, identityUrl: "", staticFiles: @"../../client/app  ", threads: 4, except: new string[]{}, nodes: 0, assemblies: new[]{typeof (Development).Assembly}, filters: new Func<Func<string, IOwinRequest, __Scope, object>, Func<string, IOwinRequest, __Scope, object>>[]{prev => (data, request, scope) =>
+            HttpServer.Start(url: "http://localhost:1080", scope: __scope, identityUrl: "", staticFiles: @"../../client/app  ", threads: 4, except: new string[]{}, nodes: 0, assemblies: new[]{typeof (Development).Assembly}, filters: new Func<Func<string, IOwinRequest, __Scope, object>, Func<string, IOwinRequest, __Scope, object>>[]{prev => (data, request, scope) =>
             {
                 if (request.User != null)
                     scope.set<IPrincipal>(request.User);
@@ -25,7 +25,7 @@ namespace metaprogramming
 
         public void Run(__Scope __scope, Action<object> success, Action<Exception> failure)
         {
-            HttpServer.Start(url: "http://metaprogramming.ninja ", scope: __scope, identityUrl: "", staticFiles: @"../../client/app  ", threads: 4, except: new string[]{}, nodes: 0, assemblies: new[]{typeof (Development).Assembly}, filters: new Func<Func<string, IOwinRequest, __Scope, object>, Func<string, IOwinRequest, __Scope, object>>[]{prev => (data, request, scope) =>
+            HttpServer.Start(url: "http://localhost:1080", scope: __scope, identityUrl: "", staticFiles: @"../../client/app  ", threads: 4, except: new string[]{}, nodes: 0, assemblies: new[]{typeof (Development).Assembly}, filters: new Func<Func<string, IOwinRequest, __Scope, object>, Func<string, IOwinRequest, __Scope, object>>[]{prev => (data, request, scope) =>
             {
                 if (request.User != null)
                     scope.set<IPrincipal>(request.User);
