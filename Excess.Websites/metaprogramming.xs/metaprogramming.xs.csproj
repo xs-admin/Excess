@@ -54,7 +54,7 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Server.Middleware, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Server.0.48.12-alpha\lib\Net45\Excess.Server.Middleware.dll</HintPath>
+      <HintPath>..\packages\Excess.Server.0.48.13-debug\lib\Net45\Excess.Server.Middleware.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.CodeAnalysis, Version=1.2.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">

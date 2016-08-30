@@ -182,6 +182,12 @@
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>jsService.template</DependentUpon>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Compile>
+    <Compile Include="Templates\jsServiceFile.generated.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>jsServiceFile.template</DependentUpon>
     </Compile>
   </ItemGroup>
   <ItemGroup>
@@ -215,8 +221,12 @@
     <Content Include="Templates\jsService.template">
       <Generator>RazorGenerator</Generator>
       <LastGenOutput>jsService.generated.cs</LastGenOutput>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="Templates\jsServiceFile.template" />
+    <Content Include="Templates\jsServiceFile.template">
+      <Generator>RazorGenerator</Generator>
+      <LastGenOutput>jsServiceFile.generated.cs</LastGenOutput>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

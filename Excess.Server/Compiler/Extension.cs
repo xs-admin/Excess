@@ -378,7 +378,7 @@ namespace Excess.Server.Compiler
                     result.AppendLine(Templates
                         .jsMethod(new
                         {
-                            Name = name.ToString(),
+                            MethodName = name.ToString(),
                             Arguments = argumentsFromParameters(parameters),
                             Data = objectFromParameters(parameters),
                             Path = "'/' + this.__ID + '/" + name.ToString() + "'",

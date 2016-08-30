@@ -3,6 +3,7 @@ using Excess.Compiler.Roslyn;
 
 namespace Excess.Server.Compiler
 {
+    using System;
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
     public static class Templates
@@ -64,6 +65,7 @@ namespace Excess.Server.Compiler
             {
                 Model = Model
             };
+
             return template.TransformText();
         }
 
@@ -93,10 +95,11 @@ namespace Excess.Server.Compiler
 
         public static string jsServiceFile(dynamic Model)
         {
-            var template = new ASP._Templates_jsService_template()
+            var template = new ASP._Templates_jsServiceFile_template()
             {
                 Model = Model
             };
+
             return template.TransformText();
         }
 

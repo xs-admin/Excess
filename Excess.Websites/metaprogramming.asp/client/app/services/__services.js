@@ -1,43 +1,46 @@
 
-            var xsServices = angular.module('xs.Services', []);
-            
-            xsServices.service('metaprogramming.Home', ['$http', '$q', function($http, $q)
-            {
-                
-            this.Transpile = function (text)
-            {
-                var deferred = $q.defer();
+var xsServices = angular.module('xs.Services', []);
 
-                $http.post("/transpile/code", {
-                    text : text,
+xsServices.service('metaprogramming.Home', ['$http', '$q', function($http, $q)
+{
+	
+this.Transpile = function (text)
+{
+	var deferred = $q.defer();
 
-                }).then(function(__response) {
-                    deferred.resolve(__response.data.__res);
-                }, function(ex){
-                    deferred.reject(ex);
-                });
+    $http.post("/transpile/code", {
+		text : text,
 
-                return deferred.promise;
-            }
+	}).then(function(__response) {
+		deferred.resolve(__response.data.__res);
+	}, function(ex){
+		deferred.reject(ex);
+    });
 
-
-            this.TranspileGraph = function (text)
-            {
-                var deferred = $q.defer();
-
-                $http.post("/transpile/graph", {
-                    text : text,
-
-                }).then(function(__response) {
-                    deferred.resolve(__response.data.__res);
-                }, function(ex){
-                    deferred.reject(ex);
-                });
-
-                return deferred.promise;
-            }
+    return deferred.promise;
+}
 
 
 
-                this.__ID = '5cb6feb9-10c4-4be0-a87d-b1e3e3ba0761';
-            }])
+this.TranspileGraph = function (text)
+{
+	var deferred = $q.defer();
+
+    $http.post("/transpile/graph", {
+		text : text,
+
+	}).then(function(__response) {
+		deferred.resolve(__response.data.__res);
+	}, function(ex){
+		deferred.reject(ex);
+    });
+
+    return deferred.promise;
+}
+
+
+
+    this.__ID = '41b27749-1ee4-4447-90e3-cc3a8bb0fecb';
+}])
+
+

@@ -226,8 +226,8 @@ namespace Tests
             var clientCode = serverConfig.GetClientInterface();
 
             //should generate a constructor for the clases
-            Assert.IsTrue(clientCode.Contains("someConcurrentClass = function (__ID)")
-                && clientCode.Contains("otherConcurrentClass = function (__ID)"));
+            Assert.IsTrue(clientCode.Contains("someConcurrentClass = function(__ID)")
+                && clientCode.Contains("otherConcurrentClass = function(__ID)"));
 
             //should internal methods
             Assert.IsTrue(clientCode.Contains("this.Hello = function (what)")

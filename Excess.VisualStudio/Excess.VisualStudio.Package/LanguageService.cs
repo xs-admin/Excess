@@ -2,7 +2,6 @@
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Diagnostics;
 using System.Collections.Generic;
 using EnvDTE;
 using EnvDTE80;
@@ -10,7 +9,6 @@ using Microsoft.VisualStudio.Package;
 using Microsoft.VisualStudio.TextManager.Interop;
 using Microsoft.VisualStudio.LanguageServices;
 using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.VisualStudio.ComponentModelHost;
 using NuGet.VisualStudio;
 using Excess.Compiler.Roslyn;
@@ -19,16 +17,13 @@ using Excess.Compiler;
 using Excess.Compiler.Core;
 using xslang;
 using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.Text;
-using Excess.Compiler.Razor;
 
 namespace Excess.VisualStudio.VSPackage
 {
-    using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
     using RoslynCompilationAnalysis = CompilationAnalysisBase<SyntaxToken, SyntaxNode, SemanticModel>;
     using CompilerFunc = Action<RoslynCompiler, Scope>;
-    using Microsoft.VisualStudio.Shell.Interop;
+    using CompilerAnalysisFunc = Action<CompilationAnalysisBase<SyntaxToken, SyntaxNode, SemanticModel>>;
 
     class ExcessLanguageService : LanguageService
     {
@@ -78,46 +73,69 @@ namespace Excess.VisualStudio.VSPackage
 
         private void BeforeBuild(vsBuildScope buildScope, vsBuildAction buildAction)
         {
-            log($"Start building xs...");
-            log($"Found {_workspace.CurrentSolution.ProjectIds.Count} projects");
-
             if (buildAction == vsBuildAction.vsBuildActionClean)
-                throw new NotImplementedException(); //td:
-
-            var compilation = new RoslynCompilationAnalysis();
-            var scope = new Scope(null);
-            scope.set(loadExtensions(compilation));
-
-            //get all the documents needing compiling
-            var documents = compile(
-                filter: doc => buildAction == vsBuildAction.vsBuildActionRebuildAll
-                    ? true
-                    : isDirty(doc), 
-                scope : scope);
-
-            log($"Found {documents.Count} files to compile");
-
-            //find the cs code behind files
-            var documentIds = new Dictionary<string, DocumentId>();
-            foreach (var path in documents.Keys)
             {
-                var csFile = path + ".cs";
-                var docId = _workspace
-                    .CurrentSolution
-                    .GetDocumentIdsWithFilePath(csFile)
-                    .FirstOrDefault();
-
-                if (docId != null)
-                {
-                    documentIds[path] = docId;
-                }
-                else
-                {
-                    log($"Cannot find document: {path}");
-                    //td: add to project
-                }
+                log($"Clean xs solution not yey implemented");
+                return; //td:
             }
 
+            log($"Start building xs...");
+
+            var projects = _dte.Solution.Projects.Cast<EnvDTE.Project>();
+            var allDocuments = new Dictionary<string, RoslynDocument>();
+            var documentIds = new Dictionary<string, DocumentId>();
+
+            var projectAnalysis = new Dictionary<string, RoslynCompilationAnalysis>();
+            var compilationAnalysis = new Dictionary<string, CompilerAnalysisFunc>();
+            var extensions = loadExtensions(compilationAnalysis);
+
+            //global scope
+            var scope = new Scope(null);
+            scope.set(extensions);
+
+            //grab info per project
+            foreach (var project in projects)
+            {
+                log($"Project {project.Name}...");
+                var projectExtensions = new List<string>();
+                var documents = compile(
+                    project,
+                    filter: doc => buildAction == vsBuildAction.vsBuildActionRebuildAll
+                        ? true
+                        : isDirty(doc),
+                    scope: scope,
+                    extensions: projectExtensions);
+
+                if (!documents.Any())
+                    continue;
+
+                foreach (var doc in documents)
+                    allDocuments[doc.Key] = doc.Value;
+
+                mapDocuments(documents, documentIds);
+
+                var compilation = new RoslynCompilationAnalysis();
+                var needsIt = false;
+                foreach (var ext in projectExtensions.Distinct())
+                {
+                    var func = default(CompilerAnalysisFunc);
+                    if (compilationAnalysis.TryGetValue(ext, out func))
+                    {
+                        func(compilation);
+                        needsIt = true;
+                    }
+                }
+
+                if (needsIt)
+                    projectAnalysis[project.FileName] = compilation;
+            }
+
+            build(allDocuments, documentIds, scope);
+            postCompilation(projectAnalysis);
+        }
+
+        private void build(Dictionary<string, RoslynDocument> documents, Dictionary<string, DocumentId> documentIds, Scope scope)
+        {
             //now we must join all files for semantic stuff
             try
             {
@@ -148,26 +166,51 @@ namespace Excess.VisualStudio.VSPackage
             {
                 log($"Failed linking with: {ex.ToString()}");
             }
+        }
 
-            //post compilation
-            try
-            { 
-                    applyCompilation(compilation);
-            }
-            catch (Exception ex)
+        private void mapDocuments(Dictionary<string, RoslynDocument> documents, Dictionary<string, DocumentId> documentIds)
+        {
+            foreach (var path in documents.Keys)
             {
-                log($"Failed post-compile with: {ex.ToString()}");
+                var csFile = path + ".cs";
+                var docId = _workspace
+                    .CurrentSolution
+                    .GetDocumentIdsWithFilePath(csFile)
+                    .FirstOrDefault();
+
+                if (docId != null)
+                {
+                    documentIds[path] = docId;
+                }
+                else
+                {
+                    log($"Cannot find document: {path}");
+                    //td: add to project
+                }
             }
         }
 
-        private void applyCompilation(RoslynCompilationAnalysis compilationAnalysis)
+        private void postCompilation(Dictionary<string, RoslynCompilationAnalysis> projectAnalysis)
         {
             foreach (var project in _workspace.CurrentSolution.Projects)
             {
-                var scope = new Scope(null); 
-                var compilation = new VSCompilation(project, scope);
-                compilation.PerformAnalysis(compilationAnalysis);
-                _workspace.TryApplyChanges(compilation.Project.Solution);
+                var analysis = default(RoslynCompilationAnalysis);
+                if (!projectAnalysis.TryGetValue(project.FilePath, out analysis))
+                    continue;
+
+                //post compilation
+                try
+                {
+                    var scope = new Scope(null);
+                    var compilation = new VSCompilation(project, scope);
+                    compilation.PerformAnalysis(analysis);
+                    if (!_workspace.TryApplyChanges(compilation.Project.Solution))
+                        log($"Failed applies changes to solution");
+                }
+                catch (Exception ex)
+                {
+                    log($"Failed post-compile with: {ex.ToString()}");
+                }
             }
         }
 
@@ -189,19 +232,15 @@ namespace Excess.VisualStudio.VSPackage
             }
         }
 
-        private Dictionary<string, RoslynDocument> compile(Func<ProjectItem, bool> filter, Scope scope)
+        private Dictionary<string, RoslynDocument> compile(EnvDTE.Project project, Func<ProjectItem, bool> filter, Scope scope, List<string> extensions)
         {
             var documents = new Dictionary<string, RoslynDocument>();
             var wait = new ManualResetEvent(false);
-            var projects = _dte.Solution.Projects.Cast<EnvDTE.Project>();
             var xsFiles = new List<ProjectItem>();
 
-            foreach (var project in projects)
+            foreach (var item in project.ProjectItems.Cast<ProjectItem>())
             {
-                foreach (var item in project.ProjectItems.Cast<ProjectItem>())
-                {
-                    collectXsFiles(item, xsFiles);
-                }
+                collectXsFiles(item, xsFiles);
             }
 
             foreach (var file in xsFiles)
@@ -210,13 +249,12 @@ namespace Excess.VisualStudio.VSPackage
                     continue;
 
                 var fileName = file.FileNames[0];
-
                 log($"Compiling {fileName}");
 
                 try
                 {
                     var text = File.ReadAllText(fileName);
-                    var doc = VSCompiler.Parse(text, scope);
+                    var doc = VSCompiler.Parse(text, scope, extensions);
                     documents[fileName] = doc;
                 }
                 catch (Exception ex)
@@ -253,14 +291,13 @@ namespace Excess.VisualStudio.VSPackage
             return true; //td:
         }
 
-        private Dictionary<string, CompilerFunc> loadExtensions(RoslynCompilationAnalysis compilation)
+        private Dictionary<string, CompilerFunc> loadExtensions(Dictionary<string, CompilerAnalysisFunc> analysis)
         {
             var result = new Dictionary<string, CompilerFunc>();
 
             ensureDTE();
             ensureNuget();
 
-            var projects = _dte.ActiveSolutionProjects;
             var packages = _nuget.GetInstalledPackages();
             foreach (var package in packages)
             {
@@ -285,8 +322,8 @@ namespace Excess.VisualStudio.VSPackage
                     {
                         if (compilationFunc != null)
                         {
-                            if (compilation != null)
-                                compilationFunc(compilation);
+                            if (analysis != null)
+                                analysis[name] = compilationFunc;
                         }
 
                         log($"Found extension {name}");
@@ -366,6 +403,11 @@ namespace Excess.VisualStudio.VSPackage
             }
 
             _logPane.OutputString(what + Environment.NewLine);
+        }
+
+        //create a hard reference to templating, so the dll is in included
+        class Templating : RazorGenerator.Templating.RazorTemplateBase
+        {
         }
     }
 }

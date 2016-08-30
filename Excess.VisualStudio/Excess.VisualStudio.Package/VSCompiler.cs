@@ -18,14 +18,14 @@ namespace Excess.VisualStudio.VSPackage
 
     public class VSCompiler
     {
-        public static RoslynDocument Parse(string text, Scope scope)
+        public static RoslynDocument Parse(string text, Scope scope, List<string> extensionNames)
         {
-            var result = CreateExcessDocument(text, scope);
+            var result = CreateExcessDocument(text, scope, extensionNames);
             result.applyChanges(CompilerStage.Syntactical);
             return result;
         }
 
-        private static RoslynDocument CreateExcessDocument(string text, Scope scope)
+        private static RoslynDocument CreateExcessDocument(string text, Scope scope, List<string> extensionNames)
         {
             //td: we need the using list in order to deduct the extensions
             //however, we don't need to parse the whole document.
@@ -33,7 +33,7 @@ namespace Excess.VisualStudio.VSPackage
             var compilationUnit = CSharp.ParseCompilationUnit(text);
             var extensions = new List<UsingDirectiveSyntax>(compilationUnit.Usings);
             var keywords = null as IEnumerable<string>;
-            var compiler = CreateCompiler(extensions, out keywords, scope);
+            var compiler = CreateCompiler(extensions, out keywords, scope, extensionNames);
 
             //build a new document
             var result = new RoslynDocument(compiler.Scope, text);
@@ -44,7 +44,7 @@ namespace Excess.VisualStudio.VSPackage
 
         private static bool isExtension(UsingDirectiveSyntax @using) => @using.Name.ToString().StartsWith("xs.");
 
-        public static RoslynCompiler CreateCompiler(ICollection<UsingDirectiveSyntax> extensions, out IEnumerable<string> keywords, Scope scope)
+        public static RoslynCompiler CreateCompiler(ICollection<UsingDirectiveSyntax> extensions, out IEnumerable<string> keywords, Scope scope, List<string> extensionNames)
         {
             keywords = null;
             var result = (RoslynCompiler)XSLanguage.CreateCompiler();
@@ -65,6 +65,7 @@ namespace Excess.VisualStudio.VSPackage
                     var compilerFunc = null as CompilerFunc;
                     if (compilerExtensions.TryGetValue(extensionName, out compilerFunc))
                     {
+                        extensionNames.Add(extensionName);
                         try
                         {
                             compilerFunc(result, props);
