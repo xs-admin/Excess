@@ -1,0 +1,9 @@
+@* Generator : Template TypeVisibility : Internal *@
+@functions {
+  public dynamic Model { get; set; }
+}
+xsServices.service('@Model.Name', ['$http', '$q', function($http, $q)
+{
+	@Model.Body
+    this.__ID = '@Model.ID';
+}])

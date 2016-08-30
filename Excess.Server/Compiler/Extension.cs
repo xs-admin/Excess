@@ -335,8 +335,7 @@ namespace Excess.Server.Compiler
             }
 
             config.AddClientInterface(node.SyntaxTree, Templates
-                .jsService
-                .Render(new
+                .jsService(new
                 {
                     Name = name,
                     Body = body,
@@ -363,8 +362,7 @@ namespace Excess.Server.Compiler
 
             var body = concurrentBody(@class, config, model);
             config.AddClientInterface(node.SyntaxTree, Templates
-                .jsConcurrentClass
-                .Render(new
+                .jsConcurrentClass(new
                 {
                     Name = @class.Identifier.ToString(),
                     Body = body
@@ -378,8 +376,7 @@ namespace Excess.Server.Compiler
                 methods: (name, type, parameters) =>
                 {
                     result.AppendLine(Templates
-                        .jsMethod
-                        .Render(new
+                        .jsMethod(new
                         {
                             Name = name.ToString(),
                             Arguments = argumentsFromParameters(parameters),
@@ -444,8 +441,7 @@ namespace Excess.Server.Compiler
                 Debug.Assert(!string.IsNullOrWhiteSpace(path));
 
                 result.AppendLine(Templates
-                    .jsMethod
-                    .Render(new
+                    .jsMethod(new
                     {
                         MethodName = method.Identifier.ToString(),
                         Arguments = argumentsFromParameters(parameters),
@@ -473,8 +469,7 @@ namespace Excess.Server.Compiler
                 throw new InvalidOperationException("cannot find the path");
 
             compilation.AddContent(servicePath, Templates
-                .servicesFile
-                .Render(new
+                .jsServiceFile(new
                 {
                     Members = clientCode
                 }));

@@ -1,0 +1,6 @@
+@* Generator : Template TypeVisibility : Internal *@
+@functions {
+  public dynamic Model { get; set; }
+}
+var xsServices = angular.module('xs.Services', []);
+@Model.Members

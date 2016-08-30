@@ -37,12 +37,11 @@ namespace Excess.Server.Compiler
                 var functionals = new StringBuilder();
                 foreach (var function in _functions)
                 {
-                    functionals.AppendLine(Templates.jsService
-                        .Render(new
-                        {
-                            Name = function.Key,
-                            Body = function.Value.ToString(),
-                            ID = Guid.NewGuid() //lol
+                    functionals.AppendLine(Templates.jsService(new
+                    {
+                        Name = function.Key,
+                        Body = function.Value.ToString(),
+                        ID = Guid.NewGuid() //lol
                     }));
                 }
 

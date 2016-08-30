@@ -1,0 +1,11 @@
+@* Generator : Template TypeVisibility : Internal *@
+@functions {
+  public dynamic Model { get; set; }
+}
+
+@Model.Name = function(__ID)
+{
+	@Model.Body
+
+    this.__ID = __ID;
+}");

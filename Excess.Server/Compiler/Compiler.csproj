@@ -39,23 +39,19 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Compiler, Version=1.0.0.0, Culture=neutral, PublicKeyToken=b0e2cc790a4c1b9e, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Compiler.0.48.10-alpha\lib\Net45\Excess.Compiler.dll</HintPath>
+      <HintPath>..\packages\Excess.Compiler.0.48.11-debug\lib\Net45\Excess.Compiler.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Compiler.Antlr4, Version=1.0.0.0, Culture=neutral, PublicKeyToken=5e449fe122806f54, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Compiler.0.48.10-alpha\lib\Net45\Excess.Compiler.Antlr4.dll</HintPath>
+      <HintPath>..\packages\Excess.Compiler.0.48.11-debug\lib\Net45\Excess.Compiler.Antlr4.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Compiler.GraphInstances, Version=1.0.0.0, Culture=neutral, PublicKeyToken=10e9636168e2f017, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Compiler.0.48.10-alpha\lib\Net45\Excess.Compiler.GraphInstances.dll</HintPath>
+      <HintPath>..\packages\Excess.Compiler.0.48.11-debug\lib\Net45\Excess.Compiler.GraphInstances.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Compiler.Mock, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Compiler.0.48.10-alpha\lib\Net45\Excess.Compiler.Mock.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="Excess.Compiler.Razor, Version=1.0.0.0, Culture=neutral, PublicKeyToken=c91418e3a10c4337, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Compiler.0.48.10-alpha\lib\Net45\Excess.Compiler.Razor.dll</HintPath>
+      <HintPath>..\packages\Excess.Compiler.0.48.11-debug\lib\Net45\Excess.Compiler.Mock.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Concurrent.Compiler, Version=0.46.2.0, Culture=neutral, processorArchitecture=MSIL">
@@ -102,6 +98,10 @@
       <HintPath>..\packages\RazorEngine.3.8.2\lib\net45\RazorEngine.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="RazorGenerator.Templating, Version=2.0.0.0, Culture=neutral, PublicKeyToken=7b26dc2a43f6a0d4, processorArchitecture=MSIL">
+      <HintPath>..\packages\RazorGenerator.Templating.2.4.7\lib\portable-Profile328\RazorGenerator.Templating.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Collections.Immutable, Version=1.1.37.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.Collections.Immutable.1.1.37\lib\dotnet\System.Collections.Immutable.dll</HintPath>
@@ -128,10 +128,12 @@
       <Private>True</Private>
     </Reference>
     <Reference Include="System.Core" />
+    <Reference Include="System.Web.Helpers, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
     <Reference Include="System.Web.Razor, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.AspNet.Razor.3.0.0\lib\net45\System.Web.Razor.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="System.Web.WebPages, Version=2.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -139,7 +141,7 @@
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
     <Reference Include="xslang, Version=1.0.0.0, Culture=neutral, PublicKeyToken=a8909f1e5623e4ea, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Compiler.0.48.10-alpha\lib\Net45\xslang.dll</HintPath>
+      <HintPath>..\packages\Excess.Compiler.0.48.11-debug\lib\Net45\xslang.dll</HintPath>
       <Private>True</Private>
     </Reference>
   </ItemGroup>
@@ -155,16 +157,66 @@
     <Compile Include="Model\StaticFilesModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ResponseVisitor.cs" />
+    <Compile Include="SampleTemplate.generated.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>SampleTemplate.cshtml</DependentUpon>
+    </Compile>
     <Compile Include="Templates.cs" />
+    <Compile Include="Templates\jsConcurrentClass.generated.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>jsConcurrentClass.template</DependentUpon>
+    </Compile>
+    <Compile Include="Templates\jsMethod.generated.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>jsMethod.template</DependentUpon>
+    </Compile>
+    <Compile Include="Templates\jsProperty.generated.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>jsProperty.template</DependentUpon>
+    </Compile>
+    <Compile Include="Templates\jsService.generated.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>jsService.template</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.config" />
     <None Include="packages.config">
       <SubType>Designer</SubType>
+    </None>
+    <None Include="SampleTemplate.cshtml">
+      <Generator>RazorGenerator</Generator>
+      <LastGenOutput>SampleTemplate.generated.cs</LastGenOutput>
     </None>
   </ItemGroup>
   <ItemGroup>
     <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.1.1.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.Analyzers.dll" />
     <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.1.1.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.CSharp.Analyzers.dll" />
+  </ItemGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <Content Include="Templates\jsConcurrentClass.template">
+      <Generator>RazorGenerator</Generator>
+      <LastGenOutput>jsConcurrentClass.generated.cs</LastGenOutput>
+    </Content>
+    <Content Include="Templates\jsMethod.template">
+      <Generator>RazorGenerator</Generator>
+      <LastGenOutput>jsMethod.generated.cs</LastGenOutput>
+    </Content>
+    <Content Include="Templates\jsProperty.template">
+      <Generator>RazorGenerator</Generator>
+      <LastGenOutput>jsProperty.generated.cs</LastGenOutput>
+    </Content>
+    <Content Include="Templates\jsService.template">
+      <Generator>RazorGenerator</Generator>
+      <LastGenOutput>jsService.generated.cs</LastGenOutput>
+    </Content>
+    <Content Include="Templates\jsServiceFile.template" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">

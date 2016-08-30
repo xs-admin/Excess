@@ -1,0 +1,18 @@
+@* Generator : Template TypeVisibility : Internal *@
+@functions {
+  public dynamic Model { get; set; }
+}
+this.@Model.MethodName = function @Model.Arguments
+{
+	var deferred = $q.defer();
+
+    $http.post(@Model.Path, {
+		@Model.Data
+	}).then(function(__response) {
+		deferred.resolve(__response.data.__res);
+	}, function(ex){
+		deferred.reject(ex);
+    });
+
+    return deferred.promise;
+}

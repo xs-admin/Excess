@@ -1,6 +1,5 @@
 ﻿using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Excess.Compiler.Roslyn;
-using Excess.Compiler.Razor;
 
 namespace Excess.Server.Compiler
 {
@@ -50,32 +49,32 @@ namespace Excess.Server.Compiler
         public static Template StringArray = Template.ParseExpression("new string[] {}");
         public static Template CallStartNode = Template.ParseStatement("_0.Start();");
 
-        public static RazorTemplate jsConcurrentClass = RazorTemplate.Parse(@"
-            @Model.Name = function (__ID)
+        public static string jsConcurrentClass(dynamic Model)
+        {
+            var template = new ASP._Templates_jsConcurrentClass_template()
             {
-                @Model.Body
+                Model = Model
+            };
+            return template.TransformText();
+        }
 
-                this.__ID = __ID;
-            }");
-
-        public static RazorTemplate jsMethod = RazorTemplate.Parse(@"
-            this.@Model.MethodName = function @Model.Arguments
+        public static string jsMethod(dynamic Model)
+        {
+            var template = new ASP._Templates_jsMethod_template()
             {
-                var deferred = $q.defer();
+                Model = Model
+            };
+            return template.TransformText();
+        }
 
-                $http.post(@Model.Path, {
-                    @Model.Data
-                }).then(function(__response) {
-                    deferred.resolve(__response.data.__res);
-                }, function(ex){
-                    deferred.reject(ex);
-                });
-
-                return deferred.promise;
-            }");
-
-        public static RazorTemplate jsProperty = RazorTemplate.Parse(@"
-            this.@Model.Name = __init.@Model.Name;");
+        public static string jsProperty(dynamic Model)
+        {
+            var template = new ASP._Templates_jsProperty_template()
+            {
+                Model = Model
+            };
+            return template.TransformText();
+        }
 
         public static Template NodeInvocation = Template.ParseStatement(@"
             _0(commonClasses);");
@@ -83,17 +82,23 @@ namespace Excess.Server.Compiler
         public static StatementSyntax RemoteTypes = CSharp.ParseStatement(@"
             return new Type[] {};");
 
-        public static RazorTemplate jsService = RazorTemplate.Parse(@"
-            xsServices.service('@Model.Name', ['$http', '$q', function($http, $q)
+        public static string jsService(dynamic Model)
+        {
+            var template = new ASP._Templates_jsService_template()
             {
-                @Model.Body
+                Model = Model
+            };
+            return template.TransformText();
+        }
 
-                this.__ID = '@Model.ID';
-            }])");
-
-        public static RazorTemplate servicesFile = RazorTemplate.Parse(@"
-            var xsServices = angular.module('xs.Services', []);
-            @Model.Members");
+        public static string jsServiceFile(dynamic Model)
+        {
+            var template = new ASP._Templates_jsService_template()
+            {
+                Model = Model
+            };
+            return template.TransformText();
+        }
 
         public static Template SqlFilter = Template.ParseExpression(@"
                 prev =>
