@@ -2,14 +2,13 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
         <id>Excess.Compiler</id>
-        <version>0.48.10-alpha</version>
+        <version>0.48.12-alpha</version>
         <authors>Excess</authors>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>Metaprogramming platform for C#</description>
 
         <dependencies>
           <dependency id="Microsoft.CodeAnalysis" version="1.2.2"/>
-          <dependency id="RazorEngine" version="3.8.2"/>
           <dependency id="Antlr4" version="4.5.3-rc1"/>
           <dependency id="Antlr4.Runtime" version="4.5.3-rc1"/>
 
@@ -20,7 +19,6 @@
         <file src="..\bin\Release\Excess.Compiler.dll" target="lib\Net45\Excess.Compiler.dll" />
         <file src="..\xslang\bin\Release\xslang.dll" target="lib\Net45\xslang.dll" />
         <file src="..\Excess.Compiler.Mock\bin\Release\Excess.Compiler.Mock.dll" target="lib\Net45\Excess.Compiler.Mock.dll" />
-        <file src="..\Excess.Compiler.Razor\bin\Release\Excess.Compiler.Razor.dll" target="lib\Net45\Excess.Compiler.Razor.dll" />
         <file src="..\Excess.Compiler.GraphInstances\bin\Release\Excess.Compiler.GraphInstances.dll" target="lib\Net45\Excess.Compiler.GraphInstances.dll" />
         <file src="..\Excess.Compiler.Antlr4\bin\Release\Excess.Compiler.Antlr4.dll" target="lib\Net45\Excess.Compiler.Antlr4.dll" />
     </files>
