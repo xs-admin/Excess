@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <VSTemplate Version="3.0.0" Type="Project" xmlns="http://schemas.microsoft.com/developer/vstemplate/2005" xmlns:sdk="http://schemas.microsoft.com/developer/vstemplate-sdkextension/2010">
   <TemplateData>
-    <Name>Excess Web App</Name>
+    <Name>XS Web App</Name>
     <Description>Web Application with Excess</Description>
     <Icon>Server.Angular.ico</Icon>
     <ProjectType>CSharp</ProjectType>
@@ -69,7 +69,7 @@
     </Project>
   </TemplateContent>
   <WizardExtension>
-    <Assembly>Excess.VS, Version=1.0.0.0, Culture=neutral, PublicKeyToken=283aacace219362b</Assembly>
-    <FullClassName>Excess.VS.InitScriptWizard</FullClassName>
+    <Assembly>Excess.VisualStudio.Package, Version=1.0.0.0, Culture=neutral, PublicKeyToken=252cb327e1986ab6</Assembly>
+    <FullClassName>Excess.VisualStudio.Package.InitScriptWizard</FullClassName>
   </WizardExtension>
 </VSTemplate>

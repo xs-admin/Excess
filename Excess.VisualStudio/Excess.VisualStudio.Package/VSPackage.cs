@@ -55,7 +55,8 @@ namespace Excess.VisualStudio.VSPackage
 
     [ProvideLanguageExtensionAttribute(typeof(ExcessLanguageService), ".xs")]
     [ProvideBindingPath]
-    public sealed class VSPackage : Package, IOleComponent
+    [ProvideAutoLoad(VSConstants.UICONTEXT.SolutionBuilding_string)]
+    public sealed class VSPackage : Package, IOleComponent, IVsSolutionEvents, IVsUpdateSolutionEvents2
     {
         /// <summary>
         /// VSPackage GUID string.
@@ -113,6 +114,9 @@ namespace Excess.VisualStudio.VSPackage
                 crinfo[0].uIdleTimeInterval = 1000;
                 int hr = mgr.FRegisterComponent(this, crinfo, out _componentID);
             }
+
+            //_sbm = (IVsSolutionBuildManager2)ServiceProvider.GlobalProvider.GetService(typeof(SVsSolutionBuildManager));
+            //_sbm.AdviseUpdateSolutionEvents(this, out _sbmCookie);
         }
 
         protected override void Dispose(bool disposing)
@@ -187,6 +191,10 @@ namespace Excess.VisualStudio.VSPackage
         {
         }
 
+        #endregion
+
+        #region VsSolutionEvents Members
+
         public void OnAppActivate(int fActive, uint dwOtherThreadID)
         {
         }
@@ -201,6 +209,91 @@ namespace Excess.VisualStudio.VSPackage
 
         public void Terminate()
         {
+        }
+
+        public int OnAfterOpenProject(IVsHierarchy pHierarchy, int fAdded)
+        {
+            return VSConstants.S_OK;
+        }
+
+        public int OnQueryCloseProject(IVsHierarchy pHierarchy, int fRemoving, ref int pfCancel)
+        {
+            return VSConstants.S_OK;
+        }
+
+        public int OnBeforeCloseProject(IVsHierarchy pHierarchy, int fRemoved)
+        {
+            return VSConstants.S_OK;
+        }
+
+        public int OnAfterLoadProject(IVsHierarchy pStubHierarchy, IVsHierarchy pRealHierarchy)
+        {
+            return VSConstants.S_OK;
+        }
+
+        public int OnQueryUnloadProject(IVsHierarchy pRealHierarchy, ref int pfCancel)
+        {
+            return VSConstants.S_OK;
+        }
+
+        public int OnBeforeUnloadProject(IVsHierarchy pRealHierarchy, IVsHierarchy pStubHierarchy)
+        {
+            return VSConstants.S_OK;
+        }
+
+        public int OnAfterOpenSolution(object pUnkReserved, int fNewSolution)
+        {
+            return VSConstants.S_OK;
+        }
+
+        public int OnQueryCloseSolution(object pUnkReserved, ref int pfCancel)
+        {
+            return VSConstants.S_OK;
+        }
+
+        public int OnBeforeCloseSolution(object pUnkReserved)
+        {
+            return VSConstants.S_OK;
+        }
+
+        public int OnAfterCloseSolution(object pUnkReserved)
+        {
+            return VSConstants.S_OK;
+        }
+
+        public int UpdateSolution_Begin(ref int pfCancelUpdate)
+        {
+            return VSConstants.S_OK;
+        }
+
+        public int UpdateSolution_Done(int fSucceeded, int fModified, int fCancelCommand)
+        {
+            return VSConstants.S_OK;
+        }
+
+        public int UpdateSolution_StartUpdate(ref int pfCancelUpdate)
+        {
+            return VSConstants.S_OK;
+        }
+
+        public int UpdateSolution_Cancel()
+        {
+            return VSConstants.S_OK;
+        }
+
+        public int OnActiveProjectCfgChange(IVsHierarchy pIVsHierarchy)
+        {
+            return VSConstants.S_OK;
+        }
+
+        public int UpdateProjectCfg_Begin(IVsHierarchy pHierProj, IVsCfg pCfgProj, IVsCfg pCfgSln, uint dwAction, ref int pfCancel)
+        {
+            return VSConstants.S_OK;
+        }
+
+        public int UpdateProjectCfg_Done(IVsHierarchy pHierProj, IVsCfg pCfgProj, IVsCfg pCfgSln, uint dwAction, int fSuccess, int fCancel)
+        {
+            return VSConstants.S_OK;
         }
 
         #endregion

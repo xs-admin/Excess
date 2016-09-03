@@ -94,6 +94,7 @@ namespace Excess.VisualStudio.VSPackage
             scope.set(extensions);
 
             //grab info per project
+            var codeFiles = new List<ProjectItem>();
             foreach (var project in projects)
             {
                 log($"Project {project.Name}...");
@@ -104,7 +105,8 @@ namespace Excess.VisualStudio.VSPackage
                         ? true
                         : isDirty(doc),
                     scope: scope,
-                    extensions: projectExtensions);
+                    extensions: projectExtensions,
+                    codeFiles: codeFiles);
 
                 if (!documents.Any())
                     continue;
@@ -132,6 +134,16 @@ namespace Excess.VisualStudio.VSPackage
 
             build(allDocuments, documentIds, scope);
             postCompilation(projectAnalysis);
+            saveAllFiles(codeFiles);
+        }
+
+        private void saveAllFiles(IEnumerable<ProjectItem> allFiles)
+        {
+            foreach (var file in allFiles)
+            {
+                if (!file.Saved)
+                    file.Save();
+            }
         }
 
         private void build(Dictionary<string, RoslynDocument> documents, Dictionary<string, DocumentId> documentIds, Scope scope)
@@ -232,15 +244,18 @@ namespace Excess.VisualStudio.VSPackage
             }
         }
 
-        private Dictionary<string, RoslynDocument> compile(EnvDTE.Project project, Func<ProjectItem, bool> filter, Scope scope, List<string> extensions)
+        private Dictionary<string, RoslynDocument> compile(EnvDTE.Project project, 
+            Func<ProjectItem, bool> filter, 
+            Scope scope, 
+            List<string> extensions,
+            List<ProjectItem> codeFiles)
         {
             var documents = new Dictionary<string, RoslynDocument>();
             var wait = new ManualResetEvent(false);
             var xsFiles = new List<ProjectItem>();
-
             foreach (var item in project.ProjectItems.Cast<ProjectItem>())
             {
-                collectXsFiles(item, xsFiles);
+                collectXsFiles(item, xsFiles, codeFiles);
             }
 
             foreach (var file in xsFiles)
@@ -270,20 +285,28 @@ namespace Excess.VisualStudio.VSPackage
             return documents;
         }
 
-        private void collectXsFiles(ProjectItem item, List<ProjectItem> result)
+        private void collectXsFiles(ProjectItem item, List<ProjectItem> result, List<ProjectItem> codeFiles)
         {
             if (isXsFile(item))
                 result.Add(item);
-            else if (item.ProjectItems != null)
+            else if (isXsCodeFile(item))
+                codeFiles.Add(item);
+
+            if (item.ProjectItems != null)
             {
                 foreach (var nested in item.ProjectItems.Cast<ProjectItem>())
-                    collectXsFiles(nested, result);
+                    collectXsFiles(nested, result, codeFiles);
             }
         }
 
         private bool isXsFile(ProjectItem item)
         {
             return item.Name.EndsWith(".xs");
+        }
+
+        private bool isXsCodeFile(ProjectItem item)
+        {
+            return item.Name.EndsWith(".xs.cs");
         }
 
         private bool isDirty(ProjectItem file)
