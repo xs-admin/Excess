@@ -14,7 +14,7 @@
   </TemplateData>
   <TemplateContent>
     <Project File="ProjectTemplate.csproj" ReplaceParameters="true">
-      <Folder Name="client" TargetFolderName="client">
+      <Folder Name="Client" TargetFolderName="Client">
         <ProjectItem ReplaceParameters="false" TargetFileName=".bowerrc">.bowerrc</ProjectItem>
         <ProjectItem ReplaceParameters="false" TargetFileName=".gitignore">.gitignore</ProjectItem>
         <ProjectItem ReplaceParameters="false" TargetFileName=".jshintrc">.jshintrc</ProjectItem>
@@ -55,21 +55,19 @@
       <Folder Name="Properties" TargetFolderName="Properties">
         <ProjectItem ReplaceParameters="true" TargetFileName="AssemblyInfo.cs">AssemblyInfo.cs</ProjectItem>
       </Folder>
-      <Folder Name="server" TargetFolderName="server">
+      <Folder Name="Server" TargetFolderName="Server">
         <ProjectItem ReplaceParameters="true" TargetFileName="Dependencies.xs">Dependencies.xs</ProjectItem>
         <ProjectItem ReplaceParameters="true" TargetFileName="Dependencies.xs.cs">Dependencies.xs.cs</ProjectItem>
+        <ProjectItem ReplaceParameters="true" TargetFileName="Deployments.xs">Deployments.xs</ProjectItem>
+        <ProjectItem ReplaceParameters="true" TargetFileName="Deployments.xs.cs">Deployments.xs.cs</ProjectItem>
       </Folder>
       <ProjectItem ReplaceParameters="true" TargetFileName="Program.cs">Program.cs</ProjectItem>
       <ProjectItem ReplaceParameters="true" TargetFileName="xs.config">xs.template.config</ProjectItem>
-      <ProjectItem ReplaceParameters="true" TargetFileName="Servers.xs">Servers.xs</ProjectItem>
-      <ProjectItem ReplaceParameters="true" TargetFileName="Servers.xs.cs">Servers.xs.cs</ProjectItem>
-      <ProjectItem ReplaceParameters="true" TargetFileName="Service1.xs">Service1.xs</ProjectItem>
-      <ProjectItem ReplaceParameters="true" TargetFileName="Service1.xs.cs">Service1.xs.cs</ProjectItem>
       <ProjectItem ReplaceParameters="false" TargetFileName="xs.packages">xs.packages</ProjectItem>
     </Project>
   </TemplateContent>
   <WizardExtension>
     <Assembly>Excess.VisualStudio.Package, Version=1.0.0.0, Culture=neutral, PublicKeyToken=252cb327e1986ab6</Assembly>
-    <FullClassName>Excess.VisualStudio.Package.InitScriptWizard</FullClassName>
+    <FullClassName>Excess.VisualStudio.VSPackage.InitScriptWizard</FullClassName>
   </WizardExtension>
 </VSTemplate>

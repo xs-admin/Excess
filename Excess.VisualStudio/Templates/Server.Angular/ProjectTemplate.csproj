@@ -44,39 +44,35 @@
 	<ItemGroup>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Service1.xs.cs">
-      <DependentUpon>Service1.xs</DependentUpon>
-    </Compile>
-    <Compile Include="server\Dependencies.xs.cs">
+    <Compile Include="Server\Dependencies.xs.cs">
       <DependentUpon>Dependencies.xs</DependentUpon>
     </Compile>
-    <Compile Include="Servers.xs.cs">
-      <DependentUpon>Servers.xs</DependentUpon>
+    <Compile Include="Server\Deployments.xs.cs">
+      <DependentUpon>Deployments.xs</DependentUpon>
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="client\app\app.css" />
-    <Content Include="client\app\app.js" />
-    <Content Include="client\app\components\version\interpolate-filter.js" />
-    <Content Include="client\app\components\version\interpolate-filter_test.js" />
-    <Content Include="client\app\components\version\version-directive.js" />
-    <Content Include="client\app\components\version\version-directive_test.js" />
-    <Content Include="client\app\components\version\version.js" />
-    <Content Include="client\app\components\version\version_test.js" />
-    <Content Include="client\app\services\__services.js" />
-    <Content Include="client\app\index.html" />
-    <Content Include="client\app\view1\view1.html" />
-    <Content Include="client\app\view1\view1.js" />
-    <Content Include="client\app\view1\view1_test.js" />
-    <Content Include="client\e2e-tests\protractor.conf.js" />
-    <Content Include="client\e2e-tests\scenarios.js" />
+    <Content Include="Client\app\app.css" />
+    <Content Include="Client\app\app.js" />
+    <Content Include="Client\app\components\version\interpolate-filter.js" />
+    <Content Include="Client\app\components\version\interpolate-filter_test.js" />
+    <Content Include="Client\app\components\version\version-directive.js" />
+    <Content Include="Client\app\components\version\version-directive_test.js" />
+    <Content Include="Client\app\components\version\version.js" />
+    <Content Include="Client\app\components\version\version_test.js" />
+    <Content Include="Client\app\services\__services.js" />
+    <Content Include="Client\app\index.html" />
+    <Content Include="Client\app\view1\view1.html" />
+    <Content Include="Client\app\view1\view1.js" />
+    <Content Include="Client\app\view1\view1_test.js" />
+    <Content Include="Client\e2e-tests\protractor.conf.js" />
+    <Content Include="Client\e2e-tests\scenarios.js" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="client\LICENSE" />
-    <None Include="client\README.md" />
-    <None Include="server\Dependencies.xs" />
-    <None Include="Servers.xs" />
-    <None Include="Service1.xs" />
+    <None Include="Client\LICENSE" />
+    <None Include="Client\README.md" />
+    <None Include="Server\Dependencies.xs" />
+    <None Include="Server\Deployments.xs" />
     <None Include="xs.packages" />
     <None Include="xs.config" />
   </ItemGroup>

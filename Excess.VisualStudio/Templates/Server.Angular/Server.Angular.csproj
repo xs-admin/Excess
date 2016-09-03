@@ -77,36 +77,32 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Servers.xs.cs">
-      <DependentUpon>Servers.xs</DependentUpon>
-    </None>
+    <Compile Include="Server\Deployments.xs.cs">
+      <DependentUpon>Deployments.xs</DependentUpon>
+    </Compile>
     <None Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <None Include="Servers.xs" />
+    <None Include="Server\Deployments.xs" />
     <None Include="xs.template.config">
       <SubType>Designer</SubType>
     </None>
-    <None Include="server\Dependencies.xs.cs">
+    <None Include="Server\Dependencies.xs.cs">
       <DependentUpon>Dependencies.xs</DependentUpon>
     </None>
-    <None Include="server\Dependencies.xs" />
-    <None Include="Service1.xs.cs">
-      <DependentUpon>Service1.xs</DependentUpon>
-    </None>
+    <None Include="Server\Dependencies.xs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
     <None Include="AssemblyInfo.cs" />
-    <None Include="client\.bowerrc" />
-    <None Include="client\.jshintrc" />
-    <None Include="client\.travis.yml" />
-    <None Include="client\bower.json" />
-    <None Include="client\LICENSE" />
-    <None Include="client\package.json" />
-    <None Include="client\README.md" />
+    <None Include="Client\.bowerrc" />
+    <None Include="Client\.jshintrc" />
+    <None Include="Client\.travis.yml" />
+    <None Include="Client\bower.json" />
+    <None Include="Client\LICENSE" />
+    <None Include="Client\package.json" />
+    <None Include="Client\README.md" />
     <None Include="xs.packages" />
     <None Include="ProjectTemplate.csproj" />
-    <None Include="Service1.xs" />
     <None Include="Server.Angular.ico" />
   </ItemGroup>
   <ItemGroup>
@@ -115,23 +111,23 @@
     </VSTemplate>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="client\.gitignore" />
-    <Content Include="client\app\app.css" />
-    <Content Include="client\app\app.js" />
-    <Content Include="client\app\components\version\interpolate-filter.js" />
-    <Content Include="client\app\components\version\interpolate-filter_test.js" />
-    <Content Include="client\app\components\version\version-directive.js" />
-    <Content Include="client\app\components\version\version-directive_test.js" />
-    <Content Include="client\app\components\version\version.js" />
-    <Content Include="client\app\components\version\version_test.js" />
-    <Content Include="client\app\index.html" />
-    <Content Include="client\app\services\__services.js" />
-    <Content Include="client\app\view1\view1.html" />
-    <Content Include="client\app\view1\view1.js" />
-    <Content Include="client\app\view1\view1_test.js" />
-    <Content Include="client\e2e-tests\protractor.conf.js" />
-    <Content Include="client\e2e-tests\scenarios.js" />
-    <Content Include="client\karma.conf.js" />
+    <Content Include="Client\.gitignore" />
+    <Content Include="Client\app\app.css" />
+    <Content Include="Client\app\app.js" />
+    <Content Include="Client\app\components\version\interpolate-filter.js" />
+    <Content Include="Client\app\components\version\interpolate-filter_test.js" />
+    <Content Include="Client\app\components\version\version-directive.js" />
+    <Content Include="Client\app\components\version\version-directive_test.js" />
+    <Content Include="Client\app\components\version\version.js" />
+    <Content Include="Client\app\components\version\version_test.js" />
+    <Content Include="Client\app\index.html" />
+    <Content Include="Client\app\services\__services.js" />
+    <Content Include="Client\app\view1\view1.html" />
+    <Content Include="Client\app\view1\view1.js" />
+    <Content Include="Client\app\view1\view1_test.js" />
+    <Content Include="Client\e2e-tests\protractor.conf.js" />
+    <Content Include="Client\e2e-tests\scenarios.js" />
+    <Content Include="Client\karma.conf.js" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.6">
