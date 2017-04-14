@@ -16,39 +16,12 @@ namespace Excess.Compiler
         void apply(ICompiler<TToken, TNode, TModel> compiler);
     }
 
-    public interface IPersistentStorage
-    {
-        int addFile(string name, string contents, bool hidden);
-        int cachedId(string name);
-        void cachedId(string name, int id);
-    }
-
-    public interface ICompilerEnvironment
-    {
-        ICompilerEnvironment dependency<T>(string module);
-        ICompilerEnvironment dependency<T>(IEnumerable<string> modules);
-        ICompilerEnvironment dependency(string module, string path = null);
-        ICompilerEnvironment dependency(IEnumerable<string> modules, string path = null);
-
-        ICompilerEnvironment keyword(string word);
-
-        ICompilerEnvironment global<T>()  where T : class, new();
-
-        IEnumerable<string> modules();
-        IEnumerable<string> keywords();
-        dynamic path();
-        IPersistentStorage storage();
-        object setting(string id);
-        void setting(string id, object value);
-    }
-
     public interface ICompiler<TToken, TNode, TModel>
     {
         ILexicalAnalysis<TToken, TNode, TModel> Lexical();
         ISyntaxAnalysis<TToken, TNode, TModel> Syntax();
         ISemanticAnalysis<TToken, TNode, TModel> Semantics();
         IInstanceAnalisys<TNode> Instance();
-        ICompilerEnvironment Environment();
 
         Scope Scope { get; }
 

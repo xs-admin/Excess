@@ -15,7 +15,6 @@ namespace Excess.Compiler.Core
         protected ISyntaxAnalysis<TToken, TNode, TModel>   _syntax;
         protected ISemanticAnalysis<TToken, TNode, TModel> _semantics;
         protected IInstanceAnalisys<TNode>                 _instance;     
-        protected ICompilerEnvironment                     _environment;
         protected CompilerStage                            _stage  = CompilerStage.Started;
         protected IDocument<TToken, TNode, TModel>         _document;
         protected Scope                                    _scope;
@@ -23,14 +22,12 @@ namespace Excess.Compiler.Core
         public CompilerBase(ILexicalAnalysis<TToken, TNode, TModel> lexical, 
                             ISyntaxAnalysis<TToken, TNode, TModel> syntax, 
                             ISemanticAnalysis<TToken, TNode, TModel> semantics,
-                            ICompilerEnvironment environment,
                             IInstanceAnalisys<TNode> instance,
                             Scope scope)
         {
             _lexical  = lexical;
             _syntax = syntax;
             _semantics = semantics;
-            _environment = environment;
             _instance = instance;
             _scope = new Scope(scope); 
         }
@@ -57,11 +54,6 @@ namespace Excess.Compiler.Core
             return _instance;
         }
 
-        public ICompilerEnvironment Environment()
-        {
-            return _environment;
-        }
-
         public void apply(IDocument<TToken, TNode, TModel> document)
         {
             var iLexical = _lexical as IDocumentInjector<TToken, TNode, TModel>;
@@ -82,10 +74,6 @@ namespace Excess.Compiler.Core
                 if (iInstance != null)
                     iInstance.apply(document);
             }
-
-            var iEnvironment = _environment as IDocumentInjector<TToken, TNode, TModel>;
-            if (iEnvironment != null)
-                iEnvironment.apply(document);
         }
 
         public bool Compile(string text, CompilerStage stage)

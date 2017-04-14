@@ -11,13 +11,15 @@ namespace xslang
         public static string[] Keywords = new[]
         {
             "function",
-            "method",
-            "property",
-            "on",
-            "match",
-            "constructor",
-            "var",
-            "inject"
+            "fn",
+            //port:
+            //"method",
+            //"property",
+            //"on",
+            //"match",
+            //"constructor",
+            //"var",
+            //"inject"
         };
 
         public static Compiler CreateCompiler()
@@ -29,13 +31,14 @@ namespace xslang
 
         public static void Apply(ICompiler<SyntaxToken, SyntaxNode, SemanticModel> compiler)
         {
-            compiler.Environment()
-                .dependency(new string[]
-                {
-                    "System",
-                    "System.Collections.Generic",
-                    "System.Linq"
-                });
+            //port:
+            //compiler.Environment()
+            //    .dependency(new string[]
+            //    {
+            //        "System",
+            //        "System.Collections.Generic",
+            //        "System.Linq"
+            //    });
 
             DependencyInjection.Apply(compiler);
             Arrays.Apply(compiler);

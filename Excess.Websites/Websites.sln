@@ -9,6 +9,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "metaprogramming.asp", "meta
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "metaprogramming.xs", "metaprogramming.xs\metaprogramming.xs.csproj", "{4BFEF960-D030-4AEA-892D-3FE630CFFC40}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "excess-ui", "excess-ui\excess-ui.csproj", "{D8565B2F-01AA-44C2-808E-01AE2D5D6B97}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{4BFEF960-D030-4AEA-892D-3FE630CFFC40}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4BFEF960-D030-4AEA-892D-3FE630CFFC40}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4BFEF960-D030-4AEA-892D-3FE630CFFC40}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D8565B2F-01AA-44C2-808E-01AE2D5D6B97}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D8565B2F-01AA-44C2-808E-01AE2D5D6B97}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D8565B2F-01AA-44C2-808E-01AE2D5D6B97}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D8565B2F-01AA-44C2-808E-01AE2D5D6B97}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

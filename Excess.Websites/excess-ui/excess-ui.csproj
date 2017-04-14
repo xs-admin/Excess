@@ -109,14 +109,15 @@
     <Content Include="Client\app\index.html" />
     <Content Include="Client\e2e-tests\protractor.conf.js" />
     <Content Include="Client\e2e-tests\scenarios.js" />
-    <Content Include="Components\excess-ui-ide\excess-ui-ide.css" />
-    <Content Include="Components\excess-ui-ide\excess-ui-ide.html" />
-    <Content Include="Components\excess-ui-ide\excess-ui-ide.js" />
-    <Content Include="Components\excess-ui-tree\excess-ui-tree.css" />
-    <Content Include="Components\excess-ui-tree\excess-ui-tree.js" />
-    <Content Include="Components\excess-ui.js" />
+    <Content Include="Client\app\components\excess-ui-ide\excess-ui-ide.css" />
+    <Content Include="Client\app\components\excess-ui-ide\excess-ui-ide.html" />
+    <Content Include="Client\app\components\excess-ui-ide\excess-ui-ide.js" />
+    <Content Include="Client\app\components\excess-ui-tree\excess-ui-tree.css" />
+    <Content Include="Client\app\components\excess-ui-tree\excess-ui-tree.js" />
+    <Content Include="Client\app\components\excess-ui.js" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Client\bower.json" />
     <None Include="Client\LICENSE" />
     <None Include="Client\README.md" />
     <None Include="packages.config" />

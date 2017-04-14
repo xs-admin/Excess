@@ -44,7 +44,7 @@
             '<ul class="xs-tree">' + 
             '    <script type="text/ng-template" id="node_renderer.html">' + 
             '        <span ng-click="nodeSelected($event, node.action, node.data)">' + 
-            '            <i ng-if="node.icon" class="no-highlighting fa {{node.icon}}"></i> ' + 
+            '            <i ng-if="node.icon" class="no-highlighting {{node.icon}}"></i> ' + 
             '            <span ng-if="node.color" class="no-highlighting" style="width:20px; background-color: {{node.color}}"></span>' + 
             '            {{node.label}}' + 
             '            <img width="10"/>' + 
@@ -54,13 +54,14 @@
             '        </span>' + 
             '        <ul>' + 
             '            <li ng-repeat="node in node.children track by $index"' + 
-            '                ng-include="&quotnode_renderer.html&quot"' + 
-            '                ng-class="{&quotxs-tree-parent&quot: node.children}"></li>' + 
+            '               ng-include="' + "'node_renderer.html'" + '"' +
+            '               ng-class="{' + "'xs-tree-parent'" + ': node.children}"' +
+            '            </li>' +
             '        </ul>' + 
             '    </script>' + 
             '    <li ng-repeat="node in tree track by $index" ' + 
-            '        ng-include="&quotnode_renderer.html&quot" ' + 
-            '        ng-class="{&quotxs-tree-parent&quot: node.children}"' +
+            '        ng-include="' + "'node_renderer.html'" + '"' +
+            '        ng-class="{' + "'xs-tree-parent'" + ': node.children}"' +
             '        ng-include-variables="{node: node}">' + 
             '    </li>' + 
             '</ul>',

@@ -522,10 +522,10 @@ namespace Excess.Compiler.Core
                 _root = applyNodeChanges(_root, CompilerStage.Syntactical);
             } while (_syntacticalChanges.Any());
 
-            //add modules before going into semantics
-            ICompilerEnvironment environment = _scope.find<ICompilerEnvironment>();
-            if (environment != null)
-                _root = addModules(_root, environment.modules());
+            //td: add modules before going into semantics
+            //ICompilerEnvironment environment = _scope.find<ICompilerEnvironment>();
+            //if (environment != null)
+            //    _root = addModules(_root, environment.modules());
 
             //see if there is more syntax work to do
             _root = pass("after-syntax", _root, _scope);

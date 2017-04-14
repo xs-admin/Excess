@@ -1,0 +1,37 @@
+﻿<div class="fluid-container">
+    <div class="row">
+        <div class="col-lg-3 no-padding">
+            <div class="panel panel-primary">
+                <div class="panel-heading" style="height: 30px; padding: 5px">
+                    <div id="toolbar" style="padding: 5px">
+                        <a title="Compile (CTRL+SHIFT+B)" ng-click="compileProject()" ng-disabled="compilerBusy">
+                            <i class="toolbar-item glyphicon glyphicon-check"></i>
+                        </a>
+                        <a title="Run (CTRL+F5)" ng-click="runProject()" ng-disabled="compilerBusy">
+                            <i class="toolbar-item glyphicon glyphicon-triangle-right"></i>
+                        </a>
+                        <a title="Save (CTRL+S)" ng-show="sourceModified" ng-click="saveFiles()">
+                            <i class="toolbar-item glyphicon glyphicon-triangle-right"></i>
+                        </a>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <xsui-tree tree="tree" action="projectAction(action, data)" />
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-9 no-padding">
+            <div style="padding-top:5px">
+                <uib-tabset id="editor-tabs">
+                    <uib-tab ng-repeat="editor in editors" heading="{{editor.name}}" active="editor.active" select="tabSelected(editor)">
+                    </uib-tab>
+                </uib-tabset>
+                <div ui-ace="{
+                    useWrapMode : true,
+                    mode: 'csharp',
+                    onLoad: sourceLoaded}" class="ace-editor"></div>
+
+            </div>
+        </div>
+    </div>
+</div>

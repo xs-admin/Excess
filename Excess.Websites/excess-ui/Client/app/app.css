@@ -28,3 +28,11 @@
   content: "";
   padding: 0;
 }
+
+.toolbar-item {
+    color: white;
+}
+
+.toolbar-item:hover {
+    color: cornflowerblue;
+}

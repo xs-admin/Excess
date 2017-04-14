@@ -1,0 +1,38 @@
+﻿.nav-tabs a {
+   height: 25px;  
+}
+
+.nav-tabs > li > a {
+    padding: 2px 15px;
+}
+
+#code-editor {
+   position: absolute;
+    top: 30px; 
+    bottom: 0; 
+    left: 0; 
+    right: 0; 
+}
+
+#toolbar {
+    float: left; 
+    padding-left:10px; 
+    padding-right:5px
+}
+
+.toolbar-item {
+    padding-right:5px;
+    padding-top:5px;
+}
+
+.no-padding {
+    padding: 0px !important;
+}
+
+.ace-editor {
+    margin-left: 3px;
+    margin-right: 3px;
+    height: 100%;
+    border-radius: 10px;
+    min-height: 300px;
+}

@@ -28,8 +28,9 @@ namespace xslang
                         .insert(";", after: "lastBrace")
                         .then(ProcessInjection));
 
-            compiler.Environment()
-                .dependency<__Scope>("Excess.Runtime");
+            //td: 
+            //compiler.Environment()
+            //    .dependency<__Scope>("Excess.Runtime");
         }
 
         private static SyntaxNode ProcessInjection(SyntaxNode node, Scope scope)

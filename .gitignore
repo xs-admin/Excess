@@ -188,3 +188,4 @@ App_Data/
 # Visual studio folders
 .vs/
 .nuget/
+bower_components/
