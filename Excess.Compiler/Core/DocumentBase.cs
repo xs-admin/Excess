@@ -249,7 +249,7 @@ namespace Excess.Compiler.Core
             return true; //finished
         }
 
-        public bool HasSemanticalChanges()
+        public bool hasSemanticalChanges()
         {
             if (_semanticalTries > 5)
                 return false; //shortcut

@@ -21,7 +21,7 @@ namespace Excess.Compiler
         bool applyChanges();
         bool applyChanges(CompilerStage stage);
         bool hasErrors();
-        bool HasSemanticalChanges();
+        bool hasSemanticalChanges();
 
         string Text { get; set; }
         CompilerStage Stage { get; }

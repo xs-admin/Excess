@@ -2,6 +2,9 @@
 
 namespace Excess.Compiler
 {
+    //port: !!! some extensions want to play with this
+    //but at the same time, it is too msbuild-ish to be justified
+    //need solutions
     public interface ICompilation<TToken, TNode, TModel>
     {
         Scope Scope { get; }
