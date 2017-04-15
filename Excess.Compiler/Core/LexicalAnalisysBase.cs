@@ -365,7 +365,7 @@ namespace Excess.Compiler.Core
                             match.AddResult(1, matchNamed);
                         }
                         else
-                            match.AddResult(contentLength + 1, named);
+                            match.AddResult(contentLength, named);
 
                         return true;
                     }

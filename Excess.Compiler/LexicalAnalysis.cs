@@ -96,7 +96,7 @@ namespace Excess.Compiler
     public interface ILexicalTransform<TToken, TNode, TModel>
     {
         ILexicalTransform<TToken, TNode, TModel> insert(string tokens, string before = null, string after = null);
-        ILexicalTransform<TToken, TNode, TModel> replace(string named, string tokens);
+        ILexicalTransform<TToken, TNode, TModel> replace(string named, string tokens, string otherNamed = null);
         ILexicalTransform<TToken, TNode, TModel> remove(string named);
 
         ILexicalTransform<TToken, TNode, TModel> then(Func<TNode, TNode> handler, string referenceToken = null);

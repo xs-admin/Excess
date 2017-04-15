@@ -24,22 +24,37 @@ namespace xslang
             var semantics = compiler.Semantics();
 
             lexical
-                .match() //lambda
+                //lambdas
+                .match() 
                     .any('(', '=', ',')
-                    .token("function", named: "fn")
+                    .any(new[] { "function", "fn"}, named: "fn")
                     .enclosed('(', ')')
                     .token('{', named: "brace")
-                    .then(compiler.Lexical().transform()
-                        .remove("fn")
-                        .insert("=>", before: "brace"))
+                        .then(compiler.Lexical().transform()
+                            .remove("fn")
+                            .insert("=>", before: "brace"))
+
+                //declarations
                 .match()
-                    .token("function", named: "fn") //declarations
+                    .any(new[] { "function", "fn" }, named: "fn") 
                     .identifier(named: "id")
                     .enclosed('(', ')')
                     .token('{')
-                    .then(lexical.transform()
-                        .remove("fn")
-                        .then(ProcessMemberFunction, referenceToken: "id"))
+                        .then(lexical.transform()
+                            .remove("fn")
+                            .then(ProcessMemberFunction, referenceToken: "id"))
+
+                .match()
+                    .any(new[] { "function", "fn" }, named: "fn")
+                    .identifier(named: "id")
+                    .enclosed('(', ')')
+                    .token(':', named: "colon")
+                    .until('{', named: "type")
+                        .then(lexical.transform()
+                            .replace("fn", null, "type")
+                            .remove("colon")
+                            .remove("type")
+                                .then(ProcessMemberFunction, referenceToken: "id"))
 
                 .match()
                     .token("scope", named: "keyword")
@@ -55,7 +70,6 @@ namespace xslang
 
         private static SyntaxNode ProcessMemberFunction(SyntaxNode node, Scope scope)
         {
-
             var document = scope.GetDocument<SyntaxToken, SyntaxNode, SemanticModel>();
 
             if (node is MethodDeclarationSyntax)
@@ -67,6 +81,7 @@ namespace xslang
 
                 method = MemberFunctionModifiers(method);
 
+                var service = scope.GetService<SyntaxToken, SyntaxNode, SemanticModel>();
                 if (method.ReturnType.IsMissing)
                 {
                     method = method.WithReturnType(RoslynCompiler.@void);
@@ -79,7 +94,6 @@ namespace xslang
                     var isMember = method.Parent is TypeDeclarationSyntax;
                     if (!isMember)
                     {
-                        var service = scope.GetService<SyntaxToken, SyntaxNode, SemanticModel>();
                         return service.MarkNode(Templates
                             .NamespaceFunction
                             .AddMembers((MemberDeclarationSyntax)document.change(
@@ -92,7 +106,11 @@ namespace xslang
                         : method;
                 }
 
-                return node;
+                return service.MarkNode(Templates
+                    .NamespaceFunction
+                    .AddMembers((MemberDeclarationSyntax)document.change(
+                        method,
+                        LinkNamespaceFunction(false))));
             }
 
             //handle functions declared inside code blocks

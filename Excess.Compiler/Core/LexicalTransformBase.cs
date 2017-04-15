@@ -15,6 +15,15 @@ namespace Excess.Compiler.Core
             return compiler.ParseTokens(tokenString);
         }
 
+        private IEnumerable<TToken> TokensFromNamed(string named, IEnumerable<TToken> tokens, ILexicalMatchResult<TToken, TNode, TModel> match, Scope scope)
+        {
+            var item = match
+                .Items
+                .First(i => i.Identifier == named);
+
+            return match.GetTokens(tokens, item.Span);
+        }
+
         private IEnumerable<TToken> EmptyTokens(IEnumerable<TToken> tokens, Scope scope)
         {
             return new TToken[] { };
@@ -24,6 +33,7 @@ namespace Excess.Compiler.Core
         {
             public string Item { get; set; }
             public Func<IEnumerable<TToken>, Scope, IEnumerable<TToken>> Handler { get; set; }
+            public Func<IEnumerable<TToken>, ILexicalMatchResult<TToken, TNode, TModel>, Scope, IEnumerable<TToken>> MatchHandler { get; set; }
             public int Priority { get; set; }
         }
 
@@ -54,10 +64,27 @@ namespace Excess.Compiler.Core
             });
         }
 
-        public ILexicalTransform<TToken, TNode, TModel> replace(string named, string tokenString)
+        private void AddTransformer(string target, Func<IEnumerable<TToken>, ILexicalMatchResult<TToken, TNode, TModel>, Scope, IEnumerable<TToken>> handler, int priority)
+        {
+            _transformers.Add(new Transformer
+            {
+                Item = target,
+                MatchHandler = handler,
+                Priority = priority
+            });
+        }
+
+        public ILexicalTransform<TToken, TNode, TModel> replace(string named, string tokenString, string otherNamed)
         {
             if (named != null)
-                AddTransformer(named, (tokens, scope) => TokensFromString(tokenString, scope), -1);
+            {
+                if (tokenString != null)
+                    AddTransformer(named, (tokens, scope) => TokensFromString(tokenString, scope), -1);
+                else if (otherNamed != null)
+                    AddTransformer(named, (tokens, match, scope) => TokensFromNamed(otherNamed, tokens, match, scope), -1);
+                else
+                    throw new InvalidOperationException("Must specify either 'tokenString' or 'otherNamed'");
+            }
             else
                 throw new InvalidOperationException("Must specify 'named'");
 
@@ -115,7 +142,12 @@ namespace Excess.Compiler.Core
                 foreach (var transformer in sorted)
                 {
                     if (transformer.Item == item.Identifier)
-                        result = transformer.Handler(result, scope);
+                    {
+                        if (transformer.Handler != null)
+                            result = transformer.Handler(result, scope);
+                        else
+                            result = transformer.MatchHandler(tokens, match, scope);
+                    }
                 }
 
                 if (_refToken != null)
@@ -123,7 +155,7 @@ namespace Excess.Compiler.Core
 
                 foreach (var token in result)
                 {
-                    if (needsMark)
+                    if (needsMark) //port: all the markings should be gone
                     {
                         TToken marked;
                         if (id < 0)
@@ -191,7 +223,7 @@ namespace Excess.Compiler.Core
             throw new InvalidOperationException();
         }
 
-        public ILexicalTransform<TToken, TNode, TModel> replace(string named, string tokens)
+        public ILexicalTransform<TToken, TNode, TModel> replace(string named, string tokens, string otherNamed)
         {
             throw new InvalidOperationException();
         }

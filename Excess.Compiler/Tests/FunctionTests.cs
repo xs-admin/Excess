@@ -21,7 +21,7 @@ namespace Tests
             var tree = ExcessMock.Link(@"
                 namespace SomeNamespace
                 {
-                    function SomeFunction()
+                    function SomeFunction(): double
                     {
                         return 10;
                     }
@@ -53,6 +53,46 @@ namespace Tests
             Assert.IsTrue(method
                 .ReturnType.ToString().ToLower()
                 .StartsWith("int"));
+        }
+
+        [TestMethod]
+        public void NamespaceFunction_Usage_WithType()
+        {
+            var tree = ExcessMock.Link(@"
+                namespace SomeNamespace
+                {
+                    fn SomeFunction(): double
+                    {
+                        return 10;
+                    }
+                }", (compiler) => Functions.Apply(compiler));
+
+            var root = tree
+                ?.GetRoot()
+                ?.NormalizeWhitespace();
+
+            //a class must have been created
+            var @class = root
+                .DescendantNodes()
+                .OfType<ClassDeclarationSyntax>()
+                .Single();
+
+            //named with the "Functions" convention
+            Assert.AreEqual(@class.Identifier.ToString(), "Functions");
+
+            //the method must remain
+            var method = root
+                .DescendantNodes()
+                .OfType<MethodDeclarationSyntax>()
+                .Single();
+
+            //inside the class
+            Assert.AreEqual(method.Parent, @class);
+
+            //with its type calculated to int
+            Assert.IsTrue(method
+                .ReturnType.ToString().ToLower()
+                .StartsWith("double"));
         }
 
         [TestMethod]
