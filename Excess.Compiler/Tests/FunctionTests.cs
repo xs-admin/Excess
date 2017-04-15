@@ -134,100 +134,6 @@ namespace Tests
         }
 
         [TestMethod]
-        public void NamespaceFunction_Injected_Requirements()
-        {
-            var tree = ExcessMock.Link(@"
-                namespace SomeNamespace
-                {
-                    interface SomeInterface
-                    {
-                        void SomeMethod();
-                    }
-
-                    function SomeFunction()
-                    {
-                        inject
-                        {
-                            SomeInterface someInterface;
-                        }
-
-                        someInterface.SomeMethod();
-                    }
-                }", 
-                (compiler) =>
-                {
-                    Functions.Apply(compiler);
-                    DependencyInjection.Apply(compiler);
-                });
-
-            var root = tree
-                ?.GetRoot()
-                ?.NormalizeWhitespace();
-
-            //the injection must transform in a variable assignment
-            //essentially asking the context to resolve the requested instance
-            Assert.IsTrue(root
-                .DescendantNodes()
-                .OfType<LocalDeclarationStatementSyntax>()
-                .Single()
-                    .Declaration
-                    .Variables
-                    .Single()
-                        .Initializer
-                        .Value.ToString().StartsWith("__scope"));
-        }
-
-        [TestMethod]
-        public void NamespaceFunction_ScopeKeyword_ShouldCreateANewContext()
-        {
-            var tree = ExcessMock.Link(@"
-                namespace SomeNamespace
-                {
-                    function Function1()
-                    {
-                        scope
-                        {
-                            var InjectedValue = ""Hello"";
-                            Function2();
-                        }
-                    }
-
-                    function Function2()
-                    {
-                        inject
-                        {
-                            string InjectedValue;
-                        }
-
-                        Console.WriteLine(InjectedValue);
-                    }
-                }",
-                (compiler) =>
-                {
-                    Functions.Apply(compiler);
-                    DependencyInjection.Apply(compiler);
-                });
-
-            var root = tree
-                ?.GetRoot()
-                ?.NormalizeWhitespace();
-
-            //the injected value must be read from the context
-            Assert.IsTrue(root
-                .DescendantNodes()
-                .OfType<StatementSyntax>()
-                .Where(statement => statement.ToString() == "string InjectedValue = __scope.get<string>(\"InjectedValue\");")
-                .Any());
-
-            //as well as be saved to a different context
-            Assert.IsTrue(root
-                .DescendantNodes()
-                .OfType<StatementSyntax>()
-                .Where(statement => statement.ToString() == "__newScope.set(\"InjectedValue\", InjectedValue);")
-                .Any());
-        }
-
-        [TestMethod]
         public void NamespaceFunction_WithoutModifiers_ShouldBePublic()
         {
             var tree = ExcessMock.Link(@"
@@ -258,27 +164,6 @@ namespace Tests
         [TestMethod]
         public void Debug()
         {
-            var tree = ExcessMock.Compile(@"
-                using xs.server;
-                using xs.concurrent;
-
-                using demo_transpiler;
-
-                namespace Home
-                { 
-	                function Transpile(string text)
-	                {
-		                return _transpiler.Process(text);       
-	                }
-
-	                public function TranspileGraph(string text)
-	                {
-		                return _graphTranspiler.Process(text);      
-	                } 
-                }", (compiler) => DependencyInjection.Apply(compiler));
-
-            //this is a placeholder to do some debuggin'
-            Assert.AreNotEqual(null, tree);
         }
     }
 }

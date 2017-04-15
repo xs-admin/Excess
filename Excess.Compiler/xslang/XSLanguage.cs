@@ -40,12 +40,12 @@ namespace xslang
             //        "System.Linq"
             //    });
 
-            DependencyInjection.Apply(compiler);
+            //DependencyInjection.Apply(compiler);
             Arrays.Apply(compiler);
-            Events.Apply(compiler);
-            DependencyInjection.Apply(compiler);
+            //Events.Apply(compiler);
+            //DependencyInjection.Apply(compiler);
             Match.Apply(compiler);
-            Members.Apply(compiler);
+            //Members.Apply(compiler);
             Functions.Apply(compiler);
         }
     }
