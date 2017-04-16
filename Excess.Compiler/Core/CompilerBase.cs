@@ -80,7 +80,7 @@ namespace Excess.Compiler.Core
         {
             Debug.Assert(_document == null); //td:
             _document = createDocument();
-
+            _document.Text = text;
             _document.applyChanges(stage);
             return _document.hasErrors();
         }

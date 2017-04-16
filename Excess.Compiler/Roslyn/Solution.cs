@@ -68,10 +68,10 @@ namespace Excess.Compiler.Roslyn
             _documents = new Dictionary<DocumentId, ExcessDocument>();
             foreach (var project in _solution.Projects)
             {
-                foreach (var doc in project.Documents)
+                foreach (var doc in project.AdditionalDocuments)
                 {
-                    if (Path.GetExtension(doc.FilePath) == ".xs")
-                        _documents[doc.Id] = buildDocument(solution, doc, out solution);
+                    if (Path.GetExtension(doc.Name) == ".xs")
+                        _documents[doc.Id] = loadDocument(solution, doc, out solution);
                 }
             }
 
@@ -88,28 +88,15 @@ namespace Excess.Compiler.Roslyn
                 {
                     var document = kvp.Value.Document;
                     var compiler = kvp.Value.Compiler;
+                    if (document.Stage == CompilerStage.Started)
+                        compiler.Compile(document.Text, CompilerStage.Syntactical);
+
                     if (document.Stage < CompilerStage.Semantical)
                         building &= compiler.Advance(CompilerStage.Semantical);
                 }
 
                 tries--;
             }
-        }
-
-        private ExcessDocument buildDocument(Solution solution, Document doc, out Solution result)
-        {
-            SourceText text;
-            if (!doc.TryGetText(out text))
-                throw new InvalidOperationException($"Cannot read from {doc.Name}");
-
-            var contents = text.ToString();
-            var compiler = null as RoslynCompiler;
-            var document = loadDocument(solution, contents, out compiler, out result);
-            return new ExcessDocument
-            {
-                Compiler = compiler,
-                Document = document,
-            };
         }
 
         private ExtensionFunction getExtension(string name)
@@ -119,8 +106,13 @@ namespace Excess.Compiler.Roslyn
             return extension;
         }
 
-        private RoslynDocument loadDocument(Solution solution, string contents, out RoslynCompiler compiler, out Solution result)
+        private ExcessDocument loadDocument(Solution solution, TextDocument doc, out Solution result)
         {
+            SourceText text;
+            if (!doc.TryGetText(out text))
+                throw new InvalidOperationException($"Cannot read from {doc.Name}");
+
+            var contents = text.ToString();
             var document = new RoslynDocument(new Scope(null), contents); //port: rid of scope
 
             var compilerResult = new RoslynCompiler(null); //port: rid of scope
@@ -145,9 +137,27 @@ namespace Excess.Compiler.Roslyn
                     return false;
                 }).ToArray();
 
-            compiler = compilerResult;
             result = solution; //td: add needed cs files, etc
-            return document;
+            var filename = doc.Name + ".cs";
+            var fileid = doc
+                .Project
+                .Documents
+                .FirstOrDefault(d => d.Name == filename)
+                ?.Id;
+
+            if (fileid == null)
+            {
+                var newFile = doc.Project.AddDocument(filename, "");
+                result = newFile.Project.Solution;
+            }
+
+            return new ExcessDocument
+            {
+                Id = doc.Id,
+                CSharpDocument = fileid,
+                Compiler = compilerResult,
+                Document = document,
+            };
         }
     }
 }

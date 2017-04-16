@@ -1,4 +1,8 @@
-﻿using Excess.Compiler;
+﻿using Microsoft.CodeAnalysis.CSharp;
+using System.Reflection;
+using System.IO;
+using System.Collections;
+using Excess.Compiler;
 using Excess.Compiler.Roslyn;
 using Microsoft.CodeAnalysis;
 using System;
@@ -7,21 +11,36 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using xslang;
+using Microsoft.CodeAnalysis.Text;
 
 namespace Excess.Compiler.Mock
 {
     using CSharp = Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
     using Compiler = ICompiler<SyntaxToken, SyntaxNode, SemanticModel>;
     using Mapper = IMappingService<SyntaxToken, SyntaxNode>;
-    using Microsoft.CodeAnalysis.CSharp;
-    using System.Reflection;
-    using System.IO;
-    using System.Collections;
+    using ExtensionFunction = Action<RoslynCompiler, Scope>;
+
     public static class ExcessMock
     {
         public static SyntaxTree CompileWithMapping(string code, Action<Compiler> builder = null)
         {
             return Compile(code, builder, new MappingService());
+        }
+
+        public static ExcessSolution SolutionForCode(string code, Dictionary<string, ExtensionFunction> extensions)
+        {
+            var workspace = new AdhocWorkspace();
+            var project = workspace.AddProject("excess", LanguageNames.CSharp);
+            var document = project.AddAdditionalDocument("main.xs", code);
+            var solution = document.Project.Solution;
+            if (!workspace.TryApplyChanges(solution))
+                throw new InvalidOperationException("should have been able to apply these changes");
+
+            workspace.OpenAdditionalDocument(document.Id);
+                
+            var result = new ExcessSolution(null, workspace.CurrentSolution, extensions);
+            project = workspace.CurrentSolution.Projects.First();
+            return result.ApplyChanges(project.AdditionalDocumentIds.First());
         }
 
         public static SyntaxTree Compile(string code, Action<Compiler> builder = null, Mapper mapper = null)
