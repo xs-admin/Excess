@@ -19,15 +19,22 @@ namespace Tests
     public class SolutionTests
     {
         [TestMethod]
-        public void ShouldBuildSolution()
+        public void Solution_Usage()
         {
             var solution = ExcessMock.SolutionForCode(@"
                 fn greetings()
                 {
-                    Console.WriteLn(""Hello"");
+                    Console.WriteLn(""Hello, world"");
                 }", null);
 
             Assert.IsNotNull(solution);
+            var document = solution.GetDocument("main.xs"); //td: magic string
+
+            Assert.IsNotNull(document);
+            Assert.IsNotNull(document.Compiler);
+            Assert.IsNotNull(document.Document);
+            Assert.IsNotNull(document.Document.SyntaxRoot);
+            Assert.IsNotNull(document.CSharpDocument);
         }
     }
 }

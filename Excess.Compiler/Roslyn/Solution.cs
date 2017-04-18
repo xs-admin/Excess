@@ -14,9 +14,10 @@ namespace Excess.Compiler.Roslyn
 {
     using ExtensionFunction = Action<RoslynCompiler, Scope>;
 
-    class ExcessDocument
+    public class ExcessDocument
     {
         public DocumentId Id { get; set; }
+        public string Name { get; set; }
         public DocumentId CSharpDocument { get; set; }
         public RoslynDocument Document { get; set; }
         public RoslynCompiler Compiler { get; set; }
@@ -25,45 +26,35 @@ namespace Excess.Compiler.Roslyn
 
     public class ExcessSolution
     {
-        public static ExcessSolution FromFile(string solutionFile)
-        {
-            throw new NotImplementedException();
-        }
-
-        public static ExcessSolution FromFiles(Dictionary<string, string> fileContents)
-        {
-            throw new NotImplementedException();
-        }
-
         ExcessSolution _parent;
         Solution _solution;
         IDictionary<string, ExtensionFunction> _extensions;
-        public ExcessSolution(ExcessSolution parent, Solution solution, IDictionary<string, ExtensionFunction> extensions)
+        Scope _scope;
+        public ExcessSolution(Solution solution, IDictionary<string, ExtensionFunction> extensions)
         {
-            _parent = parent;
             _solution = solution;
             _extensions = extensions;
+
+            _scope = new Scope(null); //td: scopes
+            _scope.set<ICompilerService<SyntaxToken, SyntaxNode, SemanticModel>>(new CompilerService());
+            loadExcessDocuments();
         }
+
+        public Solution Solution { get { return _solution; } }
 
         Dictionary<DocumentId, ExcessDocument> _documents;
         public ExcessSolution ApplyChanges(DocumentId document)
         {
-            if (_documents == null)
-            {
-                if (_parent == null)
-                {
-                    build();
-                    return this;
-                }
-            }
-
-            return new ExcessSolution(this, _solution, _extensions);
+            throw new NotImplementedException();
         }
 
-        private void build()
+        public ExcessDocument GetDocument(string name)
         {
-            var solution = _solution;
+            return _documents.First(d => d.Value.Name == name).Value;
+        }
 
+        private void loadExcessDocuments()
+        {
             Debug.Assert(_documents == null);
             _documents = new Dictionary<DocumentId, ExcessDocument>();
             foreach (var project in _solution.Projects)
@@ -71,32 +62,78 @@ namespace Excess.Compiler.Roslyn
                 foreach (var doc in project.AdditionalDocuments)
                 {
                     if (Path.GetExtension(doc.Name) == ".xs")
-                        _documents[doc.Id] = loadDocument(solution, doc, out solution);
+                        _documents[doc.Id] = loadDocument(_solution, doc, out _solution);
                 }
             }
 
-            applySemantical();
+            _solution = build(_solution);
         }
 
-        private void applySemantical()
+        private Solution doCompile(Solution solution, out bool changed)
         {
-            bool building = true;
-            int tries = 5;
-            while (building && tries > 0)
+            changed = false;
+            var documents = _documents.Values;
+            foreach (var doc in documents)
             {
-                foreach (var kvp in _documents)
+                if (doc.Compiler == null)
+                    continue;
+
+                var document = doc.Document;
+                if (document.Stage <= CompilerStage.Syntactical)
                 {
-                    var document = kvp.Value.Document;
-                    var compiler = kvp.Value.Compiler;
-                    if (document.Stage == CompilerStage.Started)
-                        compiler.Compile(document.Text, CompilerStage.Syntactical);
+                    changed = true;
 
-                    if (document.Stage < CompilerStage.Semantical)
-                        building &= compiler.Advance(CompilerStage.Semantical);
+                    var oldRoot = document.SyntaxRoot;
+                    document.applyChanges(CompilerStage.Syntactical);
+                    var newRoot = document.SyntaxRoot;
+
+                    Debug.Assert(newRoot != null);
+                    solution = solution.WithDocumentSyntaxRoot(doc.CSharpDocument, newRoot);
                 }
-
-                tries--;
             }
+
+            return solution;
+        }
+
+        public Solution build(Solution from)
+        {
+
+            bool needsProcessing;
+            var result = doCompile(from, out needsProcessing);
+            if (result == null)
+                return null;
+
+            while (needsProcessing)
+            {
+                needsProcessing = false;
+                var documents = _documents.Values;
+                foreach (var doc in documents)
+                {
+                    var document = doc.Document;
+                    if (document == null)
+                        continue;
+
+                    var tree = document.SyntaxRoot.SyntaxTree;
+
+                    var solutionDoc = result.GetDocument(doc.CSharpDocument);
+                    var model = solutionDoc.GetSemanticModelAsync().Result;
+
+                    document.Model = model;
+                    var oldRoot = document.SyntaxRoot;
+                    if (!document.applyChanges(CompilerStage.Semantical))
+                        needsProcessing = true;
+
+                    var newRoot = document.SyntaxRoot;
+
+
+                    Debug.Assert(oldRoot != null && newRoot != null);
+                    var newTree = newRoot.SyntaxTree;
+                    if (oldRoot != newRoot)
+                        result = result.WithDocumentSyntaxRoot(doc.CSharpDocument, newRoot);
+                }
+            }
+
+            return result;
         }
 
         private ExtensionFunction getExtension(string name)
@@ -113,9 +150,9 @@ namespace Excess.Compiler.Roslyn
                 throw new InvalidOperationException($"Cannot read from {doc.Name}");
 
             var contents = text.ToString();
-            var document = new RoslynDocument(new Scope(null), contents); //port: rid of scope
+            var document = new RoslynDocument(new Scope(_scope), contents); //port: rid of scope
 
-            var compilerResult = new RoslynCompiler(null); //port: rid of scope
+            var compilerResult = new RoslynCompiler(new Scope(_scope)); //port: rid of scope
             var tree = CSharpSyntaxTree.ParseText(contents);
             var usings = (tree.GetRoot() as CompilationUnitSyntax)
                 ?.Usings
@@ -137,6 +174,9 @@ namespace Excess.Compiler.Roslyn
                     return false;
                 }).ToArray();
 
+            if (_extensions.ContainsKey("xs"))
+                _extensions["xs"](compilerResult, _scope);
+
             result = solution; //td: add needed cs files, etc
             var filename = doc.Name + ".cs";
             var fileid = doc
@@ -149,11 +189,16 @@ namespace Excess.Compiler.Roslyn
             {
                 var newFile = doc.Project.AddDocument(filename, "");
                 result = newFile.Project.Solution;
+                fileid = newFile.Id;
             }
+
+            var documentInjector = compilerResult as IDocumentInjector<SyntaxToken, SyntaxNode, SemanticModel>;
+            documentInjector.apply(document);
 
             return new ExcessDocument
             {
                 Id = doc.Id,
+                Name = doc.Name,
                 CSharpDocument = fileid,
                 Compiler = compilerResult,
                 Document = document,

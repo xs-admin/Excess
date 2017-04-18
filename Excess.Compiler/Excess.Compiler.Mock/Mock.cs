@@ -29,6 +29,12 @@ namespace Excess.Compiler.Mock
 
         public static ExcessSolution SolutionForCode(string code, Dictionary<string, ExtensionFunction> extensions)
         {
+            if (extensions == null)
+                extensions = new Dictionary<string, ExtensionFunction>();
+
+            if (!extensions.Keys.Contains("xs"))
+                extensions["xs"] = (compiler, scope) => XSLanguage.Apply(compiler);
+
             var workspace = new AdhocWorkspace();
             var project = workspace.AddProject("excess", LanguageNames.CSharp);
             var document = project.AddAdditionalDocument("main.xs", code);
@@ -38,9 +44,7 @@ namespace Excess.Compiler.Mock
 
             workspace.OpenAdditionalDocument(document.Id);
                 
-            var result = new ExcessSolution(null, workspace.CurrentSolution, extensions);
-            project = workspace.CurrentSolution.Projects.First();
-            return result.ApplyChanges(project.AdditionalDocumentIds.First());
+            return new ExcessSolution(workspace.CurrentSolution, extensions);
         }
 
         public static SyntaxTree Compile(string code, Action<Compiler> builder = null, Mapper mapper = null)
