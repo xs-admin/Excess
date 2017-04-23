@@ -2,14 +2,13 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
         <id>Excess.Compiler</id>
-        <version>0.48.11-debug</version>
+        <version>0.49.2-debug</version>
         <authors>Excess</authors>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <description>Metaprogramming platform for C#</description>
 
         <dependencies>
-          <dependency id="Microsoft.CodeAnalysis" version="1.2.2"/>
-          <dependency id="Excess.Runtime" version="0.48.0-alpha"/>
+          <dependency id="Microsoft.CodeAnalysis" version="2.0.0"/>
           <dependency id="Antlr4" version="4.5.3-rc1"/>
           <dependency id="Antlr4.Runtime" version="4.5.3-rc1"/>
         </dependencies>
@@ -17,13 +16,7 @@
     <files>
         <file src="..\bin\Debug\Excess.Compiler.dll" target="lib\Net45\Excess.Compiler.dll" />
         <file src="..\bin\Debug\Excess.Compiler.pdb" target="lib\Net45\Excess.Compiler.pdb" />
-        <file src="..\xslang\bin\Debug\xslang.dll" target="lib\Net45\xslang.dll" />
-        <file src="..\xslang\bin\Debug\xslang.pdb" target="lib\Net45\xslang.pdb" />
-        <file src="..\Excess.Compiler.Mock\bin\Debug\Excess.Compiler.Mock.dll" target="lib\Net45\Excess.Compiler.Mock.dll" />
-        <file src="..\Excess.Compiler.Mock\bin\Debug\Excess.Compiler.Mock.pdb" target="lib\Net45\Excess.Compiler.Mock.pdb" />
-        <file src="..\Excess.Compiler.Antlr4\bin\Debug\Excess.Compiler.Antlr4.dll" target="lib\Net45\Excess.Compiler.Antlr4.dll" />
-        <file src="..\Excess.Compiler.Antlr4\bin\Debug\Excess.Compiler.Antlr4.pdb" target="lib\Net45\Excess.Compiler.Antlr4.pdb" />
-        <file src="..\Excess.Compiler.GraphInstances\bin\Debug\Excess.Compiler.GraphInstances.dll" target="lib\Net45\Excess.Compiler.GraphInstances.dll" />
-        <file src="..\Excess.Compiler.GraphInstances\bin\Debug\Excess.Compiler.GraphInstances.pdb" target="lib\Net45\Excess.Compiler.GraphInstances.pdb" />
+      <file src="..\Excess.Compiler.Mock\bin\Debug\Excess.Compiler.Mock.dll" target="lib\Net45\Excess.Compiler.Mock.dll" />
+      <file src="..\Excess.Compiler.Mock\bin\Debug\Excess.Compiler.Mock.pdb" target="lib\Net45\Excess.Compiler.Mock.pdb" />
     </files>
 </package>
