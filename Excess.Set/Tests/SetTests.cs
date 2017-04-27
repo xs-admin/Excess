@@ -9,20 +9,25 @@ using Compiler;
 namespace Tests
 {
     [TestClass]
-    public class ObjectTests
+    public class SetTests
     {
         [TestMethod]
-        public void Object_Usage()
+        public void Set_Usage()
         {
-            var tree = ExcessMock.Link(@"
-                namespace SomeNamespace
+            var tree = ExcessMock.Compile(@"
+            class Someclass
+            {
+                void somefn()
                 {
-                    object SomeObject
-                    {
-                        int SomeInt;
-                        string SomeString;
-                    }
-                }", (compiler) => ObjectExtension.Apply(compiler));
+                    set<int> ps = {x | x > 5}
+                    //set ps = {x : int | x > 5}
+                    //set ps = {xi | i : Guid, x > 5}
+                    //set ps = {x | x in Y, (x > 5 || P(x))}
+                    //set ps = {x as name : int, y as age in Someset | x > 5 & y.someProperty}
+                    //set ps = {x e int, y in Someset | Vx, Ey. y.someProperty}
+                    //set ps = {x in int, y in Someset | Vx, Ey. y.someProperty}
+                }
+            }", (compiler) => SetExtension.Apply(compiler));
 
             var root = tree
                 ?.GetRoot()

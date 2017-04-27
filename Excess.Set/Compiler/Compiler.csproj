@@ -158,6 +158,12 @@
     <Compile Include="Extension.cs" />
     <Compile Include="Object.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Set.cs" />
+    <Compile Include="SetParser\ConstructorSyntax.cs" />
+    <Compile Include="SetParser\Parser.cs" />
+    <Compile Include="SetParser\PredicateSyntax.cs" />
+    <Compile Include="SetParser\SetSyntax.cs" />
+    <Compile Include="SetParser\VariableSyntax.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
