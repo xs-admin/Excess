@@ -1,13 +1,17 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Compiler.SetParser
 {
+    using CSharp = SyntaxFactory;
+
     public class Parser
     {
         public static SetSyntax Parse(string text)
@@ -26,8 +30,8 @@ namespace Compiler.SetParser
                 return null; //td: errors
 
             index += consumed;
-            var constructor = parseConstructor(tokenArray, index, out consumed);
-            if (constructor == null)
+            ConstructorSyntax constructor;
+            if (!parseConstructor(tokenArray, index, out consumed, out constructor, variables))
                 return null; //td: errors
 
             return new SetSyntax(variables.ToArray(), constructor);
@@ -184,7 +188,161 @@ namespace Compiler.SetParser
             return true;
         }
 
-        private static ConstructorSyntax parseConstructor(SyntaxToken[] tokenArray, int index, out int consumed)
+        private static bool parseConstructor(SyntaxToken[] tokens, int index, out int consumed, out ConstructorSyntax constructor, List<VariableSyntax> variables)
+        {
+            consumed = 0;
+            constructor = null;
+
+            var toCompile = new StringBuilder();
+            var parenthesis = 0;
+            var expressions = new List<ExpressionSyntax>();
+            for (var i = index; i < tokens.Length; i++)
+            {
+                int iconsumed;
+                if (toCompile.Length == 0)
+                {
+                    //at the beggining of a constructor item we give the parser
+                    //chance to match custom syntax. Because custom === good.
+                    ExpressionSyntax cexpr;
+                    if (parseCustomConstructor(tokens, index = consumed, out iconsumed, out cexpr))
+                    {
+                        Debug.Assert(cexpr != null);
+
+                        consumed += iconsumed;
+                        i += iconsumed;
+                        expressions.Add(cexpr);
+                        continue;
+                    }
+                }
+
+                consumed++;
+
+                var token = tokens[i];
+                var addToCompile = true;
+                switch ((SyntaxKind)token.RawKind)
+                {
+                    case SyntaxKind.OpenParenToken:
+                        parenthesis++;
+                        break;
+                    case SyntaxKind.CloseParenToken:
+                        parenthesis--; //td: verify 
+                        break;
+                    case SyntaxKind.CommaToken:
+                        if (parenthesis == 0)
+                        {
+                            addToCompile = false;
+                            var expr = parseConstructorExpression(toCompile);
+                            if (expr == null)
+                                return false;
+
+                            expressions.Add(expr);
+                        }
+                        break;
+                    //for simplcity, we'll just switch the type of the type token  
+                    //so it compiles as a expression. Note the operator we choose is illegal otherwise.
+                    case SyntaxKind.ColonToken:
+                    case SyntaxKind.InKeyword:
+                        token = CSharp.Token(SyntaxKind.GreaterThanGreaterThanToken).WithTriviaFrom(token);
+                        break;
+                }
+
+                if (addToCompile)
+                    toCompile.Append(token.ToFullString());
+            }
+
+            if (toCompile.Length > 0)
+            {
+                var expr = parseConstructorExpression(toCompile);
+                if (expr == null)
+                    return false;
+
+                expressions.Add(expr);
+            }
+
+            return buildConstructor(variables, expressions, out constructor);
+        }
+
+        static readonly ExpressionSyntax _ellipsis = CSharp.ParseName("ellipsis");
+        private static bool parseCustomConstructor(SyntaxToken[] tokens, int index, out int consumed, out ExpressionSyntax expr)
+        {
+            consumed = 0;
+            expr = null;
+
+            var token = tokens[index];
+            switch (token.Kind())
+            {
+                //check ellipsis
+                case SyntaxKind.DotToken:
+                    if (index + 4 < tokens.Length
+                        && tokens[index + 1].Kind() == SyntaxKind.DotToken
+                        && tokens[index + 2].Kind() == SyntaxKind.DotToken)
+                    {
+                        if (tokens[index + 3].Kind() != SyntaxKind.CommaToken)
+                            return false; //td: error, bad ellipsis
+
+                        consumed = 4;
+                        expr = _ellipsis;
+                    }
+                    break;
+            }
+
+            return true;
+        }
+
+        private static ExpressionSyntax parseConstructorExpression(StringBuilder text)
+        {
+            var result = CSharp.ParseExpression(text.ToString());
+            text.Clear();
+            return result;
+        }
+
+        private static bool buildConstructor(List<VariableSyntax> variables, List<ExpressionSyntax> expressions, out ConstructorSyntax constructor)
+        {
+            constructor = null;
+            foreach (var expression in expressions)
+            {
+                if (applyToVariable(expression, variables))
+                    continue;
+
+                if (applyToMatch(expression, variables, constructor, out constructor))
+                    continue;
+
+                if (applyToIndexedInduction(expression, variables, constructor, out constructor))
+                    continue;
+
+                if (applyToGeneralInduction(expression, variables, constructor, out constructor))
+                    continue;
+
+                if (applyToPredicate(expression, variables, constructor, out constructor))
+                    continue;
+
+                return false;
+            }
+
+            return true;
+        }
+
+        private static bool applyToMatch(ExpressionSyntax expression, List<VariableSyntax> variables, ConstructorSyntax current, out ConstructorSyntax constructor)
+        {
+            throw new NotImplementedException();
+        }
+
+        private static bool applyToPredicate(ExpressionSyntax expression, List<VariableSyntax> variables, ConstructorSyntax current, out ConstructorSyntax constructor)
+        {
+            throw new NotImplementedException();
+        }
+
+        private static bool applyToGeneralInduction(ExpressionSyntax expression, List<VariableSyntax> variables, ConstructorSyntax current, out ConstructorSyntax constructor)
+        {
+            throw new NotImplementedException();
+        }
+
+        private static bool applyToIndexedInduction(ExpressionSyntax expression, List<VariableSyntax> variables, ConstructorSyntax current, out ConstructorSyntax constructor)
+        {
+            throw new NotImplementedException();
+        }
+
+        private static bool applyToVariable(ExpressionSyntax expression, List<VariableSyntax> variables)
         {
             throw new NotImplementedException();
         }

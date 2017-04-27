@@ -25,7 +25,7 @@ namespace Tests
                     //set ps = {x | x in Y, (x > 5 || P(x))}
                     //set ps = {x as name : int, y as age in Someset | x > 5 & y.someProperty}
                     //set ps = {x e int, y in Someset | Vx, Ey. y.someProperty}
-                    //set ps = {x in int, y in Someset | Vx, Ey. y.someProperty}
+                    //set ps = {x in int, y in Someset | Vx. Ey. y.someProperty}
                 }
             }", (compiler) => SetExtension.Apply(compiler));
 
