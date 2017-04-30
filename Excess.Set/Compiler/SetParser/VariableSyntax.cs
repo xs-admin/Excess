@@ -17,7 +17,8 @@ namespace Compiler.SetParser
             string alias,
             SyntaxToken aliasToken,
             bool isIndexed,
-            string indexName)
+            string indexName,
+            SyntaxToken indexType)
         {
             Name = name;
             NameToken = nameToken;
@@ -37,5 +38,16 @@ namespace Compiler.SetParser
         public SyntaxToken AliasToken { get; private set; }
         public bool IsIndexed { get; private set; }
         public string IndexName { get; private set; }
+        public SyntaxToken IndexType { get; private set; }
+
+        public VariableSyntax WithType(SyntaxToken token)
+        {
+            return new VariableSyntax(Name, NameToken, token.ToString(), token, Alias, AliasToken, IsIndexed, IndexName, IndexType);
+        }
+
+        public VariableSyntax WithIndexType(SyntaxToken token)
+        {
+            return new VariableSyntax(Name, NameToken, TypeName, TypeToken, Alias, AliasToken, IsIndexed, IndexName, token);
+        }
     }
 }

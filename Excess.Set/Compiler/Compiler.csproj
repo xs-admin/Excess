@@ -160,8 +160,13 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Set.cs" />
     <Compile Include="SetParser\ConstructorSyntax.cs" />
+    <Compile Include="SetParser\InductionConstructorSyntax.cs" />
+    <Compile Include="SetParser\MatchConstructorSyntax.cs" />
+    <Compile Include="SetParser\NumericalInductionConstructorSyntax.cs" />
     <Compile Include="SetParser\Parser.cs" />
+    <Compile Include="SetParser\PredicateConstructorSyntax.cs" />
     <Compile Include="SetParser\PredicateSyntax.cs" />
+    <Compile Include="SetParser\SetOptions.cs" />
     <Compile Include="SetParser\SetSyntax.cs" />
     <Compile Include="SetParser\VariableSyntax.cs" />
   </ItemGroup>

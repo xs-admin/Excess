@@ -26,6 +26,7 @@ namespace Tests
                     //set ps = {x as name : int, y as age in Someset | x > 5 & y.someProperty}
                     //set ps = {x e int, y in Someset | Vx, Ey. y.someProperty}
                     //set ps = {x in int, y in Someset | Vx. Ey. y.someProperty}
+                    //set ps = {x, y | when x = 3 => y = 7, otherwise y = 8 }
                 }
             }", (compiler) => SetExtension.Apply(compiler));
 

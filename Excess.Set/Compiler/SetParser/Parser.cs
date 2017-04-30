@@ -30,8 +30,10 @@ namespace Compiler.SetParser
                 return null; //td: errors
 
             index += consumed;
-            ConstructorSyntax constructor;
-            if (!parseConstructor(tokenArray, index, out consumed, out constructor, variables))
+
+            var constructor = null as ConstructorSyntax;
+            var options = new SetOptions();
+            if (!parseConstructor(tokenArray, index, out consumed, out constructor, variables, options))
                 return null; //td: errors
 
             return new SetSyntax(variables.ToArray(), constructor);
@@ -124,7 +126,7 @@ namespace Compiler.SetParser
             consumed += iconsumed;
 
             //we golden
-            variable = new VariableSyntax(varName, token, typeName, typeToken, alias, aliasToken, isIndexed, indexName);
+            variable = new VariableSyntax(varName, token, typeName, typeToken, alias, aliasToken, isIndexed, indexName, default(SyntaxToken));
             return true;
         }
 
@@ -188,7 +190,7 @@ namespace Compiler.SetParser
             return true;
         }
 
-        private static bool parseConstructor(SyntaxToken[] tokens, int index, out int consumed, out ConstructorSyntax constructor, List<VariableSyntax> variables)
+        private static bool parseConstructor(SyntaxToken[] tokens, int index, out int consumed, out ConstructorSyntax constructor, List<VariableSyntax> variables, SetOptions options)
         {
             consumed = 0;
             constructor = null;
@@ -259,7 +261,14 @@ namespace Compiler.SetParser
                 expressions.Add(expr);
             }
 
-            return buildConstructor(variables, expressions, out constructor);
+            return buildConstructor(variables, expressions, options, out constructor);
+        }
+
+        private static ExpressionSyntax parseConstructorExpression(StringBuilder text)
+        {
+            var result = CSharp.ParseExpression(text.ToString());
+            text.Clear();
+            return result;
         }
 
         static readonly ExpressionSyntax _ellipsis = CSharp.ParseName("ellipsis");
@@ -271,6 +280,21 @@ namespace Compiler.SetParser
             var token = tokens[index];
             switch (token.Kind())
             {
+                case SyntaxKind.IdentifierToken:
+                    switch (token.ToString())
+                    {
+                        case "when":
+                            if (!parseWhenClause(tokens, index + 1, out consumed, out expr))
+                                return false;
+                            break;
+                        case "otherwise":
+                        case "else":
+                            if (!parseWhenElseClause(tokens, index + 1, out consumed, out expr))
+                                return false;
+                            break;
+                    }
+                    break;
+
                 //check ellipsis
                 case SyntaxKind.DotToken:
                     if (index + 4 < tokens.Length
@@ -289,25 +313,113 @@ namespace Compiler.SetParser
             return true;
         }
 
-        private static ExpressionSyntax parseConstructorExpression(StringBuilder text)
+        private static bool parseWhenClause(SyntaxToken[] tokens, int index, out int consumed, out ExpressionSyntax expr)
         {
-            var result = CSharp.ParseExpression(text.ToString());
-            text.Clear();
-            return result;
+            consumed = 0;
+            expr = null;
+
+            var cond = new StringBuilder();
+            var value = null as StringBuilder;
+            var parenthesis = 0;
+            for (var i = index; i < tokens.Length; i++)
+            {
+                var token = tokens[i];
+                var add = true;
+                switch (token.Kind())
+                {
+                    case SyntaxKind.OpenParenToken:
+                        parenthesis++;
+                        break;
+                    case SyntaxKind.CloseParenToken:
+                        parenthesis--; //td: verify 
+                        break;
+                    case SyntaxKind.CommaToken:
+                        if (parenthesis == 0)
+                        {
+                            if (value != null)
+                            {
+                                expr = CSharp.ParseExpression($"when({cond}, {value})");
+                                return true;
+                            }
+                            else
+                                return false; //td: error, expecting =>
+                        }
+                        break;
+                    case SyntaxKind.EqualsGreaterThanToken:
+                        if (value == null)
+                        {
+                            value = new StringBuilder();
+                            add = false;
+                        }
+                        else
+                            return false; //td: error, only one =>
+                        break;
+                }
+
+                consumed++;
+                if (add)
+                {
+                    if (value != null)
+                        value.Append(token.ToFullString());
+                    else 
+                        cond.Append(token.ToFullString());
+                }
+            }
+
+            return false; //td: error, unexpected end
         }
 
-        private static bool buildConstructor(List<VariableSyntax> variables, List<ExpressionSyntax> expressions, out ConstructorSyntax constructor)
+        private static bool parseWhenElseClause(SyntaxToken[] tokens, int index, out int consumed, out ExpressionSyntax expr)
+        {
+            consumed = 0;
+            expr = null;
+
+            var parenthesis = 0;
+            var value = new StringBuilder();
+            for (var i = index; i < tokens.Length; i++)
+            {
+                var token = tokens[i];
+                switch (token.Kind())
+                {
+                    case SyntaxKind.OpenParenToken:
+                        parenthesis++;
+                        break;
+                    case SyntaxKind.CloseParenToken:
+                        parenthesis--; //td: verify 
+                        break;
+                    case SyntaxKind.CommaToken:
+                        if (parenthesis == 0)
+                        {
+                            if (value != null)
+                            {
+                                expr = CSharp.ParseExpression($"otherwise({value})");
+                                return true;
+                            }
+                            else
+                                return false; //td: error, expecting =>
+                        }
+                        break;
+                }
+            }
+
+            return false; //td: error, unexpected end
+        }
+
+        private static bool buildConstructor(List<VariableSyntax> variables, List<ExpressionSyntax> expressions, SetOptions options, out ConstructorSyntax constructor)
         {
             constructor = null;
             foreach (var expression in expressions)
             {
+                if (applyToOptions(expression, options))
+                    continue;
+
                 if (applyToVariable(expression, variables))
                     continue;
 
                 if (applyToMatch(expression, variables, constructor, out constructor))
                     continue;
 
-                if (applyToIndexedInduction(expression, variables, constructor, out constructor))
+                if (applyToNumericalInduction(expression, variables, constructor, out constructor))
                     continue;
 
                 if (applyToGeneralInduction(expression, variables, constructor, out constructor))
@@ -322,29 +434,199 @@ namespace Compiler.SetParser
             return true;
         }
 
-        private static bool applyToMatch(ExpressionSyntax expression, List<VariableSyntax> variables, ConstructorSyntax current, out ConstructorSyntax constructor)
+        private static bool applyToOptions(ExpressionSyntax expression, SetOptions options)
         {
-            throw new NotImplementedException();
-        }
+            var identifier = expression as IdentifierNameSyntax;
+            if (identifier != null)
+            {
+                switch (identifier.ToString())
+                {
+                    case "notempty":
+                        options.NotEmpty = true;
+                        break;
+                }
+            }
 
-        private static bool applyToPredicate(ExpressionSyntax expression, List<VariableSyntax> variables, ConstructorSyntax current, out ConstructorSyntax constructor)
-        {
-            throw new NotImplementedException();
-        }
-
-        private static bool applyToGeneralInduction(ExpressionSyntax expression, List<VariableSyntax> variables, ConstructorSyntax current, out ConstructorSyntax constructor)
-        {
-            throw new NotImplementedException();
-        }
-
-        private static bool applyToIndexedInduction(ExpressionSyntax expression, List<VariableSyntax> variables, ConstructorSyntax current, out ConstructorSyntax constructor)
-        {
-            throw new NotImplementedException();
+            return false;
         }
 
         private static bool applyToVariable(ExpressionSyntax expression, List<VariableSyntax> variables)
         {
-            throw new NotImplementedException();
+            var binaryExpression = expression as BinaryExpressionSyntax;
+            if (binaryExpression != null 
+                && binaryExpression.OperatorToken.Kind() == SyntaxKind.GreaterThanGreaterThanEqualsToken)
+            {
+                var nameNode = binaryExpression.Left as IdentifierNameSyntax;
+                var typeNode = binaryExpression.Right as IdentifierNameSyntax;
+
+                if (nameNode == null || typeNode == null)
+                    return false; //td: error?
+
+                var name = nameNode.ToString();
+                var type = typeNode.ToString();
+
+                for (int i = 0; i < variables.Count; i++)
+                {
+                    var variable = variables[i];
+                    if (variable.Name == name)
+                    {
+                        variables[i] = variable.WithType(nameNode.Identifier);
+                        return true;
+                    }
+
+                    if (variable.IndexName == name)
+                    {
+                        variables[i] = variable.WithIndexType(nameNode.Identifier);
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private static bool applyToMatch(ExpressionSyntax expression, List<VariableSyntax> variables, ConstructorSyntax current, out ConstructorSyntax constructor)
+        {
+            constructor = current;
+            if (expression is InvocationExpressionSyntax)
+            {
+                var invocation = expression as InvocationExpressionSyntax;
+                var isWhen = false;
+                var isElse = false;
+
+                switch (invocation.Expression.ToString())
+                {
+                    case "when":
+                        isWhen = true;
+                        break;
+                    case "otherwise":
+                        isElse = true;
+                        break;
+                }
+
+                var matchConstructor = constructor as MatchConstructorSyntax;
+                if (isWhen || isElse)
+                {
+                    if (constructor != null && matchConstructor == null)
+                        return false; //td: error, another type of constructor in progress
+
+                    if (matchConstructor == null)
+                        matchConstructor = new MatchConstructorSyntax();
+                }
+                else
+                    return false;
+
+                if (isWhen)
+                {
+                    Debug.Assert(invocation.ArgumentList.Arguments.Count == 2);
+                    var cond = invocation.ArgumentList.Arguments.First().Expression;
+                    var value = invocation.ArgumentList.Arguments.Skip(1).First().Expression;
+                    matchConstructor.CondValue.Add(new Tuple<ExpressionSyntax, ExpressionSyntax>(cond, value));
+                }
+                else
+                {
+                    Debug.Assert(invocation.ArgumentList.Arguments.Count == 1);
+                    var value = invocation.ArgumentList.Arguments.First().Expression;
+                    matchConstructor.Otherwise = value;
+                }
+
+                constructor = matchConstructor;
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool applyToPredicate(ExpressionSyntax expression, List<VariableSyntax> variables, ConstructorSyntax current, out ConstructorSyntax constructor)
+        {
+            constructor = current;
+
+            var binaryExpression = expression as BinaryExpressionSyntax;
+            if (binaryExpression != null && isBooleanOperator(binaryExpression.OperatorToken))
+            {
+                var predicateConstructor = constructor as PredicateConstructorSyntax;
+                if (constructor != null && predicateConstructor == null)
+                    return false; //td: error, another type of constructor in progress
+
+                if (predicateConstructor == null)
+                    predicateConstructor = new PredicateConstructorSyntax();
+
+                predicateConstructor.Expressions.Add(expression);
+
+                constructor = predicateConstructor;
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool isBooleanOperator(SyntaxToken token)
+        {
+            var kind = token.Kind();
+            return kind == SyntaxKind.GreaterThanToken
+                || kind == SyntaxKind.GreaterThanEqualsToken
+                || kind == SyntaxKind.LessThanToken
+                || kind == SyntaxKind.LessThanEqualsToken
+                || kind == SyntaxKind.AmpersandToken
+                || kind == SyntaxKind.AmpersandAmpersandToken
+                || kind == SyntaxKind.BarToken
+                || kind == SyntaxKind.BarBarToken
+                || kind == SyntaxKind.EqualsToken
+                || kind == SyntaxKind.EqualsEqualsToken
+                ;
+        }
+
+        private static bool applyToGeneralInduction(ExpressionSyntax expression, List<VariableSyntax> variables, ConstructorSyntax current, out ConstructorSyntax constructor)
+        {
+            constructor = current;
+
+            var binaryExpression = expression as BinaryExpressionSyntax;
+            if (binaryExpression != null 
+                && binaryExpression.OperatorToken.Kind() == SyntaxKind.SlashToken)
+            {
+                var inductionConstructor = constructor as InductionConstructorSyntax;
+                if (constructor != null && inductionConstructor == null)
+                    return false; //td: error, another type of constructor in progress
+
+                if (inductionConstructor == null)
+                    inductionConstructor = new InductionConstructorSyntax();
+
+                inductionConstructor.Rules.Add(expression);
+
+                constructor = inductionConstructor;
+                return true;
+            }
+
+            return false;
+        }
+
+        private static bool applyToNumericalInduction(ExpressionSyntax expression, List<VariableSyntax> variables, ConstructorSyntax current, out ConstructorSyntax constructor)
+        {
+            constructor = current;
+
+            var assignmentExpression = expression as AssignmentExpressionSyntax;
+            if (assignmentExpression != null)
+            {
+                throw new NotImplementedException();
+                //td: verify left is x[0], etc...
+                //if (assignmentExpression.Left is Inde)
+                //{
+                //}
+
+                //var inductionConstructor = constructor as NumericalInductionConstructorSyntax;
+                //if (constructor != null && inductionConstructor == null)
+                //    return false; //td: error, another type of constructor in progress
+
+                //if (inductionConstructor == null)
+                //    inductionConstructor = new NumericalInductionConstructorSyntax();
+
+                //inductionConstructor.Values.Add(expression);
+
+                //constructor = inductionConstructor;
+                //return true;
+            }
+
+            return false;
         }
     }
 }
