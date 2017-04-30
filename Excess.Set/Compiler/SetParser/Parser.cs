@@ -284,13 +284,13 @@ namespace Compiler.SetParser
                     switch (token.ToString())
                     {
                         case "when":
-                            if (!parseWhenClause(tokens, index + 1, out consumed, out expr))
-                                return false;
+                            if (parseWhenClause(tokens, index + 1, out consumed, out expr))
+                                return true;
                             break;
                         case "otherwise":
                         case "else":
-                            if (!parseWhenElseClause(tokens, index + 1, out consumed, out expr))
-                                return false;
+                            if (parseWhenElseClause(tokens, index + 1, out consumed, out expr))
+                                return true;
                             break;
                     }
                     break;
@@ -301,16 +301,17 @@ namespace Compiler.SetParser
                         && tokens[index + 1].Kind() == SyntaxKind.DotToken
                         && tokens[index + 2].Kind() == SyntaxKind.DotToken)
                     {
-                        if (tokens[index + 3].Kind() != SyntaxKind.CommaToken)
-                            return false; //td: error, bad ellipsis
-
-                        consumed = 4;
-                        expr = _ellipsis;
+                        if (tokens[index + 3].Kind() == SyntaxKind.CommaToken)
+                        {
+                            consumed = 4;
+                            expr = _ellipsis;
+                            return true; 
+                        }
                     }
                     break;
             }
 
-            return true;
+            return false;
         }
 
         private static bool parseWhenClause(SyntaxToken[] tokens, int index, out int consumed, out ExpressionSyntax expr)
@@ -521,13 +522,13 @@ namespace Compiler.SetParser
                     Debug.Assert(invocation.ArgumentList.Arguments.Count == 2);
                     var cond = invocation.ArgumentList.Arguments.First().Expression;
                     var value = invocation.ArgumentList.Arguments.Skip(1).First().Expression;
-                    matchConstructor.CondValue.Add(new Tuple<ExpressionSyntax, ExpressionSyntax>(cond, value));
+                    matchConstructor.MatchPairList.Add(new Tuple<ExpressionSyntax, ExpressionSyntax>(cond, value));
                 }
                 else
                 {
                     Debug.Assert(invocation.ArgumentList.Arguments.Count == 1);
                     var value = invocation.ArgumentList.Arguments.First().Expression;
-                    matchConstructor.Otherwise = value;
+                    matchConstructor.OtherwiseValue = value;
                 }
 
                 constructor = matchConstructor;
@@ -551,7 +552,7 @@ namespace Compiler.SetParser
                 if (predicateConstructor == null)
                     predicateConstructor = new PredicateConstructorSyntax();
 
-                predicateConstructor.Expressions.Add(expression);
+                predicateConstructor.ExpressionList.Add(expression);
 
                 constructor = predicateConstructor;
                 return true;
@@ -591,7 +592,7 @@ namespace Compiler.SetParser
                 if (inductionConstructor == null)
                     inductionConstructor = new InductionConstructorSyntax();
 
-                inductionConstructor.Rules.Add(expression);
+                inductionConstructor.RuleList.Add(expression);
 
                 constructor = inductionConstructor;
                 return true;

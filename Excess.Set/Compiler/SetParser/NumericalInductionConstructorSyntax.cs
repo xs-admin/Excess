@@ -9,6 +9,12 @@ namespace Compiler.SetParser
 {
     public class NumericalInductionConstructorSyntax : ConstructorSyntax
     {
-        public List<ExpressionSyntax> Values { get; private set; }
+        public NumericalInductionConstructorSyntax()
+        {
+            ValueList = new List<ExpressionSyntax>();
+        }
+
+        internal List<ExpressionSyntax> ValueList { get; private set; }
+        public IEnumerable<ExpressionSyntax> Values => Values;
     }
 }

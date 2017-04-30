@@ -9,7 +9,21 @@ namespace Compiler.SetParser
 {
     public class MatchConstructorSyntax : ConstructorSyntax
     {
-        public List<Tuple<ExpressionSyntax, ExpressionSyntax>> CondValue { get; private set; }
-        public ExpressionSyntax Otherwise { get; internal set; }
+        internal MatchConstructorSyntax()
+        {
+            MatchPairList = new List<Tuple<ExpressionSyntax, ExpressionSyntax>>();
+        }
+
+        internal MatchConstructorSyntax(ExpressionSyntax otherwiseValue)
+        {
+            MatchPairList = new List<Tuple<ExpressionSyntax, ExpressionSyntax>>();
+            OtherwiseValue = otherwiseValue;
+        }
+
+        internal List<Tuple<ExpressionSyntax, ExpressionSyntax>> MatchPairList { get; private set; }
+        public IEnumerable<Tuple<ExpressionSyntax, ExpressionSyntax>> MatchPairs => MatchPairList;
+
+        internal ExpressionSyntax OtherwiseValue { get; set; }
+        public ExpressionSyntax Otherwise => OtherwiseValue;
     }
 }

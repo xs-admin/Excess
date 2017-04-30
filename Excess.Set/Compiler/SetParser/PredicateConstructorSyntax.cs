@@ -9,6 +9,12 @@ namespace Compiler.SetParser
 {
     public class PredicateConstructorSyntax : ConstructorSyntax
     {
-        public List<ExpressionSyntax> Expressions { get; private set; }
+        internal List<ExpressionSyntax> ExpressionList { get; }
+        public PredicateConstructorSyntax()
+        {
+            ExpressionList = new List<ExpressionSyntax>();
+        }
+
+        public IEnumerable<ExpressionSyntax> Expressions { get { return ExpressionList; } }
     }
 }
