@@ -46,28 +46,31 @@ namespace Compiler
                 var result = Parser.Parse(defTokens.Skip(1).Take(defSpan.Length - 2));
                 Debug.Assert(result != null);
 
-                var document = scope.GetDocument<SyntaxToken, SyntaxNode, SemanticModel>();
-                document.change(tokens.First(), LinkSet(result));
-                Debug.Assert(result != null);
-
                 item = match.Items.FirstOrDefault(x => x.Identifier == "id");
                 var idSpan = item?.Span;
-                var newTokens = UntilIdentifier(tokens, idSpan).ToArray();
+                var newTokens = SetTokens(tokens, idSpan, scope, result);
                 return newTokens;
             }
 
             return tokens;
         }
 
-        private static IEnumerable<SyntaxToken> UntilIdentifier(IEnumerable<SyntaxToken> tokens, TokenSpan span)
+        private static IEnumerable<SyntaxToken> SetTokens(IEnumerable<SyntaxToken> tokens, TokenSpan span, Scope scope, SetSyntax set)
         {
             var index = 0;
             foreach (var token in tokens)
             {
-                if (index++ >= span.Start + span.Length)
+                if (index >= span.Start + span.Length)
                     break;
 
-                yield return token;
+                if (index == 0)
+                {
+                    var document = scope.GetDocument<SyntaxToken, SyntaxNode, SemanticModel>();
+                    yield return document.change(token, LinkSet(set)/*, "lexical-extension"*/);
+                }
+                else 
+                    yield return token;
+                index++;
             }
 
             yield return CSharp.Token(SyntaxKind.SemicolonToken);

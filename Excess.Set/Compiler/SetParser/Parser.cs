@@ -175,8 +175,8 @@ namespace Compiler.SetParser
             consumed = 0;
             name = string.Empty;
             token = tokens[index];
-            if (!token.IsKind(SyntaxKind.AsKeyword) && !token.IsKind(SyntaxKind.ColonToken))
-                return true;
+            if (!token.IsKind(SyntaxKind.InKeyword) && !token.IsKind(SyntaxKind.ColonToken))
+                return true; //parsed, no result
 
             if (index + 1 >= tokens.Length)
                 return false; //td: error, eof
@@ -206,14 +206,16 @@ namespace Compiler.SetParser
                     //at the beggining of a constructor item we give the parser
                     //chance to match custom syntax. Because custom === good.
                     ExpressionSyntax cexpr;
-                    if (parseCustomConstructor(tokens, index = consumed, out iconsumed, out cexpr))
+                    if (parseCustomConstructor(tokens, i, out iconsumed, out cexpr))
                     {
                         Debug.Assert(cexpr != null);
 
                         consumed += iconsumed;
                         i += iconsumed;
                         expressions.Add(cexpr);
-                        continue;
+
+                        if (i >= tokens.Length)
+                            break;
                     }
                 }
 
@@ -233,18 +235,21 @@ namespace Compiler.SetParser
                         if (parenthesis == 0)
                         {
                             addToCompile = false;
-                            var expr = parseConstructorExpression(toCompile);
-                            if (expr == null)
-                                return false;
+                            if (toCompile.Length > 0)
+                            {
+                                var expr = parseConstructorExpression(toCompile);
+                                if (expr == null)
+                                    return false;
 
-                            expressions.Add(expr);
+                                expressions.Add(expr);
+                            }
                         }
                         break;
-                    //for simplcity, we'll just switch the type of the type token  
+                    //for simplicity, we'll just switch the type of the type token  
                     //so it compiles as a expression. Note the operator we choose is illegal otherwise.
                     case SyntaxKind.ColonToken:
                     case SyntaxKind.InKeyword:
-                        token = CSharp.Token(SyntaxKind.GreaterThanGreaterThanToken).WithTriviaFrom(token);
+                        token = CSharp.Token(SyntaxKind.GreaterThanGreaterThanEqualsToken).WithTriviaFrom(token);
                         break;
                 }
 
@@ -285,12 +290,18 @@ namespace Compiler.SetParser
                     {
                         case "when":
                             if (parseWhenClause(tokens, index + 1, out consumed, out expr))
+                            {
+                                consumed++;
                                 return true;
+                            }
                             break;
                         case "otherwise":
                         case "else":
                             if (parseWhenElseClause(tokens, index + 1, out consumed, out expr))
+                            {
+                                consumed++;
                                 return true;
+                            }
                             break;
                     }
                     break;
@@ -346,7 +357,7 @@ namespace Compiler.SetParser
                                 return false; //td: error, expecting =>
                         }
                         break;
-                    case SyntaxKind.EqualsGreaterThanToken:
+                    case SyntaxKind.ColonToken:
                         if (value == null)
                         {
                             value = new StringBuilder();
@@ -380,6 +391,7 @@ namespace Compiler.SetParser
             for (var i = index; i < tokens.Length; i++)
             {
                 var token = tokens[i];
+                consumed++;
                 switch (token.Kind())
                 {
                     case SyntaxKind.OpenParenToken:
@@ -391,16 +403,19 @@ namespace Compiler.SetParser
                     case SyntaxKind.CommaToken:
                         if (parenthesis == 0)
                         {
-                            if (value != null)
-                            {
-                                expr = CSharp.ParseExpression($"otherwise({value})");
-                                return true;
-                            }
-                            else
-                                return false; //td: error, expecting =>
+                            expr = CSharp.ParseExpression($"otherwise({value})");
+                            return true;
                         }
                         break;
                 }
+
+                value.Append(token.ToFullString());
+            }
+
+            if (index + consumed >= tokens.Length)
+            {
+                expr = CSharp.ParseExpression($"otherwise({value})");
+                return true;
             }
 
             return false; //td: error, unexpected end
@@ -453,12 +468,12 @@ namespace Compiler.SetParser
 
         private static bool applyToVariable(ExpressionSyntax expression, List<VariableSyntax> variables)
         {
-            var binaryExpression = expression as BinaryExpressionSyntax;
-            if (binaryExpression != null 
-                && binaryExpression.OperatorToken.Kind() == SyntaxKind.GreaterThanGreaterThanEqualsToken)
+            var assignmentExpression = expression as AssignmentExpressionSyntax;
+            if (assignmentExpression != null 
+                && assignmentExpression.OperatorToken.Kind() == SyntaxKind.GreaterThanGreaterThanEqualsToken)
             {
-                var nameNode = binaryExpression.Left as IdentifierNameSyntax;
-                var typeNode = binaryExpression.Right as IdentifierNameSyntax;
+                var nameNode = assignmentExpression.Left as IdentifierNameSyntax;
+                var typeNode = assignmentExpression.Right as IdentifierNameSyntax;
 
                 if (nameNode == null || typeNode == null)
                     return false; //td: error?
@@ -477,7 +492,7 @@ namespace Compiler.SetParser
 
                     if (variable.IndexName == name)
                     {
-                        variables[i] = variable.WithIndexType(nameNode.Identifier);
+                        variables[i] = variable.WithIndexType(typeNode.Identifier);
                         return true;
                     }
                 }
@@ -606,25 +621,20 @@ namespace Compiler.SetParser
             constructor = current;
 
             var assignmentExpression = expression as AssignmentExpressionSyntax;
-            if (assignmentExpression != null)
+            if ((assignmentExpression != null && assignmentExpression.Left is ElementAccessExpressionSyntax)
+                || (expression is IdentifierNameSyntax && expression.ToString() == "ellipsis"))
             {
-                throw new NotImplementedException();
-                //td: verify left is x[0], etc...
-                //if (assignmentExpression.Left is Inde)
-                //{
-                //}
+                var inductionConstructor = constructor as NumericalInductionConstructorSyntax;
+                if (constructor != null && inductionConstructor == null)
+                    return false; //td: error, another type of constructor in progress
 
-                //var inductionConstructor = constructor as NumericalInductionConstructorSyntax;
-                //if (constructor != null && inductionConstructor == null)
-                //    return false; //td: error, another type of constructor in progress
+                if (inductionConstructor == null)
+                    inductionConstructor = new NumericalInductionConstructorSyntax();
 
-                //if (inductionConstructor == null)
-                //    inductionConstructor = new NumericalInductionConstructorSyntax();
+                inductionConstructor.ValueList.Add(expression);
 
-                //inductionConstructor.Values.Add(expression);
-
-                //constructor = inductionConstructor;
-                //return true;
+                constructor = inductionConstructor;
+                return true;
             }
 
             return false;

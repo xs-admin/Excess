@@ -15,6 +15,6 @@ namespace Compiler.SetParser
         }
 
         internal List<ExpressionSyntax> ValueList { get; private set; }
-        public IEnumerable<ExpressionSyntax> Values => Values;
+        public IEnumerable<ExpressionSyntax> Values => ValueList;
     }
 }

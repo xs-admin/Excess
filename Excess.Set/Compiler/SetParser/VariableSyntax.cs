@@ -28,6 +28,7 @@ namespace Compiler.SetParser
             AliasToken = aliasToken;
             IsIndexed = isIndexed;
             IndexName = indexName;
+            IndexType = indexType;
         }
 
         public string Name { get; private set; }
