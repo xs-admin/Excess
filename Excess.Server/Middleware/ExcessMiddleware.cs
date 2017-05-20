@@ -178,6 +178,9 @@ namespace Excess.Server.Middleware
                 return false;
 
             route = (string)attribute.ConstructorArguments[0].Value;
+            if (!route.StartsWith("/"))
+                route = "/" + route;
+
             return true;
         }
 
