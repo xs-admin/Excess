@@ -1,0 +1,25 @@
+﻿<ul class="xs-tree">
+    <script type="text/ng-template" id="node_renderer.html">
+        <span ng-click="nodeSelected($event, node.action, node.data)">
+            <i ng-if="node.children.length > 0" class="no-highlighting fa fa-chevron-down"></i>
+            <i ng-if="node.icon" class="no-highlighting fa {{node.icon}}"></i> 
+            <span ng-if="node.color" class="no-highlighting" style="width:20px; background-color: {{node.color}}"></span>
+            {{node.label}}
+            <img width="10"/>
+            <a ng-repeat="action in node.actions track by $index">
+                <i class="fa {{action.icon}}" ng-click="actionSelected($event, action.id, node.data)"></i>
+            </a>
+        </span>
+        <ul>
+            <li ng-repeat="node in node.children track by $index"
+                ng-include="'node_renderer.html'"
+                ng-class="{'xs-tree-parent': node.children.length > 0}"></li>
+        </ul>
+    </script>
+
+    <li ng-repeat="node in tree track by $index" 
+        ng-include="'node_renderer.html'" 
+        ng-class="{'xs-tree-parent': node.children.length > 0}"
+        ng-include-variables="{node: node}">
+    </li>
+</ul>

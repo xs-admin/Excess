@@ -18,16 +18,17 @@
 }
 
 .xs-tree ul {
-    padding-left: 30px;
+    padding-left: 20px;
 }
 
 .xs-tree li span {
+    /*border: 1px solid #999;*/
     -moz-border-radius: 5px;
     -webkit-border-radius: 5px;
-    border: 1px solid #999;
     border-radius: 5px;
     display: inline-block;
-    padding: 3px 8px;
+    white-space:nowrap;
+    /*padding: 3px 8px;*/
     text-decoration: none;
     /*font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
     font-size: small;*/
@@ -52,6 +53,14 @@
 
 .xs-tree li.xs-tree-parent > span:hover, .tree li.xs-tree-parent > span:hover + ul li span {
     background: #eee;
-    border: 1px solid #94a0b4;
+    /*border: 1px solid #94a0b4;*/
     color: #000;
 }
+
+/*.xs-tree-parent > span {
+    border: 1px solid #94a0b4;
+}*/
+
+/*.xs-tree-parent > span:before {
+    content: ">";
+}*/

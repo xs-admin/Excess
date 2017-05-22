@@ -1,5 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="14.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="..\packages\Antlr4.4.5.3-rc1\build\Antlr4.props" Condition="Exists('..\packages\Antlr4.4.5.3-rc1\build\Antlr4.props')" />
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -12,6 +13,8 @@
     <AssemblyName>excess-ui</AssemblyName>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -31,8 +34,36 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Antlr4.Runtime, Version=4.5.0.0, Culture=neutral, PublicKeyToken=e9931a4108ef2354, processorArchitecture=MSIL">
+      <HintPath>..\packages\Antlr4.Runtime.4.5.3-rc1\lib\net45\Antlr4.Runtime.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Excess.Compiler, Version=1.0.0.0, Culture=neutral, PublicKeyToken=b0e2cc790a4c1b9e, processorArchitecture=MSIL">
+      <HintPath>..\packages\Excess.Compiler.0.48.10-alpha\lib\Net45\Excess.Compiler.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Excess.Compiler.Antlr4, Version=1.0.0.0, Culture=neutral, PublicKeyToken=5e449fe122806f54, processorArchitecture=MSIL">
+      <HintPath>..\packages\Excess.Compiler.0.48.10-alpha\lib\Net45\Excess.Compiler.Antlr4.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Excess.Compiler.GraphInstances, Version=1.0.0.0, Culture=neutral, PublicKeyToken=10e9636168e2f017, processorArchitecture=MSIL">
+      <HintPath>..\packages\Excess.Compiler.0.48.10-alpha\lib\Net45\Excess.Compiler.GraphInstances.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Excess.Compiler.Mock, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Excess.Compiler.0.48.10-alpha\lib\Net45\Excess.Compiler.Mock.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Excess.Compiler.Razor, Version=1.0.0.0, Culture=neutral, PublicKeyToken=c91418e3a10c4337, processorArchitecture=MSIL">
+      <HintPath>..\packages\Excess.Compiler.0.48.10-alpha\lib\Net45\Excess.Compiler.Razor.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Excess.Concurrent.Compiler, Version=0.46.2.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Excess.Concurrent.Runtime.0.48.10-alpha\lib\Net45\Excess.Concurrent.Compiler.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="Excess.Concurrent.Runtime, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Excess.Concurrent.0.48.10-alpha\lib\Net45\Excess.Concurrent.Runtime.dll</HintPath>
+      <HintPath>..\packages\Excess.Concurrent.Runtime.0.48.10-alpha\lib\Net45\Excess.Concurrent.Runtime.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Excess.Runtime, Version=1.0.0.0, Culture=neutral, PublicKeyToken=270b7f55f5ad09f8, processorArchitecture=MSIL">
@@ -41,6 +72,34 @@
     </Reference>
     <Reference Include="Excess.Server.Middleware, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Excess.Server.0.48.15-alpha\lib\Net45\Excess.Server.Middleware.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.CodeAnalysis, Version=1.2.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.CodeAnalysis.Common.1.2.2\lib\net45\Microsoft.CodeAnalysis.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.CodeAnalysis.CSharp, Version=1.2.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.CodeAnalysis.CSharp.1.2.2\lib\net45\Microsoft.CodeAnalysis.CSharp.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.CodeAnalysis.CSharp.Workspaces, Version=1.2.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.CodeAnalysis.CSharp.Workspaces.1.2.2\lib\net45\Microsoft.CodeAnalysis.CSharp.Workspaces.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.CodeAnalysis.VisualBasic, Version=1.2.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.CodeAnalysis.VisualBasic.1.2.2\lib\net45\Microsoft.CodeAnalysis.VisualBasic.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.CodeAnalysis.VisualBasic.Workspaces, Version=1.2.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.CodeAnalysis.VisualBasic.Workspaces.1.2.2\lib\net45\Microsoft.CodeAnalysis.VisualBasic.Workspaces.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.CodeAnalysis.Workspaces, Version=1.2.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.CodeAnalysis.Workspaces.Common.1.2.2\lib\net45\Microsoft.CodeAnalysis.Workspaces.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Microsoft.CodeAnalysis.Workspaces.Desktop, Version=1.2.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.CodeAnalysis.Workspaces.Common.1.2.2\lib\net45\Microsoft.CodeAnalysis.Workspaces.Desktop.dll</HintPath>
       <Private>True</Private>
     </Reference>
     <Reference Include="Microsoft.Owin, Version=3.0.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
@@ -79,25 +138,82 @@
       <HintPath>..\packages\Owin.1.0\lib\net40\Owin.dll</HintPath>
       <Private>True</Private>
     </Reference>
+    <Reference Include="RazorEngine, Version=3.8.2.0, Culture=neutral, PublicKeyToken=9ee697374c7e744a, processorArchitecture=MSIL">
+      <HintPath>..\packages\RazorEngine.3.8.2\lib\net45\RazorEngine.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
+    <Reference Include="System.Collections.Immutable, Version=1.1.37.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Collections.Immutable.1.1.37\lib\dotnet\System.Collections.Immutable.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Composition.AttributedModel, Version=1.0.27.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Composition.1.0.27\lib\portable-net45+win8+wp8+wpa81\System.Composition.AttributedModel.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Composition.Convention, Version=1.0.27.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Composition.1.0.27\lib\portable-net45+win8+wp8+wpa81\System.Composition.Convention.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Composition.Hosting, Version=1.0.27.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Composition.1.0.27\lib\portable-net45+win8+wp8+wpa81\System.Composition.Hosting.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Composition.Runtime, Version=1.0.27.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Composition.1.0.27\lib\portable-net45+win8+wp8+wpa81\System.Composition.Runtime.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Composition.TypedParts, Version=1.0.27.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.Composition.1.0.27\lib\portable-net45+win8+wp8+wpa81\System.Composition.TypedParts.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Core" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Reflection.Metadata, Version=1.2.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Reflection.Metadata.1.2.0\lib\portable-net45+win8\System.Reflection.Metadata.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Web.Razor, Version=3.0.0.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35, processorArchitecture=MSIL">
+      <HintPath>..\packages\Microsoft.AspNet.Razor.3.0.0\lib\net45\System.Web.Razor.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System.Xml" />
+    <Reference Include="xslang, Version=1.0.0.0, Culture=neutral, PublicKeyToken=a8909f1e5623e4ea, processorArchitecture=MSIL">
+      <HintPath>..\packages\Excess.Compiler.0.48.10-alpha\lib\Net45\xslang.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FileDescriptor.cs" />
+    <Compile Include="Interfaces\ICodeTranspiler.cs" />
+    <Compile Include="Interfaces\IFileDescriptor.cs" />
+    <Compile Include="Interfaces\IProjectRepository.cs" />
     <Compile Include="Program.cs" />
+    <Compile Include="Project.xs.cs">
+      <DependentUpon>Project.xs</DependentUpon>
+    </Compile>
+    <Compile Include="ProjectRepository.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Queries\FileQuery.cs" />
+    <Compile Include="Queries\ProjectQuery.cs" />
     <Compile Include="Server\Dependencies.xs.cs">
       <DependentUpon>Dependencies.xs</DependentUpon>
     </Compile>
     <Compile Include="Server\Deployments.xs.cs">
       <DependentUpon>Deployments.xs</DependentUpon>
     </Compile>
+    <Compile Include="Server\WebServices\CodeTranspiler.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Client\app\app.css" />
     <Content Include="Client\app\app.js" />
+    <Content Include="Client\app\components\ui-excess-ide\ui-excess-ide.css" />
+    <Content Include="Client\app\components\ui-excess-ide\ui-excess-ide.html" />
+    <Content Include="Client\app\components\ui-excess-ide\ui-excess-ide.js" />
+    <Content Include="Client\app\components\ui-tree\ui-tree.css" />
+    <Content Include="Client\app\components\ui-tree\ui-tree.html" />
+    <Content Include="Client\app\components\ui-tree\ui-tree.js" />
     <Content Include="Client\app\components\version\interpolate-filter.js" />
     <Content Include="Client\app\components\version\interpolate-filter_test.js" />
     <Content Include="Client\app\components\version\version-directive.js" />
@@ -109,22 +225,33 @@
     <Content Include="Client\app\index.html" />
     <Content Include="Client\e2e-tests\protractor.conf.js" />
     <Content Include="Client\e2e-tests\scenarios.js" />
-    <Content Include="Components\excess-ui-ide\excess-ui-ide.css" />
-    <Content Include="Components\excess-ui-ide\excess-ui-ide.html" />
-    <Content Include="Components\excess-ui-ide\excess-ui-ide.js" />
-    <Content Include="Components\excess-ui-tree\excess-ui-tree.css" />
-    <Content Include="Components\excess-ui-tree\excess-ui-tree.js" />
-    <Content Include="Components\excess-ui.js" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Client\LICENSE" />
     <None Include="Client\README.md" />
     <None Include="packages.config" />
+    <None Include="Project.xs" />
     <None Include="Server\Dependencies.xs" />
     <None Include="Server\Deployments.xs" />
     <None Include="xs.config" />
   </ItemGroup>
+  <ItemGroup>
+    <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.1.1.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.Analyzers.dll" />
+    <Analyzer Include="..\packages\Microsoft.CodeAnalysis.Analyzers.1.1.0\analyzers\dotnet\cs\Microsoft.CodeAnalysis.CSharp.Analyzers.dll" />
+  </ItemGroup>
+  <ItemGroup>
+    <WCFMetadata Include="Service References\" />
+  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\Antlr4.4.5.3-rc1\build\Antlr4.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Antlr4.4.5.3-rc1\build\Antlr4.props'))" />
+    <Error Condition="!Exists('..\packages\Antlr4.4.5.3-rc1\build\Antlr4.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Antlr4.4.5.3-rc1\build\Antlr4.targets'))" />
+  </Target>
+  <Import Project="..\packages\Antlr4.4.5.3-rc1\build\Antlr4.targets" Condition="Exists('..\packages\Antlr4.4.5.3-rc1\build\Antlr4.targets')" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

@@ -1,4 +1,6 @@
-﻿using System;
+﻿using excess_ui.Interfaces;
+using excess_ui.server.WebTranspilers;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Excess.Runtime;
@@ -25,6 +27,8 @@ namespace excess_ui
 
         public override void Load()
         {
+            Bind<ICodeTranspiler>().To<CodeTranspiler>();
+            Bind<IProjectRepository>().To<ProjectRepository>();
         }
     }
 }

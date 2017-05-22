@@ -1,0 +1,63 @@
+﻿<div ui-layout="{ flow:'column' }" ui-layout-loaded style="overflow:hidden">
+	<script type="text/ng-template" id="NewFileModal.html">
+		<div class="modal-header">
+			<h3 class="modal-title" id="modal-title">New File</h3>
+		</div>
+		<div class="modal-body" id="modal-body">
+			Enter file name: <input type="text" ng-model="newFileName"></input>
+		</div>
+		<div class="modal-footer">
+			<button class="btn btn-primary" type="button" ng-click="$close(newFileName)">OK</button>
+			<button class="btn btn-warning" type="button" ng-click="$dismiss()">Cancel</button>
+		</div>
+	</script>
+	<div ui-layout-container collapsed="layoutControl.tree" size="250px" class="light-border">
+		<xs-tree tree="projectTree" action="projectAction(action, data)"></xs-tree>
+	</div>
+	<div ui-layout-container>
+	  <div ui-layout="{ flow:'row' }" style="overflow:hidden">
+		<div ui-layout-container="central" class="flex-stretch">
+			<div class="btn-toolbar" xrole="toolbar">
+			  <div class="btn-group" xrole="group">
+				<a class="btn btn-default" title="Compile (CTRL+SHIFT+B)" ng-click="compileProject()" ng-disabled="compilerBusy">
+					<i class="toolbar-item fa fa-check-circle"></i>
+				</a>
+				<a class="btn btn-default" title="Run (CTRL+F5)" ng-click="runProject()" ng-disabled="compilerBusy">
+					<i class="toolbar-item fa fa-play-circle"></i>
+				</a>
+				<a class="btn btn-default" title="Download"><i class="toolbar-item fa fa-download"></i></a>
+				<a class="btn btn-default" title="Save (CTRL+S)" ng-disabled="!currentTab.modified" ng-click="saveCurrent()">
+					<i class="toolbar-item fa fa-save"></i>
+				</a>
+				<a class="btn btn-default" title="Save All" ng-disabled="!sourceModified" ng-click="saveFileAll()">
+					<i class="toolbar-item fa fa-save"></i>
+					<i class="toolbar-item fa fa-asterisk fa-stack-1x" style="margin-left: 0.5em; margin-top: -0.7em;"></i>
+				</a>
+			  </div>
+			  <div class="btn-group" xrole="group">
+				<a class="btn btn-default {{layoutControl.south ? '' : 'active'}}" title="Show console" autocomplete="off" ng-click="layoutControl.toggle('south')">
+					<i class="toolbar-item fa fa-desktop"></i>
+				</a>
+			  </div>
+			</div>
+			<uib-tabset id="editor-tabs" active="activeTabID" class="flex-stretch">
+				<uib-tab ng-repeat="tab in tabs track by tab.id" index="tab.id" xactive="tab.active" xselect="tabSelected(tab.id)">
+					<uib-tab-heading>
+						<span style="margin-right:10px" ng-class="{'tab-modified': tab.modified}">{{tab.name}}</span>
+						<a ng-click="closeTab(tab.id)" title="Close Tab"><i class="fa fa-remove"></i></a>
+					</uib-tab-heading>
+ 					<div id="editor{{tab.id}}" fileID="{{tab.id}}" class="code-editor" ng-model="tab.sourceCode" 
+						ui-ace="{ mode:getModeForPath(tab.name), theme: theme, onChange: onEditorChange }"></div>
+				</uib-tab>
+			</uib-tabset>
+		</div>
+		<div id="console" ui-layout-container collapsed="layoutControl.south" size="170px" class="light-border">
+			<table>
+				<tr ng-repeat="line in console.lines track by $index"><td>
+					<nobr>{{line}}</nobr>
+				</td></tr>
+			</table>
+		</div>
+	  </div>
+	</div>
+</div>

@@ -1,0 +1,93 @@
+﻿#main-layout .ui-layout-pane {
+    border-top: 1px solid #BBB;
+    border-bottom: 1px solid #BBB;
+}
+
+#main-layout .ui-layout-pane-west {
+    border-right: 1px solid #BBB;
+    overflow: hidden;
+}
+
+#main-layout .ui-layout-pane-center {
+    border-left: 1px solid #BBB;
+    overflow: hidden;
+}
+
+#main-layout .ui-layout-resizer-west {
+    border-left: 0;
+}
+
+#main-layout .ui-layout-pane-north {
+    border-bottom: 0;
+}
+
+#main-layout .ui-layout-resizer-north {
+    border-top: 2px solid #BBB;
+}
+
+#main-layout .ui-layout-pane-south {
+    border-top: 0;
+}
+
+#main-layout .ui-layout-resizer-south {
+    border-bottom: 1px solid #BBB;
+}
+
+#main-layout .ui-layout-resizer-west-dragging,
+#main-layout .ui-layout-resizer-east-dragging {
+    border-left: 1px solid #BBB;
+    border-right: 1px solid #BBB;
+}
+
+#main-layout .ui-layout-resizer-north-dragging,
+#main-layout .ui-layout-resizer-south-dragging {
+    border-top: 1px solid #BBB;
+    border-bottom: 1px solid #BBB;
+}
+
+.nav-tabs a {
+   height: 25px;  
+}
+
+.nav-tabs > li > a {
+/*    padding: 2px 15px;*/
+    padding: 2px 5px 2px 15px;
+}
+
+.light-border {
+	border: 1px solid #aaa;
+}
+
+.flex-stretch, .tab-content, .tab-pane {
+	display:flex;
+	flex-direction:column;
+	flex-grow: 1;
+}
+
+.tab-pane {
+	padding: 2px;
+}
+
+.tab-modified {
+	/* font-weight: bold; */
+	color: red;
+}
+
+.code-editor {
+	height:100%;
+}
+
+/*.ace_editor {
+	height:100%;
+}*/
+
+#toolbar {
+    float: left; 
+    padding-left:10px; 
+    padding-right:5px
+}
+
+.toolbar-item {
+    padding-right:5px;
+    padding-top:5px;
+}

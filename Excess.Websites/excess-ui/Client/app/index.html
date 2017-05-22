@@ -9,26 +9,43 @@
   <title>excess-ui</title>
   <meta name="description" content="">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="bower_components/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="bower_components/fontawesome/css/font-awesome.min.css" rel="stylesheet">
   <link rel="stylesheet" href="bower_components/html5-boilerplate/dist/css/normalize.css">
   <link rel="stylesheet" href="bower_components/html5-boilerplate/dist/css/main.css">
+  <link rel="stylesheet" href="bower_components/angular-ui-layout/src/ui-layout.css"/>
   <link rel="stylesheet" href="app.css">
+  <link rel="stylesheet" href="components/ui-tree/ui-tree.css">
+  <link rel="stylesheet" href="components/ui-excess-ide/ui-excess-ide.css">
   <script src="bower_components/html5-boilerplate/dist/js/vendor/modernizr-2.8.3.min.js"></script>
 </head>
 <body>
-    <div ng-controller="ctrlDemo as ctrl" style="height: 100vh">
+<!--     <div ng-controller="ctrlDemo as ctrl" style="height: 100vh"> -->
+<!--      <div ng-controller="xsuiIdeController" style="height: 100vh">-->
+<!--     </div> -->
+    <ui-ide-editor theme="twilight"></ui-ide-editor>
 
-    </div>
 
   <!-- In production use:
   <script src="//ajax.googleapis.com/ajax/libs/angularjs/x.x.x/angular.min.js"></script>
   -->
+  <script src="bower_components/jquery/dist/jquery.min.js"></script>
   <script src="bower_components/angular/angular.js"></script>
   <script src="bower_components/angular-route/angular-route.js"></script>
+  <script src="bower_components/bootstrap/dist/js/bootstrap.js"></script>
+  <script src="bower_components/ace-builds/src-min-noconflict/ace.js"></script>
+  <script src="bower_components/ace-builds/src-min-noconflict/ext-modelist.js"></script>
+  <script src="bower_components/angular-ui-ace/ui-ace.js"></script>
+  <script src="bower_components/angular-ui-layout/src/ui-layout.js"></script>
+  <script src="bower_components/angular-bootstrap/ui-bootstrap-tpls.min.js"></script>
+  
   <script src="app.js"></script>
-  <script src="view1/view1.js"></script>
   <script src="components/version/version.js"></script>
   <script src="components/version/version-directive.js"></script>
   <script src="components/version/interpolate-filter.js"></script>
   <script src="services/__services.js"></script>
+  <script src="services/mock.js"></script>
+  <script src="components/ui-tree/ui-tree.js"></script>
+  <script src="components/ui-excess-ide/ui-excess-ide.js"></script>
 </body>
 </html>
