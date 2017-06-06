@@ -10,7 +10,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using xslang;
 using Microsoft.CodeAnalysis.Text;
 
 namespace Excess.Compiler.Mock
@@ -32,9 +31,6 @@ namespace Excess.Compiler.Mock
             if (extensions == null)
                 extensions = new Dictionary<string, ExtensionFunction>();
 
-            if (!extensions.Keys.Contains("xs"))
-                extensions["xs"] = (compiler, scope) => XSLanguage.Apply(compiler);
-
             var workspace = new AdhocWorkspace();
             var project = workspace.AddProject("excess", LanguageNames.CSharp);
             var document = project.AddAdditionalDocument("main.xs", code);
@@ -51,8 +47,6 @@ namespace Excess.Compiler.Mock
         {
             //build a compiler
             var compiler = new RoslynCompiler();
-            if (builder == null)
-                builder = (c) => XSLanguage.Apply(c);
             builder(compiler);
 
             //then a document
@@ -78,8 +72,6 @@ namespace Excess.Compiler.Mock
         {
             //build a compiler
             var compiler = new RoslynCompiler();
-            if (builder == null)
-                builder = (c) => XSLanguage.Apply(c);
             builder(compiler);
 
             //then a document
@@ -118,8 +110,6 @@ namespace Excess.Compiler.Mock
         {
             //build a compiler
             var compiler = new RoslynCompiler();
-            if (builder == null)
-                builder = (c) => XSLanguage.Apply(c);
             builder(compiler);
 
             //then a document

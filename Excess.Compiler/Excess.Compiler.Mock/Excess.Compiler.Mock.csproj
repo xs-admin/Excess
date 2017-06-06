@@ -161,10 +161,6 @@
       <Project>{feacfbcc-4bfe-4c14-b40f-3dc856a85fd4}</Project>
       <Name>Excess.Compiler</Name>
     </ProjectReference>
-    <ProjectReference Include="..\xslang\xslang.csproj">
-      <Project>{ade4e1f7-1ef1-4c8a-9fbe-63c497ec522b}</Project>
-      <Name>xslang</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

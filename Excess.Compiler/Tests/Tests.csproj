@@ -161,11 +161,9 @@
   <ItemGroup>
     <Compile Include="CompilerExtensionsTest.cs" />
     <Compile Include="CompilerUsageTests.cs" />
-    <Compile Include="FunctionTests.cs" />
     <Compile Include="GraphTests.cs" />
     <Compile Include="InstanceTests.cs" />
     <Compile Include="MappingTests.cs" />
-    <Compile Include="MatchTests.cs" />
     <Compile Include="Mocks\MockIdentGrammarModel.cs" />
     <Compile Include="Mocks\MockIndentGrammar.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -180,10 +178,6 @@
     <ProjectReference Include="..\Excess.Compiler.Mock\Excess.Compiler.Mock.csproj">
       <Project>{5bdd0791-9973-41a2-be2e-a2caa9f5a4cb}</Project>
       <Name>Excess.Compiler.Mock</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\xslang\xslang.csproj">
-      <Project>{ade4e1f7-1ef1-4c8a-9fbe-63c497ec522b}</Project>
-      <Name>xslang</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
